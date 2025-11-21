@@ -26,15 +26,20 @@ v1.2.1 - Progress Dialog Bug Fixes
   - Added comprehensive debug logging for troubleshooting
   - Progress now updates correctly during file copy operations
 
-v1.5.9 - Current Version
+v1.5.9 - Progrss Refinements
   - Refined progress update mechanism
   - Improved UI responsiveness during operations
   - Enhanced error handling in progress dialogs
 
-v1.6.0 - Current Version
+v1.6.0 - Cleanup Code
   - Merge Pane switching and focus code
   - Rework phrasing in menus
   - Declutter status bar
+
+v1.6.1 - 
+  - Add Rename function on F3 to menus
+  - Fix some typos
+  - Improve Menu/Statusbar flow
 
 ================================================================================
 #>
@@ -45,7 +50,7 @@ v1.6.0 - Current Version
 .SYNOPSIS
     PowerShell Commander (PSMC) v1.6.0 STABLE
 .NOTES
-    Version: 1.6.0 STABLE
+    Version: 1.6.1 STABLE
     Terminal.Gui: v1.16.0
 #>
 
@@ -1508,7 +1513,7 @@ function Show-PineappleInfo {
     $message = @"
 PSMC is codenamed "Pineapple" because:
 
-- I was drinking pineapple sodawhen writing the code.
+- I was drinking pineapple soda when writing the code.
 - The Danish word for pineapple is Ananas which I find
   amusing.
 - Pizza - with(out) pineapple can be ordered from the
@@ -1532,7 +1537,7 @@ Debug-Log "=== PSMC Starting ==="
 $script:LeftPane = New-FilePane -initialPath $start -themeMode $script:ThemeMode -paneName 'LEFT'
 $script:RightPane = New-FilePane -initialPath $start -themeMode $script:ThemeMode -paneName 'RIGHT'
 
-$win = [Terminal.Gui.Window]::new("PSMC v1.6.0 - Pineapple Build")
+$win = [Terminal.Gui.Window]::new("PSMC v1.6.1 - Pineapple Build")
 $win.X = 0
 $win.Y = 1
 $win.Width = [Terminal.Gui.Dim]::Fill()
@@ -1562,7 +1567,7 @@ $script:FocusStatusItem = [Terminal.Gui.StatusItem]::new(
 # Status bar
 $statusBar = [Terminal.Gui.StatusBar]::new(@(
     [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F1, "~F1~ Help", {
-        Show-Modal "Shortcuts" "F1 - Help`nTAB - Switch Pane`nF2 - Rename`n/F3 - TODO`nF4 - Browse Dir`nF5 - Refresh`nF6 - Copy`nF7 - Change dir`nF8 - Delete`nF10 - Quit" 
+        Show-Modal "Shortcuts" "F1 - Help`nTAB - Switch Pane`nF2 - Rename`n/F3 - Mkdir`nF4 - Browse Dir`nF5 - Refresh`nF6 - Copy`nF7 - Change dir`nF8 - Delete`nF10 - Quit" 
     }),
 
     [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::Tab, "~Tab~ Switch Pane", {
@@ -1586,6 +1591,10 @@ $statusBar = [Terminal.Gui.StatusBar]::new(@(
    }),
 
     [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F2, "~F2~ Rename", {
+        Invoke-Rename
+    }),
+
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F3, "~F3~ Mkdir", {
         Invoke-Rename
     }),
 
@@ -1663,25 +1672,28 @@ $menuFile = [Terminal.Gui.MenuBarItem]::new("_File", @(
 ))
 
 $menuActions = [Terminal.Gui.MenuBarItem]::new("_Actions", @(
-    [Terminal.Gui.MenuItem]::new("_Copy File (F6)", "Copy file", [Action]{
-        $p = Get-FocusedPane
-        Copy-CurrentFile $p.Active $p.Other
-    }),
     [Terminal.Gui.MenuItem]::new("_Move File", "Move file", [Action]{
         $p = Get-FocusedPane
         Move-CurrentFile $p.Active $p.Other
     }),
-    [Terminal.Gui.MenuItem]::new("_Delete File (F8)", "Delete file", [Action]{
-        $p = Get-FocusedPane
-        Delete-CurrentFile $p.Active
+    [Terminal.Gui.MenuItem]::new("_Rename File (F2)", "Rename file", [Action]{
+        Invoke-Rename
     }),
-    [Terminal.Gui.MenuItem]::new("Create _Directory", "Create directory", [Action]{
+    [Terminal.Gui.MenuItem]::new("Create _Directory (F3)", "Create directory", [Action]{
         $p = Get-FocusedPane
         New-DirectoryDialog $p.Active
     }),
     [Terminal.Gui.MenuItem]::new("Delete D_irectory", "Delete directory", [Action]{
         $p = Get-FocusedPane
         Remove-DirectoryDialog $p.Active
+    }),
+    [Terminal.Gui.MenuItem]::new("_Copy File (F6)", "Copy file", [Action]{
+        $p = Get-FocusedPane
+        Copy-CurrentFile $p.Active $p.Other
+    }),
+    [Terminal.Gui.MenuItem]::new("_Delete File (F8)", "Delete file", [Action]{
+        $p = Get-FocusedPane
+        Delete-CurrentFile $p.Active
     }),
     [Terminal.Gui.MenuItem]::new("File _Info", "Show file info", [Action]{
     $p = Get-FocusedPane
@@ -1707,13 +1719,6 @@ $menuActions = [Terminal.Gui.MenuBarItem]::new("_Actions", @(
 ))
 
 $menuNav = [Terminal.Gui.MenuBarItem]::new("_Navigate", @(
-    [Terminal.Gui.MenuItem]::new("_TODO (F3)", "TODO", [Action]{
-        $p = Get-FocusedPane
-        $idx = $p.Active.ListView.SelectedItem
-        if ($idx -ge 0) {
-            Navigate-ToItem $p.Active $idx
-        }
-    }),
     [Terminal.Gui.MenuItem]::new("_Browse (F4)", "Browse", [Action]{
         $p = Get-FocusedPane
         try {
@@ -1727,7 +1732,7 @@ $menuNav = [Terminal.Gui.MenuBarItem]::new("_Navigate", @(
             Show-Modal "Error" "Cannot navigate to parent"
         }
     }),
-    [Terminal.Gui.MenuItem]::new("_Refresh (F5)", "Refresh pane", [Action]{
+    [Terminal.Gui.MenuItem]::new("_Redraw (F5)", "Refresh pane", [Action]{
         $p = Get-FocusedPane
         Refresh-Pane $p.Active
     }),
@@ -1738,11 +1743,11 @@ $menuNav = [Terminal.Gui.MenuBarItem]::new("_Navigate", @(
 ))
 
 $menuHelp = [Terminal.Gui.MenuBarItem]::new("_Help", @(
-    [Terminal.Gui.MenuItem]::new("_Keys", "Shortcuts", [Action]{ 
-        Show-Modal "Shortcuts" "F1 Help`nTab - Switch Pane`nF2/F3 -TODO`nF4 - Go up`nF5 - Refresh`nF6 - Copy`nF7 - Change dir`nF8 - Delete`nF10 - Quit" 
+    [Terminal.Gui.MenuItem]::new("_Keys (F1)", "Shortcuts", [Action]{ 
+        Show-Modal "Shortcuts" "F1 Help`nTab - Switch Pane`nF2/F3 -Mkdir`nF4 - Go up`nF5 - Refresh`nF6 - Copy`nF7 - Change dir`nF8 - Delete`nF10 - Quit" 
     }),
     [Terminal.Gui.MenuItem]::new("_About", "About", [Action]{ 
-        Show-Modal "About" "PSMC v1.6.0 STABLE`nGPL-3 Copyleft" 
+        Show-Modal "About" "PSMC v1.6.1 STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600" 
     }),,
     [Terminal.Gui.MenuItem]::new("Why _Pineapple?", "", {
         Show-PineappleInfo
@@ -1767,7 +1772,7 @@ try {
     [Terminal.Gui.Application]::SetFocus($script:LeftPane.ListView) 
 } catch {}
 
-Debug-Log "=== PSMC v1.6.0 Ready ==="
+Debug-Log "=== PSMC v1.6.1 Ready ==="
 Debug-Log "File | Actions | Navigate | Help"
 
 [Terminal.Gui.Application]::Run()
