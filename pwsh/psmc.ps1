@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 <#
 =============================== VERSION HISTORY ===============================
 
@@ -39,7 +41,10 @@ v1.6.0 - Cleanup Code
 v1.6.1 - 
   - Add Rename function on F3 to menus
   - Fix some typos
-  - Improve Menu/Statusbar flow
+  - Improve Menu and Statusbar flow
+
+v1.6.2 - 
+  - Add Error action code to track down silent failures
 
 ================================================================================
 #>
@@ -50,9 +55,12 @@ v1.6.1 -
 .SYNOPSIS
     PowerShell Commander (PSMC) v1.6.0 STABLE
 .NOTES
-    Version: 1.6.1 STABLE
+    Version: $($Global:PSMC_Version)
     Terminal.Gui: v1.16.0
 #>
+
+$ErrorActionPreference = 'Continue'
+$Global:PSMC_Version = '1.6.2'
 
 param([switch]$Verbose)
 
@@ -1537,7 +1545,7 @@ Debug-Log "=== PSMC Starting ==="
 $script:LeftPane = New-FilePane -initialPath $start -themeMode $script:ThemeMode -paneName 'LEFT'
 $script:RightPane = New-FilePane -initialPath $start -themeMode $script:ThemeMode -paneName 'RIGHT'
 
-$win = [Terminal.Gui.Window]::new("PSMC v1.6.1 - Pineapple Build")
+$win = [Terminal.Gui.Window]::new("PSMC v$($Global:PSMC_Version) - Pineapple Build")
 $win.X = 0
 $win.Y = 1
 $win.Width = [Terminal.Gui.Dim]::Fill()
@@ -1747,7 +1755,7 @@ $menuHelp = [Terminal.Gui.MenuBarItem]::new("_Help", @(
         Show-Modal "Shortcuts" "F1 Help`nTab - Switch Pane`nF2/F3 -Mkdir`nF4 - Go up`nF5 - Refresh`nF6 - Copy`nF7 - Change dir`nF8 - Delete`nF10 - Quit" 
     }),
     [Terminal.Gui.MenuItem]::new("_About", "About", [Action]{ 
-        Show-Modal "About" "PSMC v1.6.1 STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600" 
+        Show-Modal "About" "PSMC v$($Global:PSMC_Version) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600" 
     }),,
     [Terminal.Gui.MenuItem]::new("Why _Pineapple?", "", {
         Show-PineappleInfo
@@ -1772,7 +1780,7 @@ try {
     [Terminal.Gui.Application]::SetFocus($script:LeftPane.ListView) 
 } catch {}
 
-Debug-Log "=== PSMC v1.6.1 Ready ==="
+Debug-Log "=== PSMC v$($Global:PSMC_Version) Ready ==="
 Debug-Log "File | Actions | Navigate | Help"
 
 [Terminal.Gui.Application]::Run()
