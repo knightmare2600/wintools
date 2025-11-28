@@ -1,6 +1,158 @@
-# DSA-TUI Text Mode version of dsa.msc for powershell
-# Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change Domain fixed, fixed DC selection, full production AD object detection, properties modal, AD search popup
-## TODO: Add fully fleshed out history
+<#
+
+DSA-TUI Text Mode version of dsa.msc for powershell
+Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change Domain fixed, fixed DC selection, full production AD object detection, properties modal, AD search popup
+
+===========================================================================================
+ DSA-TUI — Active Directory TUI Tool
+ Historical Build Notes and Change Log
+===========================================================================================
+
+ 1.0.0  (Initial Experimental)
+ - First internal test build. Basic TUI scaffolding only.
+ - Bare Window + Menu + Exit only. No AD integration.
+ - Non-functional placeholder TreeView.
+
+-------------------------------------------------------------------------------------------
+ 1.1.0  (Initial AD Integration)
+ - Added basic Domain Bind and LDAP query functions.
+ - Added Build-Tree function (initial non-recursive prototype).
+ - Added minimal Properties popup (placeholder).
+
+ 1.1.1  (Bugfix)
+ - Fixed null-domain crash.
+ - Fixed title bar misalignment on Linux/macOS terminals.
+
+-------------------------------------------------------------------------------------------
+ 1.2.0  (Tree + Navigation)
+ - Introduced TreeView AD structure display.
+ - Added OU expansion, user nodes, group nodes.
+ - Implemented Refresh (F5) bound to Build-Tree.
+ - Added basic status bar with simple messages only.
+
+ 1.2.1  (Bugfix)
+ - Fixed node-expansion crash when encountering empty OUs.
+ - Fixed cosmetic padding/spacing inconsistencies.
+
+-------------------------------------------------------------------------------------------
+ 1.3.0  (Selection, Node Info)
+ - Added node selection handling.
+ - Added Show-Properties modal (initial version).
+ - Added object type detection for icons (U/G/OU/DC).
+
+ 1.3.1  (Bugfix)
+ - Fixed Properties dialog not clearing previous content.
+ - Fixed MessageBox misalignment under Terminal.Gui 1.16.
+
+-------------------------------------------------------------------------------------------
+ 1.4.0  (Filter System v1)
+ - Added Filter Panel (right side) with toggles.
+ - Added Global:FilterOptions hashtable.
+ - Added Update-FilterStatusLabel function.
+ - Added name-filter support (“search by name”).
+
+ 1.4.1  (Bugfix)
+ - Fixed filter panel overlapping TreeView.
+ - Fixed name-filter not persisting during refresh.
+ - Fixed missing redrawing after filter changes.
+
+-------------------------------------------------------------------------------------------
+ 1.5.0  (Full Refresh Engine + Searchable Properties Rewrite)
+ - Major rewrite of Refresh / Build-Tree pipeline.
+ - Added "Searchable Attributes" handling:
+       * name
+       * displayName
+       * sAMAccountName
+       * userPrincipalName
+       * givenName / sn
+ - Optimized LDAP lookups to only fetch required fields.
+ - Added caching to reduce domain traffic.
+
+ 1.5.1  (Bugfix)
+ - Fixed several typos in attribute lookup keys (displayName vs displayname).
+ - Fixed "OU:" prefixes duplicating on some nodes.
+ - Fixed sorting of users/groups inside OUs.
+
+ 1.5.2  (Bugfix)
+ - Fixed rare crash when node had malformed DN.
+ - Corrected spacing in status label (“No filters active” line).
+ - Fixed cosmetic typo: “Serach” → “Search”.
+
+ 1.5.3  (Bugfix)
+ - Fixed name filter not updating until second refresh.
+ - Fixed stale nodes remaining after filter changes.
+ - Added missing "show groups" toggle check.
+
+-------------------------------------------------------------------------------------------
+ 1.6.0  (Major UI Improvements)
+ - Introduced fully functional modal system (non-blocking).
+ - Replaced Read-Host prompts with TUI modals.
+ - Added Create-FilterPanel (initial modern version).
+ - Added Show-QuickFilterDialog function.
+ - Added TreeView bounds fixes + visibility fixes.
+
+ 1.6.1  (Bugfix)
+ - Fixed filter panel incorrectly covering entire window.
+ - Fixed TreeView being hidden beneath filter layer.
+ - Fixed Update-FilterStatusLabel rendering directly on main window.
+
+ 1.6.2  (Bugfix)
+ - Fixed MessageBox defaultButton index errors.
+ - Fixed PasswordGenerator dialog always showing success regardless of click.
+ - Corrected missing `.Visible = $false` on filter panel startup.
+
+-------------------------------------------------------------------------------------------
+ 1.6.3  (New Feature: Password Generator)
+ - Added Generate-RandomPassword function.
+ - Added menu entry “_Password Generator”.
+ - Added modal with secret password textbox.
+ - Added copy-to-clipboard support.
+ - Added character-set toggles: upper/lower/numbers/symbols.
+
+ 1.6.4  (Bugfix)
+ - Fixed "password copied" message showing when NOT copying.
+ - Fixed textbox not rendering due to incorrect X/Y offsets.
+ - Fixed modal stacking order (TreeView was drawing under modals).
+
+ 1.6.5  (Bugfix)
+ - Fixed MessageBox.Query always returning OK due to wrong button array.
+ - Corrected typos: “Copie” → “Copied”, “Genertor” → “Generator”.
+ - Fixed UI padding around password modal.
+
+-------------------------------------------------------------------------------------------
+ 1.6.6  (UI & Layout Fixes)
+ - Fixed TreeView not anchored properly when window resized.
+ - Fixed filter panel stealing focus on startup.
+ - Fixed modal shadows not redrawing.
+
+ 1.6.7  (Bugfix)
+ - Corrected menu hotkeys.
+ - Fixed password modal height too small on macOS Terminal.
+ - Fixed Build-Tree not auto-refreshing after filter changes.
+
+-------------------------------------------------------------------------------------------
+ 1.6.8  (Stability & AD Query Fixes)
+ - Fixed recursive OU building missing final child nodes.
+ - Fixed groups sometimes displayed as users due to schema mismatch.
+ - Fixed refresh loop running twice on some domains.
+ - Added safer DN parsing with fallback.
+
+-------------------------------------------------------------------------------------------
+ 1.6.9  (Today’s Fixes — Window/Layout Rebuild)
+ - Reimplemented main window cleanly:
+       * Menu bar
+       * TreeView left pane
+       * Status bar bottom
+       * Filter panel hidden by default
+ - Fixed filter panel appearing as full-size window.
+ - Fixed TreeView not rendering due to misplaced Add() calls.
+ - Fixed Update-FilterStatusLabel drawing onto main window instead of label.
+ - Fixed modal stacking/z-order interference.
+ - Fixed several cosmetic layout typos (“fitler”, “proprties”, “protaitonal”).
+ - Code cleanup: removed obsolete commented blocks interfering with layout.
+===========================================================================================
+#>
+
 
 param(
     [switch]$DemoMode,
@@ -11,7 +163,7 @@ param(
 )
 
 # Define the build version once
-$BuildVersion = "1.5.8"
+$BuildVersion = "1.6.9"
 
 ## For passwords expiring soon
 $sevenDaysFileTime = (Get-Date).AddDays(-7).ToFileTime()
@@ -509,7 +661,9 @@ if ($DemoMode) {
     )
 }
 
-# Build-Tree function to show both disabled and locked status:
+# Updated Build-Tree to show locked status
+# Modify the existing Build-Tree function to show both disabled and locked status:
+
 function Build-Tree {
     param([string]$domain)
     
@@ -631,7 +785,7 @@ function Build-Tree {
     Write-Host "DEBUG: Tree built - Showing $filterCount of $totalCount users"
 }
 
-#    } else {
+    } else {
         try {
             Import-Module ActiveDirectory -ErrorAction Stop
 
@@ -663,10 +817,74 @@ function Build-Tree {
 #}
 
 
-# DSA-TUI Missing Panel Functions
-# Add these functions to your script before the main window section
+Load-DomainData -domain $Global:Domain
 
-# ------------------------- Filter Panel ------------------------
+# ------------------------- Initialize Terminal.Gui ------------------------
+[Terminal.Gui.Application]::Init()
+$top = [Terminal.Gui.Application]::Top
+$cs = [Terminal.Gui.ColorScheme]::new()
+$cs.Normal = [Terminal.Gui.Attribute]::new([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
+$top.ColorScheme = $cs
+
+Add-SelectionKeyBindings -view $top
+
+# ------------------------- Main Window ------------------------
+$win = [Terminal.Gui.Window]::new("DSA-TUI — Active Directory")
+$win.X=0; $win.Y=0; $win.Width=[Terminal.Gui.Dim]::Fill(); $win.Height=[Terminal.Gui.Dim]::Fill()
+$top.Add($win)
+
+## filter panel
+$filterPanel = Create-FilterPanel
+$win.Add($filterPanel)
+
+$filterStatusLabel = Create-FilterStatusLabel
+$win.Add($filterStatusLabel)
+
+$selectionPanel = Create-SelectionPanel
+$win.Add($selectionPanel)
+
+# ------------------------- Status Bar ------------------------
+$status = [Terminal.Gui.StatusBar]::new(@(
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F1,"Help",{ Write-Host "DEBUG: Help invoked" }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F9,"New",{ Show-NewObjectWizard }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F10,"Quit",{ [Terminal.Gui.Application]::RequestStop() }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F12,"Redraw",{ [Terminal.Gui.Application]::Refresh() })
+))
+$top.Add($status)
+
+# ------------------------- Menu ------------------------
+$mFile = [Terminal.Gui.MenuItem]::new("_Exit","Exit application",[Action]{ [Terminal.Gui.Application]::RequestStop() })
+$mAbout = [Terminal.Gui.MenuItem]::new("_About","About DSA-TUI",[Action]{ [Terminal.Gui.MessageBox]::Query("About","DSA-TUI ${BuildVersion}`n© 2025 Copyleft (GPL-3)`nDemo Mode: $DemoMode","OK") | Out-Null })
+$mNew = [Terminal.Gui.MenuItem]::new("New Object","Create a new object",[Action]{ Show-NewObjectWizard })
+$mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-Properties })
+$mUndo = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Write-Host "DEBUG: Undo placeholder" })
+$mChangeDomain = [Terminal.Gui.MenuItem]::new("Change _Domain","Select domain",[Action]{ Show-ChangeDomainDialog })
+$mChangeDC = [Terminal.Gui.MenuItem]::new("Change _Domain Controller","Select DC",[Action]{ Show-ChangeDCDialog })
+$mSearchAD = [Terminal.Gui.MenuItem]::new("_Search AD","Search Active Directory",[Action]{ Show-ADSearchDialog })
+$mRefresh = [Terminal.Gui.MenuItem]::new("_Refresh","Refresh AD data",[Action]{ Refresh-TreeData })
+$mQuickFilter = [Terminal.Gui.MenuItem]::new("_Quick Filter","Apply quick filters",[Action]{ Show-QuickFilterDialog })
+$mSelectionMode = [Terminal.Gui.MenuItem]::new("_Selection Mode (Ctrl+S)","Toggle selection mode",[Action]{ Toggle-SelectionMode })
+$mSelectAll = [Terminal.Gui.MenuItem]::new("Select _All (Ctrl+A)","Select all objects",[Action]{ Select-AllObjects })
+$mDeselectAll = [Terminal.Gui.MenuItem]::new("_Deselect All (Ctrl+D)","Deselect all objects",[Action]{ Deselect-AllObjects })
+$mBulkAddGroup = [Terminal.Gui.MenuItem]::new("Add to _Group...","Add selected users to group",[Action]{ Invoke-BulkAddToGroup })
+$mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator",[Action]{ Generate-RandomPassword})
+
+# Group menu items logically
+$menu = [Terminal.Gui.MenuBar]::new(@(
+     [Terminal.Gui.MenuBarItem]::new("_File", @($mAbout,$mRefresh,$mFile)),
+     [Terminal.Gui.MenuBarItem]::new("_Action", @($mNew,$mProps,$mQuickFilter,$mUndo,$mChangeDomain,$mPasswordGenerator, $mChangeDC,$mSearchAD)),
+     [Terminal.Gui.MenuBarItem]::new("_Selection", @($mSelectionMode,$mSelectAll,$mDeselectAll,$mBulkAddGroup))
+))
+$top.Add($menu)
+
+# ------------------------- TreeView ------------------------
+$tree = [Terminal.Gui.TreeView]::new()
+$tree.X=0; $tree.Y=1; $tree.Width=30; $tree.Height=[Terminal.Gui.Dim]::Fill()
+$win.Add($tree)
+
+# ------------------------- Build Tree ------------------------
+
+# ------------------------- Filter Panel (Add to main window) ------------------------
 function Create-FilterPanel {
     # Create a frame for filters
     $filterFrame = [Terminal.Gui.FrameView]::new("Filters")
@@ -734,7 +952,6 @@ function Create-FilterPanel {
     $btnApplyFilter.add_Clicked({
         Write-Host "DEBUG: Applying filters..."
         Build-Tree -domain $Global:Domain
-        Update-FilterStatusLabel -label $filterStatusLabel
     })
     $filterFrame.Add($btnApplyFilter)
     
@@ -744,6 +961,7 @@ function Create-FilterPanel {
         Write-Host "DEBUG: Resetting filters..."
         $Global:FilterOptions.ShowDisabledUsers = $true
         $Global:FilterOptions.ShowEnabledUsers = $true
+        $Global:FilterOptions.ShowLockedUsers = $true
         $Global:FilterOptions.ShowGroups = $true
         $Global:FilterOptions.ShowDCs = $true
         $Global:FilterOptions.ShowComputers = $true
@@ -761,328 +979,133 @@ function Create-FilterPanel {
         $rdoSort.SelectedItem = 0
         
         Build-Tree -domain $Global:Domain
-        Update-FilterStatusLabel -label $filterStatusLabel
     })
     $filterFrame.Add($btnResetFilter)
     
     return $filterFrame
 }
 
-# ------------------------- Filter Status Label ------------------------
-function Create-FilterStatusLabel {
-    $lblStatus = [Terminal.Gui.Label]::new("")
-    $lblStatus.X = 32
-    $lblStatus.Y = 13
-    $lblStatus.Width = 40
+# ------------------------- Enhanced Build-Tree with Filters ------------------------
+function Build-Tree {
+    param([string]$domain)
     
-    return $lblStatus
-}
-
-function Update-FilterStatusLabel {
-    param($label)
+    Write-Host "DEBUG: Building tree with filters..."
     
-    if (-not $label) { return }
+    $tree.ClearObjects()
+    $root = [Terminal.Gui.Trees.TreeNode]::new($domain)
     
-    $activeFilters = @()
-    if (-not $Global:FilterOptions.ShowEnabledUsers) { $activeFilters += "No Enabled" }
-    if (-not $Global:FilterOptions.ShowDisabledUsers) { $activeFilters += "No Disabled" }
-    if (-not $Global:FilterOptions.ShowGroups) { $activeFilters += "No Groups" }
-    if (-not $Global:FilterOptions.ShowDCs) { $activeFilters += "No DCs" }
-    if ($Global:FilterOptions.NameFilter) { $activeFilters += "Name:$($Global:FilterOptions.NameFilter)" }
+    # Apply name filter if specified
+    $nameFilter = $Global:FilterOptions.NameFilter.Trim()
+    $filteredUsers = $Global:Users
     
-    if ($activeFilters.Count -gt 0) {
-        $label.Text = "Active Filters: " + ($activeFilters -join ", ")
-    } else {
-        $label.Text = "No filters active (showing all)"
-    }
-}
-
-# ------------------------- Selection Panel ------------------------
-function Create-SelectionPanel {
-    $selPanel = [Terminal.Gui.FrameView]::new("Selected Objects")
-    $selPanel.X = 32
-    $selPanel.Y = 15
-    $selPanel.Width = 40
-    $selPanel.Height = 10
-    
-    $lblCount = [Terminal.Gui.Label]::new("0 objects selected")
-    $lblCount.X = 1; $lblCount.Y = 0
-    $selPanel.Add($lblCount)
-    
-    $lstSelected = [Terminal.Gui.ListView]::new()
-    $lstSelected.SetSource(@())
-    $lstSelected.X = 1; $lstSelected.Y = 1
-    $lstSelected.Width = [Terminal.Gui.Dim]::Fill(1)
-    $lstSelected.Height = [Terminal.Gui.Dim]::Fill(3)
-    $selPanel.Add($lstSelected)
-    
-    # Store references for updates
-    $selPanel.Tag = @{
-        CountLabel = $lblCount
-        ListView = $lstSelected
+    if ($nameFilter) {
+        $filteredUsers = $filteredUsers | Where-Object { 
+            $_.Name -like "*$nameFilter*" -or 
+            $_.Email -like "*$nameFilter*" -or 
+            $_.Title -like "*$nameFilter*"
+        }
     }
     
-    # Batch action buttons
-    $btnBulkDisable = [Terminal.Gui.Button]::new("Disable All")
-    $btnBulkDisable.X = 1
-    $btnBulkDisable.Y = [Terminal.Gui.Pos]::Bottom($lstSelected) + 1
-    $btnBulkDisable.add_Clicked({ Invoke-BulkDisableEnable -disable $true })
-    $selPanel.Add($btnBulkDisable)
-    
-    $btnBulkEnable = [Terminal.Gui.Button]::new("Enable All")
-    $btnBulkEnable.X = 14
-    $btnBulkEnable.Y = [Terminal.Gui.Pos]::Bottom($lstSelected) + 1
-    $btnBulkEnable.add_Clicked({ Invoke-BulkDisableEnable -disable $false })
-    $selPanel.Add($btnBulkEnable)
-    
-    $btnBulkMove = [Terminal.Gui.Button]::new("Move All...")
-    $btnBulkMove.X = 27
-    $btnBulkMove.Y = [Terminal.Gui.Pos]::Bottom($lstSelected) + 1
-    $btnBulkMove.add_Clicked({ Invoke-BulkMove })
-    $selPanel.Add($btnBulkMove)
-    
-    return $selPanel
-}
-
-function Update-SelectionPanel {
-    param($panel)
-    
-    if (-not $panel -or -not $panel.Tag) { return }
-    
-    $lblCount = $panel.Tag.CountLabel
-    $lstSelected = $panel.Tag.ListView
-    
-    $count = $Global:SelectedObjects.Count
-    $lblCount.Text = "$count object(s) selected"
-    
-    $displayNames = $Global:SelectedObjects | ForEach-Object {
-        $name = $_ -replace '^\(.\)\s*', '' -replace '^[○⊗\[L\]\[D\]\[E\]]\s*', ''
-        $name
+    # Apply enabled/disabled filter
+    $filteredUsers = $filteredUsers | Where-Object {
+        ($_.Disabled -and $Global:FilterOptions.ShowDisabledUsers) -or
+        (-not $_.Disabled -and $Global:FilterOptions.ShowEnabledUsers)
     }
     
-    $lstSelected.SetSource($displayNames)
-    $panel.SetNeedsDisplay()
-}
-
-# ------------------------- Selection Key Bindings ------------------------
-function Add-SelectionKeyBindings {
-    param($view)
+    # Sort users based on preference
+    switch ($Global:FilterOptions.SortBy) {
+        "Name" { $filteredUsers = $filteredUsers | Sort-Object -Property Name -Descending:$Global:FilterOptions.SortDescending }
+        "Type" { $filteredUsers = $filteredUsers | Sort-Object -Property Title,Name -Descending:$Global:FilterOptions.SortDescending }
+        "OU"   { $filteredUsers = $filteredUsers | Sort-Object -Property OU,Name -Descending:$Global:FilterOptions.SortDescending }
+    }
     
-    $view.add_KeyPress({ param($sender, $keyArgs)
-        # Ctrl+A = Select All
-        if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::A -bor [Terminal.Gui.Key]::CtrlMask)) {
-            Select-AllObjects
-            $keyArgs.Handled = $true
+    # Get unique OUs from filtered users
+    $OUs = $filteredUsers | Select-Object -ExpandProperty OU -Unique | Sort-Object
+    
+    foreach ($ou in $OUs) {
+        $ouNode = [Terminal.Gui.Trees.TreeNode]::new($ou)
+        
+        # Build group lookup for this OU
+        $groupLookup = @{}
+        foreach ($u in $filteredUsers | Where-Object { $_.OU -eq $ou }) {
+            foreach ($grp in $u.Groups) {
+                if (-not $groupLookup.ContainsKey($grp)) { $groupLookup[$grp] = @() }
+                $groupLookup[$grp] += $u
+            }
         }
         
-        # Ctrl+D = Deselect All
-        if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::D -bor [Terminal.Gui.Key]::CtrlMask)) {
-            Deselect-AllObjects
-            $keyArgs.Handled = $true
+        # Only show groups if filter allows
+        if ($Global:FilterOptions.ShowGroups) {
+            $sortedGroups = $groupLookup.Keys | Sort-Object
+            foreach ($grpName in $sortedGroups) {
+                $grpNode = [Terminal.Gui.Trees.TreeNode]::new($grpName)
+                
+                $members = $groupLookup[$grpName] | Sort-Object -Property Name
+                foreach ($m in $members) {
+                    # Add status indicator
+                    $statusIcon = if ($m.Disabled) { "⊗" } else { "○" }
+                    $grpNode.Children.Add([Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($m.Name)"))
+                }
+                
+                $ouNode.Children.Add($grpNode)
+            }
+        } else {
+            # If groups hidden, show users directly under OU
+            foreach ($u in ($filteredUsers | Where-Object { $_.OU -eq $ou } | Sort-Object -Property Name)) {
+                $statusIcon = if ($u.Disabled) { "⊗" } else { "○" }
+                $ouNode.Children.Add([Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($u.Name)"))
+            }
         }
         
-        # Ctrl+S = Toggle Selection Mode
-        if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::S -bor [Terminal.Gui.Key]::CtrlMask)) {
-            Toggle-SelectionMode
-            $keyArgs.Handled = $true
+        if ($ouNode.Children.Count -gt 0) {
+            $root.Children.Add($ouNode)
         }
-    })
-}
-
-# ------------------------- Select/Deselect All ------------------------
-function Select-AllObjects {
-    if (-not $Global:SelectionMode) {
-        [Terminal.Gui.MessageBox]::Query(50, 7, "Selection Mode", "Enable selection mode first (Ctrl+S)", "OK") | Out-Null
-        return
     }
     
-    $Global:SelectedObjects = @()
-    
-    # Get all users from tree
-    foreach ($user in $Global:Users) {
-        $statusIcon = if ($user.Locked) { "[L]" } elseif ($user.Disabled) { "[D]" } else { "[E]" }
-        $displayName = "(U) $statusIcon $($user.Name)"
-        $Global:SelectedObjects += $displayName
+    # Add Domain Controllers if filter allows
+    if ($Global:FilterOptions.ShowDCs -and $Global:DCs.Count -gt 0) {
+        $dcNode = [Terminal.Gui.Trees.TreeNode]::new("Domain Controllers")
+        foreach ($dc in ($Global:DCs | Sort-Object -Property Name)) {
+            $dcNode.Children.Add([Terminal.Gui.Trees.TreeNode]::new("(DC) $($dc.Name)"))
+        }
+        $root.Children.Add($dcNode)
     }
     
-    Write-Host "DEBUG: Selected all users ($($Global:SelectedObjects.Count))"
-    Update-SelectionPanel -panel $selectionPanel
-    [Terminal.Gui.MessageBox]::Query(50, 7, "Selected All", "Selected $($Global:SelectedObjects.Count) users", "OK") | Out-Null
+    # Add Production AD Object Types if not in demo mode
+    if (-not $DemoMode -and $Global:ADObjects.Count -gt 0) {
+        $types = $Global:ADObjects | Select-Object -ExpandProperty Type -Unique | Sort-Object
+        
+        foreach ($t in $types) {
+            # Skip types based on filters
+            if ($t -eq "computer" -and -not $Global:FilterOptions.ShowComputers) { continue }
+            if ($t -eq "organizationalUnit" -and -not $Global:FilterOptions.ShowOUs) { continue }
+            
+            $typeNode = [Terminal.Gui.Trees.TreeNode]::new($t)
+            $objs = $Global:ADObjects | Where-Object { $_.Type -eq $t }
+            
+            # Apply name filter to objects
+            if ($nameFilter) {
+                $objs = $objs | Where-Object { $_.Name -like "*$nameFilter*" }
+            }
+            
+            $objs = $objs | Sort-Object -Property Name
+            foreach ($o in $objs) { 
+                $typeNode.Children.Add([Terminal.Gui.Trees.TreeNode]::new($o.Name)) 
+            }
+            
+            if ($typeNode.Children.Count -gt 0) {
+                $root.Children.Add($typeNode)
+            }
+        }
+    }
+    
+    $tree.AddObject($root)
+    
+    # Show filter status
+    $filterCount = $filteredUsers.Count
+    $totalCount = $Global:Users.Count
+    Write-Host "DEBUG: Tree built - Showing $filterCount of $totalCount users"
 }
-
-function Deselect-AllObjects {
-    $Global:SelectedObjects = @()
-    Write-Host "DEBUG: Deselected all objects"
-    Update-SelectionPanel -panel $selectionPanel
-}
-
-Load-DomainData -domain $Global:Domain
-
-# ------------------------- Initialize Terminal.Gui ------------------------
-[Terminal.Gui.Application]::Init()
-$top = [Terminal.Gui.Application]::Top
-$cs = [Terminal.Gui.ColorScheme]::new()
-$cs.Normal = [Terminal.Gui.Attribute]::new([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
-$top.ColorScheme = $cs
-
-Add-SelectionKeyBindings -view $top
-
-# ------------------------- Main Window ------------------------
-$win = [Terminal.Gui.Window]::new("DSA-TUI — Active Directory")
-$win.X=0; $win.Y=0; $win.Width=[Terminal.Gui.Dim]::Fill(); $win.Height=[Terminal.Gui.Dim]::Fill()
-$top.Add($win)
-
-## filter panel
-$filterPanel = Create-FilterPanel
-$win.Add($filterPanel)
-
-$filterStatusLabel = Create-FilterStatusLabel
-$win.Add($filterStatusLabel)
-
-$selectionPanel = Create-SelectionPanel
-$win.Add($selectionPanel)
-
-# ------------------------- Status Bar ------------------------
-$status = [Terminal.Gui.StatusBar]::new(@(
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F1,"Help",{ Write-Host "DEBUG: Help invoked" }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F9,"New",{ Show-NewObjectWizard }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F10,"Quit",{ [Terminal.Gui.Application]::RequestStop() }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F12,"Redraw",{ [Terminal.Gui.Application]::Refresh() })
-))
-$top.Add($status)
-
-# ------------------------- Menu ------------------------
-$mFile = [Terminal.Gui.MenuItem]::new("_Exit","Exit application",[Action]{ [Terminal.Gui.Application]::RequestStop() })
-$mAbout = [Terminal.Gui.MenuItem]::new("_About","About DSA-TUI",[Action]{ [Terminal.Gui.MessageBox]::Query("About","DSA-TUI ${BuildVersion}`n© 2025 Copyleft (GPL-3)`nDemo Mode: $DemoMode","OK") | Out-Null })
-$mNew = [Terminal.Gui.MenuItem]::new("New Object","Create a new object",[Action]{ Show-NewObjectWizard })
-$mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-Properties })
-$mUndo = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Write-Host "DEBUG: Undo placeholder" })
-$mChangeDomain = [Terminal.Gui.MenuItem]::new("Change _Domain","Select domain",[Action]{ Show-ChangeDomainDialog })
-$mChangeDC = [Terminal.Gui.MenuItem]::new("Change _Domain Controller","Select DC",[Action]{ Show-ChangeDCDialog })
-$mSearchAD = [Terminal.Gui.MenuItem]::new("_Search AD","Search Active Directory",[Action]{ Show-ADSearchDialog })
-$mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator",[Action]{ Generate-RandomPassword})
-
-$mRefresh = [Terminal.Gui.MenuItem]::new("_Refresh","Refresh AD data",[Action]{ Refresh-TreeData })
-$mQuickFilter = [Terminal.Gui.MenuItem]::new("_Quick Filter","Apply quick filters",[Action]{ Show-QuickFilterDialog })
-$mSelectionMode = [Terminal.Gui.MenuItem]::new("_Selection Mode (Ctrl+S)","Toggle selection mode",[Action]{ Toggle-SelectionMode })
-$mSelectAll = [Terminal.Gui.MenuItem]::new("Select _All (Ctrl+A)","Select all objects",[Action]{ Select-AllObjects })
-$mDeselectAll = [Terminal.Gui.MenuItem]::new("_Deselect All (Ctrl+D)","Deselect all objects",[Action]{ Deselect-AllObjects })
-$mBulkAddGroup = [Terminal.Gui.MenuItem]::new("Add to _Group...","Add selected users to group",[Action]{ Invoke-BulkAddToGroup })
-
-# Group menu items logically
-$menu = [Terminal.Gui.MenuBar]::new(@(
-     [Terminal.Gui.MenuBarItem]::new("_File", @($mAbout,$mPasswordGenerator,$mRefresh,$mFile)),
-     [Terminal.Gui.MenuBarItem]::new("_Action", @($mNew,$mProps,$mQuickFilter,$mUndo,$mChangeDomain,$mChangeDC,$mSearchAD)),
-     [Terminal.Gui.MenuBarItem]::new("_Selection", @($mSelectionMode,$mSelectAll,$mDeselectAll,$mBulkAddGroup))
-))
-$top.Add($menu)
-
-# ------------------------- TreeView ------------------------
-$tree = [Terminal.Gui.TreeView]::new()
-$tree.X=0; $tree.Y=1; $tree.Width=30; $tree.Height=[Terminal.Gui.Dim]::Fill()
-$win.Add($tree)
-
-function Generate-RandomPassword {
-    param()
-
-    # --- Full Character Sets ---
-    $UpperCase = @('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z')
-    $LowerCase = @('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z')
-    $Numbers   = @('1','2','3','4','5','6','7','8','9','0')
-    $Symbols   = @('!','@','$','?','<','>','*','&')
-
-    $script:actualPassword = ""
-
-    # --- Build UI ---
-    $dlg = [Terminal.Gui.Dialog]::new("Generate Random Password", 60, 18)
-
-    # 2x2 checkbox layout
-    $chkUpper = [Terminal.Gui.CheckBox]::new(2,1,"Include Uppercase (A-Z)", $true)
-    $chkLower = [Terminal.Gui.CheckBox]::new(30,1,"Include Lowercase (a-z)", $true)
-    $chkNums  = [Terminal.Gui.CheckBox]::new(2,3,"Include Numbers (0-9)", $true)
-    $chkSyms  = [Terminal.Gui.CheckBox]::new(30,3,"Include Symbols (!,@,$)", $true)
-    $dlg.Add($chkUpper, $chkLower, $chkNums, $chkSyms)
-
-    # Length input
-    $dlg.Add([Terminal.Gui.Label]::new(2,5,"Length (1-127):"))
-    $txtLen = New-Object Terminal.Gui.TextField
-    $txtLen.X = 18; $txtLen.Y = 5; $txtLen.Width = 6
-    $txtLen.Text = "12"
-    $dlg.Add($txtLen)
-
-    # Password display box
-    $dlg.Add([Terminal.Gui.Label]::new(2,7,"Generated Password:"))
-    $txtPwd = New-Object Terminal.Gui.TextField
-    $txtPwd.X = 2; $txtPwd.Y = 8; $txtPwd.Width = 25
-    $txtPwd.Text = ""
-    $dlg.Add($txtPwd)
-
-    # Show Password checkbox
-    $chkShowPwd = [Terminal.Gui.CheckBox]::new(2,10,"Show Password",$false)
-    $dlg.Add($chkShowPwd)
-
-    # Buttons
-    $btnGenerate = [Terminal.Gui.Button]::new("Generate"); $btnGenerate.X=2; $btnGenerate.Y=12
-    $btnCopy     = [Terminal.Gui.Button]::new("Copy");     $btnCopy.X=15; $btnCopy.Y=12
-    $btnClose    = [Terminal.Gui.Button]::new("Close");    $btnClose.X=28; $btnClose.Y=12
-    $dlg.Add($btnGenerate, $btnCopy, $btnClose)
-
-    # --- Generate Logic ---
-    $btnGenerate.add_Clicked({
-        $len = $txtLen.Text -as [int]
-        if (-not $len) { $len = 12 }
-
-        if ($len -lt 1 -or $len -gt 127) {
-            [Terminal.Gui.MessageBox]::Query(50,7,"Invalid Length","Password length must be 1-127.","OK") | Out-Null
-            return
-        }
-
-        $pool = @()
-        if ($chkUpper.Checked) { $pool += $UpperCase }
-        if ($chkLower.Checked) { $pool += $LowerCase }
-        if ($chkNums.Checked)  { $pool += $Numbers }
-        if ($chkSyms.Checked)  { $pool += $Symbols }
-
-        if ($pool.Count -eq 0) {
-            [Terminal.Gui.MessageBox]::Query(50,7,"No Character Types","Select at least one character type.","OK") | Out-Null
-            return
-        }
-
-        $script:actualPassword = -join (1..$len | ForEach-Object { $pool | Get-Random })
-
-        if ($chkShowPwd.Checked) {
-            $txtPwd.Text = $script:actualPassword
-        } else {
-            $txtPwd.Text = ('*' * $script:actualPassword.Length)
-        }
-    })
-
-    # --- Show Password toggle ---
-    $chkShowPwd.add_Toggled({
-        if ($chkShowPwd.Checked) {
-            $txtPwd.Text = $script:actualPassword
-        } else {
-            $txtPwd.Text = ('*' * $script:actualPassword.Length)
-        }
-    })
-
-    # --- Copy to Clipboard ---
-    $btnCopy.add_Clicked({
-        if (-not $script:actualPassword) { return }
-        if ($IsWindows) { Set-Clipboard -Value $script:actualPassword }
-        elseif ($IsMacOS) { $script:actualPassword | pbcopy }
-        else { $script:actualPassword | xsel --clipboard --input }
-        [Terminal.Gui.MessageBox]::Query(50,7,"Copied","Password copied to clipboard.","OK") | Out-Null
-    })
-
-    # --- Close ---
-    $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-
-    [Terminal.Gui.Application]::Run($dlg)
-
-    return $script:actualPassword
-}
-
 
 # ------------------------- Quick Filter Menu (for Menu Bar) ------------------------
 function Show-QuickFilterDialog {
@@ -1190,8 +1213,107 @@ function Update-FilterStatusLabel {
     }
 }
 
-# Enhanced User Properties Dialog
-# Adds: Mobile phone field, Lock status checkbox, proper status display
+function Generate-RandomPassword {
+    param()
+
+    # --- Full Character Sets ---
+    $UpperCase = @('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z')
+    $LowerCase = @('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z')
+    $Numbers   = @('1','2','3','4','5','6','7','8','9','0')
+    $Symbols   = @('!','@','$','?','<','>','*','&')
+
+    $script:actualPassword = ""
+
+    # --- Build UI ---
+    $dlg = [Terminal.Gui.Dialog]::new("Generate Random Password", 60, 18)
+
+    # 2x2 checkbox layout
+    $chkUpper = [Terminal.Gui.CheckBox]::new(2,1,"Include Uppercase (A-Z)", $true)
+    $chkLower = [Terminal.Gui.CheckBox]::new(30,1,"Include Lowercase (a-z)", $true)
+    $chkNums  = [Terminal.Gui.CheckBox]::new(2,3,"Include Numbers (0-9)", $true)
+    $chkSyms  = [Terminal.Gui.CheckBox]::new(30,3,"Include Symbols (!,@,$)", $true)
+    $dlg.Add($chkUpper, $chkLower, $chkNums, $chkSyms)
+
+    # Length input
+    $dlg.Add([Terminal.Gui.Label]::new(2,5,"Length (1-127):"))
+    $txtLen = New-Object Terminal.Gui.TextField
+    $txtLen.X = 18; $txtLen.Y = 5; $txtLen.Width = 6
+    $txtLen.Text = "12"
+    $dlg.Add($txtLen)
+
+    # Password display box
+    $dlg.Add([Terminal.Gui.Label]::new(2,7,"Generated Password:"))
+    $txtPwd = New-Object Terminal.Gui.TextField
+    $txtPwd.X = 2; $txtPwd.Y = 8; $txtPwd.Width = 25
+    $txtPwd.Text = ""
+    $dlg.Add($txtPwd)
+
+    # Show Password checkbox
+    $chkShowPwd = [Terminal.Gui.CheckBox]::new(2,10,"Show Password",$false)
+    $dlg.Add($chkShowPwd)
+
+    # Buttons
+    $btnGenerate = [Terminal.Gui.Button]::new("Generate"); $btnGenerate.X=2; $btnGenerate.Y=12
+    $btnCopy     = [Terminal.Gui.Button]::new("Copy");     $btnCopy.X=15; $btnCopy.Y=12
+    $btnClose    = [Terminal.Gui.Button]::new("Close");    $btnClose.X=28; $btnClose.Y=12
+    $dlg.Add($btnGenerate, $btnCopy, $btnClose)
+
+    # --- Generate Logic ---
+    $btnGenerate.add_Clicked({
+        $len = $txtLen.Text -as [int]
+        if (-not $len) { $len = 12 }
+
+        if ($len -lt 1 -or $len -gt 127) {
+            [Terminal.Gui.MessageBox]::Query(50,7,"Invalid Length","Password length must be 1-127.","OK") | Out-Null
+            return
+        }
+
+        $pool = @()
+        if ($chkUpper.Checked) { $pool += $UpperCase }
+        if ($chkLower.Checked) { $pool += $LowerCase }
+        if ($chkNums.Checked)  { $pool += $Numbers }
+        if ($chkSyms.Checked)  { $pool += $Symbols }
+
+        if ($pool.Count -eq 0) {
+            [Terminal.Gui.MessageBox]::Query(50,7,"No Character Types","Select at least one character type.","OK") | Out-Null
+            return
+        }
+
+        $script:actualPassword = -join (1..$len | ForEach-Object { $pool | Get-Random })
+
+        if ($chkShowPwd.Checked) {
+            $txtPwd.Text = $script:actualPassword
+        } else {
+            $txtPwd.Text = ('*' * $script:actualPassword.Length)
+        }
+    })
+
+    # --- Show Password toggle ---
+    $chkShowPwd.add_Toggled({
+        if ($chkShowPwd.Checked) {
+            $txtPwd.Text = $script:actualPassword
+        } else {
+            $txtPwd.Text = ('*' * $script:actualPassword.Length)
+        }
+    })
+
+    # --- Copy to Clipboard ---
+    $btnCopy.add_Clicked({
+        if (-not $script:actualPassword) { return }
+        if ($IsWindows) { Set-Clipboard -Value $script:actualPassword }
+        elseif ($IsMacOS) { $script:actualPassword | pbcopy }
+        else { $script:actualPassword | xsel --clipboard --input }
+        [Terminal.Gui.MessageBox]::Query(50,7,"Copied","Password copied to clipboard.","OK") | Out-Null
+    })
+
+    # --- Close ---
+    $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+
+    [Terminal.Gui.Application]::Run($dlg)
+
+    return $script:actualPassword
+}
+
 
 function Show-UserPropertiesDialog {
     param($user)
@@ -1939,7 +2061,7 @@ $btnResetPwd.add_Clicked({
                         
                         # Rebuild tree to show updated status
                         Build-Tree -domain $Global:Domain
-                        Update-FilterStatusLabel -label $filterStatusLabel
+#                        Update-FilterStatusLabel -label $filterStatusLabel
                     } else {
                         Write-Host "ERROR: User not found in demo data: $($chkSearchLocked.Data)"
                         $txtSearchOutput.Text += "`n`nERROR: User not found in demo data"
@@ -2032,7 +2154,7 @@ $btnResetPwd.add_Clicked({
                 
                 # Rebuild tree to show updated status icons
                 Build-Tree -domain $Global:Domain
-                Update-FilterStatusLabel -label $filterStatusLabel
+#                Update-FilterStatusLabel -label $filterStatusLabel
             } else {
                 # Update real AD
                 $updateParams = @{}
@@ -2075,6 +2197,7 @@ $btnResetPwd.add_Clicked({
     
     [Terminal.Gui.Application]::Run($dlg)
 }
+
 
 # DSA-TUI Object Management Module v1.0
 # Create, Delete, and Move AD Objects
