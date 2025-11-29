@@ -518,6 +518,23 @@ if ($DemoMode) {
 # ---------------- Demo Data + Clickable OU Tree ----------------
 if ($DemoMode) {
 
+  # Demo Data Reset Patch
+  # Add this at the VERY START of your demo mode section
+
+  if ($DemoMode) {
+    Write-Host "Initializing demo mode..."
+    
+    # ------------------------- RESET/CLEAR ALL DEMO DATA -------------------------
+    # Clear any existing data from previous runs
+    $Global:Users = @()
+    $Global:DCs = @()
+    $Global:ADObjects = @()
+    $Global:SelectedObjects = @()
+    $Global:Domain = "example.com"
+    
+    Write-Host "Demo data arrays cleared and reset"
+    }
+
     # -------------------------
     # Users
     # -------------------------
@@ -605,53 +622,182 @@ if ($DemoMode) {
         @{ Name = 'EXALNDCDC01'; OU = 'Domain Controllers'; Site = 'LND' },
         @{ Name = 'EXACPHDC01'; OU = 'Domain Controllers'; Site = 'CPH' }
     )
-
-    # -------------------------
-    # Clickable OU Tree
-    # -------------------------
-    $tree = [Terminal.Gui.TreeView]::new()
-    $tree.X = 0; $tree.Y = 0; $tree.Width = [Terminal.Gui.Dim]::Fill(); $tree.Height = [Terminal.Gui.Dim]::Fill()
-
-    function Add-OUNode {
-        param([string[]]$OUPath, [Terminal.Gui.TreeNode]$ParentNode)
-        $name = $OUPath[0]
-        $existing = $ParentNode.Children | Where-Object { $_.Text -eq $name }
-        if ($existing) { $node = $existing[0] } else { $node = [Terminal.Gui.TreeNode]::new($name); $ParentNode.AddChild($node) }
-        if ($OUPath.Count -gt 1) { Add-OUNode -OUPath $OUPath[1..($OUPath.Count - 1)] -ParentNode $node }
-        return $node
     }
 
-    $root = [Terminal.Gui.TreeNode]::new("Locations")
-    $tree.AddChild($root)
-
-    foreach ($user in $Global:Users) {
-        $ouPath = $user.OU
-        $pathForTree = $ouPath[1..($ouPath.Count - 1)]
-
-        if ($pathForTree.Count -gt 1) {
-            $parentNode = Add-OUNode -OUPath $pathForTree[0..($pathForTree.Count - 2)] -ParentNode $root
-        } else {
-            $parentNode = $root
+    # -------------------------
+    # Clickable OU Tree with Proper Hierarchy
+    # -------------------------
+    
+    # Helper function to find or create an OU node
+    function Get-OrCreateOUNode {
+        param(
+            [Terminal.Gui.TreeNode]$ParentNode,
+            [string]$OUName
+        )
+        
+        # Look for existing child with this name
+        foreach ($child in $ParentNode.Children) {
+            if ($child.Text -eq $OUName) {
+                return $child
+            }
         }
-
-        $leafNode = [Terminal.Gui.TreeNode]::new("${pathForTree[-1]} (${user.Name})")
-        $leafNode.Data = $user
-        $parentNode.AddChild($leafNode)
+        
+        # Not found, create new node
+        $newNode = [Terminal.Gui.TreeNode]::new($OUName)
+        $ParentNode.AddChild($newNode)
+        return $newNode
     }
-
-    $tree.OnSelectedItemChanged.Add({
-        $selectedNode = $tree.SelectedNode
-        if ($selectedNode -and $selectedNode.Data) {
-            $user = $selectedNode.Data
-            [Terminal.Gui.MessageBox]::Query(50,7,"User Selected","Name: ${user.Name}`nTitle: ${user.Title}`nOffice: ${user.Office}","OK")
+    
+    # Helper function to build OU path recursively
+    function Build-OUPath {
+        param(
+            [Terminal.Gui.TreeNode]$CurrentNode,
+            [string[]]$RemainingPath
+        )
+        
+        if ($RemainingPath.Count -eq 0) {
+            return $CurrentNode
+        }
+        
+        $nextOU = $RemainingPath[0]
+        $childNode = Get-OrCreateOUNode -ParentNode $CurrentNode -OUName $nextOU
+        
+        if ($RemainingPath.Count -gt 1) {
+            return Build-OUPath -CurrentNode $childNode -RemainingPath $RemainingPath[1..($RemainingPath.Count - 1)]
+        } else {
+            return $childNode
+        }
+    }
+    
+    # Create root "Locations" node
+    $rootLocations = [Terminal.Gui.TreeNode]::new("Locations")
+    
+    # Group users by their OU path and band
+    $bandStructure = @{}
+    
+    foreach ($user in $Global:Users) {
+        $ouPath = $user.OU  # e.g., @('Locations','UK','Scotland','Glasgow','Simple Minds')
+        
+        # Skip 'Locations' (index 0) and get the path
+        $pathWithoutRoot = $ouPath[1..($ouPath.Count - 1)]
+        
+        # The last element is the band name
+        $bandName = $pathWithoutRoot[-1]
+        
+        # The path to the band (country/region/city)
+        $cityPath = $pathWithoutRoot[0..($pathWithoutRoot.Count - 2)]
+        
+        # Build the path key for grouping
+        $pathKey = ($cityPath -join '/') + '/' + $bandName
+        
+        if (-not $bandStructure.ContainsKey($pathKey)) {
+            $bandStructure[$pathKey] = @{
+                CityPath = $cityPath
+                BandName = $bandName
+                Users = @()
+            }
+        }
+        
+        $bandStructure[$pathKey].Users += $user
+    }
+    
+    # Now build the tree
+    foreach ($pathKey in ($bandStructure.Keys | Sort-Object)) {
+        $band = $bandStructure[$pathKey]
+        
+        # Build the FULL city path recursively (e.g., UK → Scotland → Glasgow)
+        # Start from rootLocations and drill down through each level
+        $currentNode = $rootLocations
+        
+        foreach ($pathSegment in $band.CityPath) {
+            $currentNode = Get-OrCreateOUNode -ParentNode $currentNode -OUName $pathSegment
+        }
+        
+        # Now $currentNode is the city node (e.g., Glasgow)
+        # Add band node under the city
+        $bandNode = [Terminal.Gui.TreeNode]::new($band.BandName)
+        $currentNode.AddChild($bandNode)
+        
+        # Add each band member under the band
+        foreach ($user in ($band.Users | Sort-Object -Property Name)) {
+            $status = if ($user.Locked) { "[L]" } elseif ($user.Disabled) { "[D]" } else { "[E]" }
+            $userNode = [Terminal.Gui.TreeNode]::new("$status $($user.Name)")
+            $userNode.Tag = $user  # Store user data for click handling
+            $bandNode.AddChild($userNode)
+        }
+    }
+    
+    # Create "Groups" node (instrument groups)
+    $rootGroups = [Terminal.Gui.TreeNode]::new("Groups")
+    
+    # Build instrument groups
+    $instrumentGroups = @('Vocalists', 'Guitarists', 'Keyboards', 'Percussion', 'Synth')
+    
+    foreach ($groupName in $instrumentGroups) {
+        $groupNode = [Terminal.Gui.TreeNode]::new($groupName)
+        
+        # Find all users in this group
+        $groupMembers = $Global:Users | Where-Object { $_.Groups -contains $groupName } | Sort-Object -Property Name
+        
+        foreach ($user in $groupMembers) {
+            $status = if ($user.Locked) { "[L]" } elseif ($user.Disabled) { "[D]" } else { "[E]" }
+            $userNode = [Terminal.Gui.TreeNode]::new("$status $($user.Name)")
+            $userNode.Tag = $user
+            $groupNode.AddChild($userNode)
+        }
+        
+        if ($groupMembers.Count -gt 0) {
+            $rootGroups.AddChild($groupNode)
+        }
+    }
+    
+    # Create "Domain Controllers" node
+    $rootDCs = [Terminal.Gui.TreeNode]::new("Domain Controllers")
+    
+    foreach ($dc in ($Global:DCs | Sort-Object -Property Name)) {
+        $dcNode = [Terminal.Gui.TreeNode]::new("$($dc.Name) [$($dc.Site)]")
+        $rootDCs.AddChild($dcNode)
+    }
+    
+    # Create the tree view
+    $tree = [Terminal.Gui.TreeView]::new()
+    $tree.X = 0
+    $tree.Y = 1
+    $tree.Width = 40
+    $tree.Height = [Terminal.Gui.Dim]::Fill()
+    
+    # Add root domain node
+    $domainRoot = [Terminal.Gui.TreeNode]::new("example.com")
+    
+    # Add all root nodes UNDER the domain root
+    $domainRoot.AddChild($rootLocations)
+    $domainRoot.AddChild($rootGroups)
+    $domainRoot.AddChild($rootDCs)
+    
+    # Add only the domain root to tree
+    $tree.AddObject($domainRoot)
+    
+    # Handle selection
+    $tree.add_SelectionChanged({
+        if ($tree.SelectedObject -and $tree.SelectedObject.Tag) {
+            $user = $tree.SelectedObject.Tag
+            Write-Host "DEBUG: Selected user: $($user.Name)"
+            # Optionally show properties
+            # Show-UserPropertiesDialog -user $user
         }
     })
-
-    $win = [Terminal.Gui.Window]::new("Demo OU Tree")
-    $win.Add($tree)
-    [Terminal.Gui.Application]::Top.Add($win)
-    [Terminal.Gui.Application]::Run()
-  }
+    
+    Write-Host "Demo tree built successfully"
+    Write-Host "  Domain root: $($domainRoot.Text)"
+    Write-Host "  - Locations: $($rootLocations.Children.Count) countries"
+    foreach ($country in $rootLocations.Children) {
+        Write-Host "    - $($country.Text): $($country.Children.Count) regions/cities"
+        foreach ($region in $country.Children) {
+            Write-Host "      - $($region.Text): $($region.Children.Count) cities/bands"
+        }
+    }
+    Write-Host "  - Groups: $($rootGroups.Children.Count) instrument groups"
+    Write-Host "  - DCs: $($rootDCs.Children.Count) domain controllers"
 }
 
 # Updated Build-Tree to show locked status
@@ -1292,16 +1438,12 @@ function Update-FilterStatusLabel {
 function Generate-RandomPassword {
 
     # Helper function
-
     function Get-PasswordEntropy {
         param([int]$poolSize, [int]$length)
         if ($poolSize -le 0 -or $length -le 0) { return 0 }
         return [Math]::Log($poolSize, 2) * $length
     }
 
-##    param()
-
-    # --- Full Character Sets ---
     $UpperCase = @('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z')
     $LowerCase = @('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z')
     $Numbers   = @('1','2','3','4','5','6','7','8','9','0')
@@ -1310,7 +1452,7 @@ function Generate-RandomPassword {
     $script:actualPassword = ""
 
     # --- Build UI ---
-    $dlg = [Terminal.Gui.Dialog]::new("Generate Random Password", 60, 18)
+    $dlg = [Terminal.Gui.Dialog]::new("Generate Random Password", 66, 14)
 
     # 2x2 checkbox layout
     $chkUpper = [Terminal.Gui.CheckBox]::new(2,1,"Include Uppercase (A-Z)", $true)
@@ -1331,78 +1473,64 @@ function Generate-RandomPassword {
     $txtPwd = New-Object Terminal.Gui.TextField
     $txtPwd.X = 2; $txtPwd.Y = 8; $txtPwd.Width = 25
     $txtPwd.Text = ""
-
-    # === ENTROPY METER (NEW) ===
-    $dlg.Add([Terminal.Gui.Label]::new(30,7,"Strength:"))
-    $lblStrength = [Terminal.Gui.Label]::new(30,8,"Not generated")
-    $lblStrength.Width = 25
-    $dlg.Add($lblStrength)
-    
-    # Progress bar for visual entropy indicator
-    $progEntropy = [Terminal.Gui.ProgressBar]::new()
-    $progEntropy.X = 30; $progEntropy.Y = 9; $progEntropy.Width = 25
-    $progEntropy.Fraction = 0.0
-    $dlg.Add($progEntropy)
-    # === END ENTROPY METER ===
-
     $dlg.Add($txtPwd)
 
+    # --- ENTROPY DISPLAY ---
+    $lblStrength = [Terminal.Gui.Label]::new(30,7,"Strength: Not generated")
+    $lblStrength.Width = 30
+    $dlg.Add($lblStrength)
+
+    $progEntropy = [Terminal.Gui.ProgressBar]::new()
+    $progEntropy.X = 30; $progEntropy.Y = 8; $progEntropy.Width = 25
+    $progEntropy.Fraction = 0.0
+    $dlg.Add($progEntropy)
+
     # Show Password checkbox
-    $chkShowPwd = [Terminal.Gui.CheckBox]::new(2,10,"Show Password",$false)
-    $dlg.Add($chkShowPwd)
+ $chkShowPwd = [Terminal.Gui.CheckBox]::new(30,5,"Show Password",$false)
+ $dlg.Add($chkShowPwd)
 
     # Buttons
-    $btnGenerate = [Terminal.Gui.Button]::new("Generate"); $btnGenerate.X=2; $btnGenerate.Y=12
-    $btnCopy     = [Terminal.Gui.Button]::new("Copy");     $btnCopy.X=15; $btnCopy.Y=12
-    $btnClose    = [Terminal.Gui.Button]::new("Close");    $btnClose.X=28; $btnClose.Y=12
+    $btnGenerate = [Terminal.Gui.Button]::new("Generate"); $btnGenerate.X=2; $btnGenerate.Y=10
+    $btnCopy     = [Terminal.Gui.Button]::new("Copy");     $btnCopy.X=15; $btnCopy.Y=10
+    $btnClose    = [Terminal.Gui.Button]::new("Close");    $btnClose.X=28; $btnClose.Y=10
     $dlg.Add($btnGenerate, $btnCopy, $btnClose)
 
     # --- Generate Logic ---
-$btnGenerate.add_Clicked({
+    $btnGenerate.add_Clicked({
         $len = $txtLen.Text -as [int]
         if (-not $len) { $len = 12 }
         if ($len -lt 1 -or $len -gt 127) {
             [Terminal.Gui.MessageBox]::Query(50,7,"Invalid Length","Password length must be 1-127.","OK") | Out-Null
             return
         }
+
         $pool = @()
         if ($chkUpper.Checked) { $pool += $UpperCase }
         if ($chkLower.Checked) { $pool += $LowerCase }
         if ($chkNums.Checked)  { $pool += $Numbers }
         if ($chkSyms.Checked)  { $pool += $Symbols }
+
         if ($pool.Count -eq 0) {
             [Terminal.Gui.MessageBox]::Query(50,7,"No Character Types","Select at least one character type.","OK") | Out-Null
             return
         }
-        
-        # === ENTROPY CALCULATION (NEW) ===
-        $entropy = Get-PasswordEntropy -poolSize $pool.Count -length $len
-        
-        # Determine strength category and color
-        $strength = ""
-        $fraction = 0.0
-        if ($entropy -lt 40) {
-            $strength = "Weak ($([int]$entropy) bits)"
-            $fraction = 0.2
-        } elseif ($entropy -lt 60) {
-            $strength = "Fair ($([int]$entropy) bits)"
-            $fraction = 0.4
-        } elseif ($entropy -lt 80) {
-            $strength = "Good ($([int]$entropy) bits)"
-            $fraction = 0.6
-        } elseif ($entropy -lt 100) {
-            $strength = "Strong ($([int]$entropy) bits)"
-            $fraction = 0.8
-        } else {
-            $strength = "Very Strong ($([int]$entropy) bits)"
-            $fraction = 1.0
-        }
-        
-        $lblStrength.Text = $strength
-        $progEntropy.Fraction = $fraction
-        # === END ENTROPY CALCULATION ===
-        
+
         $script:actualPassword = -join (1..$len | ForEach-Object { $pool | Get-Random })
+
+        # --- Entropy update ---
+        $entropy = Get-PasswordEntropy -poolSize $pool.Count -length $len
+        $strengthCategory = ""
+        $fraction = 0.0
+        if ($entropy -lt 40) { $strengthCategory="Weak"; $fraction=0.2 }
+        elseif ($entropy -lt 60) { $strengthCategory="Fair"; $fraction=0.4 }
+        elseif ($entropy -lt 80) { $strengthCategory="Good"; $fraction=0.6 }
+        elseif ($entropy -lt 100) { $strengthCategory="Strong"; $fraction=0.8 }
+        else { $strengthCategory="Very Strong"; $fraction=1.0 }
+
+        $lblStrength.Text = "Strength ($([int]$entropy) bits): $strengthCategory"
+        $progEntropy.Fraction = $fraction
+        # --- End Entropy update ---
+
         if ($chkShowPwd.Checked) {
             $txtPwd.Text = $script:actualPassword
         } else {
@@ -1419,38 +1547,6 @@ $btnGenerate.add_Clicked({
         }
     })
 
-    $updatePreview = {
-        $len = $txtLen.Text -as [int]
-        if (-not $len) { $len = 12 }
-        if ($len -lt 1) { return }
-        
-        $poolSize = 0
-        if ($chkUpper.Checked) { $poolSize += 26 }
-        if ($chkLower.Checked) { $poolSize += 26 }
-        if ($chkNums.Checked)  { $poolSize += 10 }
-        if ($chkSyms.Checked)  { $poolSize += 8 }
-        
-        if ($poolSize -gt 0) {
-            $entropy = Get-PasswordEntropy -poolSize $poolSize -length $len
-            $strength = if ($entropy -lt 40) { "Weak ($([int]$entropy) bits)" }
-                elseif ($entropy -lt 60) { "Fair ($([int]$entropy) bits)" }
-                elseif ($entropy -lt 80) { "Good ($([int]$entropy) bits)" }
-                elseif ($entropy -lt 100) { "Strong ($([int]$entropy) bits)" }
-                else { "Very Strong ($([int]$entropy) bits)" }
-            
-            $fraction = [Math]::Min(1.0, $entropy / 120.0)
-            $lblStrength.Text = $strength
-            $progEntropy.Fraction = $fraction
-        }
-    }
-    
-    $chkUpper.add_Toggled($updatePreview)
-    $chkLower.add_Toggled($updatePreview)
-    $chkNums.add_Toggled($updatePreview)
-    $chkSyms.add_Toggled($updatePreview)
-    $txtLen.add_TextChanged($updatePreview)
-
-
     # --- Copy to Clipboard ---
     $btnCopy.add_Clicked({
         if (-not $script:actualPassword) { return }
@@ -1464,7 +1560,6 @@ $btnGenerate.add_Clicked({
     $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
 
     [Terminal.Gui.Application]::Run($dlg)
-
     return $script:actualPassword
 }
 
