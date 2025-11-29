@@ -4,7 +4,7 @@ DSA-TUI Text Mode version of dsa.msc for powershell
 Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change Domain fixed, fixed DC selection, full production AD object detection, properties modal, AD search popup
 
 ===========================================================================================
- DSA-TUI — Active Directory TUI Tool
+ DSA-TUI Blaabaer — Active Directory TUI Tool
  Historical Build Notes and Change Log
 ===========================================================================================
 
@@ -13,7 +13,6 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Bare Window + Menu + Exit only. No AD integration.
  - Non-functional placeholder TreeView.
 
--------------------------------------------------------------------------------------------
  1.1.0  (Initial AD Integration)
  - Added basic Domain Bind and LDAP query functions.
  - Added Build-Tree function (initial non-recursive prototype).
@@ -23,7 +22,6 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Fixed null-domain crash.
  - Fixed title bar misalignment on Linux/macOS terminals.
 
--------------------------------------------------------------------------------------------
  1.2.0  (Tree + Navigation)
  - Introduced TreeView AD structure display.
  - Added OU expansion, user nodes, group nodes.
@@ -34,7 +32,6 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Fixed node-expansion crash when encountering empty OUs.
  - Fixed cosmetic padding/spacing inconsistencies.
 
--------------------------------------------------------------------------------------------
  1.3.0  (Selection, Node Info)
  - Added node selection handling.
  - Added Show-Properties modal (initial version).
@@ -44,7 +41,6 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Fixed Properties dialog not clearing previous content.
  - Fixed MessageBox misalignment under Terminal.Gui 1.16.
 
--------------------------------------------------------------------------------------------
  1.4.0  (Filter System v1)
  - Added Filter Panel (right side) with toggles.
  - Added Global:FilterOptions hashtable.
@@ -56,7 +52,6 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Fixed name-filter not persisting during refresh.
  - Fixed missing redrawing after filter changes.
 
--------------------------------------------------------------------------------------------
  1.5.0  (Full Refresh Engine + Searchable Properties Rewrite)
  - Major rewrite of Refresh / Build-Tree pipeline.
  - Added "Searchable Attributes" handling:
@@ -83,7 +78,6 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Fixed stale nodes remaining after filter changes.
  - Added missing "show groups" toggle check.
 
--------------------------------------------------------------------------------------------
  1.6.0  (Major UI Improvements)
  - Introduced fully functional modal system (non-blocking).
  - Replaced Read-Host prompts with TUI modals.
@@ -101,7 +95,6 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Fixed PasswordGenerator dialog always showing success regardless of click.
  - Corrected missing `.Visible = $false` on filter panel startup.
 
--------------------------------------------------------------------------------------------
  1.6.3  (New Feature: Password Generator)
  - Added Generate-RandomPassword function.
  - Added menu entry “_Password Generator”.
@@ -119,7 +112,6 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Corrected typos: “Copie” → “Copied”, “Genertor” → “Generator”.
  - Fixed UI padding around password modal.
 
--------------------------------------------------------------------------------------------
  1.6.6  (UI & Layout Fixes)
  - Fixed TreeView not anchored properly when window resized.
  - Fixed filter panel stealing focus on startup.
@@ -130,14 +122,12 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Fixed password modal height too small on macOS Terminal.
  - Fixed Build-Tree not auto-refreshing after filter changes.
 
--------------------------------------------------------------------------------------------
  1.6.8  (Stability & AD Query Fixes)
  - Fixed recursive OU building missing final child nodes.
  - Fixed groups sometimes displayed as users due to schema mismatch.
  - Fixed refresh loop running twice on some domains.
  - Added safer DN parsing with fallback.
 
--------------------------------------------------------------------------------------------
  1.6.9  (Today’s Fixes — Window/Layout Rebuild)
  - Reimplemented main window cleanly:
        * Menu bar
@@ -150,6 +140,18 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Fixed modal stacking/z-order interference.
  - Fixed several cosmetic layout typos (“fitler”, “proprties”, “protaitonal”).
  - Code cleanup: removed obsolete commented blocks interfering with layout.
+
+ 1.7.0  (Demo data and menu fixes)
+ - Rework demo data to be more AD like cleaning up redundancy
+ - Create dedicated about menu
+ - Add shortcuts modal
+
+ 1.7.0  (Demo data expansion - New cities and band)
+ - Rendr demo data in a better fashion
+ - Add user devices and office printers
+ - Add Rocazino form the Koge office
+ - Have other locations in Denmark along with different user properites e.g. Alan Wilder
+
 ===========================================================================================
 #>
 
@@ -158,12 +160,14 @@ param(
     [switch]$DemoMode,
     [switch]$Logging,
     [string]$Domain,
-    [ValidateSet("Dark","Light","Faxekondi","British","Default")]
-    [string]$Theme = "Dark"
+    [ValidateSet("light","dark","matrix","british")]
+    [string]$Theme = "dark"
 )
 
+Write-Host "Starting DSA-TUI in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode with $Theme theme..."
+
 # Define the build version once
-$BuildVersion = "1.6.9"
+$BuildVersion = "1.7.1"
 
 ## For passwords expiring soon
 $sevenDaysFileTime = (Get-Date).AddDays(-7).ToFileTime()
@@ -191,6 +195,10 @@ $Global:SelectionMode = $false
 
 # Set global demo mode flag immediately
 $Global:DemoMode = $DemoMode
+
+# Set global flags immediately after param block - themes here
+$Global:DemoMode = $DemoMode
+$script:ThemeMode = $Theme
 
 Write-Host "Starting DSA-TUI in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode..."
 
@@ -387,6 +395,46 @@ function Close-LoadingDialog {
     if ($null -ne $loading.Dialog) { [Terminal.Gui.Application]::End($loading.Dialog) }
 }
 
+function Show-ThemeSelector {
+    $dlg = [Terminal.Gui.Dialog]::new("Select Theme", 50, 14)
+    
+    $lbl = [Terminal.Gui.Label]::new("Choose a color theme:"); $lbl.X=2; $lbl.Y=1; $dlg.Add($lbl)
+    
+    $themes = @("light", "dark", "matrix", "british")
+    $currentIndex = $themes.IndexOf($script:ThemeMode)
+    if ($currentIndex -lt 0) { $currentIndex = 1 } # default to dark
+    
+    $rdoThemes = [Terminal.Gui.RadioGroup]::new($themes)
+    $rdoThemes.X=2; $rdoThemes.Y=3; $rdoThemes.SelectedItem=$currentIndex
+    $dlg.Add($rdoThemes)
+    
+    $btnApply = [Terminal.Gui.Button]::new("Apply")
+    $btnApply.add_Clicked({
+        $selectedTheme = $themes[$rdoThemes.SelectedItem]
+        Write-Host "Switching to theme: $selectedTheme"
+        $script:ThemeMode = $selectedTheme
+        
+        # Get new theme
+        $newTheme = Get-Theme -mode $selectedTheme
+        
+        # Apply to all components
+        Apply-Theme -ThemeData $newTheme -TopLevel $top -MainWindow $win -Menu $menu -Status $status
+        
+        # Refresh display
+        [Terminal.Gui.Application]::Refresh()
+        
+        [Terminal.Gui.MessageBox]::Query(50, 7, "Theme Changed", "Theme changed to: $selectedTheme", "OK") | Out-Null
+        [Terminal.Gui.Application]::RequestStop()
+    })
+    $dlg.AddButton($btnApply)
+    
+    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+    $dlg.AddButton($btnCancel)
+    
+    [Terminal.Gui.Application]::Run($dlg)
+}
+
 # ------------------------- Load Domain Data ------------------------
 function Get-ADObjectsByType {
     param([string]$domain)
@@ -417,248 +465,193 @@ function Load-DomainData {
     if ($Logging) { Write-Host "DEBUG: Loading domain data for: $domain" }
 
 <#
+A note on phone numbers:
+
 UK Phone Number Standards (Ofcom reserved ranges for fiction/testing):
-- Glasgow: 0141 496 0xxx
-- Edinburgh: 0131 496 0xxx  
-- London: 020 7946 0xxx
-- Generic UK: 01632 96xxxx
-- UK Mobile: 07700 900xxx
+- Glasgow: 0141 496 0xxx + Mobile: 07700 900xxx
+- Edinburgh: 0131 496 0xxx + Mobile: 07700 900xxx
+- London: 020 7946 0xxx / 01632 96xxxx + Mobile: 07700 900xxx
 
 Denmark Testing Numbers:
-- Copenhagen landline: +45 0000-xxxx (fictional format)
+- Copenhagen landline: +45 0000-xxxx
 - Denmark mobile: +45 2xxx xxxx
+
+NB: I don't believe Denmark uses 0000 but this is not confirmed!
 #>
 
+# ================= DSA-TUI Enhanced Demo Data v4 =================
+# Proper OU hierarchy: Locations → Countries → Cities → Bands, and separate Occupations OU
+# Drop-in replacement for Load-DomainData demo section
+
+# ------------------------- Demo OU Tree -------------------------
 if ($DemoMode) {
+
+    # ------------------------ Helper Function ------------------------
+    function Convert-HashtableToTreeNode {
+        param(
+            [hashtable]$node
+        )
+
+        $treeNode = [Terminal.Gui.TreeNode]::new($node.Name)
+        $treeNode.Tag = $node  # store full hashtable for access later
+
+        # Add children recursively
+        if ($node.ContainsKey('Children')) {
+            foreach ($child in $node.Children) {
+                $treeNode.AddChild((Convert-HashtableToTreeNode -node $child))
+            }
+        }
+
+        # Add users as leaf nodes
+        if ($node.ContainsKey('Users')) {
+            foreach ($user in $node.Users) {
+                $userNode = [Terminal.Gui.TreeNode]::new($user.Name)
+                $userNode.Tag = $user
+                $treeNode.AddChild($userNode)
+            }
+        }
+
+        return $treeNode
+    }
+
+    # ------------------------ Demo Data ------------------------
+# ---------------- Demo Data + Clickable OU Tree ----------------
+if ($DemoMode) {
+
+    # -------------------------
+    # Users
+    # -------------------------
     $Global:Users = @(
+
+        # ========== Simple Minds (UK/Scotland/Glasgow) ==========
         @{
-            Name='Jim Kerr'
-            OU='GLA'
-            Groups=@('Simple Minds','Vocalists')
-            Title='Vocalist'
-            Email='jim.kerr@example.com'
-            Country='UK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='Glasgow Office'
-            Phone='0141 496 0101'
-            MobilePhone='07700 900101'
-            Street='123 Clyde Street'
-            City='Glasgow'
-            PostalCode='G1 4JY'
-            Company='Example Music Ltd'
-            Manager=''
-            Description='Lead vocalist for Simple Minds'
+            Name = 'Jim Kerr'; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Vocalists'); Title = 'Lead Vocalist'; Email = 'jim.kerr@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1111'; MobilePhone = '+44 7700 111111'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Lead vocalist for Simple Minds'
         },
         @{
-            Name='Charlie Burchill'
-            OU='GLA'
-            Groups=@('Simple Minds','Guitarists')
-            Title='Guitarist'
-            Email='charlie.b@example.com'
-            Country='UK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='Glasgow Office'
-            Phone='0141 496 0102'
-            MobilePhone='07700 900102'
-            Street='123 Clyde Street'
-            City='Glasgow'
-            PostalCode='G1 4JY'
-            Company='Example Music Ltd'
-            Manager='Jim Kerr'
-            Description='Guitarist and founding member'
+            Name = 'Charlie Burchill'; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Guitarists'); Title = 'Lead Guitarist'; Email = 'charlie.b@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1112'; MobilePhone = '+44 7700 111112'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = 'Jim Kerr'; Description = 'Guitarist and founding member of Simple Minds'
         },
         @{
-            Name='Andy Bell'
-            OU='LND'
-            Groups=@('Erasure','Vocalists')
-            Title='Vocalist'
-            Email='andy.bell@example.com'
-            Country='UK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='London Office'
-            Phone='020 7946 0201'
-            MobilePhone='07700 900201'
-            Street='456 Thames Road'
-            City='London'
-            PostalCode='EC1A 1BB'
-            Company='Example Music Ltd'
-            Manager=''
-            Description='Lead vocalist for Erasure'
+            Name = 'Mel Gaynor'; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Percussion'); Title = 'Drummer'; Email = 'mel.gaynor@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1113'; MobilePhone = '+44 7700 111113'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = 'Jim Kerr'; Description = 'Drummer for Simple Minds'
+        },
+
+        # ========== Marillion (UK/Scotland/Edinburgh) ==========
+        @{
+            Name = 'Derek Dick'; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Vocalists'); Title = 'Lead Vocalist'; Email = 'fish@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $true; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2221'; MobilePhone = '+44 7700 222221'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former lead vocalist (Fish) for Marillion (1981-1988)'
         },
         @{
-            Name='Vince Clarke'
-            OU='LND'
-            Groups=@('Erasure','Depeche Mode','Keyboards')
-            Title='Synthesizer'
-            Email='vince.clarke@example.com'
-            Country='UK'
-            Disabled=$false
-            Locked=$true  # Account is LOCKED (not disabled)
-            Department='Music'
-            Office='London Office'
-            Phone='020 7946 0202'
-            MobilePhone='07700 900202'
-            Street='456 Thames Road'
-            City='London'
-            PostalCode='EC1A 1BB'
-            Company='Example Music Ltd'
-            Manager='Andy Bell'
-            Description='Synthesizer pioneer - member of both Erasure and Depeche Mode'
+            Name = 'Steve Rothery'; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Guitarists'); Title = 'Lead Guitarist'; Email = 'steve.rothery@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2222'; MobilePhone = '+44 7700 222222'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Lead guitarist and founding member of Marillion'
         },
         @{
-            Name='Martin Gore'
-            OU='LND'
-            Groups=@('Depeche Mode','Guitarists','Keyboards')
-            Title='Guitarist/Keyboard'
-            Email='martin.gore@example.com'
-            Country='UK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='London Office'
-            Phone='01632 960301'
-            MobilePhone='07700 900301'
-            Street='789 Abbey Lane'
-            City='London'
-            PostalCode='W1A 1AA'
-            Company='Example Music Ltd'
-            Manager=''
-            Description='Guitarist, keyboardist and primary songwriter'
+            Name = 'Pete Trewavas'; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Guitarists'); Title = 'Bassist'; Email = 'pete.trewavas@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2223'; MobilePhone = '+44 7700 222223'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Bassist and founding member of Marillion'
         },
         @{
-            Name='Dave Gahan'
-            OU='LND'
-            Groups=@('Depeche Mode','Vocalists')
-            Title='Vocalist'
-            Email='dave.gahan@example.com'
-            Country='UK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='London Office'
-            Phone='01632 960302'
-            MobilePhone='07700 900302'
-            Street='789 Abbey Lane'
-            City='London'
-            PostalCode='W1A 1AA'
-            Company='Example Music Ltd'
-            Manager='Martin Gore'
-            Description='Lead vocalist for Depeche Mode'
+            Name = 'Mark Kelly'; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Keyboards'); Title = 'Keyboardist'; Email = 'mark.kelly@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2224'; MobilePhone = '+44 7700 222224'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Keyboardist and founding member of Marillion'
         },
         @{
-            Name='Andrew Fletcher'
-            OU='LND'
-            Groups=@('Depeche Mode','Keyboards')
-            Title='Keyboards/Bass Synth'
-            Email='andrew.fletcher@example.com'
-            Country='UK'
-            Disabled=$true  # Account DISABLED
-            Locked=$true #Locked too for good measure
-            Department='Music'
-            Office='London Office'
-            Phone='01632 960303'
-            MobilePhone='07700 900303'
-            Street='789 Abbey Lane'
-            City='London'
-            PostalCode='W1A 1AA'
-            Company='Example Music Ltd'
-            Manager='Martin Gore'
-            Description='Keyboard and bass synthesizer (deceased 2022)'
+            Name = 'Ian Mosley'; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Percussion'); Title = 'Drummer'; Email = 'ian.mosley@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2225'; MobilePhone = '+44 7700 222225'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Drummer for Marillion (joined 1984)'
+        },
+
+        # ========== Erasure (UK/England/London) ==========
+        @{
+            Name = 'Andy Bell'; OU = @('Locations','UK','England','London','Erasure'); Groups = @('Erasure','Vocalists'); Title = 'Lead Vocalist'; Email = 'andy.bell@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 1111'; MobilePhone = '+44 7700 333333'; Street = '15 River Street'; City = 'London'; PostalCode = 'E1 7AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Lead vocalist for Erasure'
         },
         @{
-            Name='Claus Norreen'
-            OU='CPH'
-            Groups=@('TV-2','Keyboards')
-            Title='Keyboard'
-            Email='claus.norreen@example.com'
-            Country='DK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='Copenhagen Office'
-            Phone='+45 0000-1234'
-            MobilePhone='+45 2012 3456'
-            Street='12 Strøget'
-            City='Copenhagen'
-            PostalCode='1000'
-            Company='Example Music ApS'
-            Manager=''
-            Description='Keyboard player for TV-2'
+            Name = 'Vince Clarke'; OU = @('Locations','UK','England','London','Erasure'); Groups = @('Erasure','Synth','Keyboards'); Title = 'Synth / Keyboardist'; Email = 'vince.clarke@example.com'; Country = 'UK'; Disabled = $false; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 1112'; MobilePhone = '+44 7700 333334'; Street = '15 River Street'; City = 'London'; PostalCode = 'E1 7AA'; Company = 'Example Music Ltd'; Manager = 'Andy Bell'; Description = 'Synthesizer pioneer - founding member of Depeche Mode and Erasure'
+        },
+
+        # ========== Depeche Mode (UK/England/London) ==========
+        @{
+            Name = 'Martin Gore'; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Guitarists','Keyboards'); Title = 'Guitarist/Keyboardist'; Email = 'martin.gore@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 2221'; MobilePhone = '+44 7700 444441'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Guitarist, keyboardist and primary songwriter for Depeche Mode'
         },
         @{
-            Name='Steffen Brandt'
-            OU='CPH'
-            Groups=@('TV-2','Vocalists','Guitarists')
-            Title='Vocalist/Guitar'
-            Email='steffen.brandt@example.com'
-            Country='DK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='Copenhagen Office'
-            Phone='+45 0000-1235'
-            MobilePhone='+45 2012 3457'
-            Street='12 Strøget'
-            City='Copenhagen'
-            PostalCode='1000'
-            Company='Example Music ApS'
-            Manager='Claus Norreen'
-            Description='Lead vocalist and guitarist for TV-2'
+            Name = 'Dave Gahan'; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Vocalists'); Title = 'Lead Vocalist'; Email = 'dave.gahan@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $true; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 2222'; MobilePhone = '+44 7700 444442'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Lead vocalist for Depeche Mode'
         },
         @{
-            Name='Derek Dick'
-            OU='EDI'
-            Groups=@('Marillion','Vocalists')
-            Title='Vocalist'
-            Email='fish@example.com'
-            Country='UK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='Edinburgh Office'
-            Phone='0131 496 0401'
-            MobilePhone='07700 900401'
-            Street='34 Royal Mile'
-            City='Edinburgh'
-            PostalCode='EH1 1RE'
-            Company='Example Music Ltd'
-            Manager=''
-            Description='Former lead vocalist (Fish) for Marillion'
+            Name = 'Alan Wilder'; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Keyboards','Percussion'); Title = 'Keyboardist/Drummer'; Email = 'alan.wilder@example.com'; Country = 'UK'; Disabled = $false; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 2224'; MobilePhone = '+44 7700 444444'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Multi-instrumentalist for Depeche Mode (1982-1995, departed)'
         },
         @{
-            Name='Steve Rothery'
-            OU='EDI'
-            Groups=@('Marillion','Guitarists')
-            Title='Guitarist'
-            Email='steve.rothery@example.com'
-            Country='UK'
-            Disabled=$false
-            Locked=$false
-            Department='Music'
-            Office='Edinburgh Office'
-            Phone='0131 496 0402'
-            MobilePhone='07700 900402'
-            Street='34 Royal Mile'
-            City='Edinburgh'
-            PostalCode='EH1 1RE'
-            Company='Example Music Ltd'
-            Manager='Derek Dick'
-            Description='Lead guitarist for Marillion'
+            Name = 'Andrew Fletcher'; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Keyboards'); Title = 'Keyboards/Bass Synth'; Email = 'andrew.fletcher@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 2223'; MobilePhone = '+44 7700 444443'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Keyboard and bass synthesizer for Depeche Mode (deceased)'
+
+        },
+
+        # ========== TV-2 (Denmark/Copenhagen) ==========
+        @{
+            Name = 'Steffen Brandt'; OU = @('Locations','Denmark','Copenhagen','TV-2'); Groups = @('TV-2','Vocalists','Guitarists'); Title = 'Lead Vocalist / Guitarist'; Email = 'steffen.brandt@example.com'; Country = 'DK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Copenhagen Office'; Phone = '+45 0000 2222'; MobilePhone = '+45 5012 3457'; Street = '1 Raadhuspladsen'; City = 'Copenhagen'; PostalCode = '1550'; Company = 'Example Music ApS'; Manager = ''; Description = 'Frontman of TV-2'
+        },
+
+        # ========== Rocazino (Denmark/Koge) ==========
+        @{
+            Name = 'Ulla Kjaer'; OU = @('Locations','Denmark','Koge','Rocazino'); Groups = @('Rocazino','Vocalists'); Title = 'Lead Vocalist'; Email = 'ulla.kjaer@example.com'; Country = 'DK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Koge Office'; Phone = '+45 0000 2234'; MobilePhone = '+45 3012 3456'; Street = '7 Torvet'; City = 'Koge'; PostalCode = '4600'; Company = 'Example Music ApS'; Manager = ''; Description = 'Lead vocalist for Rocazino'
+        },
+        @{
+            Name = 'Michael Bruun'; OU = @('Locations','Denmark','Koge','Rocazino'); Groups = @('Rocazino','Guitarists'); Title = 'Guitarist'; Email = 'michael.bruun@example.com'; Country = 'DK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Koge Office'; Phone = '+45 0000 2235'; MobilePhone = '+45 3012 3457'; Street = '7 Torvet'; City = 'Koge'; PostalCode = '4600'; Company = 'Example Music ApS'; Manager = 'Ulla Kjaer'; Description = 'Guitarist and songwriter for Rocazino'
+        },
+        @{
+            Name = 'Jan Sivertsen'; OU = @('Locations','Denmark','Koge','Rocazino'); Groups = @('Rocazino','Percussion'); Title = 'Drummer'; Email = 'jan.sivertsen@example.com'; Country = 'DK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Koge Office'; Phone = '+45 0000 2236'; MobilePhone = '+45 3012 3458'; Street = '7 Torvet'; City = 'Koge'; PostalCode = '4600'; Company = 'Example Music ApS'; Manager = 'Ulla Kjaer'; Description = 'Drummer for Rocazino'
+        },
+
+        # ========== Mo (Denmark/Odense) ==========
+        @{
+            Name = 'Karen Marie Orsted'; OU = @('Locations','Denmark','Odense','Mo'); Groups = @('Mo','Vocalists'); Title = 'Singer / Songwriter'; Email = 'karen.orsted@example.com'; Country = 'DK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Odense Office'; Phone = '+45 0000 3234'; MobilePhone = '+45 4012 3456'; Street = '22 Vestergade'; City = 'Odense'; PostalCode = '5000'; Company = 'Example Music ApS'; Manager = ''; Description = 'Danish singer-songwriter known internationally as Mo'
         }
     )
-    
+
+    # -------------------------
+    # Domain Controllers
+    # -------------------------
     $Global:DCs = @(
-        @{Name='EXAGLADC01'; OU='Domain Controllers'; Site='GLA'},
-        @{Name='EXAEDIDC01'; OU='Domain Controllers'; Site='EDI'},
-        @{Name='EXALNDCDC01'; OU='Domain Controllers'; Site='LND'},
-        @{Name='EXACPHDC01'; OU='Domain Controllers'; Site='CPH'}
+        @{ Name = 'EXAGLADC01'; OU = 'Domain Controllers'; Site = 'GLA' },
+        @{ Name = 'EXAEDIDC01'; OU = 'Domain Controllers'; Site = 'EDI' },
+        @{ Name = 'EXALNDCDC01'; OU = 'Domain Controllers'; Site = 'LND' },
+        @{ Name = 'EXACPHDC01'; OU = 'Domain Controllers'; Site = 'CPH' }
     )
+
+    # -------------------------
+    # Clickable OU Tree
+    # -------------------------
+    $tree = [Terminal.Gui.TreeView]::new()
+    $tree.X = 0; $tree.Y = 0; $tree.Width = [Terminal.Gui.Dim]::Fill(); $tree.Height = [Terminal.Gui.Dim]::Fill()
+
+    function Add-OUNode {
+        param([string[]]$OUPath, [Terminal.Gui.TreeNode]$ParentNode)
+        $name = $OUPath[0]
+        $existing = $ParentNode.Children | Where-Object { $_.Text -eq $name }
+        if ($existing) { $node = $existing[0] } else { $node = [Terminal.Gui.TreeNode]::new($name); $ParentNode.AddChild($node) }
+        if ($OUPath.Count -gt 1) { Add-OUNode -OUPath $OUPath[1..($OUPath.Count - 1)] -ParentNode $node }
+        return $node
+    }
+
+    $root = [Terminal.Gui.TreeNode]::new("Locations")
+    $tree.AddChild($root)
+
+    foreach ($user in $Global:Users) {
+        $ouPath = $user.OU
+        $pathForTree = $ouPath[1..($ouPath.Count - 1)]
+
+        if ($pathForTree.Count -gt 1) {
+            $parentNode = Add-OUNode -OUPath $pathForTree[0..($pathForTree.Count - 2)] -ParentNode $root
+        } else {
+            $parentNode = $root
+        }
+
+        $leafNode = [Terminal.Gui.TreeNode]::new("${pathForTree[-1]} (${user.Name})")
+        $leafNode.Data = $user
+        $parentNode.AddChild($leafNode)
+    }
+
+    $tree.OnSelectedItemChanged.Add({
+        $selectedNode = $tree.SelectedNode
+        if ($selectedNode -and $selectedNode.Data) {
+            $user = $selectedNode.Data
+            [Terminal.Gui.MessageBox]::Query(50,7,"User Selected","Name: ${user.Name}`nTitle: ${user.Title}`nOffice: ${user.Office}","OK")
+        }
+    })
+
+    $win = [Terminal.Gui.Window]::new("Demo OU Tree")
+    $win.Add($tree)
+    [Terminal.Gui.Application]::Top.Add($win)
+    [Terminal.Gui.Application]::Run()
+  }
 }
 
 # Updated Build-Tree to show locked status
@@ -819,20 +812,33 @@ function Build-Tree {
 
 Load-DomainData -domain $Global:Domain
 
+# Step 3: Replace your "Initialize Terminal.Gui" section with this:
+
 # ------------------------- Initialize Terminal.Gui ------------------------
 [Terminal.Gui.Application]::Init()
 $top = [Terminal.Gui.Application]::Top
-$cs = [Terminal.Gui.ColorScheme]::new()
-$cs.Normal = [Terminal.Gui.Attribute]::new([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
-$top.ColorScheme = $cs
 
-Add-SelectionKeyBindings -view $top
+# Get the selected theme
+Write-Host "Applying theme: $Theme"
+$themeData = Get-Theme -mode $Theme
+
+# Apply theme to top level first
+if ($themeData -and $themeData.Global) {
+    $top.ColorScheme = $themeData.Global
+}
 
 # ------------------------- Main Window ------------------------
-$win = [Terminal.Gui.Window]::new("DSA-TUI — Active Directory")
+$win = [Terminal.Gui.Window]::new("DSA-TUI — Active Directory ${BuildVersion} Blaabaer")
 $win.X=0; $win.Y=0; $win.Width=[Terminal.Gui.Dim]::Fill(); $win.Height=[Terminal.Gui.Dim]::Fill()
+
+# Apply theme to main window
+if ($themeData -and $themeData.MainWindow) {
+    $win.ColorScheme = $themeData.MainWindow
+}
+
 $top.Add($win)
 
+Write-Host "Theme applied successfully: $Theme"
 ## filter panel
 $filterPanel = Create-FilterPanel
 $win.Add($filterPanel)
@@ -845,16 +851,17 @@ $win.Add($selectionPanel)
 
 # ------------------------- Status Bar ------------------------
 $status = [Terminal.Gui.StatusBar]::new(@(
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F1,"Help",{ Write-Host "DEBUG: Help invoked" }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F9,"New",{ Show-NewObjectWizard }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F10,"Quit",{ [Terminal.Gui.Application]::RequestStop() }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F12,"Redraw",{ [Terminal.Gui.Application]::Refresh() })
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F1,"~F1~ Help",{
+         Show-Modal "Shortcuts" "F1 - Help`nF9 -New`nF10 - Delete`nF10 - Quit`nF12 Redraw" }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F9,"~F9~ New",{ Show-NewObjectWizard }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F10,"~F10~ Quit",{ [Terminal.Gui.Application]::RequestStop() }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F12,"~F12~ Redraw",{ [Terminal.Gui.Application]::Refresh() })
 ))
 $top.Add($status)
 
 # ------------------------- Menu ------------------------
+# Existing menu items
 $mFile = [Terminal.Gui.MenuItem]::new("_Exit","Exit application",[Action]{ [Terminal.Gui.Application]::RequestStop() })
-$mAbout = [Terminal.Gui.MenuItem]::new("_About","About DSA-TUI",[Action]{ [Terminal.Gui.MessageBox]::Query("About","DSA-TUI ${BuildVersion}`n© 2025 Copyleft (GPL-3)`nDemo Mode: $DemoMode","OK") | Out-Null })
 $mNew = [Terminal.Gui.MenuItem]::new("New Object","Create a new object",[Action]{ Show-NewObjectWizard })
 $mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-Properties })
 $mUndo = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Write-Host "DEBUG: Undo placeholder" })
@@ -867,14 +874,83 @@ $mSelectionMode = [Terminal.Gui.MenuItem]::new("_Selection Mode (Ctrl+S)","Toggl
 $mSelectAll = [Terminal.Gui.MenuItem]::new("Select _All (Ctrl+A)","Select all objects",[Action]{ Select-AllObjects })
 $mDeselectAll = [Terminal.Gui.MenuItem]::new("_Deselect All (Ctrl+D)","Deselect all objects",[Action]{ Deselect-AllObjects })
 $mBulkAddGroup = [Terminal.Gui.MenuItem]::new("Add to _Group...","Add selected users to group",[Action]{ Invoke-BulkAddToGroup })
-$mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator",[Action]{ Generate-RandomPassword})
+$mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator",[Action]{ Generate-RandomPassword })
 
-# Group menu items logically
-$menu = [Terminal.Gui.MenuBar]::new(@(
-     [Terminal.Gui.MenuBarItem]::new("_File", @($mAbout,$mRefresh,$mFile)),
-     [Terminal.Gui.MenuBarItem]::new("_Action", @($mNew,$mProps,$mQuickFilter,$mUndo,$mChangeDomain,$mPasswordGenerator, $mChangeDC,$mSearchAD)),
-     [Terminal.Gui.MenuBarItem]::new("_Selection", @($mSelectionMode,$mSelectAll,$mDeselectAll,$mBulkAddGroup))
+# --- NEW: About Menu Items ---
+
+$mShortcuts = [Terminal.Gui.MenuItem]::new(
+    "_Shortcuts",
+    "Keyboard shortcuts",
+    [Action]{
+        Show-Modal "Shortcuts" "F1 - Help`nF9 -New`nF10 - Quit`nF11 -Redraw"
+    }
+)
+
+$mAboutDSATUI = [Terminal.Gui.MenuItem]::new(
+    "_About DSA-TUI",
+    "About this application",
+    [Action]{ 
+        [Terminal.Gui.MessageBox]::Query("About","DSA-TUI ${BuildVersion} Blaabaer`n© 2025 Copyleft (GPL-3)`nDemo Mode: $DemoMode","OK") | Out-Null 
+    }
+)
+
+$mWhyBlaabaer = [Terminal.Gui.MenuItem]::new(
+    "Why _Blaabaer?",
+    "Why the Blaabaer codename?",
+    [Action]{ Show-BlaabaerInfo }
+)
+
+# --- NEW: About Top-Level Menu ---
+$aboutMenu = [Terminal.Gui.MenuBarItem]::new("_About", @(
+    $mShortcuts,
+    $mAboutDSATUI,
+    $mWhyBlaabaer
 ))
+
+# Mandatory (BEFORE creating $menu):
+$mTheme = [Terminal.Gui.MenuItem]::new("_Theme","Change color theme",[Action]{ Show-ThemeSelector })
+
+
+# ------------------------- FIXED MENU BAR -------------------------
+$menu = [Terminal.Gui.MenuBar]::new(@(
+    # FILE menu
+    [Terminal.Gui.MenuBarItem]::new("_File", @(
+        $mRefresh,
+        $mTheme,
+        $mFile
+    )),
+
+    # ACTION menu
+    [Terminal.Gui.MenuBarItem]::new("_Action", @(
+        $mNew,
+        $mProps,
+        $mQuickFilter,
+        $mUndo,
+        $mChangeDomain,
+        $mPasswordGenerator,
+        $mChangeDC,
+        $mSearchAD
+    )),
+
+    # SELECTION menu
+    [Terminal.Gui.MenuBarItem]::new("_Selection", @(
+        $mSelectionMode,
+        $mSelectAll,
+        $mDeselectAll,
+        $mBulkAddGroup
+    )),
+
+    # ABOUT menu (new and now visible)
+    $aboutMenu
+))
+# -----------------------------------------------------------------
+
+
+# Apply full theme to all components <-- do this BEFORE the menus
+Apply-Theme -ThemeData $themeData -TopLevel $top -MainWindow $win -Menu $menu -Status $status
+
+Write-Host "Theme applied successfully: $Theme"
+
 $top.Add($menu)
 
 # ------------------------- TreeView ------------------------
@@ -1214,7 +1290,16 @@ function Update-FilterStatusLabel {
 }
 
 function Generate-RandomPassword {
-    param()
+
+    # Helper function
+
+    function Get-PasswordEntropy {
+        param([int]$poolSize, [int]$length)
+        if ($poolSize -le 0 -or $length -le 0) { return 0 }
+        return [Math]::Log($poolSize, 2) * $length
+    }
+
+##    param()
 
     # --- Full Character Sets ---
     $UpperCase = @('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z')
@@ -1246,6 +1331,20 @@ function Generate-RandomPassword {
     $txtPwd = New-Object Terminal.Gui.TextField
     $txtPwd.X = 2; $txtPwd.Y = 8; $txtPwd.Width = 25
     $txtPwd.Text = ""
+
+    # === ENTROPY METER (NEW) ===
+    $dlg.Add([Terminal.Gui.Label]::new(30,7,"Strength:"))
+    $lblStrength = [Terminal.Gui.Label]::new(30,8,"Not generated")
+    $lblStrength.Width = 25
+    $dlg.Add($lblStrength)
+    
+    # Progress bar for visual entropy indicator
+    $progEntropy = [Terminal.Gui.ProgressBar]::new()
+    $progEntropy.X = 30; $progEntropy.Y = 9; $progEntropy.Width = 25
+    $progEntropy.Fraction = 0.0
+    $dlg.Add($progEntropy)
+    # === END ENTROPY METER ===
+
     $dlg.Add($txtPwd)
 
     # Show Password checkbox
@@ -1259,28 +1358,51 @@ function Generate-RandomPassword {
     $dlg.Add($btnGenerate, $btnCopy, $btnClose)
 
     # --- Generate Logic ---
-    $btnGenerate.add_Clicked({
+$btnGenerate.add_Clicked({
         $len = $txtLen.Text -as [int]
         if (-not $len) { $len = 12 }
-
         if ($len -lt 1 -or $len -gt 127) {
             [Terminal.Gui.MessageBox]::Query(50,7,"Invalid Length","Password length must be 1-127.","OK") | Out-Null
             return
         }
-
         $pool = @()
         if ($chkUpper.Checked) { $pool += $UpperCase }
         if ($chkLower.Checked) { $pool += $LowerCase }
         if ($chkNums.Checked)  { $pool += $Numbers }
         if ($chkSyms.Checked)  { $pool += $Symbols }
-
         if ($pool.Count -eq 0) {
             [Terminal.Gui.MessageBox]::Query(50,7,"No Character Types","Select at least one character type.","OK") | Out-Null
             return
         }
-
+        
+        # === ENTROPY CALCULATION (NEW) ===
+        $entropy = Get-PasswordEntropy -poolSize $pool.Count -length $len
+        
+        # Determine strength category and color
+        $strength = ""
+        $fraction = 0.0
+        if ($entropy -lt 40) {
+            $strength = "Weak ($([int]$entropy) bits)"
+            $fraction = 0.2
+        } elseif ($entropy -lt 60) {
+            $strength = "Fair ($([int]$entropy) bits)"
+            $fraction = 0.4
+        } elseif ($entropy -lt 80) {
+            $strength = "Good ($([int]$entropy) bits)"
+            $fraction = 0.6
+        } elseif ($entropy -lt 100) {
+            $strength = "Strong ($([int]$entropy) bits)"
+            $fraction = 0.8
+        } else {
+            $strength = "Very Strong ($([int]$entropy) bits)"
+            $fraction = 1.0
+        }
+        
+        $lblStrength.Text = $strength
+        $progEntropy.Fraction = $fraction
+        # === END ENTROPY CALCULATION ===
+        
         $script:actualPassword = -join (1..$len | ForEach-Object { $pool | Get-Random })
-
         if ($chkShowPwd.Checked) {
             $txtPwd.Text = $script:actualPassword
         } else {
@@ -1296,6 +1418,38 @@ function Generate-RandomPassword {
             $txtPwd.Text = ('*' * $script:actualPassword.Length)
         }
     })
+
+    $updatePreview = {
+        $len = $txtLen.Text -as [int]
+        if (-not $len) { $len = 12 }
+        if ($len -lt 1) { return }
+        
+        $poolSize = 0
+        if ($chkUpper.Checked) { $poolSize += 26 }
+        if ($chkLower.Checked) { $poolSize += 26 }
+        if ($chkNums.Checked)  { $poolSize += 10 }
+        if ($chkSyms.Checked)  { $poolSize += 8 }
+        
+        if ($poolSize -gt 0) {
+            $entropy = Get-PasswordEntropy -poolSize $poolSize -length $len
+            $strength = if ($entropy -lt 40) { "Weak ($([int]$entropy) bits)" }
+                elseif ($entropy -lt 60) { "Fair ($([int]$entropy) bits)" }
+                elseif ($entropy -lt 80) { "Good ($([int]$entropy) bits)" }
+                elseif ($entropy -lt 100) { "Strong ($([int]$entropy) bits)" }
+                else { "Very Strong ($([int]$entropy) bits)" }
+            
+            $fraction = [Math]::Min(1.0, $entropy / 120.0)
+            $lblStrength.Text = $strength
+            $progEntropy.Fraction = $fraction
+        }
+    }
+    
+    $chkUpper.add_Toggled($updatePreview)
+    $chkLower.add_Toggled($updatePreview)
+    $chkNums.add_Toggled($updatePreview)
+    $chkSyms.add_Toggled($updatePreview)
+    $txtLen.add_TextChanged($updatePreview)
+
 
     # --- Copy to Clipboard ---
     $btnCopy.add_Clicked({
@@ -1313,7 +1467,6 @@ function Generate-RandomPassword {
 
     return $script:actualPassword
 }
-
 
 function Show-UserPropertiesDialog {
     param($user)
@@ -1563,11 +1716,117 @@ $btnResetPwd.add_Clicked({
     $lstGroups.X=2; $lstGroups.Y=3; $lstGroups.Width=[Terminal.Gui.Dim]::Fill(2); $lstGroups.Height=[Terminal.Gui.Dim]::Fill(8)
     $memberView.Add($lstGroups)
     
+# Working Add/Remove Group Functionality
+# Replace the Add/Remove group buttons section in your Member Of tab
+
     # Add/Remove buttons for group membership
     $btnAddGroup = [Terminal.Gui.Button]::new("Add..."); $btnAddGroup.X=2; $btnAddGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
     $btnAddGroup.add_Clicked({
-        Write-Host "DEBUG: Add to group functionality (coming soon)"
-        [Terminal.Gui.MessageBox]::Query(50, 7, "Add to Group", "Add to group feature coming soon!", "OK") | Out-Null
+        Write-Host "DEBUG: Add to group clicked for user: $($user.Name)"
+        
+        # Get list of all available groups
+        if ($Global:DemoMode) {
+            # Demo mode: collect all unique groups from all users
+            $allGroups = @()
+            foreach ($u in $Global:Users) {
+                $allGroups += $u.Groups
+            }
+            $availableGroups = $allGroups | Select-Object -Unique | Sort-Object
+        } else {
+            # Production mode: get all groups from AD
+            try {
+                $availableGroups = Get-ADGroup -Filter * | Select-Object -ExpandProperty Name | Sort-Object
+            } catch {
+                [Terminal.Gui.MessageBox]::Query(60, 8, "Error", "Failed to retrieve groups from AD:`n$($_.Exception.Message)", "OK") | Out-Null
+                return
+            }
+        }
+        
+        # Filter out groups the user is already a member of
+        $currentGroups = if ($user.Groups) { $user.Groups } else { @() }
+        $groupsToAdd = $availableGroups | Where-Object { $currentGroups -notcontains $_ }
+        
+        if ($groupsToAdd.Count -eq 0) {
+            [Terminal.Gui.MessageBox]::Query(50, 7, "No Groups", "User is already a member of all available groups!", "OK") | Out-Null
+            return
+        }
+        
+        # Show group selection dialog
+        $grpDlg = [Terminal.Gui.Dialog]::new("Add to Group", 60, 20)
+        
+        $lblGrp = [Terminal.Gui.Label]::new("Select group to add $($user.Name) to:")
+        $lblGrp.X=2; $lblGrp.Y=1
+        $grpDlg.Add($lblGrp)
+        
+        $lstAvailGroups = [Terminal.Gui.ListView]::new()
+        $lstAvailGroups.SetSource($groupsToAdd)
+        $lstAvailGroups.X=2; $lstAvailGroups.Y=3
+        $lstAvailGroups.Width=[Terminal.Gui.Dim]::Fill(2)
+        $lstAvailGroups.Height=[Terminal.Gui.Dim]::Fill(2)
+        $grpDlg.Add($lstAvailGroups)
+        
+        $btnAddOK = [Terminal.Gui.Button]::new("Add")
+        $btnAddOK.add_Clicked({
+            if ($lstAvailGroups.SelectedItem -ge 0) {
+                $selectedGroup = $groupsToAdd[$lstAvailGroups.SelectedItem]
+                Write-Host "DEBUG: Adding $($user.Name) to group: $selectedGroup"
+                
+                try {
+                    if ($Global:DemoMode) {
+                        # Demo mode: add to array
+                        if (-not $user.Groups) { $user.Groups = @() }
+                        $user.Groups += $selectedGroup
+                        $user.Groups = $user.Groups | Sort-Object  # Keep sorted
+                        
+                        Write-Host "DEBUG: User $($user.Name) added to group $selectedGroup (demo mode)"
+                        [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Added to group: $selectedGroup`n(demo mode)", "OK") | Out-Null
+                    } else {
+                        # Production mode: add to AD
+                        Add-ADGroupMember -Identity $selectedGroup -Members $user.Name -ErrorAction Stop
+                        
+                        Write-Host "DEBUG: User $($user.Name) added to group $selectedGroup in AD"
+                        [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Added to group: $selectedGroup", "OK") | Out-Null
+                        
+                        # Reload group membership from AD
+                        $user.Groups = @(Get-ADPrincipalGroupMembership -Identity $user.Name | Select-Object -ExpandProperty Name | Sort-Object)
+                    }
+                    
+                    # Update the groups list display - use MainLoop.Invoke for safety
+                    [Terminal.Gui.Application]::MainLoop.Invoke({
+                        $lstGroups.SetSource($user.Groups)
+                    })
+                    
+                    # Mark as changed
+                    $script:changesMade = $true
+                    
+                    # Close the add dialog
+                    [Terminal.Gui.Application]::RequestStop()
+                    
+                    # Rebuild tree in background after dialog closes
+                    [Terminal.Gui.Application]::MainLoop.Invoke({
+                        Build-Tree -domain $Global:Domain
+                        Update-FilterStatusLabel -label $filterStatusLabel
+                    })
+                    
+                } catch {
+                    $errMsg = $_.Exception.Message
+                    Write-Host "ERROR: Failed to add to group: $errMsg"
+                    [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to add to group:`n$errMsg", "OK") | Out-Null
+                }
+            } else {
+                [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select a group first", "OK") | Out-Null
+            }
+        })
+        $grpDlg.AddButton($btnAddOK)
+        
+        $btnAddCancel = [Terminal.Gui.Button]::new("Cancel")
+        $btnAddCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+        $grpDlg.AddButton($btnAddCancel)
+        
+        # Handle Enter key
+        $lstAvailGroups.add_OpenSelectedItem({ $btnAddOK.PerformClick() })
+        
+        [Terminal.Gui.Application]::Run($grpDlg)
     })
     $memberView.Add($btnAddGroup)
     
@@ -1575,16 +1834,57 @@ $btnResetPwd.add_Clicked({
     $btnRemoveGroup.add_Clicked({
         if ($lstGroups.SelectedItem -ge 0) {
             $grp = $user.Groups[$lstGroups.SelectedItem]
-            $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Remove from Group", "Remove $($user.Name) from '$grp'?", "Yes", "No")
+            
+            Write-Host "DEBUG: Remove from group clicked: $grp"
+            
+            # Confirm removal
+            $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Remove from Group", "Remove $($user.Name) from group:`n'$grp'?", "Yes", "No")
+            
             if ($result -eq 0) {
-                Write-Host "DEBUG: Removing $($user.Name) from group: $grp"
-                $script:changesMade = $true
-                [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Removed from group (demo mode)", "OK") | Out-Null
+                try {
+                    if ($Global:DemoMode) {
+                        # Demo mode: remove from array
+                        $user.Groups = $user.Groups | Where-Object { $_ -ne $grp } | Sort-Object
+                        
+                        Write-Host "DEBUG: User $($user.Name) removed from group $grp (demo mode)"
+                        [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Removed from group: $grp`n(demo mode)", "OK") | Out-Null
+                    } else {
+                        # Production mode: remove from AD
+                        Remove-ADGroupMember -Identity $grp -Members $user.Name -Confirm:$false -ErrorAction Stop
+                        
+                        Write-Host "DEBUG: User $($user.Name) removed from group $grp in AD"
+                        [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Removed from group: $grp", "OK") | Out-Null
+                        
+                        # Reload group membership from AD
+                        $user.Groups = @(Get-ADPrincipalGroupMembership -Identity $user.Name | Select-Object -ExpandProperty Name | Sort-Object)
+                    }
+                    
+                    # Update the groups list display - use MainLoop.Invoke for safety
+                    [Terminal.Gui.Application]::MainLoop.Invoke({
+                        $lstGroups.SetSource($user.Groups)
+                    })
+                    
+                    # Mark as changed
+                    $script:changesMade = $true
+                    
+                    # Rebuild tree in background
+                    [Terminal.Gui.Application]::MainLoop.Invoke({
+                        Build-Tree -domain $Global:Domain
+                        Update-FilterStatusLabel -label $filterStatusLabel
+                    })
+                    
+                } catch {
+                    $errMsg = $_.Exception.Message
+                    Write-Host "ERROR: Failed to remove from group: $errMsg"
+                    [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to remove from group:`n$errMsg", "OK") | Out-Null
+                }
             }
+        } else {
+            [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select a group to remove first", "OK") | Out-Null
         }
     })
-    $memberView.Add($btnRemoveGroup)
-    
+          $memberView.Add($btnRemoveGroup)
+          $memberView.Add($btnRemoveGroup)    
     $memberTab.View = $memberView
     $tabView.AddTab($memberTab, $false)
     
@@ -1625,7 +1925,12 @@ $btnResetPwd.add_Clicked({
     $chkSearchLocked = [Terminal.Gui.CheckBox]::new("Account Locked"); $chkSearchLocked.X=2; $chkSearchLocked.Y=[Terminal.Gui.Pos]::Bottom($txtSearchOutput)+1
     $chkSearchLocked.CanFocus=$true; $chkSearchLocked.Data=""
     $searchView.Add($chkSearchLocked)
-    
+
+    # Disabled accounts checkbox for users
+    $chkSearchDisabled = [Terminal.Gui.CheckBox]::new("Account Disabled");  $chkSearchDisabled.X = 2; $chkSearchDisabled.Y = [Terminal.Gui.Pos]::Bottom($chkSearchLocked) + 1
+    $chkSearchDisabled.CanFocus = $true; $chkSearchDisabled.Data = ""
+    $searchView.Add($chkSearchDisabled)
+   
     # Search button
     $btnDoSearch = [Terminal.Gui.Button]::new("Search"); $btnDoSearch.X=48; $btnDoSearch.Y=3; $searchView.Add($btnDoSearch)
     
@@ -2198,6 +2503,175 @@ $btnResetPwd.add_Clicked({
     [Terminal.Gui.Application]::Run($dlg)
 }
 
+# Add this function after Show-UserPropertiesDialog:
+
+function Show-OUPropertiesDialog {
+    param([string]$ouName)
+    
+    Write-Host "DEBUG: Show-OUPropertiesDialog called for: $ouName"
+    
+    # Create dialog
+    $dlg = [Terminal.Gui.Dialog]::new("OU Properties - $ouName", 90, 30)
+    
+    # Create TabView
+    $tabView = [Terminal.Gui.TabView]::new()
+    $tabView.X = 0
+    $tabView.Y = 0
+    $tabView.Width = [Terminal.Gui.Dim]::Fill()
+    $tabView.Height = [Terminal.Gui.Dim]::Fill(2)
+    
+    # ----- General Tab -----
+    $generalTab = [Terminal.Gui.TabView+Tab]::new()
+    $generalTab.Text = "General"
+    $generalView = [Terminal.Gui.View]::new()
+    
+    $y = 1
+    
+    # Get OU info
+    if ($Global:DemoMode) {
+        # Demo mode - construct info from OU name
+        $ouPath = $ouName
+        $description = "Organizational Unit for $ouName"
+        $created = Get-Date
+        $modified = Get-Date
+    } else {
+        # Production mode - get from AD
+        try {
+            $ou = Get-ADOrganizationalUnit -Identity $ouName -Properties Description,Created,Modified,DistinguishedName -ErrorAction Stop
+            $ouPath = $ou.DistinguishedName
+            $description = $ou.Description
+            $created = $ou.Created
+            $modified = $ou.Modified
+        } catch {
+            [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to retrieve OU properties:`n$($_.Exception.Message)", "OK") | Out-Null
+            return
+        }
+    }
+    
+    $lbl = [Terminal.Gui.Label]::new("Name:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $txtName = [Terminal.Gui.TextField]::new($ouName); $txtName.X=20; $txtName.Y=$y; $txtName.Width=60; $txtName.ReadOnly=$true
+    $generalView.Add($txtName)
+    $y+=2
+    
+    $lbl = [Terminal.Gui.Label]::new("Description:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $txtDesc = [Terminal.Gui.TextField]::new($description); $txtDesc.X=20; $txtDesc.Y=$y; $txtDesc.Width=60
+    $generalView.Add($txtDesc)
+    $y+=2
+    
+    $lbl = [Terminal.Gui.Label]::new("Path:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $txtPath = [Terminal.Gui.TextField]::new($ouPath); $txtPath.X=20; $txtPath.Y=$y; $txtPath.Width=60; $txtPath.ReadOnly=$true
+    $generalView.Add($txtPath)
+    $y+=2
+    
+    $lbl = [Terminal.Gui.Label]::new("Created:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $lblCreated = [Terminal.Gui.Label]::new($created.ToString()); $lblCreated.X=20; $lblCreated.Y=$y
+    $generalView.Add($lblCreated)
+    $y+=1
+    
+    $lbl = [Terminal.Gui.Label]::new("Modified:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $lblModified = [Terminal.Gui.Label]::new($modified.ToString()); $lblModified.X=20; $lblModified.Y=$y
+    $generalView.Add($lblModified)
+    
+    $generalTab.View = $generalView
+    $tabView.AddTab($generalTab, $false)
+    
+    # ----- Members Tab -----
+    $membersTab = [Terminal.Gui.TabView+Tab]::new()
+    $membersTab.Text = "Members"
+    $membersView = [Terminal.Gui.View]::new()
+    
+    # Get users in this OU
+    if ($Global:DemoMode) {
+        # Demo mode - find users in this OU
+        $usersInOU = $Global:Users | Where-Object { $_.OU -like "*$ouName*" }
+        $userNames = $usersInOU | ForEach-Object { 
+            $status = if ($_.Locked) { "[L]" } elseif ($_.Disabled) { "[D]" } else { "[E]" }
+            "$status $($_.Name) - $($_.Title)"
+        } | Sort-Object
+    } else {
+        # Production mode - get from AD
+        try {
+            $users = Get-ADUser -SearchBase $ouPath -SearchScope OneLevel -Filter * -Properties DisplayName,Title -ErrorAction Stop
+            $userNames = $users | ForEach-Object { 
+                "$($_.DisplayName) - $($_.Title)"
+            } | Sort-Object
+        } catch {
+            $userNames = @("Error retrieving users: $($_.Exception.Message)")
+        }
+    }
+    
+    $lblUsers = [Terminal.Gui.Label]::new("Users in this OU: $($userNames.Count)"); $lblUsers.X=2; $lblUsers.Y=1
+    $membersView.Add($lblUsers)
+    
+    $lstUsers = [Terminal.Gui.ListView]::new()
+    $lstUsers.SetSource($userNames)
+    $lstUsers.X=2; $lstUsers.Y=3
+    $lstUsers.Width=[Terminal.Gui.Dim]::Fill(2)
+    $lstUsers.Height=[Terminal.Gui.Dim]::Fill(2)
+    $membersView.Add($lstUsers)
+    
+    $membersTab.View = $membersView
+    $tabView.AddTab($membersTab, $false)
+    
+    # ----- Sub-OUs Tab -----
+    $subTab = [Terminal.Gui.TabView+Tab]::new()
+    $subTab.Text = "Sub-OUs"
+    $subView = [Terminal.Gui.View]::new()
+    
+    # Get sub-OUs
+    if ($Global:DemoMode) {
+        # Demo mode - parse OU paths to find children
+        $allOUs = $Global:Users | Select-Object -ExpandProperty OU -Unique
+        $subOUs = $allOUs | Where-Object { 
+            $_ -like "$ouName/*" -and ($_ -replace "$ouName/", "").IndexOf('/') -eq -1
+        } | ForEach-Object {
+            ($_ -split '/')[-1]
+        } | Sort-Object -Unique
+    } else {
+        # Production mode - get from AD
+        try {
+            $subOUObjects = Get-ADOrganizationalUnit -SearchBase $ouPath -SearchScope OneLevel -Filter * -ErrorAction Stop
+            $subOUs = $subOUObjects | ForEach-Object { $_.Name } | Sort-Object
+        } catch {
+            $subOUs = @("Error retrieving sub-OUs: $($_.Exception.Message)")
+        }
+    }
+    
+    $lblSubOUs = [Terminal.Gui.Label]::new("Child OUs: $($subOUs.Count)"); $lblSubOUs.X=2; $lblSubOUs.Y=1
+    $subView.Add($lblSubOUs)
+    
+    $lstSubOUs = [Terminal.Gui.ListView]::new()
+    $lstSubOUs.SetSource($subOUs)
+    $lstSubOUs.X=2; $lstSubOUs.Y=3
+    $lstSubOUs.Width=[Terminal.Gui.Dim]::Fill(2)
+    $lstSubOUs.Height=[Terminal.Gui.Dim]::Fill(2)
+    $subView.Add($lstSubOUs)
+    
+    $subTab.View = $subView
+    $tabView.AddTab($subTab, $false)
+    
+    # Add TabView to dialog
+    $dlg.Add($tabView)
+    
+    # Buttons
+    $btnOK = [Terminal.Gui.Button]::new("OK")
+    $btnOK.add_Clicked({ 
+        # Save description if changed
+        $newDesc = $txtDesc.Text.ToString()
+        if ($newDesc -ne $description) {
+            Write-Host "DEBUG: Description changed to: $newDesc"
+            # In production, would update with Set-ADOrganizationalUnit
+        }
+        [Terminal.Gui.Application]::RequestStop() 
+    })
+    $dlg.AddButton($btnOK)
+    
+    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+    $dlg.AddButton($btnCancel)
+    
+    [Terminal.Gui.Application]::Run($dlg)
+}
 
 # DSA-TUI Object Management Module v1.0
 # Create, Delete, and Move AD Objects
@@ -3029,7 +3503,7 @@ function Show-ContextMenu {
         })
     } elseif ($isOU) {
         $menuItems += [Terminal.Gui.MenuItem]::new("_Properties", "View OU properties", [Action]{ 
-            [Terminal.Gui.MessageBox]::Query(50, 7, "OU Properties", "OU: $cleanName`n(Full properties coming soon)", "OK") | Out-Null
+            Show-OUPropertiesDialog -ouName $cleanName
         })
         $menuItems += [Terminal.Gui.MenuItem]::new("_New Object...", "Create new object in this OU", [Action]{ 
             Show-NewObjectWizard
@@ -4127,7 +4601,6 @@ function Update-SelectionPanel {
     $panel.SetNeedsDisplay()
 }
 
-
 function Show-GroupPropertiesDialog {
     param([string]$groupName)
     
@@ -4153,7 +4626,7 @@ function Check-DCReplication {
 }
 
 # ------------------------- Tree Mouse Handler ------------------------
-# Add this to your tree setup after creating $tree:
+# Add this to tree setup after creating $tree:
 
 $tree.add_MouseClick({ param($sender, $mouseArgs)
     # Right-click for context menu
@@ -4166,6 +4639,32 @@ $tree.add_MouseClick({ param($sender, $mouseArgs)
         Handle-TreeClick -mouseArgs $mouseArgs
     }
 })
+
+# This is a theme now. Danish Fruit soda based fun
+# Method to the madness
+function Show-BlaabaerInfo {
+    $dlg = [Terminal.Gui.Dialog]::new("Why Blaabaer? 🫐", 60, 12)
+    
+    $message = @"
+DSA-TUI is codenamed "Blaabaer" because:
+
+- I was drinking blueberry soda when writing the code
+- 'Blåbær' (Blaabaer) is Danish for blueberry
+- Føtex sells a rather nice Blaabaer soda
+- Every great project needs a forest-fruit mascot!
+"@
+    
+    $label = [Terminal.Gui.Label]::new(1, 1, $message)
+    $dlg.Add($label)
+    
+    [Terminal.Gui.MessageBox]::Query("Why Blaabaer? 🫐", $message, @("OK"))
+}
+
+function Show-Modal { 
+    param($title, $msg) 
+    [Terminal.Gui.MessageBox]::Query($title, $msg, @("OK")) | Out-Null 
+}
+
 
 # ------------------------- Build initial tree ------------------------
 Build-Tree -domain $Global:Domain
