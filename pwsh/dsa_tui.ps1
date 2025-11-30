@@ -1945,178 +1945,123 @@ $btnResetPwd.add_Clicked({
     $lstGroups.X=2; $lstGroups.Y=3; $lstGroups.Width=[Terminal.Gui.Dim]::Fill(2); $lstGroups.Height=[Terminal.Gui.Dim]::Fill(8)
     $memberView.Add($lstGroups)
     
-# Working Add/Remove Group Functionality
-# Replace the Add/Remove group buttons section in your Member Of tab
-
-    # Add/Remove buttons for group membership
-    $btnAddGroup = [Terminal.Gui.Button]::new("Add..."); $btnAddGroup.X=2; $btnAddGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
-    $btnAddGroup.add_Clicked({
-        Write-Host "DEBUG: Add to group clicked for user: $($user.Name)"
-        
-        # Get list of all available groups
-        if ($Global:DemoMode) {
-            # Demo mode: collect all unique groups from all users
-            $allGroups = @()
-            foreach ($u in $Global:Users) {
-                $allGroups += $u.Groups
-            }
-            $availableGroups = $allGroups | Select-Object -Unique | Sort-Object
-        } else {
-            # Production mode: get all groups from AD
-            try {
-                $availableGroups = Get-ADGroup -Filter * | Select-Object -ExpandProperty Name | Sort-Object
-            } catch {
-                [Terminal.Gui.MessageBox]::Query(60, 8, "Error", "Failed to retrieve groups from AD:`n$($_.Exception.Message)", "OK") | Out-Null
-                return
-            }
+# Add/Remove buttons for group membership
+$btnAddGroup = [Terminal.Gui.Button]::new("Add..."); $btnAddGroup.X=2; $btnAddGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
+$btnAddGroup.add_Clicked({
+    Write-Host "DEBUG: Add to group clicked for user: $($user.Name)"
+    
+    # Get list of all available groups
+    if ($Global:DemoMode) {
+        # Demo mode: collect all unique groups from all users
+        $allGroups = @()
+        foreach ($u in $Global:Users) {
+            $allGroups += $u.Groups
         }
-        
-        # Filter out groups the user is already a member of
-        $currentGroups = if ($user.Groups) { $user.Groups } else { @() }
-        $groupsToAdd = $availableGroups | Where-Object { $currentGroups -notcontains $_ }
-        
-        if ($groupsToAdd.Count -eq 0) {
-            [Terminal.Gui.MessageBox]::Query(50, 7, "No Groups", "User is already a member of all available groups!", "OK") | Out-Null
+        $availableGroups = $allGroups | Select-Object -Unique | Sort-Object
+    } else {
+        # Production mode: get all groups from AD
+        try {
+            $availableGroups = Get-ADGroup -Filter * | Select-Object -ExpandProperty Name | Sort-Object
+        } catch {
+            [Terminal.Gui.MessageBox]::Query(60, 8, "Error", "Failed to retrieve groups from AD:`n$($_.Exception.Message)", "OK") | Out-Null
+            return
+        }
+    }
+    
+    # Filter out groups the user is already a member of
+    $currentGroups = if ($user.Groups) { $user.Groups } else { @() }
+    $groupsToAdd = $availableGroups | Where-Object { $currentGroups -notcontains $_ }
+    
+    if ($groupsToAdd.Count -eq 0) {
+        [Terminal.Gui.MessageBox]::Query(50, 7, "No Groups", "User is already a member of all available groups!", "OK") | Out-Null
+        return
+    }
+    
+    # Show group selection dialog
+    $grpDlg = [Terminal.Gui.Dialog]::new("Add to Group", 60, 20)
+    
+    $lblGrp = [Terminal.Gui.Label]::new("Select group to add $($user.Name) to:")
+    $lblGrp.X=2; $lblGrp.Y=1
+    $grpDlg.Add($lblGrp)
+    
+    $lstAvailGroups = [Terminal.Gui.ListView]::new()
+    $lstAvailGroups.SetSource($groupsToAdd)
+    $lstAvailGroups.X=2; $lstAvailGroups.Y=3
+    $lstAvailGroups.Width=[Terminal.Gui.Dim]::Fill(2)
+    $lstAvailGroups.Height=[Terminal.Gui.Dim]::Fill(2)
+    $grpDlg.Add($lstAvailGroups)
+    
+    $btnAddOK = [Terminal.Gui.Button]::new("Add")
+    $btnAddOK.add_Clicked({
+        # Check if something is selected
+        if ($lstAvailGroups.SelectedItem -eq -1) {
+            [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select a group first", "OK") | Out-Null
             return
         }
         
-        # Show group selection dialog
-        $grpDlg = [Terminal.Gui.Dialog]::new("Add to Group", 60, 20)
+        $selectedGroup = $groupsToAdd[$lstAvailGroups.SelectedItem]
+        Write-Host "DEBUG: Adding $($user.Name) to group: $selectedGroup"
         
-        $lblGrp = [Terminal.Gui.Label]::new("Select group to add $($user.Name) to:")
-        $lblGrp.X=2; $lblGrp.Y=1
-        $grpDlg.Add($lblGrp)
-        
-        $lstAvailGroups = [Terminal.Gui.ListView]::new()
-        $lstAvailGroups.SetSource($groupsToAdd)
-        $lstAvailGroups.X=2; $lstAvailGroups.Y=3
-        $lstAvailGroups.Width=[Terminal.Gui.Dim]::Fill(2)
-        $lstAvailGroups.Height=[Terminal.Gui.Dim]::Fill(2)
-        $grpDlg.Add($lstAvailGroups)
-        
-        $btnAddOK = [Terminal.Gui.Button]::new("Add")
-        $btnAddOK.add_Clicked({
-            if ($lstAvailGroups.SelectedItem -ge 0) {
-                $selectedGroup = $groupsToAdd[$lstAvailGroups.SelectedItem]
-                Write-Host "DEBUG: Adding $($user.Name) to group: $selectedGroup"
+        try {
+            if ($Global:DemoMode) {
+                # Demo mode: add to array
+                if (-not $user.Groups) { $user.Groups = @() }
+                $user.Groups += $selectedGroup
+                $user.Groups = $user.Groups | Sort-Object  # Keep sorted
                 
-                try {
-                    if ($Global:DemoMode) {
-                        # Demo mode: add to array
-                        if (-not $user.Groups) { $user.Groups = @() }
-                        $user.Groups += $selectedGroup
-                        $user.Groups = $user.Groups | Sort-Object  # Keep sorted
-                        
-                        Write-Host "DEBUG: User $($user.Name) added to group $selectedGroup (demo mode)"
-                        [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Added to group: $selectedGroup`n(demo mode)", "OK") | Out-Null
-                    } else {
-                        # Production mode: add to AD
-                        Add-ADGroupMember -Identity $selectedGroup -Members $user.Name -ErrorAction Stop
-                        
-                        Write-Host "DEBUG: User $($user.Name) added to group $selectedGroup in AD"
-                        [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Added to group: $selectedGroup", "OK") | Out-Null
-                        
-                        # Reload group membership from AD
-                        $user.Groups = @(Get-ADPrincipalGroupMembership -Identity $user.Name | Select-Object -ExpandProperty Name | Sort-Object)
-                    }
-                    
-                    # Update the groups list display - use MainLoop.Invoke for safety
-                    [Terminal.Gui.Application]::MainLoop.Invoke({
-                        $lstGroups.SetSource($user.Groups)
-                    })
-                    
-                    # Mark as changed
-                    $script:changesMade = $true
-                    
-                    # Close the add dialog
-                    [Terminal.Gui.Application]::RequestStop()
-                    
-                    # Rebuild tree in background after dialog closes
-                    [Terminal.Gui.Application]::MainLoop.Invoke({
-                        Build-Tree -domain $Global:Domain
-                        Update-FilterStatusLabel -label $filterStatusLabel
-                    })
-                    
-                } catch {
-                    $errMsg = $_.Exception.Message
-                    Write-Host "ERROR: Failed to add to group: $errMsg"
-                    [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to add to group:`n$errMsg", "OK") | Out-Null
-                }
+                Write-Host "DEBUG: User $($user.Name) added to group $selectedGroup (demo mode)"
+                [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Added to group: $selectedGroup`n(demo mode)", "OK") | Out-Null
             } else {
-                [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select a group first", "OK") | Out-Null
+                # Production mode: add to AD
+                Add-ADGroupMember -Identity $selectedGroup -Members $user.Name -ErrorAction Stop
+                
+                Write-Host "DEBUG: User $($user.Name) added to group $selectedGroup in AD"
+                [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Added to group: $selectedGroup", "OK") | Out-Null
+                
+                # Reload group membership from AD
+                $user.Groups = @(Get-ADPrincipalGroupMembership -Identity $user.Name | Select-Object -ExpandProperty Name | Sort-Object)
             }
-        })
-        $grpDlg.AddButton($btnAddOK)
-        
-        $btnAddCancel = [Terminal.Gui.Button]::new("Cancel")
-        $btnAddCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-        $grpDlg.AddButton($btnAddCancel)
-        
-        # Handle Enter key
-        $lstAvailGroups.add_OpenSelectedItem({ $btnAddOK.PerformClick() })
-        
-        [Terminal.Gui.Application]::Run($grpDlg)
-    })
-    $memberView.Add($btnAddGroup)
-    
-    $btnRemoveGroup = [Terminal.Gui.Button]::new("Remove"); $btnRemoveGroup.X=[Terminal.Gui.Pos]::Right($btnAddGroup)+2; $btnRemoveGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
-    $btnRemoveGroup.add_Clicked({
-        if ($lstGroups.SelectedItem -ge 0) {
-            $grp = $user.Groups[$lstGroups.SelectedItem]
             
-            Write-Host "DEBUG: Remove from group clicked: $grp"
+            # Update the groups list display - use MainLoop.Invoke for safety
+            [Terminal.Gui.Application]::MainLoop.Invoke({
+                $lstGroups.SetSource($user.Groups)
+            })
             
-            # Confirm removal
-            $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Remove from Group", "Remove $($user.Name) from group:`n'$grp'?", "Yes", "No")
+            # Mark as changed
+            $script:changesMade = $true
             
-            if ($result -eq 0) {
-                try {
-                    if ($Global:DemoMode) {
-                        # Demo mode: remove from array
-                        $user.Groups = $user.Groups | Where-Object { $_ -ne $grp } | Sort-Object
-                        
-                        Write-Host "DEBUG: User $($user.Name) removed from group $grp (demo mode)"
-                        [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Removed from group: $grp`n(demo mode)", "OK") | Out-Null
-                    } else {
-                        # Production mode: remove from AD
-                        Remove-ADGroupMember -Identity $grp -Members $user.Name -Confirm:$false -ErrorAction Stop
-                        
-                        Write-Host "DEBUG: User $($user.Name) removed from group $grp in AD"
-                        [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Removed from group: $grp", "OK") | Out-Null
-                        
-                        # Reload group membership from AD
-                        $user.Groups = @(Get-ADPrincipalGroupMembership -Identity $user.Name | Select-Object -ExpandProperty Name | Sort-Object)
-                    }
-                    
-                    # Update the groups list display - use MainLoop.Invoke for safety
-                    [Terminal.Gui.Application]::MainLoop.Invoke({
-                        $lstGroups.SetSource($user.Groups)
-                    })
-                    
-                    # Mark as changed
-                    $script:changesMade = $true
-                    
-                    # Rebuild tree in background
-                    [Terminal.Gui.Application]::MainLoop.Invoke({
-                        Build-Tree -domain $Global:Domain
-                        Update-FilterStatusLabel -label $filterStatusLabel
-                    })
-                    
-                } catch {
-                    $errMsg = $_.Exception.Message
-                    Write-Host "ERROR: Failed to remove from group: $errMsg"
-                    [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to remove from group:`n$errMsg", "OK") | Out-Null
-                }
-            }
-        } else {
-            [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select a group to remove first", "OK") | Out-Null
+            # Close the add dialog
+            [Terminal.Gui.Application]::RequestStop()
+            
+            # Rebuild tree in background after dialog closes
+            [Terminal.Gui.Application]::MainLoop.Invoke({
+                Build-Tree -domain $Global:Domain
+                Update-FilterStatusLabel -label $filterStatusLabel
+            })
+            
+        } catch {
+            $errMsg = $_.Exception.Message
+            Write-Host "ERROR: Failed to add to group: $errMsg"
+            [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to add to group:`n$errMsg", "OK") | Out-Null
         }
     })
-          $memberView.Add($btnRemoveGroup)
-          $memberView.Add($btnRemoveGroup)    
-    $memberTab.View = $memberView
-    $tabView.AddTab($memberTab, $false)
+    $grpDlg.AddButton($btnAddOK)
     
+    $btnAddCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnAddCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+    $grpDlg.AddButton($btnAddCancel)
+    
+    # Handle Enter key - MOVED AFTER button is added to dialog
+    $lstAvailGroups.add_OpenSelectedItem({ 
+        if ($btnAddOK) { 
+            $btnAddOK.OnClicked()
+        }
+    })
+    
+    [Terminal.Gui.Application]::Run($grpDlg)
+})
+$memberView.Add($btnAddGroup)    
+
     # ----- Search/Lookup Tab -----
     $searchTab = [Terminal.Gui.TabView+Tab]::new()
     $searchTab.Text = "Search/Lookup"
@@ -4839,15 +4784,248 @@ function Show-GroupPropertiesDialog {
     [Terminal.Gui.MessageBox]::Query(60, 20, "Group Properties", $txt, "OK") | Out-Null
 }
 
+# Add/Remove Group Member Implementation
+# Replace the placeholder functions in your script
+
+# =====================================================
+# ADD GROUP MEMBER
+# =====================================================
 function Show-AddGroupMemberDialog {
     param([string]$groupName)
-    [Terminal.Gui.MessageBox]::Query(50, 7, "Add Member", "Add member to '$groupName'`n(Coming soon)", "OK") | Out-Null
+    
+    Write-Host "DEBUG: Add member to group: $groupName"
+    
+    $dlg = [Terminal.Gui.Dialog]::new("Add Member to Group - $groupName", 70, 25)
+    
+    $lblInfo = [Terminal.Gui.Label]::new("Select users to add to '$groupName':")
+    $lblInfo.X = 2; $lblInfo.Y = 1
+    $dlg.Add($lblInfo)
+    
+    # Get list of all users NOT already in this group
+    if ($Global:DemoMode) {
+        # Demo mode: find users not in this group
+        $availableUsers = $Global:Users | Where-Object { 
+            $_.Groups -notcontains $groupName 
+        } | Sort-Object -Property Name
+    } else {
+        # Production mode: get all users not in group
+        try {
+            $groupMembers = Get-ADGroupMember -Identity $groupName -ErrorAction Stop | 
+                Select-Object -ExpandProperty SamAccountName
+            
+            $allUsers = Get-ADUser -Filter * -Properties SamAccountName, DisplayName -ErrorAction Stop
+            
+            $availableUsers = $allUsers | Where-Object { 
+                $groupMembers -notcontains $_.SamAccountName 
+            } | Sort-Object -Property DisplayName
+        } catch {
+            [Terminal.Gui.MessageBox]::Query(60, 10, "Error", 
+                "Failed to retrieve users:`n$($_.Exception.Message)", "OK") | Out-Null
+            return
+        }
+    }
+    
+    if ($availableUsers.Count -eq 0) {
+        [Terminal.Gui.MessageBox]::Query(50, 7, "No Users", 
+            "All users are already members of this group!", "OK") | Out-Null
+        return
+    }
+    
+    # Create list of available users
+    if ($Global:DemoMode) {
+        $userList = $availableUsers | ForEach-Object { 
+            "$($_.Name) - $($_.Title) [$($_.OU[-1])]" 
+        }
+    } else {
+        $userList = $availableUsers | ForEach-Object { 
+            "$($_.DisplayName) ($($_.SamAccountName))" 
+        }
+    }
+    
+    $lstUsers = [Terminal.Gui.ListView]::new()
+    $lstUsers.SetSource($userList)
+    $lstUsers.X = 2
+    $lstUsers.Y = 3
+    $lstUsers.Width = [Terminal.Gui.Dim]::Fill(2)
+    $lstUsers.Height = [Terminal.Gui.Dim]::Fill(4)
+    $lstUsers.AllowsMarking = $true  # Allow multi-select
+    $dlg.Add($lstUsers)
+    
+    # Info label
+    $lblHelp = [Terminal.Gui.Label]::new("Tip: Use SPACE to select multiple users")
+    $lblHelp.X = 2
+    $lblHelp.Y = [Terminal.Gui.Pos]::Bottom($lstUsers) + 1
+    $dlg.Add($lblHelp)
+    
+    # Add button
+$btnAdd = [Terminal.Gui.Button]::new("Add Selected")
+$btnAdd.add_Clicked({
+    # Get marked (selected) items
+    $markedIndices = @()
+    for ($i = 0; $i -lt $userList.Count; $i++) {
+        if ($lstUsers.Source.IsMarked($i)) {
+            $markedIndices += $i
+        }
+    }
+    
+    # If nothing marked, check if there's a selected item
+    if ($markedIndices.Count -eq 0) {
+        if ($lstUsers.SelectedItem -ne -1) {
+            # User just highlighted but didn't mark - use the selected item
+            $markedIndices = @($lstUsers.SelectedItem)
+        } else {
+            [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", 
+                "Please select at least one user (use SPACE to mark multiple, or just highlight one)", "OK") | Out-Null
+            return
+        }
+    }
+})
 }
 
+# =====================================================
+# REMOVE GROUP MEMBER
+# =====================================================
 function Show-RemoveGroupMemberDialog {
     param([string]$groupName)
-    [Terminal.Gui.MessageBox]::Query(50, 7, "Remove Member", "Remove member from '$groupName'`n(Coming soon)", "OK") | Out-Null
+    
+    Write-Host "DEBUG: Remove member from group: $groupName"
+    
+    $dlg = [Terminal.Gui.Dialog]::new("Remove Member from Group - $groupName", 70, 25)
+    
+    $lblInfo = [Terminal.Gui.Label]::new("Select users to remove from '$groupName':")
+    $lblInfo.X = 2; $lblInfo.Y = 1
+    $dlg.Add($lblInfo)
+    
+    # Get list of current group members
+    if ($Global:DemoMode) {
+        # Demo mode: find users in this group
+        $groupMembers = $Global:Users | Where-Object { 
+            $_.Groups -contains $groupName 
+        } | Sort-Object -Property Name
+    } else {
+        # Production mode: get group members from AD
+        try {
+            $members = Get-ADGroupMember -Identity $groupName -ErrorAction Stop
+            $groupMembers = $members | ForEach-Object {
+                Get-ADUser -Identity $_.SamAccountName -Properties DisplayName, SamAccountName -ErrorAction Stop
+            } | Sort-Object -Property DisplayName
+        } catch {
+            [Terminal.Gui.MessageBox]::Query(60, 10, "Error", 
+                "Failed to retrieve group members:`n$($_.Exception.Message)", "OK") | Out-Null
+            return
+        }
+    }
+    
+    if ($groupMembers.Count -eq 0) {
+        [Terminal.Gui.MessageBox]::Query(50, 7, "Empty Group", 
+            "This group has no members!", "OK") | Out-Null
+        return
+    }
+    
+    # Create list of group members
+    if ($Global:DemoMode) {
+        $memberList = $groupMembers | ForEach-Object { 
+            "$($_.Name) - $($_.Title) [$($_.OU[-1])]" 
+        }
+    } else {
+        $memberList = $groupMembers | ForEach-Object { 
+            "$($_.DisplayName) ($($_.SamAccountName))" 
+        }
+    }
+    
+    $lstMembers = [Terminal.Gui.ListView]::new()
+    $lstMembers.SetSource($memberList)
+    $lstMembers.X = 2
+    $lstMembers.Y = 3
+    $lstMembers.Width = [Terminal.Gui.Dim]::Fill(2)
+    $lstMembers.Height = [Terminal.Gui.Dim]::Fill(4)
+    $lstMembers.AllowsMarking = $true  # Allow multi-select
+    $dlg.Add($lstMembers)
+    
+    # Info label
+    $lblHelp = [Terminal.Gui.Label]::new("Tip: Use SPACE to select multiple users")
+    $lblHelp.X = 2
+    $lblHelp.Y = [Terminal.Gui.Pos]::Bottom($lstMembers) + 1
+    $dlg.Add($lblHelp)
+    
+    # Remove button
+    $btnRemove = [Terminal.Gui.Button]::new("Remove Selected")
+    $btnRemove.add_Clicked({
+        # Get marked (selected) items
+        $markedIndices = @()
+        for ($i = 0; $i -lt $memberList.Count; $i++) {
+            if ($lstMembers.Source.IsMarked($i)) {
+                $markedIndices += $i
+            }
+        }
+        
+        if ($markedIndices.Count -eq 0) {
+            [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", 
+                "Please select at least one user (use SPACE key)", "OK") | Out-Null
+            return
+        }
+        
+        $usersToRemove = $markedIndices | ForEach-Object { $groupMembers[$_] }
+        
+        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Remove", 
+            "Remove $($usersToRemove.Count) user(s) from group '$groupName'?", 
+            "Yes", "No")
+        
+        if ($confirm -eq 0) {
+            $successCount = 0
+            $failCount = 0
+            $errors = @()
+            
+            foreach ($user in $usersToRemove) {
+                try {
+                    if ($Global:DemoMode) {
+                        # Demo mode: remove group from user's Groups array
+                        $user.Groups = $user.Groups | Where-Object { $_ -ne $groupName }
+                        $successCount++
+                        Write-Host "DEBUG: Removed $($user.Name) from $groupName (demo mode)"
+                    } else {
+                        # Production mode: remove from AD
+                        Remove-ADGroupMember -Identity $groupName -Members $user.SamAccountName -Confirm:$false -ErrorAction Stop
+                        $successCount++
+                        Write-Host "DEBUG: Removed $($user.SamAccountName) from $groupName in AD"
+                    }
+                } catch {
+                    $failCount++
+                    $userName = if ($Global:DemoMode) { $user.Name } else { $user.SamAccountName }
+                    $errors += "$userName`: $($_.Exception.Message)"
+                    Write-Host "ERROR: Failed to remove $userName from group: $_"
+                }
+            }
+            
+            # Show results
+            $msg = "Successfully removed $successCount user(s) from '$groupName'"
+            if ($failCount -gt 0) {
+                $msg += "`n`nFailed: $failCount"
+                if ($errors.Count -gt 0 -and $errors.Count -le 5) {
+                    $msg += "`n`nErrors:`n" + ($errors -join "`n")
+                }
+            }
+            
+            [Terminal.Gui.MessageBox]::Query(70, 15, "Remove Members Complete", $msg, "OK") | Out-Null
+            
+            # Rebuild tree
+            [Terminal.Gui.Application]::MainLoop.Invoke({
+                Build-Tree -domain $Global:Domain
+                Update-FilterStatusLabel -label $filterStatusLabel
+            })
+            
+            [Terminal.Gui.Application]::RequestStop()
+        }
+    })
+    $dlg.AddButton($btnRemove)
+    
+    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+    $dlg.AddButton($btnCancel)
+    
+    [Terminal.Gui.Application]::Run($dlg)
 }
+
 
 function Check-DCReplication {
     param([string]$dcName)
