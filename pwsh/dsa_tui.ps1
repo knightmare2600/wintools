@@ -931,7 +931,7 @@ if ($DemoMode) {
     }
     Write-Host "  - Groups: $($rootGroups.Children.Count) instrument groups"
     Write-Host "  - DCs: $($rootDCs.Children.Count) domain controllers"
-}
+#}
 
 
 # Updated Build-Tree to show locked status
@@ -1058,7 +1058,7 @@ function Build-Tree {
     Write-Host "DEBUG: Tree built - Showing $filterCount of $totalCount users"
 }
 
-    } else {
+#    } else {
         try {
             Import-Module ActiveDirectory -ErrorAction Stop
 
@@ -1086,7 +1086,7 @@ function Build-Tree {
             [Terminal.Gui.MessageBox]::Query("Error","Failed to query domain ${domain}:`n$($_.ToString())","OK") | Out-Null
             $Global:Users=@(); $Global:DCs=@(); $Global:ADObjects=@()
         }
-    }
+#    }
 #}
 
 
