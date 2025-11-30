@@ -152,6 +152,11 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Add Rocazino form the Koge office
  - Have other locations in Denmark along with different user properites e.g. Alan Wilder
 
+ 1.7.1  Fixes for regressions in 1.7.0
+ - Clean up entropy box
+ - Clean up Demo data tree building
+
+
 ===========================================================================================
 #>
 
@@ -485,55 +490,183 @@ NB: I don't believe Denmark uses 0000 but this is not confirmed!
 
 # ------------------------- Demo OU Tree -------------------------
 if ($DemoMode) {
-
-    # ------------------------ Helper Function ------------------------
-    function Convert-HashtableToTreeNode {
+    Write-Host "Building demo OU tree..."
+    
+    # -------------------------
+    # Clickable OU Tree with Proper Hierarchy
+    # -------------------------
+    
+    # Helper function to find or create an OU node
+    function Get-OrCreateOUNode {
         param(
-            [hashtable]$node
+            [Terminal.Gui.Trees.TreeNode]$ParentNode,
+            [string]$OUName
         )
-
-        $treeNode = [Terminal.Gui.TreeNode]::new($node.Name)
-        $treeNode.Tag = $node  # store full hashtable for access later
-
-        # Add children recursively
-        if ($node.ContainsKey('Children')) {
-            foreach ($child in $node.Children) {
-                $treeNode.AddChild((Convert-HashtableToTreeNode -node $child))
+        
+        # Look for existing child with this name
+        foreach ($child in $ParentNode.Children) {
+            if ($child.Text -eq $OUName) {
+                return $child
             }
         }
-
-        # Add users as leaf nodes
-        if ($node.ContainsKey('Users')) {
-            foreach ($user in $node.Users) {
-                $userNode = [Terminal.Gui.TreeNode]::new($user.Name)
-                $userNode.Tag = $user
-                $treeNode.AddChild($userNode)
+        
+        # Not found, create new node
+        $newNode = [Terminal.Gui.Trees.TreeNode]::new($OUName)
+        $ParentNode.AddChild($newNode)
+        return $newNode
+    }
+    
+    # Helper function to build OU path recursively
+    function Build-OUPath {
+        param(
+            [Terminal.Gui.Trees.TreeNode]$CurrentNode,
+            [string[]]$RemainingPath
+        )
+        
+        if ($RemainingPath.Count -eq 0) {
+            return $CurrentNode
+        }
+        
+        $nextOU = $RemainingPath[0]
+        $childNode = Get-OrCreateOUNode -ParentNode $CurrentNode -OUName $nextOU
+        
+        if ($RemainingPath.Count -gt 1) {
+            return Build-OUPath -CurrentNode $childNode -RemainingPath $RemainingPath[1..($RemainingPath.Count - 1)]
+        } else {
+            return $childNode
+        }
+    }
+    
+    # Create root "Locations" node
+    $rootLocations = [Terminal.Gui.Trees.TreeNode]::new("Locations")
+    
+    # Group users by their OU path and band
+    $bandStructure = @{}
+    
+    foreach ($user in $Global:Users) {
+        $ouPath = $user.OU  # e.g., @('Locations','UK','Scotland','Glasgow','Simple Minds')
+        
+        # Skip 'Locations' (index 0) and get the path
+        $pathWithoutRoot = $ouPath[1..($ouPath.Count - 1)]
+        
+        # The last element is the band name
+        $bandName = $pathWithoutRoot[-1]
+        
+        # The path to the band (country/region/city)
+        $cityPath = $pathWithoutRoot[0..($pathWithoutRoot.Count - 2)]
+        
+        # Build the path key for grouping
+        $pathKey = ($cityPath -join '/') + '/' + $bandName
+        
+        if (-not $bandStructure.ContainsKey($pathKey)) {
+            $bandStructure[$pathKey] = @{
+                CityPath = $cityPath
+                BandName = $bandName
+                Users = @()
             }
         }
-
-        return $treeNode
+        
+        $bandStructure[$pathKey].Users += $user
     }
-
-    # ------------------------ Demo Data ------------------------
-# ---------------- Demo Data + Clickable OU Tree ----------------
-if ($DemoMode) {
-
-  # Demo Data Reset Patch
-  # Add this at the VERY START of your demo mode section
-
-  if ($DemoMode) {
-    Write-Host "Initializing demo mode..."
     
-    # ------------------------- RESET/CLEAR ALL DEMO DATA -------------------------
-    # Clear any existing data from previous runs
-    $Global:Users = @()
-    $Global:DCs = @()
-    $Global:ADObjects = @()
-    $Global:SelectedObjects = @()
-    $Global:Domain = "example.com"
-    
-    Write-Host "Demo data arrays cleared and reset"
+    # Now build the tree
+    foreach ($pathKey in ($bandStructure.Keys | Sort-Object)) {
+        $band = $bandStructure[$pathKey]
+        
+        # Build the FULL city path recursively (e.g., UK → Scotland → Glasgow)
+        # Start from rootLocations and drill down through each level
+        $currentNode = $rootLocations
+        
+        foreach ($pathSegment in $band.CityPath) {
+            $currentNode = Get-OrCreateOUNode -ParentNode $currentNode -OUName $pathSegment
+        }
+        
+        # Now $currentNode is the city node (e.g., Glasgow)
+        # Add band node under the city
+        $bandNode = [Terminal.Gui.Trees.TreeNode]::new($band.BandName)
+        $currentNode.AddChild($bandNode)
+        
+        # Add each band member under the band
+        foreach ($user in ($band.Users | Sort-Object -Property Name)) {
+            $status = if ($user.Locked) { "[L]" } elseif ($user.Disabled) { "[D]" } else { "[E]" }
+            $userNode = [Terminal.Gui.Trees.TreeNode]::new("$status $($user.Name)")
+            $userNode.Tag = $user  # Store user data for click handling
+            $bandNode.AddChild($userNode)
+        }
     }
+    
+    # Create "Groups" node (instrument groups)
+    $rootGroups = [Terminal.Gui.Trees.TreeNode]::new("Groups")
+    
+    # Build instrument groups
+    $instrumentGroups = @('Vocalists', 'Guitarists', 'Keyboards', 'Percussion', 'Synth')
+    
+    foreach ($groupName in $instrumentGroups) {
+        $groupNode = [Terminal.Gui.Trees.TreeNode]::new($groupName)
+        
+        # Find all users in this group
+        $groupMembers = $Global:Users | Where-Object { $_.Groups -contains $groupName } | Sort-Object -Property Name
+        
+        foreach ($user in $groupMembers) {
+            $status = if ($user.Locked) { "[L]" } elseif ($user.Disabled) { "[D]" } else { "[E]" }
+            $userNode = [Terminal.Gui.Trees.TreeNode]::new("$status $($user.Name)")
+            $userNode.Tag = $user
+            $groupNode.AddChild($userNode)
+        }
+        
+        if ($groupMembers.Count -gt 0) {
+            $rootGroups.AddChild($groupNode)
+        }
+    }
+    
+    # Create "Domain Controllers" node
+    $rootDCs = [Terminal.Gui.Trees.TreeNode]::new("Domain Controllers")
+    
+    foreach ($dc in ($Global:DCs | Sort-Object -Property Name)) {
+        $dcNode = [Terminal.Gui.Trees.TreeNode]::new("$($dc.Name) [$($dc.Site)]")
+        $rootDCs.AddChild($dcNode)
+    }
+    
+    # Create the tree view
+    $tree = [Terminal.Gui.TreeView]::new()
+    $tree.X = 0
+    $tree.Y = 1
+    $tree.Width = 40
+    $tree.Height = [Terminal.Gui.Dim]::Fill()
+    
+    # Add root domain node
+    $domainRoot = [Terminal.Gui.Trees.TreeNode]::new("example.com")
+    
+    # Add all root nodes UNDER the domain root
+    $domainRoot.AddChild($rootLocations)
+    $domainRoot.AddChild($rootGroups)
+    $domainRoot.AddChild($rootDCs)
+    
+    # Add only the domain root to tree
+    $tree.AddObject($domainRoot)
+    
+    # Handle selection
+    $tree.add_SelectionChanged({
+        if ($tree.SelectedObject -and $tree.SelectedObject.Tag) {
+            $user = $tree.SelectedObject.Tag
+            Write-Host "DEBUG: Selected user: $($user.Name)"
+            # Optionally show properties
+            # Show-UserPropertiesDialog -user $user
+        }
+    })
+    
+    Write-Host "Demo tree built successfully"
+    Write-Host "  Domain root: $($domainRoot.Text)"
+    Write-Host "  - Locations: $($rootLocations.Children.Count) countries"
+    foreach ($country in $rootLocations.Children) {
+        Write-Host "    - $($country.Text): $($country.Children.Count) regions/cities"
+        foreach ($region in $country.Children) {
+            Write-Host "      - $($region.Text): $($region.Children.Count) cities/bands"
+        }
+    }
+    Write-Host "  - Groups: $($rootGroups.Children.Count) instrument groups"
+    Write-Host "  - DCs: $($rootDCs.Children.Count) domain controllers"
+}
 
     # -------------------------
     # Users
@@ -799,6 +932,7 @@ if ($DemoMode) {
     Write-Host "  - Groups: $($rootGroups.Children.Count) instrument groups"
     Write-Host "  - DCs: $($rootDCs.Children.Count) domain controllers"
 }
+
 
 # Updated Build-Tree to show locked status
 # Modify the existing Build-Tree function to show both disabled and locked status:
