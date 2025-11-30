@@ -757,182 +757,6 @@ if ($DemoMode) {
     )
     }
 
-    # -------------------------
-    # Clickable OU Tree with Proper Hierarchy
-    # -------------------------
-    
-    # Helper function to find or create an OU node
-    function Get-OrCreateOUNode {
-        param(
-            [Terminal.Gui.TreeNode]$ParentNode,
-            [string]$OUName
-        )
-        
-        # Look for existing child with this name
-        foreach ($child in $ParentNode.Children) {
-            if ($child.Text -eq $OUName) {
-                return $child
-            }
-        }
-        
-        # Not found, create new node
-        $newNode = [Terminal.Gui.TreeNode]::new($OUName)
-        $ParentNode.AddChild($newNode)
-        return $newNode
-    }
-    
-    # Helper function to build OU path recursively
-    function Build-OUPath {
-        param(
-            [Terminal.Gui.TreeNode]$CurrentNode,
-            [string[]]$RemainingPath
-        )
-        
-        if ($RemainingPath.Count -eq 0) {
-            return $CurrentNode
-        }
-        
-        $nextOU = $RemainingPath[0]
-        $childNode = Get-OrCreateOUNode -ParentNode $CurrentNode -OUName $nextOU
-        
-        if ($RemainingPath.Count -gt 1) {
-            return Build-OUPath -CurrentNode $childNode -RemainingPath $RemainingPath[1..($RemainingPath.Count - 1)]
-        } else {
-            return $childNode
-        }
-    }
-    
-    # Create root "Locations" node
-    $rootLocations = [Terminal.Gui.TreeNode]::new("Locations")
-    
-    # Group users by their OU path and band
-    $bandStructure = @{}
-    
-    foreach ($user in $Global:Users) {
-        $ouPath = $user.OU  # e.g., @('Locations','UK','Scotland','Glasgow','Simple Minds')
-        
-        # Skip 'Locations' (index 0) and get the path
-        $pathWithoutRoot = $ouPath[1..($ouPath.Count - 1)]
-        
-        # The last element is the band name
-        $bandName = $pathWithoutRoot[-1]
-        
-        # The path to the band (country/region/city)
-        $cityPath = $pathWithoutRoot[0..($pathWithoutRoot.Count - 2)]
-        
-        # Build the path key for grouping
-        $pathKey = ($cityPath -join '/') + '/' + $bandName
-        
-        if (-not $bandStructure.ContainsKey($pathKey)) {
-            $bandStructure[$pathKey] = @{
-                CityPath = $cityPath
-                BandName = $bandName
-                Users = @()
-            }
-        }
-        
-        $bandStructure[$pathKey].Users += $user
-    }
-    
-    # Now build the tree
-    foreach ($pathKey in ($bandStructure.Keys | Sort-Object)) {
-        $band = $bandStructure[$pathKey]
-        
-        # Build the FULL city path recursively (e.g., UK → Scotland → Glasgow)
-        # Start from rootLocations and drill down through each level
-        $currentNode = $rootLocations
-        
-        foreach ($pathSegment in $band.CityPath) {
-            $currentNode = Get-OrCreateOUNode -ParentNode $currentNode -OUName $pathSegment
-        }
-        
-        # Now $currentNode is the city node (e.g., Glasgow)
-        # Add band node under the city
-        $bandNode = [Terminal.Gui.TreeNode]::new($band.BandName)
-        $currentNode.AddChild($bandNode)
-        
-        # Add each band member under the band
-        foreach ($user in ($band.Users | Sort-Object -Property Name)) {
-            $status = if ($user.Locked) { "[L]" } elseif ($user.Disabled) { "[D]" } else { "[E]" }
-            $userNode = [Terminal.Gui.TreeNode]::new("$status $($user.Name)")
-            $userNode.Tag = $user  # Store user data for click handling
-            $bandNode.AddChild($userNode)
-        }
-    }
-    
-    # Create "Groups" node (instrument groups)
-    $rootGroups = [Terminal.Gui.TreeNode]::new("Groups")
-    
-    # Build instrument groups
-    $instrumentGroups = @('Vocalists', 'Guitarists', 'Keyboards', 'Percussion', 'Synth')
-    
-    foreach ($groupName in $instrumentGroups) {
-        $groupNode = [Terminal.Gui.TreeNode]::new($groupName)
-        
-        # Find all users in this group
-        $groupMembers = $Global:Users | Where-Object { $_.Groups -contains $groupName } | Sort-Object -Property Name
-        
-        foreach ($user in $groupMembers) {
-            $status = if ($user.Locked) { "[L]" } elseif ($user.Disabled) { "[D]" } else { "[E]" }
-            $userNode = [Terminal.Gui.TreeNode]::new("$status $($user.Name)")
-            $userNode.Tag = $user
-            $groupNode.AddChild($userNode)
-        }
-        
-        if ($groupMembers.Count -gt 0) {
-            $rootGroups.AddChild($groupNode)
-        }
-    }
-    
-    # Create "Domain Controllers" node
-    $rootDCs = [Terminal.Gui.TreeNode]::new("Domain Controllers")
-    
-    foreach ($dc in ($Global:DCs | Sort-Object -Property Name)) {
-        $dcNode = [Terminal.Gui.TreeNode]::new("$($dc.Name) [$($dc.Site)]")
-        $rootDCs.AddChild($dcNode)
-    }
-    
-    # Create the tree view
-    $tree = [Terminal.Gui.TreeView]::new()
-    $tree.X = 0
-    $tree.Y = 1
-    $tree.Width = 40
-    $tree.Height = [Terminal.Gui.Dim]::Fill()
-    
-    # Add root domain node
-    $domainRoot = [Terminal.Gui.TreeNode]::new("example.com")
-    
-    # Add all root nodes UNDER the domain root
-    $domainRoot.AddChild($rootLocations)
-    $domainRoot.AddChild($rootGroups)
-    $domainRoot.AddChild($rootDCs)
-    
-    # Add only the domain root to tree
-    $tree.AddObject($domainRoot)
-    
-    # Handle selection
-    $tree.add_SelectionChanged({
-        if ($tree.SelectedObject -and $tree.SelectedObject.Tag) {
-            $user = $tree.SelectedObject.Tag
-            Write-Host "DEBUG: Selected user: $($user.Name)"
-            # Optionally show properties
-            # Show-UserPropertiesDialog -user $user
-        }
-    })
-    
-    Write-Host "Demo tree built successfully"
-    Write-Host "  Domain root: $($domainRoot.Text)"
-    Write-Host "  - Locations: $($rootLocations.Children.Count) countries"
-    foreach ($country in $rootLocations.Children) {
-        Write-Host "    - $($country.Text): $($country.Children.Count) regions/cities"
-        foreach ($region in $country.Children) {
-            Write-Host "      - $($region.Text): $($region.Children.Count) cities/bands"
-        }
-    }
-    Write-Host "  - Groups: $($rootGroups.Children.Count) instrument groups"
-    Write-Host "  - DCs: $($rootDCs.Children.Count) domain controllers"
-#}
-
 
 # Updated Build-Tree to show locked status
 # Modify the existing Build-Tree function to show both disabled and locked status:
@@ -1699,6 +1523,27 @@ function Generate-RandomPassword {
 
 function Show-UserPropertiesDialog {
     param($user)
+
+    # ADD THESE DEBUG LINES AT THE TOP
+    Write-Host "DEBUG: Show-UserPropertiesDialog called"
+    Write-Host "DEBUG: Parameter type: $($user.GetType().Name)"
+    Write-Host "DEBUG: Parameter has Name property: $($user.PSObject.Properties.Name -contains 'Name')"
+    Write-Host "DEBUG: Parameter has Groups property: $($user.PSObject.Properties.Name -contains 'Groups')"
+    if ($user.PSObject.Properties.Name -contains 'Name') {
+        Write-Host "DEBUG: User.Name = $($user.Name)"
+    }
+    if ($user.PSObject.Properties.Name -contains 'Groups') {
+        Write-Host "DEBUG: User.Groups type: $($user.Groups.GetType().Name)"
+        Write-Host "DEBUG: User.Groups count: $($user.Groups.Count)"
+        Write-Host "DEBUG: User.Groups values: $($user.Groups -join ', ')"
+    }
+    
+    # Validate the user parameter
+    if (-not $user -or $user -is [string]) {
+        Write-Host "ERROR: Invalid user parameter - is null or string"
+        [Terminal.Gui.MessageBox]::Query(50, 7, "Error", "Invalid user object passed to properties dialog", "OK") | Out-Null
+        return
+    }
     
     # Create dialog
     $dlg = [Terminal.Gui.Dialog]::new("User Properties - $($user.Name)", 90, 32)
@@ -1818,12 +1663,11 @@ function Show-UserPropertiesDialog {
     $chkChangePwd.add_Toggled({ $script:changesMade = $true })
     $y+=2
     
-$btnResetPwd = [Terminal.Gui.Button]::new("Reset Password...")
-$btnResetPwd.X = 2
-$btnResetPwd.Y = $y
-$accountView.Add($btnResetPwd)
-
-$btnResetPwd.add_Clicked({
+    $btnResetPwd = [Terminal.Gui.Button]::new("Reset Password...")
+    $btnResetPwd.X = 2
+    $btnResetPwd.Y = $y
+    $accountView.Add($btnResetPwd)
+    $btnResetPwd.add_Clicked({
 
     # 1. Launch password generator dialog
     $newPwd = Generate-RandomPassword
@@ -1849,7 +1693,7 @@ $btnResetPwd.add_Clicked({
     Write-Host "DEBUG: Password reset for $($user.Name) to: $newPwd"
 
     Show-Modal "Success" "Password reset (demo mode)."
-})
+    })
 
     $accountTab.View = $accountView
     $tabView.AddTab($accountTab, $false)
@@ -1944,22 +1788,20 @@ $btnResetPwd.add_Clicked({
     $lstGroups = [Terminal.Gui.ListView]::new($user.Groups)
     $lstGroups.X=2; $lstGroups.Y=3; $lstGroups.Width=[Terminal.Gui.Dim]::Fill(2); $lstGroups.Height=[Terminal.Gui.Dim]::Fill(8)
     $memberView.Add($lstGroups)
-    
-# Add/Remove buttons for group membership
-$btnAddGroup = [Terminal.Gui.Button]::new("Add..."); $btnAddGroup.X=2; $btnAddGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
-$btnAddGroup.add_Clicked({
-    Write-Host "DEBUG: Add to group clicked for user: $($user.Name)"
+
+         # Add/Remove buttons for group membership
+   $btnAddGroup = [Terminal.Gui.Button]::new("Add..."); $btnAddGroup.X=2; $btnAddGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
+   $btnAddGroup.add_Clicked({
+        Write-Host "DEBUG: Add to group clicked for user: $($user.Name)"
     
     # Get list of all available groups
     if ($Global:DemoMode) {
-        # Demo mode: collect all unique groups from all users
         $allGroups = @()
         foreach ($u in $Global:Users) {
             $allGroups += $u.Groups
         }
         $availableGroups = $allGroups | Select-Object -Unique | Sort-Object
     } else {
-        # Production mode: get all groups from AD
         try {
             $availableGroups = Get-ADGroup -Filter * | Select-Object -ExpandProperty Name | Sort-Object
         } catch {
@@ -1968,7 +1810,6 @@ $btnAddGroup.add_Clicked({
         }
     }
     
-    # Filter out groups the user is already a member of
     $currentGroups = if ($user.Groups) { $user.Groups } else { @() }
     $groupsToAdd = $availableGroups | Where-Object { $currentGroups -notcontains $_ }
     
@@ -1977,9 +1818,7 @@ $btnAddGroup.add_Clicked({
         return
     }
     
-    # Show group selection dialog
     $grpDlg = [Terminal.Gui.Dialog]::new("Add to Group", 60, 20)
-    
     $lblGrp = [Terminal.Gui.Label]::new("Select group to add $($user.Name) to:")
     $lblGrp.X=2; $lblGrp.Y=1
     $grpDlg.Add($lblGrp)
@@ -1993,7 +1832,6 @@ $btnAddGroup.add_Clicked({
     
     $btnAddOK = [Terminal.Gui.Button]::new("Add")
     $btnAddOK.add_Clicked({
-        # Check if something is selected
         if ($lstAvailGroups.SelectedItem -eq -1) {
             [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select a group first", "OK") | Out-Null
             return
@@ -2004,41 +1842,29 @@ $btnAddGroup.add_Clicked({
         
         try {
             if ($Global:DemoMode) {
-                # Demo mode: add to array
                 if (-not $user.Groups) { $user.Groups = @() }
                 $user.Groups += $selectedGroup
-                $user.Groups = $user.Groups | Sort-Object  # Keep sorted
-                
+                $user.Groups = $user.Groups | Sort-Object
                 Write-Host "DEBUG: User $($user.Name) added to group $selectedGroup (demo mode)"
                 [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Added to group: $selectedGroup`n(demo mode)", "OK") | Out-Null
             } else {
-                # Production mode: add to AD
                 Add-ADGroupMember -Identity $selectedGroup -Members $user.Name -ErrorAction Stop
-                
                 Write-Host "DEBUG: User $($user.Name) added to group $selectedGroup in AD"
                 [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Added to group: $selectedGroup", "OK") | Out-Null
-                
-                # Reload group membership from AD
                 $user.Groups = @(Get-ADPrincipalGroupMembership -Identity $user.Name | Select-Object -ExpandProperty Name | Sort-Object)
             }
             
-            # Update the groups list display - use MainLoop.Invoke for safety
             [Terminal.Gui.Application]::MainLoop.Invoke({
                 $lstGroups.SetSource($user.Groups)
             })
             
-            # Mark as changed
             $script:changesMade = $true
-            
-            # Close the add dialog
             [Terminal.Gui.Application]::RequestStop()
             
-            # Rebuild tree in background after dialog closes
             [Terminal.Gui.Application]::MainLoop.Invoke({
                 Build-Tree -domain $Global:Domain
                 Update-FilterStatusLabel -label $filterStatusLabel
             })
-            
         } catch {
             $errMsg = $_.Exception.Message
             Write-Host "ERROR: Failed to add to group: $errMsg"
@@ -2051,7 +1877,6 @@ $btnAddGroup.add_Clicked({
     $btnAddCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $grpDlg.AddButton($btnAddCancel)
     
-    # Handle Enter key - MOVED AFTER button is added to dialog
     $lstAvailGroups.add_OpenSelectedItem({ 
         if ($btnAddOK) { 
             $btnAddOK.OnClicked()
@@ -2059,10 +1884,62 @@ $btnAddGroup.add_Clicked({
     })
     
     [Terminal.Gui.Application]::Run($grpDlg)
-})
-$memberView.Add($btnAddGroup)    
+})  # <-- THIS CLOSING BRACE WAS MISSING!
+$memberView.Add($btnAddGroup)
 
-    # ----- Search/Lookup Tab -----
+# Remove Group Button
+$btnRemoveGroup = [Terminal.Gui.Button]::new("Remove")
+$btnRemoveGroup.X=[Terminal.Gui.Pos]::Right($btnAddGroup)+2
+$btnRemoveGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
+$btnRemoveGroup.add_Clicked({
+    if ($lstGroups.SelectedItem -ge 0) {
+        $grp = $user.Groups[$lstGroups.SelectedItem]
+        Write-Host "DEBUG: Remove from group clicked: $grp"
+        
+        $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Remove from Group", "Remove $($user.Name) from group:`n'$grp'?", "Yes", "No")
+        
+        if ($result -eq 0) {
+            try {
+                if ($Global:DemoMode) {
+                    $user.Groups = $user.Groups | Where-Object { $_ -ne $grp } | Sort-Object
+                    Write-Host "DEBUG: User $($user.Name) removed from group $grp (demo mode)"
+                    [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Removed from group: $grp`n(demo mode)", "OK") | Out-Null
+                } else {
+                    Remove-ADGroupMember -Identity $grp -Members $user.Name -Confirm:$false -ErrorAction Stop
+                    Write-Host "DEBUG: User $($user.Name) removed from group $grp in AD"
+                    [Terminal.Gui.MessageBox]::Query(50, 7, "Success", "Removed from group: $grp", "OK") | Out-Null
+                    $user.Groups = @(Get-ADPrincipalGroupMembership -Identity $user.Name | Select-Object -ExpandProperty Name | Sort-Object)
+                }
+                
+                [Terminal.Gui.Application]::MainLoop.Invoke({
+                    $lstGroups.SetSource($user.Groups)
+                })
+                
+                $script:changesMade = $true
+                
+                [Terminal.Gui.Application]::MainLoop.Invoke({
+                    Build-Tree -domain $Global:Domain
+                    Update-FilterStatusLabel -label $filterStatusLabel
+                })
+            } catch {
+                $errMsg = $_.Exception.Message
+                Write-Host "ERROR: Failed to remove from group: $errMsg"
+                [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to remove from group:`n$errMsg", "OK") | Out-Null
+            }
+        }
+    } else {
+        [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select a group to remove first", "OK") | Out-Null
+    }
+})
+$memberView.Add($btnRemoveGroup)
+
+# Add the Member Of tab to the tabview
+$memberTab.View = $memberView
+$tabView.AddTab($memberTab, $false)    
+
+
+
+    # ----- Search/Lookup Filter Tab In User Properties -----
     $searchTab = [Terminal.Gui.TabView+Tab]::new()
     $searchTab.Text = "Search/Lookup"
     $searchView = [Terminal.Gui.View]::new()
@@ -2540,7 +2417,7 @@ $memberView.Add($btnAddGroup)
                         
                         # Rebuild tree to show updated status
                         Build-Tree -domain $Global:Domain
-#                        Update-FilterStatusLabel -label $filterStatusLabel
+                        Update-FilterStatusLabel -label $filterStatusLabel
                     } else {
                         Write-Host "ERROR: User not found in demo data: $($chkSearchLocked.Data)"
                         $txtSearchOutput.Text += "`n`nERROR: User not found in demo data"
@@ -2633,7 +2510,7 @@ $memberView.Add($btnAddGroup)
                 
                 # Rebuild tree to show updated status icons
                 Build-Tree -domain $Global:Domain
-#                Update-FilterStatusLabel -label $filterStatusLabel
+                Update-FilterStatusLabel -label $filterStatusLabel
             } else {
                 # Update real AD
                 $updateParams = @{}
@@ -2678,7 +2555,6 @@ $memberView.Add($btnAddGroup)
 }
 
 # Add this function after Show-UserPropertiesDialog:
-
 function Show-OUPropertiesDialog {
     param([string]$ouName)
     
