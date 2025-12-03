@@ -42,7 +42,7 @@ if (-not ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName
 
 ## -------------------------{ Global Variables }--------------------------
 ## Define the build version, project name and fruit codename once only
-$BuildVersion = "1.0.1"
+$BuildVersion = "1.2.4"
 $ProjectName = "Demo TUI Powershell App"
 $FruitName = "Dansk Frugt Namen"
 
