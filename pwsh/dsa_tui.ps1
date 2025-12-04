@@ -516,7 +516,7 @@ NB: I don't believe Denmark uses 0000 but this is not confirmed!
 function Load-DomainData {
   param([string]$domain)
 
-  if ($Logging) { Write-Host "DEBUG: Loading domain data for: $domain" }
+  if ($Logging) { Write-Debug "DEBUG: Loading domain data for: $domain" }
 
   if ($Global:DemoMode) {
     Write-Host "Starting DSA-TUI in DEMO mode..."
@@ -602,16 +602,16 @@ function Load-DomainData {
         @{ Name='EXACPHDC01'; Site='CPH' }
     )
 
-    Write-Host "DEBUG: rawUsers count:" $Global:rawUsers.Count
-    Write-Host "DEBUG: rawDCs count:" $Global:rawDCs.Count
+    Write-Debug "DEBUG: rawUsers count:" $Global:rawUsers.Count
+    Write-Debug "DEBUG: rawDCs count:" $Global:rawDCs.Count
 
     # ------------------ Convert to AD-like objects ------------------
     $converted = Convert-DemoDataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Domain $Global:Domain
 
     # The function already sets $Global:Users, $Global:DCs, $Global:ADObjects
-    Write-Host "DEBUG: Users count:" $Global:Users.Count
-    Write-Host "DEBUG: DCs count:" $Global:DCs.Count
-    Write-Host "DEBUG: ADObjects count:" $Global:ADObjects.Count
+    Write-Debug "DEBUG: Users count:" $Global:Users.Count
+    Write-Debug "DEBUG: DCs count:" $Global:DCs.Count
+    Write-Debug "DEBUG: ADObjects count:" $Global:ADObjects.Count
 
     } else {
         # Production mode - real AD calls
@@ -628,7 +628,7 @@ function Load-DomainData {
                 $Global:ADObjects = Get-ADObjectsByType -domain $domain
 
                 # Users
-########################################### THIS CODE IS SETTING NULLS INSTEADO F READING VALUES ##############################
+
                 $Global:Users = $Global:ADObjects | Where-Object { $_.Type -eq 'user' } | ForEach-Object {
                     $ou = ($_.DN -split ',') | Where-Object { $_ -like 'OU=*' } | Select-Object -First 1
                     if ($ou) { $ou = $ou -replace '^OU=' ,'' } else { $ou = "" }
@@ -657,7 +657,7 @@ function Convert-DemoDataToADObjects {
         [string]$BaseDN = "DC=example,DC=com"
     )
 
-    Write-Host "DEBUG: Converting demo data to AD-like objects..."
+    Write-Debug "DEBUG: Converting demo data to AD-like objects..."
 
     # Helper functions
     function New-FakeGuid { [guid]::NewGuid().ToString() }
@@ -761,7 +761,7 @@ function Convert-DemoDataToADObjects {
     $Global:DCs       = $convertedDCs
     $Global:ADObjects = $convertedUsers + $convertedDCs
 
-    Write-Host "DEBUG: Converted $($convertedUsers.Count) users and $($convertedDCs.Count) DCs to AD-like objects"
+    Write-Debug "DEBUG: Converted $($convertedUsers.Count) users and $($convertedDCs.Count) DCs to AD-like objects"
 
     # Return hashtable
     return @{
@@ -775,13 +775,13 @@ function Convert-DemoDataToADObjects {
 function Build-Tree {
     param([string]$domain)
 
-    Write-Host "DEBUG: Building tree for domain $domain..."
+    Write-Debug "DEBUG: Building tree for domain $domain..."
 
     $tree.ClearObjects()
     $root = [Terminal.Gui.Trees.TreeNode]::new($domain)
 
     if ($Global:DemoMode) {
-        Write-Host "DEBUG: Building demo mode tree..."
+        Write-Debug "DEBUG: Building demo mode tree..."
 
         # Helper class for OU nodes
         class OUNode {
@@ -814,7 +814,7 @@ function Build-Tree {
             }
         }
 
-        Write-Host "DEBUG: Filtered to $($filteredUsers.Count) users"
+        Write-Debug "DEBUG: Filtered to $($filteredUsers.Count) users"
 
         # Build hierarchical OU tree
         $rootOU = [OUNode]::new($domain)
@@ -879,13 +879,13 @@ function Build-Tree {
         # Add top-level OU to tree
         $tree.AddObject($rootOU)
 
-        Write-Host "DEBUG: Demo tree built with $($rootOU.Children.Count) top-level nodes"
+        Write-Debug "DEBUG: Demo tree built with $($rootOU.Children.Count) top-level nodes"
     }
 }
 
 if ($Global:DemoMode) {
-  Write-Host "DEBUG: rawUsers count:" $rawUsers.Count
-  Write-Host "DEBUG: rawDCs count:" $rawDCs.Count
+  Write-Debug "DEBUG: rawUsers count:" $rawUsers.Count
+  Write-Debug "DEBUG: rawDCs count:" $rawDCs.Count
 
   $converted = Convert-DemoDataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Domain $Global:domain
 } else {
@@ -2293,7 +2293,7 @@ $dlg = [Terminal.Gui.Dialog]::new("User Properties", 100, 40, $btnOK, $btnCancel
     $y+=2
 
     # Telephone
-    Write-Host "DEBUG: User Phone value='$($selUser.OfficePhone)'"
+    Write-Debug "DEBUG: User Phone value='$($selUser.OfficePhone)'"
     $lbl = [Terminal.Gui.Label]::new("Telephone:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
     $txtPhone = [Terminal.Gui.TextField]::new($user.OfficePhone ?? ""); $txtPhone.X=20; $txtPhone.Y=$y; $txtPhone.Width=40
     $txtPhone.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtPhone)
@@ -2306,7 +2306,7 @@ $dlg = [Terminal.Gui.Dialog]::new("User Properties", 100, 40, $btnOK, $btnCancel
     $y+=2
 
     # E-mail 
-    Write-Host "DEBUG: User Email value='$($selUser.EmailAddress)'"
+    Write-Debug "DEBUG: User Email value='$($selUser.EmailAddress)'"
     $lbl = [Terminal.Gui.Label]::new("E-mail:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
     $txtEmail = [Terminal.Gui.TextField]::new($user.EmailAddress ?? ""); $txtEmail.X=20; $txtEmail.Y=$y; $txtEmail.Width=40
     $txtEmail.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtEmail)
@@ -2373,7 +2373,7 @@ $dlg = [Terminal.Gui.Dialog]::new("User Properties", 100, 40, $btnOK, $btnCancel
             "Apply", "Cancel"
         )
         if ($confirm -ne 0) { Show-Modal "Cancelled" "Password reset cancelled."; return }
-        Write-Host "DEBUG: Password reset for $($user.Name) to: $newPwd"
+        Write-Debug "DEBUG: Password reset for $($user.Name) to: $newPwd"
         Show-Modal "Success" "Password reset (demo mode)."
     })
 
@@ -2474,7 +2474,7 @@ $btnAddGroup.add_Clicked({
     # Store reference in a variable that will be captured
     $currentUser = $user
     
-    Write-Host "DEBUG: Add to group clicked for user: $($currentUser.Name)"
+    Write-Debug "DEBUG: Add to group clicked for user: $($currentUser.Name)"
     
     # Get list of all available groups
     if ($Global:DemoMode) {
@@ -2498,7 +2498,7 @@ $btnAddGroup.add_Clicked({
     $currentGroups = if ($currentUser['Groups']) { $currentUser['Groups'] } else { @() }
     $groupsToAdd = $availableGroups | Where-Object { $currentGroups -notcontains $_ }
     
-    Write-Host "DEBUG: Available groups to add: $($groupsToAdd.Count)"
+    Write-Debug "DEBUG: Available groups to add: $($groupsToAdd.Count)"
     
     if ($groupsToAdd.Count -eq 0) {
         [Terminal.Gui.MessageBox]::Query(50, 7, "No Groups", "User is already in all groups!", "OK") | Out-Null
@@ -2523,8 +2523,8 @@ $btnAddGroup.add_Clicked({
     
     $btnAddOK = [Terminal.Gui.Button]::new("Add")
     $btnAddOK.add_Clicked({
-        Write-Host "DEBUG: Add OK clicked, SelectedItem = $($lstAvailGroups.SelectedItem)"
-        Write-Host "DEBUG: Current user in handler: '$($currentUser.Name)'"
+        Write-Debug "DEBUG: Add OK clicked, SelectedItem = $($lstAvailGroups.SelectedItem)"
+        Write-Debug "DEBUG: Current user in handler: '$($currentUser.Name)'"
         
         if ($lstAvailGroups.SelectedItem -eq -1) {
             [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select a group", "OK") | Out-Null
@@ -2544,28 +2544,28 @@ $btnAddGroup.add_Clicked({
         }
         
         $selectedGroup = $groupsToAdd[$lstAvailGroups.SelectedItem]
-        Write-Host "DEBUG: Selected group: $selectedGroup"
+        Write-Debug "DEBUG: Selected group: $selectedGroup"
         
         try {
             if ($Global:DemoMode) {
                 # Initialize Groups if needed
                 if (-not $currentUser.ContainsKey('Groups') -or $null -eq $currentUser['Groups']) {
-                    Write-Host "DEBUG: Initializing Groups array"
+                    Write-Debug "DEBUG: Initializing Groups array"
                     $currentUser['Groups'] = @()
                 }
                 
                 # Ensure it's an array
                 if ($currentUser['Groups'] -isnot [array]) {
-                    Write-Host "DEBUG: Converting Groups to array"
+                    Write-Debug "DEBUG: Converting Groups to array"
                     $currentUser['Groups'] = @($currentUser['Groups'])
                 }
                 
                 # Add the group
-                Write-Host "DEBUG: Current groups before add: $($currentUser['Groups'] -join ', ')"
+                Write-Debug "DEBUG: Current groups before add: $($currentUser['Groups'] -join ', ')"
                 $currentUser['Groups'] += $selectedGroup
                 $currentUser['Groups'] = $currentUser['Groups'] | Sort-Object -Unique
-                Write-Host "DEBUG: Current groups after add: $($currentUser['Groups'] -join ', ')"
-      Write-Host "DEBUG: User $($currentUser.Name) added to group $selectedGroup (demo mode)"
+                Write-Debug "DEBUG: Current groups after add: $($currentUser['Groups'] -join ', ')"
+      Write-Debug "DEBUG: User $($currentUser.Name) added to group $selectedGroup (demo mode)"
                 
                 # Close dialog first
                 [Terminal.Gui.Application]::RequestStop()
@@ -2573,17 +2573,17 @@ $btnAddGroup.add_Clicked({
                 # Then update UI with error handling
                 [Terminal.Gui.Application]::MainLoop.Invoke({
                     try {
-                        Write-Host "DEBUG: Updating parent groups list..."
+                        Write-Debug "DEBUG: Updating parent groups list..."
                         $parentGroupsList.SetSource($currentUser['Groups'])
-                        Write-Host "DEBUG: Parent groups list updated"
+                        Write-Debug "DEBUG: Parent groups list updated"
                         
                         # Skip tree rebuild - will happen when properties dialog closes
                         # Build-Tree -domain $Global:Domain
                         
-                        Write-Host "DEBUG: Updating filter status label..."
+                        Write-Debug "DEBUG: Updating filter status label..."
                         if ($filterStatusLabel) {
                             Update-FilterStatusLabel -label $filterStatusLabel
-                            Write-Host "DEBUG: Filter status label updated"
+                            Write-Debug "DEBUG: Filter status label updated"
                         } else {
                             Write-Host "WARNING: filterStatusLabel is null, skipping update"
                         }
@@ -2602,7 +2602,7 @@ $btnAddGroup.add_Clicked({
                 # Production mode
                 Add-ADGroupMember -Identity $selectedGroup -Members $currentUser.Name -ErrorAction Stop
                 
-                Write-Host "DEBUG: User $($currentUser.Name) added to group $selectedGroup in AD"
+                Write-Debug "DEBUG: User $($currentUser.Name) added to group $selectedGroup in AD"
                 
                 # Reload from AD
                 $currentUser['Groups'] = @(Get-ADPrincipalGroupMembership -Identity $currentUser.Name | Select-Object -ExpandProperty Name | Sort-Object)
@@ -2613,18 +2613,18 @@ $btnAddGroup.add_Clicked({
                 # Then update UI with error handling
                 [Terminal.Gui.Application]::MainLoop.Invoke({
                     try {
-                        Write-Host "DEBUG: Updating parent groups list..."
+                        Write-Debug "DEBUG: Updating parent groups list..."
                         $parentGroupsList.SetSource($currentUser['Groups'])
-                        Write-Host "DEBUG: Parent groups list updated"
+                        Write-Debug "DEBUG: Parent groups list updated"
                         
-                        Write-Host "DEBUG: Rebuilding tree..."
+                        Write-Debug "DEBUG: Rebuilding tree..."
                         Build-Tree -domain $Global:Domain
-                        Write-Host "DEBUG: Tree rebuilt"
+                        Write-Debug "DEBUG: Tree rebuilt"
                         
-                        Write-Host "DEBUG: Updating filter status label..."
+                        Write-Debug "DEBUG: Updating filter status label..."
                         if ($filterStatusLabel) {
                             Update-FilterStatusLabel -label $filterStatusLabel
-                            Write-Host "DEBUG: Filter status label updated"
+                            Write-Debug "DEBUG: Filter status label updated"
                         } else {
                             Write-Host "WARNING: filterStatusLabel is null, skipping update"
                         }
@@ -2669,7 +2669,7 @@ $btnRemoveGroup.add_Clicked({
     # Store reference in a variable that will be captured
     $currentUser = $user
     
-    Write-Host "DEBUG: Remove from group clicked for user: $($currentUser.Name)"
+    Write-Debug "DEBUG: Remove from group clicked for user: $($currentUser.Name)"
     
     # Check if a group is selected
     if ($lstGroups.SelectedItem -eq -1) {
@@ -2692,7 +2692,7 @@ $btnRemoveGroup.add_Clicked({
     
     # Get the selected group
     $selectedGroup = $currentUser['Groups'][$lstGroups.SelectedItem]
-    Write-Host "DEBUG: Selected group to remove: $selectedGroup"
+    Write-Debug "DEBUG: Selected group to remove: $selectedGroup"
     
     # Confirm removal - FIXED: Store message first
     $confirmMessage = "Remove $($currentUser.Name) from group '$selectedGroup'?"
@@ -2706,26 +2706,26 @@ $btnRemoveGroup.add_Clicked({
     }
     
     if ($result -eq 0) {
-        Write-Host "DEBUG: User confirmed removal"
+        Write-Debug "DEBUG: User confirmed removal"
         
         try {
             if ($Global:DemoMode) {
                 # Demo mode: remove from array
-                Write-Host "DEBUG: Current groups before remove: $($currentUser['Groups'] -join ', ')"
+                Write-Debug "DEBUG: Current groups before remove: $($currentUser['Groups'] -join ', ')"
                 $currentUser['Groups'] = $currentUser['Groups'] | Where-Object { $_ -ne $selectedGroup }
-                Write-Host "DEBUG: Current groups after remove: $($currentUser['Groups'] -join ', ')"
+                Write-Debug "DEBUG: Current groups after remove: $($currentUser['Groups'] -join ', ')"
                 
-                Write-Host "DEBUG: User $($currentUser.Name) removed from group $selectedGroup (demo mode)"
+                Write-Debug "DEBUG: User $($currentUser.Name) removed from group $selectedGroup (demo mode)"
                 
                 # Update the groups list display
                 # Update the groups list display
                 [Terminal.Gui.Application]::MainLoop.Invoke({
                     try {
-                        Write-Host "DEBUG: Updating groups list..."
+                        Write-Debug "DEBUG: Updating groups list..."
                         $lstGroups.SetSource($currentUser['Groups'])
                         $lstGroups.SetNeedsDisplay()
                         $lstGroups.Redraw($lstGroups.Bounds)
-                        Write-Host "DEBUG: Groups list updated"
+                        Write-Debug "DEBUG: Groups list updated"
                     } catch {
                         Write-Host "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
                     }
@@ -2738,7 +2738,7 @@ $btnRemoveGroup.add_Clicked({
                 # Production mode: remove from AD
                 Remove-ADGroupMember -Identity $selectedGroup -Members $currentUser.Name -Confirm:$false -ErrorAction Stop
                 
-                Write-Host "DEBUG: User $($currentUser.Name) removed from group $selectedGroup in AD"
+                Write-Debug "DEBUG: User $($currentUser.Name) removed from group $selectedGroup in AD"
                 
                 # Reload group membership from AD
                 $currentUser['Groups'] = @(Get-ADPrincipalGroupMembership -Identity $currentUser.Name | Select-Object -ExpandProperty Name | Sort-Object)
@@ -2746,11 +2746,11 @@ $btnRemoveGroup.add_Clicked({
                 # Update the groups list display
                 [Terminal.Gui.Application]::MainLoop.Invoke({
                     try {
-                        Write-Host "DEBUG: Updating groups list..."
+                        Write-Debug "DEBUG: Updating groups list..."
                         $lstGroups.SetSource($currentUser['Groups'])
                         $lstGroups.SetNeedsDisplay()
                         $lstGroups.Redraw($lstGroups.Bounds)
-                        Write-Host "DEBUG: Groups list updated"
+                        Write-Debug "DEBUG: Groups list updated"
                     } catch {
                         Write-Host "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
                     }
@@ -2767,7 +2767,7 @@ $btnRemoveGroup.add_Clicked({
             [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to remove from group:`n$($_.Exception.Message)", "OK") | Out-Null
         }
     } else {
-        Write-Host "DEBUG: User cancelled removal"
+        Write-Debug "DEBUG: User cancelled removal"
     }
 }.GetNewClosure())
 $memberView.Add($btnRemoveGroup)
