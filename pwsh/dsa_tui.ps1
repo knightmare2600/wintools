@@ -165,7 +165,13 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
 1.8.1 Verbosity
  - Add Debug-Log and clean up Debug-Log calls
  - Convert Demo data to use same format as produciton data which cuts code down significantly
- - clean up outut via ebug-Log and removing dead or unused  dmeo code stanzas
+ - clean up outut via Debug-Log and removing dead or unused  dmeo code stanzas
+
+1.8.2 Lumberjack mode
+ - Rework Build-Tree from https://jdhitsolutions.com/blog/active-directory/8173/climbing-trees-in-powershell/
+ - Remove duplicatedd Build-Tree code
+ - Add updated Theme-Selector modal
+ - Additional Debug-Log code printed only when Verbose is true
 
 ===========================================================================================
 #>
@@ -228,6 +234,21 @@ $Global:FilterOptions = @{
     NameFilter = ""
     SortBy = "Name"
     SortDescending = $false
+}
+
+class OUNode {
+    [string]$Name
+    [System.Collections.Generic.List[object]]$Children
+    [object]$Tag
+
+    OUNode([string]$name) {
+        $this.Name = $name
+        $this.Children = [System.Collections.Generic.List[object]]::new()
+    }
+
+    [string] ToString() {
+        return $this.Name
+    }
 }
 
 ## --------------------------{ Debug Logging }-------------------------
@@ -602,16 +623,16 @@ function Load-DomainData {
         @{ Name='EXACPHDC01'; Site='CPH' }
     )
 
-    Write-Debug "DEBUG: rawUsers count:" $Global:rawUsers.Count
-    Write-Debug "DEBUG: rawDCs count:" $Global:rawDCs.Count
+    Write-Debug "DEBUG: rawUsers count: ${Global}:rawUsers.Count"
+    Write-Debug "DEBUG: rawDCs count: ${Global}:rawDCs.Count"
 
     # ------------------ Convert to AD-like objects ------------------
     $converted = Convert-DemoDataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Domain $Global:Domain
 
     # The function already sets $Global:Users, $Global:DCs, $Global:ADObjects
-    Write-Debug "DEBUG: Users count:" $Global:Users.Count
-    Write-Debug "DEBUG: DCs count:" $Global:DCs.Count
-    Write-Debug "DEBUG: ADObjects count:" $Global:ADObjects.Count
+    Write-Debug "DEBUG: Users count: $Global:Users.Count"
+    Write-Debug "DEBUG: DCs count: $Global:DCs.Count"
+    Write-Debug "DEBUG: ADObjects count: $Global:ADObjects.Count"
 
     } else {
         # Production mode - real AD calls
@@ -770,139 +791,217 @@ function Convert-DemoDataToADObjects {
     }
 }
 
-# Updated Build-Tree to show locked status
-# Modify the existing Build-Tree function to show both disabled and locked status:
-function Build-Tree {
-    param([string]$domain)
+## Debug ASCII art
+function Dump-OUNode {
+    param(
+        [Parameter(Mandatory)]
+        $Node,
+        [string]$Prefix = "",
+        [bool]$IsLast = $true
+    )
 
-    Write-Debug "DEBUG: Building tree for domain $domain..."
+    $connector = if ($Prefix -eq "") { "" }
+                 elseif ($IsLast)    { "└── " }
+                 else                { "├── " }
 
-    $tree.ClearObjects()
-    $root = [Terminal.Gui.Trees.TreeNode]::new($domain)
+   Debug-Log "$Prefix$connector${$Node.Name}"
 
-    if ($Global:DemoMode) {
-        Write-Debug "DEBUG: Building demo mode tree..."
-
-        # Helper class for OU nodes
-        class OUNode {
-            [string]$Name
-            [System.Collections.Generic.List[object]]$Children
-            [object]$Tag
-
-            OUNode([string]$name) {
-                $this.Name = $name
-                $this.Children = [System.Collections.Generic.List[object]]::new()
-            }
-
-            [string] ToString() {
-                return $this.Name
-            }
-        }
-
-        # Apply filters once
-        $nameFilter = $Global:FilterOptions.NameFilter.Trim()
-        $filteredUsers = $Global:Users | Where-Object {
-            ($_.Disabled -and $Global:FilterOptions.ShowDisabledUsers) -or
-            (-not $_.Disabled -and $Global:FilterOptions.ShowEnabledUsers)
-        }
-
-        if ($nameFilter) {
-            $filteredUsers = $filteredUsers | Where-Object {
-                $_.Name -like "*$nameFilter*" -or
-                $_.EmailAddress -like "*$nameFilter*" -or
-                $_.Title -like "*$nameFilter*"
-            }
-        }
-
-        Write-Debug "DEBUG: Filtered to $($filteredUsers.Count) users"
-
-        # Build hierarchical OU tree
-        $rootOU = [OUNode]::new($domain)
-        $nodeCache = @{ "" = $rootOU }
-
-        foreach ($user in $filteredUsers) {
-            if (-not $user.OU) { continue }
-
-            $pathSoFar = ""
-            $currentNode = $rootOU
-
-            foreach ($ouLevel in $user.OU) {
-                $newPath = if ($pathSoFar) { "$pathSoFar/$ouLevel" } else { $ouLevel }
-
-                if ($nodeCache.ContainsKey($newPath)) {
-                    $currentNode = $nodeCache[$newPath]
-                } else {
-                    $newNode = [OUNode]::new($ouLevel)
-                    $currentNode.Children.Add($newNode)
-                    $nodeCache[$newPath] = $newNode
-                    $currentNode = $newNode
-                }
-
-                $pathSoFar = $newPath
-            }
-
-            # Add user node with status icon
-            $statusIcon = if ($user.Locked) { "🔒" } elseif ($user.Disabled) { "⊗" } else { "○" }
-            $userNode = [OUNode]::new("(U) $statusIcon $($user.Name)")
-            $userNode.Tag = $user
-            $currentNode.Children.Add($userNode)
-        }
-
-        # Add Groups under their respective OUs
-        if ($Global:FilterOptions.ShowGroups) {
-            $allGroups = $filteredUsers | ForEach-Object { $_.Groups } | Where-Object { $_ } | Select-Object -Unique
-            foreach ($groupName in $allGroups | Sort-Object) {
-                $groupNode = [OUNode]::new($groupName)
-                $members = $filteredUsers | Where-Object { $_.Groups -contains $groupName } | Sort-Object -Property Name
-                foreach ($member in $members) {
-                    $statusIcon = if ($member.Locked) { "🔒" } elseif ($member.Disabled) { "⊗" } else { "○" }
-                    $memberNode = [OUNode]::new("(U) $statusIcon $($member.Name)")
-                    $memberNode.Tag = $member
-                    $groupNode.Children.Add($memberNode)
-                }
-                if ($groupNode.Children.Count -gt 0) {
-                    $rootOU.Children.Add($groupNode)
-                }
-            }
-        }
-
-        # Add Domain Controllers
-        if ($Global:FilterOptions.ShowDCs -and $Global:DCs.Count -gt 0) {
-            $dcNode = [OUNode]::new("Domain Controllers")
-            foreach ($dc in ($Global:DCs | Sort-Object -Property Name)) {
-                $dcChildNode = [OUNode]::new("(DC) $($dc.Name) [$($dc.Site)]")
-                $dcNode.Children.Add($dcChildNode)
-            }
-            $rootOU.Children.Add($dcNode)
-        }
-
-        # Add top-level OU to tree
-        $tree.AddObject($rootOU)
-
-        Write-Debug "DEBUG: Demo tree built with $($rootOU.Children.Count) top-level nodes"
+    # Build prefix for children
+    $childPrefix = if ($Prefix -eq "") {
+        ""   # root has no prefix
+    } elseif ($IsLast) {
+        "$Prefix    "
+    } else {
+        "$Prefix│   "
     }
 }
 
-if ($Global:DemoMode) {
-  Write-Debug "DEBUG: rawUsers count:" $rawUsers.Count
-  Write-Debug "DEBUG: rawDCs count:" $rawDCs.Count
+function Convert-ToTreeNode {
+    param([OUNode]$node)
 
-  $converted = Convert-DemoDataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Domain $Global:domain
-} else {
-  Load-DomainData -domain $Global:Domain
-  # Set global variables
-  $Global:Users = $converted.Users
-  $Global:DCs   = $converted.DCs
-  $Global:ADObjects = $converted.Users + $converted.DCs
+    $tn = [Terminal.Gui.Trees.TreeNode]::new($node, $node.Name)
 
-  Write-Host $converted.Users
-  Write-Host $converted.DCs
-  Write-Host $converted.ADObjects
+    foreach ($child in $node.Children) {
+        $tn.Children.Add((Convert-ToTreeNode $child))
+    }
+
+    return $tn
 }
 
-# Step 3: Replace your "Initialize Terminal.Gui" section with this:
+function Build-Tree {
+    param([string]$domain)
 
-# ------------------------- Initialize Terminal.Gui ------------------------
+    Write-Host "DEBUG: Building tree for domain $domain..."
+
+    $tree.ClearObjects()
+
+    # Apply filters (same as before)
+    $nameFilter = $Global:FilterOptions.NameFilter.Trim()
+    $filteredUsers = $Global:Users | Where-Object {
+        ($_.Disabled -and $Global:FilterOptions.ShowDisabledUsers) -or
+        (-not $_.Disabled -and $Global:FilterOptions.ShowEnabledUsers)
+    }
+
+    if ($nameFilter) {
+        $filteredUsers = $filteredUsers | Where-Object {
+            $_.Name -like "*$nameFilter*" -or
+            $_.EmailAddress -like "*$nameFilter*" -or
+            $_.Title -like "*$nameFilter*"
+        }
+    }
+
+    Write-Host "DEBUG: Filtered to $($filteredUsers.Count) users"
+
+    # Create root TreeNode (Terminal.Gui native)
+    $root = [Terminal.Gui.Trees.TreeNode]::new($domain)
+
+    # Cache for finding nodes by path
+    $nodeCache = @{ "" = $root }
+
+    # Helper function to get or create node
+    function Get-OrCreateChildNode {
+        param(
+            [Terminal.Gui.Trees.TreeNode]$Parent,
+            [string]$Name,
+            [string]$FullPath
+        )
+
+        # Check cache first
+        if ($nodeCache.ContainsKey($FullPath)) {
+            return $nodeCache[$FullPath]
+        }
+
+        # Create new node
+        $newNode = [Terminal.Gui.Trees.TreeNode]::new($Name)
+        
+        # Try to add to parent - handle if Children is null
+        try {
+            if ($null -eq $Parent.Children) {
+                # Initialize Children collection if needed
+                $Parent | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+            }
+            $Parent.Children.Add($newNode)
+        } catch {
+            Write-Host "WARNING: Could not add node $Name to parent: $_"
+        }
+
+        # Cache it
+        $nodeCache[$FullPath] = $newNode
+        return $newNode
+    }
+
+    # Build OU hierarchy
+    foreach ($user in $filteredUsers) {
+        if (-not $user.OU) { continue }
+
+        $ouPath = @($user.OU)
+        if ($ouPath.Count -eq 0) { continue }
+
+        # Navigate/create the OU path
+        $currentNode = $root
+        $pathSoFar = ""
+
+        foreach ($ouLevel in $ouPath) {
+            $pathSoFar = if ($pathSoFar) { "$pathSoFar/$ouLevel" } else { $ouLevel }
+            $currentNode = Get-OrCreateChildNode -Parent $currentNode -Name $ouLevel -FullPath $pathSoFar
+        }
+
+        # Add user node
+        $statusIcon = if ($user.Locked) { "🔒" } elseif ($user.Disabled) { "⊗" } else { "○" }
+        $userNode = [Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($user.Name)")
+        $userNode.Tag = $user
+        
+        if ($null -eq $currentNode.Children) {
+            $currentNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+        }
+        $currentNode.Children.Add($userNode)
+    }
+
+    # Add Groups
+    if ($Global:FilterOptions.ShowGroups) {
+        $groupsNode = Get-OrCreateChildNode -Parent $root -Name "Groups" -FullPath "_Groups"
+        
+        $allGroups = $filteredUsers | 
+            ForEach-Object { $_.Groups } | 
+            Where-Object { $_ } | 
+            Select-Object -Unique | 
+            Sort-Object
+        
+        foreach ($groupName in $allGroups) {
+            $groupNode = [Terminal.Gui.Trees.TreeNode]::new($groupName)
+            
+            $members = $filteredUsers | 
+                Where-Object { $_.Groups -contains $groupName } | 
+                Sort-Object -Property Name
+            
+            foreach ($member in $members) {
+                $statusIcon = if ($member.Locked) { "🔒" } elseif ($member.Disabled) { "⊗" } else { "○" }
+                $memberNode = [Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($member.Name)")
+                $memberNode.Tag = $member
+                
+                if ($null -eq $groupNode.Children) {
+                    $groupNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+                }
+                $groupNode.Children.Add($memberNode)
+            }
+            
+            if ($groupNode.Children -and $groupNode.Children.Count -gt 0) {
+                $groupsNode.Children.Add($groupNode)
+            }
+        }
+    }
+
+    # Add DCs
+    if ($Global:FilterOptions.ShowDCs -and $Global:DCs.Count -gt 0) {
+        $dcNode = Get-OrCreateChildNode -Parent $root -Name "Domain Controllers" -FullPath "_DCs"
+        
+        foreach ($dc in ($Global:DCs | Sort-Object -Property Name)) {
+            $dcChildNode = [Terminal.Gui.Trees.TreeNode]::new("(DC) $($dc.Name) [$($dc.Site)]")
+            $dcChildNode.Tag = $dc
+            $dcNode.Children.Add($dcChildNode)
+        }
+    }
+
+    # Add root to tree
+    $tree.AddObject($root)
+
+    Write-Host "DEBUG: Tree built with $($nodeCache.Count) cached nodes"
+}
+
+# ------------------------- Filter Status Label ------------------------
+function Create-FilterStatusLabel {
+    $lblStatus = [Terminal.Gui.Label]::new("")
+    $lblStatus.X = 80
+    $lblStatus.Y = 6
+    $lblStatus.Width = 40
+    
+    return $lblStatus
+}
+
+function Update-FilterStatusLabel {
+    param($label)
+    
+    if (-not $label) {
+        Debug-Log "WARNING: label parameter is null in Update-FilterStatusLabel"
+        return
+    }
+    
+    $activeFilters = @()
+    if (-not $Global:FilterOptions.ShowEnabledUsers) { $activeFilters += "No Enabled" }
+    if (-not $Global:FilterOptions.ShowDisabledUsers) { $activeFilters += "No Disabled" }
+    if (-not $Global:FilterOptions.ShowGroups) { $activeFilters += "No Groups" }
+    if (-not $Global:FilterOptions.ShowDCs) { $activeFilters += "No DCs" }
+    if ($Global:FilterOptions.NameFilter) { $activeFilters += "Name:$($Global:FilterOptions.NameFilter)" }
+    
+    if ($activeFilters.Count -gt 0) {
+        $label.Text = "Active Filters: " + ($activeFilters -join ", ")
+    } else {
+        $label.Text = "No filters active (showing all)"
+    }
+}
+
+## ----------------------------{ Start program }----------------------------
+## ------------------------{ Initialize Terminal.Gui }----------------------
 [Terminal.Gui.Application]::Init()
 $top = [Terminal.Gui.Application]::Top
 
@@ -951,7 +1050,7 @@ $top.Add($status)
 # Existing menu items
 $mFile = [Terminal.Gui.MenuItem]::new("_Exit","Exit application",[Action]{ [Terminal.Gui.Application]::RequestStop() })
 $mNew = [Terminal.Gui.MenuItem]::new("New Object","Create a new object",[Action]{ Show-NewObjectWizard })
-$mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-Properties })
+$mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-UserPropertiesDialog -user $selUser -Global $Global })
 $mUndo = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Debug-Log "DEBUG: Undo placeholder" })
 $mChangeDomain = [Terminal.Gui.MenuItem]::new("Change _Domain","Select domain",[Action]{ Show-ChangeDomainDialog })
 $mChangeDC = [Terminal.Gui.MenuItem]::new("Change _Domain Controller","Select DC",[Action]{ Show-ChangeDCDialog })
@@ -1045,7 +1144,7 @@ $top.Add($menu)
 
 # ------------------------- TreeView ------------------------
 $tree = [Terminal.Gui.TreeView]::new()
-$tree.X=0; $tree.Y=1; $tree.Width=30; $tree.Height=[Terminal.Gui.Dim]::Fill()
+$tree.X=0; $tree.Y=1; $tree.Width=80; $tree.Height=[Terminal.Gui.Dim]::Fill()
 
 
 
@@ -1154,128 +1253,6 @@ function Create-FilterPanel {
     return $filterFrame
 }
 
-# ------------------------- Enhanced Build-Tree with Filters ------------------------
-function Build-Tree {
-    param([string]$domain)
-    
-    Debug-Log "DEBUG: Building tree with filters..."
-    
-    $tree.ClearObjects()
-    $root = [Terminal.Gui.Trees.TreeNode]::new($domain)
-    
-    # Apply name filter if specified
-    $nameFilter = $Global:FilterOptions.NameFilter.Trim()
-    $filteredUsers = $Global:Users
-    
-    if ($nameFilter) {
-        $filteredUsers = $filteredUsers | Where-Object { 
-            $_.Name -like "*$nameFilter*" -or 
-            $_.Email -like "*$nameFilter*" -or 
-            $_.Title -like "*$nameFilter*"
-        }
-    }
-    
-    # Apply enabled/disabled filter
-    $filteredUsers = $filteredUsers | Where-Object {
-        ($_.Disabled -and $Global:FilterOptions.ShowDisabledUsers) -or
-        (-not $_.Disabled -and $Global:FilterOptions.ShowEnabledUsers)
-    }
-    
-    # Sort users based on preference
-    switch ($Global:FilterOptions.SortBy) {
-        "Name" { $filteredUsers = $filteredUsers | Sort-Object -Property Name -Descending:$Global:FilterOptions.SortDescending }
-        "Type" { $filteredUsers = $filteredUsers | Sort-Object -Property Title,Name -Descending:$Global:FilterOptions.SortDescending }
-        "OU"   { $filteredUsers = $filteredUsers | Sort-Object -Property OU,Name -Descending:$Global:FilterOptions.SortDescending }
-    }
-    
-    # Get unique OUs from filtered users
-    $OUs = $filteredUsers | Select-Object -ExpandProperty OU -Unique | Sort-Object
-    
-    foreach ($ou in $OUs) {
-        $ouNode = [Terminal.Gui.Trees.TreeNode]::new($ou)
-        
-        # Build group lookup for this OU
-        $groupLookup = @{}
-        foreach ($u in $filteredUsers | Where-Object { $_.OU -eq $ou }) {
-            foreach ($grp in $u.Groups) {
-                if (-not $groupLookup.ContainsKey($grp)) { $groupLookup[$grp] = @() }
-                $groupLookup[$grp] += $u
-            }
-        }
-        
-        # Only show groups if filter allows
-        if ($Global:FilterOptions.ShowGroups) {
-            $sortedGroups = $groupLookup.Keys | Sort-Object
-            foreach ($grpName in $sortedGroups) {
-                $grpNode = [Terminal.Gui.Trees.TreeNode]::new($grpName)
-                
-                $members = $groupLookup[$grpName] | Sort-Object -Property Name
-                foreach ($m in $members) {
-                    # Add status indicator
-                    $statusIcon = if ($m.Disabled) { "⊗" } else { "○" }
-                    $grpNode.Children.Add([Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($m.Name)"))
-                }
-                
-                $ouNode.Children.Add($grpNode)
-            }
-        } else {
-            # If groups hidden, show users directly under OU
-            foreach ($u in ($filteredUsers | Where-Object { $_.OU -eq $ou } | Sort-Object -Property Name)) {
-                $statusIcon = if ($u.Disabled) { "⊗" } else { "○" }
-                $ouNode.Children.Add([Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($u.Name)"))
-            }
-        }
-        
-        if ($ouNode.Children.Count -gt 0) {
-            $root.Children.Add($ouNode)
-        }
-    }
-    
-    # Add Domain Controllers if filter allows
-    if ($Global:FilterOptions.ShowDCs -and $Global:DCs.Count -gt 0) {
-        $dcNode = [Terminal.Gui.Trees.TreeNode]::new("Domain Controllers")
-        foreach ($dc in ($Global:DCs | Sort-Object -Property Name)) {
-            $dcNode.Children.Add([Terminal.Gui.Trees.TreeNode]::new("(DC) $($dc.Name)"))
-        }
-        $root.Children.Add($dcNode)
-    }
-    
-    # Add Production AD Object Types if not in demo mode
-    if (-not $DemoMode -and $Global:ADObjects.Count -gt 0) {
-        $types = $Global:ADObjects | Select-Object -ExpandProperty Type -Unique | Sort-Object
-        
-        foreach ($t in $types) {
-            # Skip types based on filters
-            if ($t -eq "computer" -and -not $Global:FilterOptions.ShowComputers) { continue }
-            if ($t -eq "organizationalUnit" -and -not $Global:FilterOptions.ShowOUs) { continue }
-            
-            $typeNode = [Terminal.Gui.Trees.TreeNode]::new($t)
-            $objs = $Global:ADObjects | Where-Object { $_.Type -eq $t }
-            
-            # Apply name filter to objects
-            if ($nameFilter) {
-                $objs = $objs | Where-Object { $_.Name -like "*$nameFilter*" }
-            }
-            
-            $objs = $objs | Sort-Object -Property Name
-            foreach ($o in $objs) { 
-                $typeNode.Children.Add([Terminal.Gui.Trees.TreeNode]::new($o.Name)) 
-            }
-            
-            if ($typeNode.Children.Count -gt 0) {
-                $root.Children.Add($typeNode)
-            }
-        }
-    }
-    
-    $tree.AddObject($root)
-    
-    # Show filter status
-    $filterCount = $filteredUsers.Count
-    $totalCount = $Global:Users.Count
-    Debug-Log "DEBUG: Tree built - Showing $filterCount of $totalCount users"
-}
-
 # ------------------------- Quick Filter Menu (for Menu Bar) ------------------------
 function Show-QuickFilterDialog {
     $dlg = [Terminal.Gui.Dialog]::new("Quick Filters", 50, 20)
@@ -1353,38 +1330,6 @@ function Show-QuickFilterDialog {
     $dlg.AddButton($btnCancel)
     
     [Terminal.Gui.Application]::Run($dlg)
-}
-
-# ------------------------- Filter Status Label ------------------------
-function Create-FilterStatusLabel {
-    $lblStatus = [Terminal.Gui.Label]::new("")
-    $lblStatus.X = 32
-    $lblStatus.Y = 13
-    $lblStatus.Width = 40
-    
-    return $lblStatus
-}
-
-function Update-FilterStatusLabel {
-    param($label)
-    
-    if (-not $label) {
-        Debug-Log "WARNING: label parameter is null in Update-FilterStatusLabel"
-        return
-    }
-    
-    $activeFilters = @()
-    if (-not $Global:FilterOptions.ShowEnabledUsers) { $activeFilters += "No Enabled" }
-    if (-not $Global:FilterOptions.ShowDisabledUsers) { $activeFilters += "No Disabled" }
-    if (-not $Global:FilterOptions.ShowGroups) { $activeFilters += "No Groups" }
-    if (-not $Global:FilterOptions.ShowDCs) { $activeFilters += "No DCs" }
-    if ($Global:FilterOptions.NameFilter) { $activeFilters += "Name:$($Global:FilterOptions.NameFilter)" }
-    
-    if ($activeFilters.Count -gt 0) {
-        $label.Text = "Active Filters: " + ($activeFilters -join ", ")
-    } else {
-        $label.Text = "No filters active (showing all)"
-    }
 }
 
 # ---------------------------------------------------------------------------
