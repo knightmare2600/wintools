@@ -18,6 +18,9 @@ Historical Build Notes and Change Log
 - Corrected function keys in menus and status bar
 - Add command line options for DemoMode, Logging and Verbose
 - Global Debug-Log and Show-Modal functions ot significantly cut down on code
+1.2.8 (Globals)
+ - Make use of global variables and use accordingly in dialogs and modals
+ - Add codename Global and use accordingly
 ===========================================================================================
 #>
 
@@ -42,15 +45,15 @@ if (-not ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName
 
 ## -------------------------{ Global Variables }--------------------------
 ## Define the build version, project name and fruit codename once only
-$BuildVersion = "1.2.4"
-$ProjectName = "Demo TUI Powershell App"
-$FruitName = "Dansk Frugt Namen"
+$Global:ProjectName = "Demo TUI Powershell App"
+$Global:FruitName = "Dansk Frugt Namen"
+$Global:BuildVersion = "1.2.4"
 
 ## Set global flags immediately after param block - themes here
 $Global:DemoMode = $DemoMode
-$script:ThemeMode = $Theme
+$Global:ThemeMode = $Theme
 
-Write-Host "Starting ${ProjectName} v ${BuildVersion} in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode with ${Theme} theme..."
+Write-Host "Starting $($Global:ProjectName) - ${Global:BuildVersion} Codename: ($Global:FruitName) with theme: ($Global:Theme)"
 
 ## -------------------------------{ App }---------------------------------
 [Terminal.Gui.Application]::Init()
@@ -120,7 +123,7 @@ function Show-ThemeSelector {
   $lbl = [Terminal.Gui.Label]::new("Choose a color theme:"); $lbl.X=2; $lbl.Y=1; $dlg.Add($lbl)
   
   $themes = @("light", "dark", "matrix", "british")
-  $currentIndex = $themes.IndexOf($script:ThemeMode)
+  $currentIndex = $themes.IndexOf($Global:ThemeMode)
   if ($currentIndex -lt 0) { $currentIndex = 1 } # default to dark
 
   $rdoThemes = [Terminal.Gui.RadioGroup]::new($themes)
@@ -132,7 +135,7 @@ function Show-ThemeSelector {
   $btnApply.add_Clicked({
     $selectedTheme = $themes[$rdoThemes.SelectedItem]
     Debug-Log "Switching to theme: $selectedTheme"
-    $script:ThemeMode = $selectedTheme
+    $Global:ThemeMode = $selectedTheme
         
     ## Get new theme
     $newTheme = Get-Theme -mode $selectedTheme
@@ -295,7 +298,7 @@ function Dump-ColorScheme {
 }
 
 ## Select theme before proceeding. Save the mode string
-$script:ThemeMode = $Theme
+$Global:ThemeMode = $Theme
 
 ## Get the selected colour scheme
 $cs = Get-Theme -mode $Theme
@@ -486,13 +489,13 @@ $btnCopy.add_Clicked({
 ## This is a theme now. Danish Fruit soda based fun. Method to the
 ## madness
 function Show-DanskFrugtInfo {
-  $dlg = [Terminal.Gui.Dialog]::new("Why Danske Frught? 🫐", 60, 12)
+  $dlg = [Terminal.Gui.Dialog]::new("Why ($Global:DruitName)? 🫐", 60, 12)
     
   $message = @"
 ${ProjectName} is codenamed "Fruitname" because:
 
 - Reason 1
-- 'Fruit Name' (Danish Speling) is Danish for Fruit Namen
+- '($Global:FruitName)' (Danish Speling) is Danish for Fruit Namen
 - Reason 2
 - Every great project needs a forest-fruit mascot!
 "@
@@ -500,7 +503,7 @@ ${ProjectName} is codenamed "Fruitname" because:
   $label = [Terminal.Gui.Label]::new(1, 1, $message)
   $dlg.Add($label)
     
-  [Terminal.Gui.MessageBox]::Query("Why Frught Namen? 🫐", $message, @("OK"))
+  [Terminal.Gui.MessageBox]::Query("Why ($Global:FruitName)? 🫐", $message, @("OK"))
 }
 
 ## ------------------------{ Show message boxes }----------------------
@@ -567,7 +570,8 @@ $Menu = [Terminal.Gui.MenuBar]::new(@(
   [Terminal.Gui.MenuBarItem]::new("_Help", @(
     [Terminal.Gui.MenuItem]::new("_Shortcuts", "Keyboard shortcuts (F1)", [Action]{ Show-Modal "Shortcuts" "F1 - Help`nF2 -Password Generator`nF3 Tools`n F10 - Quit`nF12 -Themes" }),
     [Terminal.Gui.MenuItem]::new("_Why Frught Namen?", "Danish Fruit Explainer", [Action]{ Show-DanskFrugtInfo }),
-    [Terminal.Gui.MenuItem]::new("_About", "About ${ProjectName}", [Action]{Show-Modal "About" "${ProjectName} ${BuildVersion} ${FruitName}`n© 1995 Copyleft (GPL-3)`nDemo Mode: $DemoMode"
+    [Terminal.Gui.MenuItem]::new("_About", "About ($Global:FruitName)", [Action]{
+      Show-Modal "About" "$($Global:ProjectName)`n`nCodename: $($Global:FruitName)`nv$($Global:PSMC_Version) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600"
     })
   ))
 ))
@@ -620,7 +624,7 @@ $top.Add($win)
 
 ## Get the selected theme (use this variable)
 $themeData = Get-Theme -mode $Theme
-$script:ThemeMode = $Theme
+$Global:ThemeMode = $Theme
 Debug-Log "Applying theme: $Theme"
 
 ## Apply theme globally and per-component
