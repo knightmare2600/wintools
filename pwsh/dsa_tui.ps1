@@ -172,6 +172,7 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Remove duplicatedd Build-Tree code
  - Add updated Theme-Selector modal
  - Additional Debug-Log code printed only when Verbose is true
+ - Explain Show-Properties and why that is called instead of e.g. Show-UserProperties
 
 ===========================================================================================
 #>
@@ -187,7 +188,7 @@ param(
 Write-Host "Starting DSA-TUI in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode with $Theme theme..."
 
 # Define the build version once
-$BuildVersion = "1.8.1"
+$BuildVersion = "1.8.2"
 
 ## For passwords expiring soon
 $sevenDaysFileTime = (Get-Date).AddDays(-7).ToFileTime()
@@ -540,7 +541,7 @@ function Load-DomainData {
   if ($Logging) { Write-Debug "DEBUG: Loading domain data for: $domain" }
 
   if ($Global:DemoMode) {
-    Write-Host "Starting DSA-TUI in DEMO mode..."
+    Debug-Log "Starting DSA-TUI in DEMO mode..."
 
     # ------------------ Define Demo Users ------------------
     $Global:rawUsers = @(
@@ -831,7 +832,7 @@ function Convert-ToTreeNode {
 function Build-Tree {
     param([string]$domain)
 
-    Write-Host "DEBUG: Building tree for domain $domain..."
+    Debug-Log "DEBUG: Building tree for domain $domain..."
 
     $tree.ClearObjects()
 
@@ -850,7 +851,7 @@ function Build-Tree {
         }
     }
 
-    Write-Host "DEBUG: Filtered to $($filteredUsers.Count) users"
+    Debug-Log "DEBUG: Filtered to $($filteredUsers.Count) users"
 
     # Create root TreeNode (Terminal.Gui native)
     $root = [Terminal.Gui.Trees.TreeNode]::new($domain)
@@ -882,7 +883,7 @@ function Build-Tree {
             }
             $Parent.Children.Add($newNode)
         } catch {
-            Write-Host "WARNING: Could not add node $Name to parent: $_"
+            Debug-Log "WARNING: Could not add node $Name to parent: $_"
         }
 
         # Cache it
@@ -965,7 +966,7 @@ function Build-Tree {
     # Add root to tree
     $tree.AddObject($root)
 
-    Write-Host "DEBUG: Tree built with $($nodeCache.Count) cached nodes"
+    Debug-Log "DEBUG: Tree built with $($nodeCache.Count) cached nodes"
 }
 
 # ------------------------- Filter Status Label ------------------------
@@ -1050,7 +1051,7 @@ $top.Add($status)
 # Existing menu items
 $mFile = [Terminal.Gui.MenuItem]::new("_Exit","Exit application",[Action]{ [Terminal.Gui.Application]::RequestStop() })
 $mNew = [Terminal.Gui.MenuItem]::new("New Object","Create a new object",[Action]{ Show-NewObjectWizard })
-$mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-UserPropertiesDialog -user $selUser -Global $Global })
+$mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-Properties -user $selUser })
 $mUndo = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Debug-Log "DEBUG: Undo placeholder" })
 $mChangeDomain = [Terminal.Gui.MenuItem]::new("Change _Domain","Select domain",[Action]{ Show-ChangeDomainDialog })
 $mChangeDC = [Terminal.Gui.MenuItem]::new("Change _Domain Controller","Select DC",[Action]{ Show-ChangeDCDialog })
@@ -2195,12 +2196,20 @@ function Update-UserObjectFromFields($user) {
 }
 
 function Show-UserPropertiesDialog {
-    param($user, $Global)
+    param($user)
 
-    # Safety checks
-    if (-not $user) { Write-Error "User object is null"; return }
-    if (-not $Global:Domain) { $Global:Domain = "" }
-    if ($Global:DemoMode -and -not $Global:Users) { $Global:Users = @() }
+   # Safety checks
+    if (-not $user) { 
+        Debug-Log "ERROR: User object is null"
+        return 
+    }
+    
+    Debug-Log "DEBUG: Show-UserPropertiesDialog starting for: $($user.Name)"
+
+#    # Safety checks
+#    if (-not $user) { Write-Error "User object is null"; return }
+#    if (-not $Global:Domain) { $Global:Domain = "" }
+#    if ($Global:DemoMode -and -not $Global:Users) { $Global:Users = @() }
 
     # ----- Create main dialog -----
     $dlg = [Terminal.Gui.Dialog]::new("User Properties", 100, 40)
@@ -2477,13 +2486,13 @@ $btnAddGroup.add_Clicked({
         }
         
         if (-not $groupsToAdd -or $groupsToAdd.Count -eq 0) {
-            Write-Host "ERROR: groupsToAdd is null or empty"
+            Debug-Log "ERROR: groupsToAdd is null or empty"
             [Terminal.Gui.MessageBox]::Query(50, 7, "Error", "No groups available", "OK") | Out-Null
             return
         }
         
         if ($lstAvailGroups.SelectedItem -ge $groupsToAdd.Count) {
-            Write-Host "ERROR: SelectedItem ($($lstAvailGroups.SelectedItem)) >= groupsToAdd.Count ($($groupsToAdd.Count))"
+            Debug-Log "ERROR: SelectedItem ($($lstAvailGroups.SelectedItem)) >= groupsToAdd.Count ($($groupsToAdd.Count))"
             [Terminal.Gui.MessageBox]::Query(50, 7, "Error", "Invalid selection index", "OK") | Out-Null
             return
         }
@@ -2530,20 +2539,20 @@ $btnAddGroup.add_Clicked({
                             Update-FilterStatusLabel -label $filterStatusLabel
                             Write-Debug "DEBUG: Filter status label updated"
                         } else {
-                            Write-Host "WARNING: filterStatusLabel is null, skipping update"
+                            Debug-Log "WARNING: filterStatusLabel is null, skipping update"
                         }
                     } catch {
-                        Write-Host "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
-                        Write-Host "ERROR: Stack trace: $($_.ScriptStackTrace)"
+                        Debug-Log "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
+                        Debug-Log "ERROR: Stack trace: $($_.ScriptStackTrace)"
                     }
                 })
                 
                 $script:changesMade = $true
                 
                 # Success message
-                Write-Host "SUCCESS: Added $($currentUser.Name) to group $selectedGroup"
+                Debug-Log "SUCCESS: Added $($currentUser.Name) to group $selectedGroup"
 
-} else {
+                } else {
                 # Production mode
                 Add-ADGroupMember -Identity $selectedGroup -Members $currentUser.Name -ErrorAction Stop
                 
@@ -2571,22 +2580,22 @@ $btnAddGroup.add_Clicked({
                             Update-FilterStatusLabel -label $filterStatusLabel
                             Write-Debug "DEBUG: Filter status label updated"
                         } else {
-                            Write-Host "WARNING: filterStatusLabel is null, skipping update"
+                            Debug-Log "WARNING: filterStatusLabel is null, skipping update"
                         }
                     } catch {
-                        Write-Host "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
-                        Write-Host "ERROR: Stack trace: $($_.ScriptStackTrace)"
+                        Debug-Log "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
+                        Debug-Log "ERROR: Stack trace: $($_.ScriptStackTrace)"
                     }
                 })
                 
                 $script:changesMade = $true
                 
-                Write-Host "SUCCESS: Added $($currentUser.Name) to group $selectedGroup"
+                Debug-Log "SUCCESS: Added $($currentUser.Name) to group $selectedGroup"
             }
-  } catch {
-            Write-Host "ERROR: Failed to add to group: $($_.Exception.Message)"
-            Write-Host "ERROR: Exception type: $($_.Exception.GetType().FullName)"
-            Write-Host "ERROR: Stack trace: $($_.ScriptStackTrace)"
+       } catch {
+            Debug-Log "ERROR: Failed to add to group: $($_.Exception.Message)"
+            Debug-Log "ERROR: Exception type: $($_.Exception.GetType().FullName)"
+            Debug-Log "ERROR: Stack trace: $($_.ScriptStackTrace)"
             [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to add to group:`n$($_.Exception.Message)", "OK") | Out-Null
         }
     }.GetNewClosure())
@@ -2602,7 +2611,7 @@ $btnAddGroup.add_Clicked({
         }
     })
     
-    [Terminal.Gui.Application]::Run($grpDlg)
+[Terminal.Gui.Application]::Run($grpDlg)
 }.GetNewClosure())
 $memberView.Add($btnAddGroup)
    
@@ -2630,7 +2639,7 @@ $btnRemoveGroup.add_Clicked({
     
     # Verify selected index is valid
     if ($lstGroups.SelectedItem -ge $currentUser['Groups'].Count) {
-        Write-Host "ERROR: SelectedItem out of range"
+        Debug-Log "ERROR: SelectedItem out of range"
         [Terminal.Gui.MessageBox]::Query(50, 7, "Error", "Invalid group selection", "OK") | Out-Null
         return
     }
@@ -2645,7 +2654,7 @@ $btnRemoveGroup.add_Clicked({
     try {
         $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Confirm Removal", $confirmMessage, @("Yes", "No"))
     } catch {
-        Write-Host "ERROR: MessageBox failed: $($_.Exception.Message)"
+        Debug-Log "ERROR: MessageBox failed: $($_.Exception.Message)"
         # Fall back to no confirmation, just do it
         $result = 0
     }
@@ -2672,12 +2681,12 @@ $btnRemoveGroup.add_Clicked({
                         $lstGroups.Redraw($lstGroups.Bounds)
                         Write-Debug "DEBUG: Groups list updated"
                     } catch {
-                        Write-Host "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
+                        Debug-Log "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
                     }
                 })                
                 $script:changesMade = $true
                 
-                Write-Host "SUCCESS: Removed $($currentUser.Name) from group $selectedGroup"
+                Debug-Log "SUCCESS: Removed $($currentUser.Name) from group $selectedGroup"
                 
             } else {
                 # Production mode: remove from AD
@@ -2697,18 +2706,18 @@ $btnRemoveGroup.add_Clicked({
                         $lstGroups.Redraw($lstGroups.Bounds)
                         Write-Debug "DEBUG: Groups list updated"
                     } catch {
-                        Write-Host "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
+                        Debug-Log "ERROR in MainLoop.Invoke: $($_.Exception.Message)"
                     }
                 })
                 
                 $script:changesMade = $true
                 
-                Write-Host "SUCCESS: Removed $($currentUser.Name) from group $selectedGroup"
+                Debug-Log "SUCCESS: Removed $($currentUser.Name) from group $selectedGroup"
             }
             
         } catch {
-            Write-Host "ERROR: Failed to remove from group: $($_.Exception.Message)"
-            Write-Host "ERROR: Stack trace: $($_.ScriptStackTrace)"
+            Debug-Log "ERROR: Failed to remove from group: $($_.Exception.Message)"
+            Debug-Log "ERROR: Stack trace: $($_.ScriptStackTrace)"
             [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to remove from group:`n$($_.Exception.Message)", "OK") | Out-Null
         }
     } else {
@@ -2798,7 +2807,57 @@ $tabView.AddTab($memberTab, $false)
         }
     })
 
+#####################################################################################################
+## placeholder menu items. Place tabs chronologically as to see them in order, 1.16
+## doesn't support any other type of ordering
 
+# ----- Profile -----
+$profileTab = [Terminal.Gui.TabView+Tab]::new()
+$profileTab.Text = "Proifle"
+$profileView = [Terminal.Gui.View]::new()
+
+$y = 1
+$lbl = [Terminal.Gui.Label]::new("Profile Dir:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
+$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=40
+$txtStreet.add_TextChanged({ $script:changesMade = $true })
+$addressView.Add($txtStreet)
+$y+=2
+
+$profileTab.View = $profileView
+$tabView.AddTab($profileTab, $false)
+
+# ----- Remote Desktop Services -----
+$RDPTab = [Terminal.Gui.TabView+Tab]::new()
+$RDPTab.Text = "Remote Desktop Services"
+$RDPView = [Terminal.Gui.View]::new()
+
+$y = 1
+$lbl = [Terminal.Gui.Label]::new("RDP Profile Dir:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
+$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=40
+$txtStreet.add_TextChanged({ $script:changesMade = $true })
+$addressView.Add($txtStreet)
+$y+=2
+
+$RDPTab.View = $RDPView
+$tabView.AddTab($RDPTab, $false)
+
+# ----- Sessions -----
+$SessionsTab = [Terminal.Gui.TabView+Tab]::new()
+$SessionsTab.Text = "Proifle"
+$SessionsView = [Terminal.Gui.View]::new()
+
+$y = 1
+$lbl = [Terminal.Gui.Label]::new("Sessions:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
+$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=40
+$txtStreet.add_TextChanged({ $script:changesMade = $true })
+$addressView.Add($txtStreet)
+$y+=2
+
+$SessionsTab.View = $SessionsView
+$tabView.AddTab($SessionsTab, $false)
+
+
+#####################################################################################################
 
     # ----- Add TabView to Dialog -----
     $dlg.Add($tabView)
@@ -2846,6 +2905,7 @@ $dlg.Add($btnApply)
 
 # DSA-TUI Object Management Module v1.0
 # Create, Delete, and Move AD Objects
+
 
 # ------------------------- Create New Object Wizard ------------------------
 function Show-NewObjectWizard {
@@ -3698,65 +3758,67 @@ function Show-ContextMenu {
     $listView.Height = [Terminal.Gui.Dim]::Fill(2)
     $contextDialog.Add($listView)
     
-    # Handle selection
-    $listView.add_OpenSelectedItem({
-        $selected = $menuText[$listView.SelectedItem]
-        [Terminal.Gui.Application]::RequestStop()
+# Handle selection
+$listView.add_OpenSelectedItem({
+    $selected = $menuText[$listView.SelectedItem]
+    
+    Debug-Log "DEBUG: Menu item selected: $selected"
+    
+    [Terminal.Gui.Application]::RequestStop()
+    
+    if ($selected -ne "---") {
+        Debug-Log "DEBUG: Context menu selected: $selected"
         
-        if ($selected -ne "---") {
-            Debug-Log "DEBUG: Context menu selected: $selected"
-            
-            switch ($selected) {
-                "Properties" { 
-                    if ($isUser) {
-                        $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-                        if ($user) { 
-                            Show-UserPropertiesDialog -user $user -Global $Global
-                        } else {
-                            Debug-Log "ERROR: User '$cleanName' not found"
+        switch ($selected) {
+            "Properties" { 
+                Debug-Log "DEBUG: Properties selected for type: isUser=$isUser, isGroup=$isGroup, isDC=$isDC"
+                
+                if ($isUser) {
+                    Debug-Log "DEBUG: Looking for user: $cleanName"
+                    $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+                    
+                    if ($user) { 
+                        Debug-Log "DEBUG: Found user, calling Show-UserPropertiesDialog"
+                        Debug-Log "DEBUG: User type: $($user.GetType().Name)"
+                        Debug-Log "DEBUG: User Name: $($user.Name)"
+                        
+                        try {
+                            Show-UserPropertiesDialog -user $user  # REMOVED -Global $Global
+                            Debug-Log "DEBUG: Show-UserPropertiesDialog returned"
+                        } catch {
+                            Debug-Log "ERROR: Exception showing properties: $($_.Exception.Message)"
+                            Debug-Log "ERROR: Stack trace: $($_.ScriptStackTrace)"
+                            [Terminal.Gui.MessageBox]::Query(60, 10, "Error", "Failed to show properties:`n$($_.Exception.Message)", "OK") | Out-Null
                         }
-                    } elseif ($isGroup) {
-                        Show-GroupPropertiesDialog -groupName $cleanName
-                    } elseif ($isDC) {
-                        Show-DCPropertiesDialog -dcName $cleanName
                     } else {
-                        $msg = "Object: $cleanName`nType: $objectType"
-                        [Terminal.Gui.MessageBox]::Query(50, 7, "Properties", $msg, "OK") | Out-Null
+                        Debug-Log "ERROR: User '$cleanName' not found in Global:Users"
+                        [Terminal.Gui.MessageBox]::Query(50, 7, "Not Found", "User '$cleanName' not found", "OK") | Out-Null
                     }
-                }
-                "Reset Password" { 
-                    Show-ResetPasswordDialog -userName $cleanName 
-                }
-                "Disable Account" { 
-                    Toggle-UserAccount -userName $cleanName -disable $true 
-                }
-                "Enable Account" { 
-                    Toggle-UserAccount -userName $cleanName -disable $false 
-                }
-                "Move to OU..." { 
-                    Show-MoveObjectDialog -objectName $cleanName -objectType "User" 
-                }
-                "Delete" { 
-                    Show-DeleteObjectDialog -objectName $cleanName -objectType $objectType 
-                }
-                "Add Member..." { 
-                    Show-AddGroupMemberDialog -groupName $cleanName 
-                }
-                "Remove Member..." { 
-                    Show-RemoveGroupMemberDialog -groupName $cleanName 
-                }
-                "New Object..." { 
-                    Show-NewObjectWizard 
-                }
-                "Check Replication" { 
-                    Check-DCReplication -dcName $cleanName 
-                }
-                "Refresh" { 
-                    Refresh-TreeData 
+                } elseif ($isGroup) {
+                    Debug-Log "DEBUG: Showing group properties"
+                    Show-GroupPropertiesDialog -groupName $cleanName
+                } elseif ($isDC) {
+                    Debug-Log "DEBUG: Showing DC properties"
+                    Show-DCPropertiesDialog -dcName $cleanName
+                } else {
+                    Debug-Log "DEBUG: Showing generic properties"
+                    $msg = "Object: $cleanName`nType: $objectType"
+                    [Terminal.Gui.MessageBox]::Query(50, 7, "Properties", $msg, "OK") | Out-Null
                 }
             }
+            "Reset Password" { Show-ResetPasswordDialog -userName $cleanName }
+            "Disable Account" { Toggle-UserAccount -userName $cleanName -disable $true }
+            "Enable Account" { Toggle-UserAccount -userName $cleanName -disable $false }
+            "Move to OU..." { Show-MoveObjectDialog -objectName $cleanName -objectType "User" }
+            "Delete" { Show-DeleteObjectDialog -objectName $cleanName -objectType $objectType }
+            "Add Member..." { Show-AddGroupMemberDialog -groupName $cleanName }
+            "Remove Member..." { Show-RemoveGroupMemberDialog -groupName $cleanName }
+            "New Object..." { Show-NewObjectWizard }
+            "Check Replication" { Check-DCReplication -dcName $cleanName }
+            "Refresh" { Refresh-TreeData }
         }
-    })
+    }
+})
     
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
@@ -3766,7 +3828,8 @@ function Show-ContextMenu {
 }
 
 # Debug version of Show-Properties
-# Replace your Show-Properties function with this to see what's happening
+# Show-Properties is the helper function which takes what is selected and transmogrifies
+# it to be a format the other funcitons such as Show-UserProperties and so on can use
 
 function Show-Properties {
     Debug-Log "DEBUG: Show-Properties called"
@@ -3808,7 +3871,7 @@ function Show-Properties {
 Debug-Log "DEBUG: "
 
             try {
-                Show-UserPropertiesDialog -user $selUser -Global $Global
+                Show-UserPropertiesDialog -user $selUser
                 Debug-Log "DEBUG: Show-UserPropertiesDialog completed"
             } catch {
                 Debug-Log "ERROR: Exception in Show-UserPropertiesDialog: $_"
@@ -3826,6 +3889,7 @@ Debug-Log "DEBUG: "
         $desc = "<no description>"
         $txt = "Group: $groupName`nDescription: $desc`nMembers:`n" + ($members -join "`n")
         [Terminal.Gui.MessageBox]::Query(60, 20, "Group Properties", $txt, "OK") | Out-Null
+
     } else {
         Debug-Log "DEBUG: Selected object type $selType not handled yet."
     }
@@ -5115,9 +5179,9 @@ function Show-Modal {
 Load-DomainData -domain $Global:Domain
 
 # (Optional) Debug after loading
-Write-Host "POST-LOAD DEBUG: Users:"  $Global:Users.Count
-Write-Host "POST-LOAD DEBUG: DCs:"     $Global:DCs.Count
-Write-Host "POST-LOAD DEBUG: Objects:" $Global:ADObjects.Count
+Debug-Log "POST-LOAD DEBUG: Users:"  $Global:Users.Count
+Debug-Log "POST-LOAD DEBUG: DCs:"     $Global:DCs.Count
+Debug-Log "POST-LOAD DEBUG: Objects:" $Global:ADObjects.Count
 
 # ------------------------- Build initial tree ------------------------
 Build-Tree -domain $Global:Domain
