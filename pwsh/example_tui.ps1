@@ -53,7 +53,7 @@ $Global:BuildVersion = "1.2.4"
 $Global:DemoMode = $DemoMode
 $Global:ThemeMode = $Theme
 
-Write-Host "Starting $($Global:ProjectName) - ${Global:BuildVersion} Codename: ($Global:FruitName) with theme: ($Global:Theme)"
+Write-Host "Starting $($Global:ProjectName) - ${Global:BuildVersion} Codename: ($Global:FruitName) with theme: ($Global:ThemeMode)"
 
 ## -------------------------------{ App }---------------------------------
 [Terminal.Gui.Application]::Init()
