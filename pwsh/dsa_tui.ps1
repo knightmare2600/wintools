@@ -4,7 +4,7 @@ DSA-TUI Text Mode version of dsa.msc for powershell
 Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change Domain fixed, fixed DC selection, full production AD object detection, properties modal, AD search popup
 
 ===========================================================================================
- DSA-TUI Blaabaer — Active Directory TUI Tool
+ DSA-TUI Blåbær — Active Directory TUI Tool
  Historical Build Notes and Change Log
 ===========================================================================================
 
@@ -174,6 +174,12 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
  - Additional Debug-Log code printed only when Verbose is true
  - Explain Show-Properties and why that is called instead of e.g. Show-UserProperties
 
+1.8.3 More cowbell
+  - Add misisng and former group memebrs of bands
+  - Add Get-CleanObjectInfo to reduce code re-use
+  - Fix buttons on user properties modal
+  - Bring forward $Global code for a more streamlined approach
+
 ===========================================================================================
 #>
 
@@ -185,10 +191,13 @@ param(
     [string]$Theme = "dark"
 )
 
-Write-Host "Starting DSA-TUI in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode with $Theme theme..."
-
 # Define the build version once
-$BuildVersion = "1.8.2"
+$Global:ProjectName = "DSA-TUI pwsh dsa.msc TUI"
+$Global:FruitName = "Blåbær"
+$Global:BuildVersion = "1.8.3"
+
+## Get ready for the launch
+Write-Host "Starting $($Global:ProjectName) Codename: $($Global:FruitName) v$($Global:BuildVersion) in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode with $Theme theme..."
 
 ## For passwords expiring soon
 $sevenDaysFileTime = (Get-Date).AddDays(-7).ToFileTime()
@@ -221,7 +230,7 @@ $Global:DemoMode = $DemoMode
 $Global:DemoMode = $DemoMode
 $script:ThemeMode = $Theme
 
-Write-Host "Starting DSA-TUI in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode..."
+Write-Host "Starting $($Global:ProjectName) in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode..."
 
 # Global Search filters:
 $Global:FilterOptions = @{
@@ -541,7 +550,7 @@ function Load-DomainData {
   if ($Logging) { Write-Debug "DEBUG: Loading domain data for: $domain" }
 
   if ($Global:DemoMode) {
-    Debug-Log "Starting DSA-TUI in DEMO mode..."
+    Debug-Log "Starting $($Global:ProjectName) in DEMO mode..."
 
     # ------------------ Define Demo Users ------------------
     $Global:rawUsers = @(
@@ -554,6 +563,12 @@ function Load-DomainData {
             },
             @{
                 Name = 'Mel Gaynor'; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Percussion'); Title = 'Drummer'; Email = 'mel.gaynor@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1113'; MobilePhone = '+44 7700 111113'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = 'Jim Kerr'; Description = 'Drummer for Simple Minds'
+            },
+            @{
+                Name = 'Mick MacNeil'; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Musicians','Former Staff'); Title = 'Keyboardist (Former)'; Email = 'mick.macneil@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1120'; MobilePhone = '+44 7700 111120'; Street = '20 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former keyboardist for Simple Minds (1977-1990)'
+            },
+            @{
+                Name = 'Derek Forbes'; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Musicians','Former Staff'); Title = 'Bassist (Former)'; Email = 'derek.forbes@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1121'; MobilePhone = '+44 7700 111121'; Street = '21 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former bassist for Simple Minds (1977-1985)'
             },
 
             # ========== Marillion (UK/Scotland/Edinburgh) ==========
@@ -599,6 +614,15 @@ function Load-DomainData {
             @{
                 Name = 'Steffen Brandt'; OU = @('Locations','Denmark','Copenhagen','TV-2'); Groups = @('TV-2','Vocalists','Guitarists'); Title = 'Lead Vocalist / Guitarist'; Email = 'steffen.brandt@example.com'; Country = 'DK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Copenhagen Office'; Phone = '+45 0000 2222'; MobilePhone = '+45 5012 3457'; Street = '1 Raadhuspladsen'; City = 'Copenhagen'; PostalCode = '1550'; Company = 'Example Music ApS'; Manager = ''; Description = 'Frontman of TV-2'
             },
+            @{
+                Name = 'Hans Erik Lerchenfeldt'; OU = @('Locations','Denmark','Copenhagen','TV-2'); Groups = @('TV-2','Musicians'); Title = 'Bassist'; Email = 'hans.lerchenfeldt@example.com'; Country = 'Denmark'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Copenhagen Office'; Phone = '+45 33 12 3457'; MobilePhone = '+45 20 11 1157'; Street = 'Nørrebrogade 2'; City = 'Copenhagen'; PostalCode = '2200'; Company = 'Example Music Ltd'; Manager = 'Steffen Brandt'; Description = 'Bassist for TV-2'
+            },
+            @{
+                Name = 'Sven Gaul'; OU = @('Locations','Denmark','Copenhagen','TV-2'); Groups = @('TV-2','Musicians'); Title = 'Drummer'; Email = 'sven.gaul@example.com'; Country = 'Denmark'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Copenhagen Office'; Phone = '+45 33 12 3458'; MobilePhone = '+45 20 11 1158'; Street = 'Nørrebrogade 3'; City = 'Copenhagen'; PostalCode = '2200'; Company = 'Example Music Ltd'; Manager = 'Steffen Brandt'; Description = 'Drummer for TV-2'
+            },
+            @{
+                Name = 'Georg Olesen'; OU = @('Locations','Denmark','Aarhus','TV-2'); Groups = @('TV-2','Musicians','Former Staff'); Title = 'Guitarist (Former)'; Email = 'georg.olesen@example.com'; Country = 'Denmark'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'Aarhus Office'; Phone = '+45 86 12 3470'; MobilePhone = '+45 20 11 1170'; Street = 'Åboulevarden 20'; City = 'Aarhus'; PostalCode = '8000'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former guitarist and co-founder of TV-2 (1981-2003)'
+            },
 
             # ========== Rocazino (Denmark/Koge) ==========
             @{
@@ -616,57 +640,180 @@ function Load-DomainData {
                 Name = 'Karen Marie Orsted'; OU = @('Locations','Denmark','Odense','Mo'); Groups = @('Mo','Vocalists'); Title = 'Singer / Songwriter'; Email = 'karen.orsted@example.com'; Country = 'DK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Odense Office'; Phone = '+45 0000 3234'; MobilePhone = '+45 4012 3456'; Street = '22 Vestergade'; City = 'Odense'; PostalCode = '5000'; Company = 'Example Music ApS'; Manager = ''; Description = 'Danish singer-songwriter known internationally as MØ'
             }
         )
+
+ # Demo Groups
+    $Global:rawDemoGroups = @(
+        @{ Name = 'Simple Minds' ; Description = 'Scottish rock band formed in Glasgow in 1977' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Jim Kerr' ; Email = 'simpleminds@example.com' },
+        @{ Name = 'Depeche Mode' ; Description = 'English electronic music band formed in Basildon in 1980' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Dave Gahan' ; Email = 'depechemode@example.com' },
+        @{ Name = 'Erasure' ; Description = 'English synth-pop duo formed in London in 1985' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Andy Bell' ; Email = 'erasure@example.com' },
+        @{ Name = 'Marillion' ; Description = 'British rock band formed in Edinburgh in 1979' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Steve Hogarth' ; Email = 'marillion@example.com' },
+        @{ Name = 'TV-2' ; Description = 'Danish rock band formed in 1981' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Steffen Brandt' ; Email = 'tv2@example.com' },
+        @{ Name = 'Rocazino' ; Description = 'Danish pop band from Koge' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Stine Bramsen' ; Email = 'alphabeat@example.com' },
+        @{ Name = 'MØ Solo' ; Description = 'Solo artist MØ from Odense' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Karen Marie Ørsted' ; Email = 'mo@example.com' },
+        @{ Name = 'Vocalists' ; Description = 'Lead singers and vocalists across all bands' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = '' ; Email = '' },
+        @{ Name = 'Keyboards' ; Description = 'Keyboard And synthesizers' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = '' ; Email = '' },
+        @{ Name = 'Musicians' ; Description = 'Instrumentalists - guitarists, bassists, drummers, keyboardists' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = '' ; Email = '' },
+        @{ Name = 'Guitarists' ; Description = 'Guitar and bass players' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = '' ; Email = '' },
+        @{ Name = 'Percussionists' ; Description = 'Drummers and percussion specialists' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = '' ; Email = '' },
+        @{ Name = 'Former Staff' ; Description = 'Former band members and staff' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = '' ; Email = '' },
+        @{ Name = 'Disabled Users' ; Description = 'Users with administratively disabled accounts' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = '' ; Email = '' }
+    )
         
     $Global:rawDCs = @(
-        @{ Name='EXAGLADC01'; Site='GLA' },
-        @{ Name='EXAEDIDC01'; Site='EDI' },
-        @{ Name='EXALNDCDC01'; Site='LND' },
-        @{ Name='EXACPHDC01'; Site='CPH' }
+# Demo Domain Controllers
+
+        @{
+            Name = 'EXAGLADC01'
+            Site = 'GLA'
+            Location = 'Glasgow, Scotland'
+            OS = 'Windows Server 2022 Standard'
+            IPAddress = '192.168.4.20'
+            IsGlobalCatalog = $true
+            FSMORoles = @('Schema Master', 'Domain Naming Master', 'PDC Emulator')
+            LastReplication = (Get-Date).AddMinutes(-12)
+            ReplicationHealth = 'Healthy'
+            LastBoot = (Get-Date).AddDays(-45)
+            Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'}
+            DiskSpace = @{
+                'C:' = @{Total = '120 GB'; Used = '45 GB'; Free = '75 GB'; PercentFree = 62}
+                'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84}
+            }
+            ReplicationPartners = @('EXALNDDC01', 'EXAEDIDC01')
+        },
+
+        @{
+            Name = 'EXAEDIDC01'
+            Site = 'EDI'
+            Location = 'Edinburgh, Scotland'
+            OS = 'Windows Server 2019 Standard'
+            IPAddress = '192.168.3.20'
+            IsGlobalCatalog = $true
+            FSMORoles = @()
+            LastReplication = (Get-Date).AddMinutes(-18)
+            ReplicationHealth = 'Healthy'
+            LastBoot = (Get-Date).AddDays(-67)
+            Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'}
+            DiskSpace = @{
+                'C:' = @{Total = '120 GB'; Used = '38 GB'; Free = '82 GB'; PercentFree = 68}
+                'SYSVOL' = @{Total = '50 GB'; Used = '6 GB'; Free = '44 GB'; PercentFree = 88}
+            }
+            ReplicationPartners = @('EXAGLADC01', 'EXALNDDC01')
+        },
+        @{
+            Name = 'EXALNDDC01'
+            Site = 'LND'
+            Location = 'London, England'
+            OS = 'Windows Server 2022 Standard'
+            IPAddress = '192.168.2.20'
+            IsGlobalCatalog = $true
+            FSMORoles = @('RID Master', 'Infrastructure Master')
+            LastReplication = (Get-Date).AddMinutes(-8)
+            ReplicationHealth = 'Healthy'
+            LastBoot = (Get-Date).AddDays(-23)
+            Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'}
+            DiskSpace = @{
+                'C:' = @{Total = '120 GB'; Used = '52 GB'; Free = '68 GB'; PercentFree = 57}
+                'SYSVOL' = @{Total = '50 GB'; Used = '12 GB'; Free = '38 GB'; PercentFree = 76}
+            }
+            ReplicationPartners = @('EXAGLADC01', 'EXAEDIDC01', 'EXAKGEDC01', 'EXACPHDC01')
+        },
+        @{
+            Name = 'EXACPHDC01'
+            Site = 'CPH'
+            Location = 'Copenhagen, Denmark'
+            OS = 'Windows Server 2022 Standard'
+            IPAddress = '192.168.6.20'
+            IsGlobalCatalog = $true
+            FSMORoles = @()
+            LastReplication = (Get-Date).AddMinutes(-10)
+            ReplicationHealth = 'Healthy'
+            LastBoot = (Get-Date).AddDays(-34)
+            Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'}
+            DiskSpace = @{
+                'C:' = @{Total = '120 GB'; Used = '41 GB'; Free = '79 GB'; PercentFree = 66}
+                'SYSVOL' = @{Total = '50 GB'; Used = '9 GB'; Free = '41 GB'; PercentFree = 82}
+            }
+            ReplicationPartners = @('EXALNDDC01', 'EXAKGEDC01')
+        },
+        @{
+            Name = 'EXAKGEDC01'
+            Site = 'KGE'
+            Location = 'Køge, Denmark'
+            OS = 'Windows Server 2016 Standard'
+            IPAddress = '192.168.5.20'
+            IsGlobalCatalog = $false
+            FSMORoles = @()
+            LastReplication = (Get-Date).AddHours(-4).AddMinutes(-35)
+            ReplicationHealth = 'Warning - Out of Sync'
+            LastBoot = (Get-Date).AddDays(-156)
+            Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'}
+            DiskSpace = @{
+                'C:' = @{Total = '100 GB'; Used = '78 GB'; Free = '22 GB'; PercentFree = 22}
+                'SYSVOL' = @{Total = '40 GB'; Used = '28 GB'; Free = '12 GB'; PercentFree = 30}
+            }
+            ReplicationPartners = @('EXALNDDC01', 'EXACPHDC01')
+        },
+        @{
+            Name = 'EXAODEDC01'
+            Site = 'ODE'
+            Location = 'Odense, Denmark'
+            OS = 'Windows Server 2022 Standard'
+            IPAddress = '192.168.7.20'
+            IsGlobalCatalog = $true
+            FSMORoles = @()
+            LastReplication = (Get-Date).AddMinutes(-14)
+            ReplicationHealth = 'Healthy'
+            LastBoot = (Get-Date).AddDays(-28)
+            Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'}
+            DiskSpace = @{
+                'C:' = @{Total = '120 GB'; Used = '42 GB'; Free = '78 GB'; PercentFree = 65}
+                'SYSVOL' = @{Total = '50 GB'; Used = '7 GB'; Free = '43 GB'; PercentFree = 86}
+            }
+            ReplicationPartners = @('EXACPHDC01', 'EXAKGEDC01')
+        }
+
     )
 
     Write-Debug "DEBUG: rawUsers count: ${Global}:rawUsers.Count"
     Write-Debug "DEBUG: rawDCs count: ${Global}:rawDCs.Count"
 
     # ------------------ Convert to AD-like objects ------------------
-    $converted = Convert-DemoDataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Domain $Global:Domain
-
-    # The function already sets $Global:Users, $Global:DCs, $Global:ADObjects
-    Write-Debug "DEBUG: Users count: $Global:Users.Count"
-    Write-Debug "DEBUG: DCs count: $Global:DCs.Count"
-    Write-Debug "DEBUG: ADObjects count: $Global:ADObjects.Count"
-
+    $converted = Convert-DemoDataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Groups $Global:rawDemoGroups -Domain $Global:Domain
+    # The function already sets $Global:Users, $Global:DCs, $Global:Groups, $Global:ADObjects
+    Write-Debug "DEBUG: Users count: $($Global:Users.Count)"
+    Write-Debug "DEBUG: DCs count: $($Global:DCs.Count)"
+    Write-Debug "DEBUG: Groups count: $($Global:Groups.Count)"
+    Write-Debug "DEBUG: ADObjects count: $($Global:ADObjects.Count)"
     } else {
         # Production mode - real AD calls
         try {
             Import-Module ActiveDirectory -ErrorAction Stop
-
             $loadingDlg = Show-LoadingDialog -Message "Loading AD objects for $domain..."
             try {
                 # Domain Controllers
                 $Global:DCs = Get-ADDomainController -Discover -Domain $domain |
                     ForEach-Object { @{ Name=$_.HostName; OU='Domain Controllers'; Site=$_.Site } }
-
                 # Get AD objects
                 $Global:ADObjects = Get-ADObjectsByType -domain $domain
-
                 # Users
-
                 $Global:Users = $Global:ADObjects | Where-Object { $_.Type -eq 'user' } | ForEach-Object {
                     $ou = ($_.DN -split ',') | Where-Object { $_ -like 'OU=*' } | Select-Object -First 1
                     if ($ou) { $ou = $ou -replace '^OU=' ,'' } else { $ou = "" }
                     @{ Name=$_.Name; OU=$ou; Groups=$null; Title=$null; Email=$null; Country=$null; Disabled=$false }
                 }
+                # Groups
+                $Global:Groups = $Global:ADObjects | Where-Object { $_.Type -eq 'group' } | ForEach-Object {
+                    @{ Name=$_.Name }
+                }
             } finally {
                 Close-LoadingDialog $loadingDlg
             }
-
         } catch {
             [Terminal.Gui.MessageBox]::Query("Error","Failed to query domain ${domain}:`n$_","OK") | Out-Null
-            $Global:Users=@(); $Global:DCs=@(); $Global:ADObjects=@()
+            $Global:Users=@(); $Global:DCs=@(); $Global:Groups=@(); $Global:ADObjects=@()
         }
     }
 }
-
 function Convert-DemoDataToADObjects {
     <#
     .SYNOPSIS
@@ -675,6 +822,7 @@ function Convert-DemoDataToADObjects {
     param(
         [array]$Users,
         [array]$DCs = @(),
+        [array]$Groups = @(),
         [string]$Domain = "example.com",
         [string]$BaseDN = "DC=example,DC=com"
     )
@@ -757,63 +905,75 @@ function Convert-DemoDataToADObjects {
     $convertedDCs = @()
     foreach ($dc in $DCs) {
         $dn = "CN=$($dc.Name),OU=Domain Controllers,$BaseDN"
-
         $adDC = [PSCustomObject]@{
-            ObjectClass        = 'computer'
-            Name               = $dc.Name
-            DNSHostName        = "$($dc.Name).$Domain"
-            DistinguishedName  = $dn
-            ObjectGUID         = New-FakeGuid
-            SID                = New-FakeSid
-            Enabled            = $true
-            Site               = $dc.Site
-            OperatingSystem    = 'Windows Server 2022'
-            OperatingSystemVersion = '10.0 (20348)'
-            whenCreated        = (Get-Date).AddDays(-180)
-            OU                 = 'Domain Controllers'
+            ObjectClass               = 'computer'
+            Name                      = $dc.Name
+            DNSHostName               = "$($dc.Name).$Domain"
+            DistinguishedName         = $dn
+            ObjectGUID                = New-FakeGuid
+            SID                       = New-FakeSid
+            Enabled                   = $true
+            Site                      = $dc.Site
+            Location                  = $dc.Location
+            OperatingSystem           = $dc.OS
+            OperatingSystemVersion    = if ($dc.OS -match '2022') { '10.0 (20348)' } elseif ($dc.OS -match '2019') { '10.0 (17763)' } else { '10.0 (14393)' }
+            IPv4Address               = $dc.IPAddress
+            IsGlobalCatalog           = $dc.IsGlobalCatalog
+            FSMORoles                 = $dc.FSMORoles
+            LastReplication           = $dc.LastReplication
+            ReplicationHealth         = $dc.ReplicationHealth
+            LastBootUpTime            = $dc.LastBoot
+            Services                  = $dc.Services
+            DiskSpace                 = $dc.DiskSpace
+            ReplicationPartners       = $dc.ReplicationPartners
+            whenCreated               = (Get-Date).AddDays(-180)
+            OU                        = 'Domain Controllers'
         }
-
         $adDC.PSObject.TypeNames.Insert(0, 'Microsoft.ActiveDirectory.Management.ADComputer')
-
         $convertedDCs += $adDC
     }
-
+    
+    # Convert Groups
+    $convertedGroups = @()
+    foreach ($group in $Groups) {
+        $sam = ($group.Name -replace '\s+', '.').ToLower()
+        $dn = "CN=$($group.Name),OU=Groups,$BaseDN"
+        
+        $adGroup = [PSCustomObject]@{
+            ObjectClass       = 'group'
+            Name              = $group.Name
+            SamAccountName    = $sam
+            DistinguishedName = $dn
+            ObjectGUID        = New-FakeGuid
+            SID               = New-FakeSid
+            GroupCategory     = $group.Type
+            GroupScope        = $group.Scope
+            Description       = $group.Description
+            ManagedBy         = $group.ManagedBy
+            Mail              = $group.Email
+            whenCreated       = (Get-Date).AddDays(-180)
+            whenChanged       = (Get-Date).AddDays(-10)
+        }
+        
+        # Make it look like AD group object
+        $adGroup.PSObject.TypeNames.Insert(0, 'Microsoft.ActiveDirectory.Management.ADGroup')
+        
+        $convertedGroups += $adGroup
+    }
+    
     # Set global variables
     $Global:Users     = $convertedUsers
     $Global:DCs       = $convertedDCs
-    $Global:ADObjects = $convertedUsers + $convertedDCs
+    $Global:Groups    = $convertedGroups
+    $Global:ADObjects = $convertedUsers + $convertedDCs + $convertedGroups
 
-    Write-Debug "DEBUG: Converted $($convertedUsers.Count) users and $($convertedDCs.Count) DCs to AD-like objects"
+    Write-Debug "DEBUG: Converted $($convertedUsers.Count) users, $($convertedDCs.Count) DCs, and $($convertedGroups.Count) groups to AD-like objects"
 
     # Return hashtable
     return @{
         Users = $convertedUsers
         DCs   = $convertedDCs
-    }
-}
-
-## Debug ASCII art
-function Dump-OUNode {
-    param(
-        [Parameter(Mandatory)]
-        $Node,
-        [string]$Prefix = "",
-        [bool]$IsLast = $true
-    )
-
-    $connector = if ($Prefix -eq "") { "" }
-                 elseif ($IsLast)    { "└── " }
-                 else                { "├── " }
-
-   Debug-Log "$Prefix$connector${$Node.Name}"
-
-    # Build prefix for children
-    $childPrefix = if ($Prefix -eq "") {
-        ""   # root has no prefix
-    } elseif ($IsLast) {
-        "$Prefix    "
-    } else {
-        "$Prefix│   "
+        Groups = $convertedGroups
     }
 }
 
@@ -1016,7 +1176,7 @@ if ($themeData -and $themeData.Global) {
 }
 
 # ------------------------- Main Window ------------------------
-$win = [Terminal.Gui.Window]::new("DSA-TUI — Active Directory ${BuildVersion} Blaabaer")
+$win = [Terminal.Gui.Window]::new("$($Global:ProjectName) — Active Directory ${BuildVersion} ${Global:FruitName}")
 $win.X=0; $win.Y=0; $win.Width=[Terminal.Gui.Dim]::Fill(); $win.Height=[Terminal.Gui.Dim]::Fill()
 
 # Apply theme to main window
@@ -1076,16 +1236,16 @@ $mShortcuts = [Terminal.Gui.MenuItem]::new(
 )
 
 $mAboutDSATUI = [Terminal.Gui.MenuItem]::new(
-    "_About DSA-TUI",
-    "About this application",
+    "_About",
+    "About $($Global:ProjectName)",
     [Action]{ 
-        [Terminal.Gui.MessageBox]::Query("About","DSA-TUI ${BuildVersion} Blaabaer`n© 2025 Copyleft (GPL-3)`nDemo Mode: $DemoMode","OK") | Out-Null 
+            Show-Modal "About" "$($Global:ProjectName)`n`nCodename: $($Global:FruitName)`nv$($Global:BuildVersion) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600"
     }
 )
 
 $mWhyBlaabaer = [Terminal.Gui.MenuItem]::new(
     "Why _Blaabaer?",
-    "Why the Blaabaer codename?",
+    "Why the $($Global:FruitName) codename?",
     [Action]{ Show-BlaabaerInfo }
 )
 
@@ -2195,6 +2355,98 @@ function Update-UserObjectFromFields($user) {
     $user.Locked      = $chkLocked.Checked
 }
 
+# First, create the Apply-UserChanges function (put this before Show-UserPropertiesDialog):
+
+function Apply-UserChanges {
+    param($user, $fields)
+    
+    Debug-Log "DEBUG: Applying changes for user: $($user.Name)"
+    
+    try {
+        if ($Global:DemoMode) {
+            # Update demo user object
+            $user.Name = $fields.txtName.Text.ToString()
+            $user.Description = $fields.txtDesc.Text.ToString()
+            $user.Office = $fields.txtOffice.Text.ToString()
+            $user.OfficePhone = $fields.txtPhone.Text.ToString()
+            $user.MobilePhone = $fields.txtMobile.Text.ToString()
+            $user.EmailAddress = $fields.txtEmail.Text.ToString()
+            $user.Disabled = $fields.chkDisabled.Checked
+            $user.Locked = $fields.chkLocked.Checked
+            $user.StreetAddress = $fields.txtStreet.Text.ToString()
+            $user.City = $fields.txtCity.Text.ToString()
+            $user.PostalCode = $fields.txtPostal.Text.ToString()
+            $user.Country = $fields.txtCountry.Text.ToString()
+            $user.Title = $fields.txtTitle.Text.ToString()
+            $user.Department = $fields.txtDept.Text.ToString()
+            $user.Company = $fields.txtCompany.Text.ToString()
+            $user.Manager = $fields.txtManager.Text.ToString()
+            
+            Debug-Log "SUCCESS: User changes applied (demo mode)"
+            Show-Modal "Success" "Changes applied successfully (demo mode)"
+            
+            # Rebuild tree to reflect changes
+            [Terminal.Gui.Application]::MainLoop.Invoke({
+                Build-Tree -domain $Global:Domain
+                if ($filterStatusLabel) {
+                    Update-FilterStatusLabel -label $filterStatusLabel
+                }
+            })
+            
+        } else {
+            # Production mode - use Set-ADUser
+            $setParams = @{
+                Identity = $user.SamAccountName
+                DisplayName = $fields.txtName.Text.ToString()
+                Description = $fields.txtDesc.Text.ToString()
+                Office = $fields.txtOffice.Text.ToString()
+                OfficePhone = $fields.txtPhone.Text.ToString()
+                MobilePhone = $fields.txtMobile.Text.ToString()
+                EmailAddress = $fields.txtEmail.Text.ToString()
+                StreetAddress = $fields.txtStreet.Text.ToString()
+                City = $fields.txtCity.Text.ToString()
+                PostalCode = $fields.txtPostal.Text.ToString()
+                Country = $fields.txtCountry.Text.ToString()
+                Title = $fields.txtTitle.Text.ToString()
+                Department = $fields.txtDept.Text.ToString()
+                Company = $fields.txtCompany.Text.ToString()
+                Manager = $fields.txtManager.Text.ToString()
+            }
+            
+            Set-ADUser @setParams -ErrorAction Stop
+            
+            # Handle account status separately
+            if ($fields.chkDisabled.Checked -and $user.Enabled) {
+                Disable-ADAccount -Identity $user.SamAccountName -ErrorAction Stop
+            } elseif (-not $fields.chkDisabled.Checked -and -not $user.Enabled) {
+                Enable-ADAccount -Identity $user.SamAccountName -ErrorAction Stop
+            }
+            
+            if ($fields.chkLocked.Checked -eq $false -and $user.LockedOut) {
+                Unlock-ADAccount -Identity $user.SamAccountName -ErrorAction Stop
+            }
+            
+            Debug-Log "SUCCESS: User changes applied to AD"
+            Show-Modal "Success" "Changes applied successfully"
+            
+            # Reload AD data
+            Load-DomainData -domain $Global:Domain
+            Build-Tree -domain $Global:Domain
+            if ($filterStatusLabel) {
+                Update-FilterStatusLabel -label $filterStatusLabel
+            }
+        }
+        
+        $script:changesMade = $false
+        return $true
+        
+    } catch {
+        Debug-Log "ERROR: Failed to apply changes: $($_.Exception.Message)"
+        Show-Modal "Error" "Failed to apply changes:`n$($_.Exception.Message)"
+        return $false
+    }
+}
+
 function Show-UserPropertiesDialog {
     param($user)
 
@@ -2206,21 +2458,22 @@ function Show-UserPropertiesDialog {
     
     Debug-Log "DEBUG: Show-UserPropertiesDialog starting for: $($user.Name)"
 
-#    # Safety checks
-#    if (-not $user) { Write-Error "User object is null"; return }
-#    if (-not $Global:Domain) { $Global:Domain = "" }
-#    if ($Global:DemoMode -and -not $Global:Users) { $Global:Users = @() }
+    #    # Safety checks
+    #    if (-not $user) { Write-Error "User object is null"; return }
+    #    if (-not $Global:Domain) { $Global:Domain = "" }
+    #    if ($Global:DemoMode -and -not $Global:Users) { $Global:Users = @() }
 
-    # ----- Create main dialog -----
-    $dlg = [Terminal.Gui.Dialog]::new("User Properties", 100, 40)
+    # ----- Create buttons FIRST -----
+    $btnOK = [Terminal.Gui.Button]::new("OK")
+    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnApply = [Terminal.Gui.Button]::new("Apply")
+
+    # ----- Create dialog WITH buttons -----
+    $dlg = [Terminal.Gui.Dialog]::new("User Properties", 100, 40, $btnOK, $btnCancel, $btnApply)
 
     # ----- TabView -----
     $tabView = [Terminal.Gui.TabView]::new()
     $tabView.X=0; $tabView.Y=0; $tabView.Width=[Terminal.Gui.Dim]::Fill(); $tabView.Height = [Terminal.Gui.Dim]::Percent(98)  # leave 2% at bottom
-
-$btnOK = [Terminal.Gui.Button]::new("OK")
-$btnCancel = [Terminal.Gui.Button]::new("Cancel")
-$dlg = [Terminal.Gui.Dialog]::new("User Properties", 100, 40, $btnOK, $btnCancel)
 
     # ==================== General Tab ====================
     $generalTab = [Terminal.Gui.TabView+Tab]::new()
@@ -2861,51 +3114,121 @@ $tabView.AddTab($SessionsTab, $false)
 
     # ----- Add TabView to Dialog -----
     $dlg.Add($tabView)
-# add buttons
-# ----- Buttons -----
-$btnOK = [Terminal.Gui.Button]::new("OK")
-$btnCancel = [Terminal.Gui.Button]::new("Cancel")
-$btnApply = [Terminal.Gui.Button]::new("Apply")
 
-# Position buttons at the bottom right
-$btnCancel.X = [Terminal.Gui.Pos]::Right($dlg) - 12
-$btnCancel.Y = [Terminal.Gui.Pos]::Bottom($dlg) - 2
-
-$btnOK.X = [Terminal.Gui.Pos]::Left($btnCancel) - 12
-$btnOK.Y = $btnCancel.Y
-
-$btnApply.X = [Terminal.Gui.Pos]::Left($btnOK) - 12
-$btnApply.Y = $btnCancel.Y
-
-# Button actions
+# ----- Wire up button actions (DON'T add them again!) -----
 $btnOK.add_Clicked({
-    # You can apply changes here if you want, or just close
-    $dlg.Running = $false
-})
+    # Apply changes and close
+    if (Apply-UserChanges -user $user -fields $fields) {
+        [Terminal.Gui.Application]::RequestStop()
+    }
+}.GetNewClosure())
 
 $btnCancel.add_Clicked({
-    # Discard changes
-    $script:changesMade = $false
-    $dlg.Running = $false
-})
+    # Check if changes were made
+    if ($script:changesMade) {
+        $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Unsaved Changes", 
+            "You have unsaved changes. Discard them?", 
+            @("Yes", "No"))
+        if ($result -eq 0) {
+            $script:changesMade = $false
+            [Terminal.Gui.Application]::RequestStop()
+        }
+    } else {
+        [Terminal.Gui.Application]::RequestStop()
+    }
+}.GetNewClosure())
 
 $btnApply.add_Clicked({
     # Apply changes but keep dialog open
-    Apply-UserChanges -User $user
-})
+    Apply-UserChanges -user $user -fields $fields
+}.GetNewClosure())
 
-# Add buttons to dialog
-$dlg.Add($btnOK)
-$dlg.Add($btnCancel)
-$dlg.Add($btnApply)
-
-##run it
-    [Terminal.Gui.Application]::Run($dlg)
+# Run the dialog (ONLY ONCE!)
+Debug-Log "DEBUG: Show-UserPropertiesDialog running"
+[Terminal.Gui.Application]::Run($dlg)
+Debug-Log "DEBUG: Show-UserPropertiesDialog completed"
 }
 
 # DSA-TUI Object Management Module v1.0
 # Create, Delete, and Move AD Objects
 
+#### Show Group Informaiton
+function Show-GroupPropertiesDialog {
+    param([string]$groupName)
+    
+    Debug-Log "DEBUG: Showing group properties for: $groupName"
+    
+    if ($Global:DemoMode) {
+        # Find the group definition
+        $group = $Global:Groups | Where-Object { $_.Name -eq $groupName } | Select-Object -First 1
+        
+        if ($group) {
+            Debug-Log "DEBUG: Group object found: $($group.Name)"
+            
+            # Get members from users who have this group in their Groups array
+            # NEW - includes all members regardless of disabled status
+     $members = $Global:Users | Where-Object { $_.Groups -contains $groupName } | ForEach-Object { $_.Name } | Sort-Object
+            $memberCount = $members.Count
+            
+            # Format member list
+            $memberList = if ($memberCount -gt 0) {
+                $members -join "`n"
+            } else {
+                "(No members)"
+            }
+            
+            $managedBy = if ($group.ManagedBy) { $group.ManagedBy } else { "(Not set)" }
+            $email = if ($group.Mail) { $group.Mail } else { "(Not set)" }
+            $groupType = if ($group.GroupCategory) { $group.GroupCategory } else { "(Not set)" }
+            $groupScope = if ($group.GroupScope) { $group.GroupScope } else { "(Not set)" }
+            
+            $msg = "Group: $($group.Name)`nDescription: $($group.Description)`nType: $groupType`nScope: $groupScope`nManaged By: $managedBy`nEmail: $email`nMember Count: $memberCount`n`nMembers:`n$memberList`n`n(Demo Mode)"
+            
+            if ($Global:VerboseMode) {
+                Debug-Log "VERBOSE: Group MessageBox content:"
+                Debug-Log "VERBOSE: Title: Group Properties"
+                Debug-Log "VERBOSE: Message:`n$msg"
+            }
+            
+            Show-Modal "Group Properties" $msg
+        } else {
+            Show-Modal "Not Found" "Group '$groupName' not found"
+        }
+    } else {
+        # Production mode - use real AD cmdlets
+        try {
+            $group = Get-ADGroup -Identity $groupName -Properties Description,ManagedBy,Mail,GroupScope,GroupCategory -ErrorAction Stop
+            $members = Get-ADGroupMember -Identity $groupName -ErrorAction Stop | Select-Object -ExpandProperty Name | Sort-Object
+            $memberCount = $members.Count
+            
+            $memberList = if ($memberCount -gt 0) {
+                $members -join "`n"
+            } else {
+                "(No members)"
+            }
+            
+            $managedBy = if ($group.ManagedBy) { 
+                (Get-ADUser $group.ManagedBy -ErrorAction SilentlyContinue).Name 
+            } else { 
+                "(Not set)" 
+            }
+            
+            $email = if ($group.Mail) { $group.Mail } else { "(Not set)" }
+            
+            $msg = "Group: $($group.Name)`nDescription: $($group.Description)`nType: $($group.GroupCategory)`nScope: $($group.GroupScope)`nManaged By: $managedBy`nEmail: $email`nMember Count: $memberCount`n`nMembers:`n$memberList"
+            
+            if ($Global:VerboseMode) {
+                Debug-Log "VERBOSE: Group MessageBox content:"
+                Debug-Log "VERBOSE: Title: Group Properties"
+                Debug-Log "VERBOSE: Message:`n$msg"
+            }
+            
+            Show-Modal "Group Properties" $msg
+        } catch {
+            Show-Modal "Error" "Failed to get group properties:`n$_"
+        }
+    }
+}
 
 # ------------------------- Create New Object Wizard ------------------------
 function Show-NewObjectWizard {
@@ -3136,8 +3459,15 @@ function Show-NewObjectWizard {
 function Show-DeleteObjectDialog {
     param([string]$objectName, [string]$objectType)
     
-    $cleanName = $objectName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-    
+           # Remove prefixes and ALL leading non-alphanumeric characters
+# Remove prefixes like "(U) " or "(DC) "
+
+    # Parse the tree text to get clean name and type
+    $objInfo = Get-CleanObjectInfo -treeText $objectName
+    $cleanName = $objInfo.Name
+
+Debug-Log "DEBUG: After removing prefix: '$cleanName'"
+
     # Extra confirmation for destructive action
     $result = [Terminal.Gui.MessageBox]::Query(70, 11, "DELETE CONFIRMATION", 
         "⚠️ WARNING: You are about to DELETE:`n`n  Type: $objectType`n  Name: $cleanName`n`nThis action CANNOT be undone!`n`nAre you absolutely sure?", 
@@ -3212,7 +3542,9 @@ function Show-DeleteObjectDialog {
 function Show-MoveObjectDialog {
     param([string]$objectName, [string]$objectType)
     
-    $cleanName = $objectName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
+          # Parse the tree text to get clean name and type
+          $objInfo = Get-CleanObjectInfo -treeText $objectName
+          $cleanName = $objInfo.Name
     
     $dlg = [Terminal.Gui.Dialog]::new("Move Object - $cleanName", 70, 18)
     
@@ -3683,33 +4015,69 @@ function Show-DCPropertiesDialog {
         $dc = $Global:DCs | Where-Object { $_.Name -eq $dcName } | Select-Object -First 1
         
         if ($dc) {
-            $msg = "Domain Controller: $($dc.Name)`nSite: $($dc.Site)`nOU: $($dc.OU)`n`n(Demo Mode)"
-            [Terminal.Gui.MessageBox]::Query(60, 10, "DC Properties", $msg, "OK") | Out-Null
+            Debug-Log "DEBUG: DC object found: $($dc.Name)"
+            
+            # Safely get property values with fallbacks
+            $fsmoRoles = if ($dc.FSMORoles -and $dc.FSMORoles.Count -gt 0) { 
+                $dc.FSMORoles -join ', ' 
+            } else { 
+                'None' 
+            }
+            
+            $partners = if ($dc.ReplicationPartners -and $dc.ReplicationPartners.Count -gt 0) {
+                $dc.ReplicationPartners -join ', '
+            } else {
+                'None'
+            }
+            
+            $lastRep = if ($dc.LastReplication) { $dc.LastReplication.ToString('g') } else { 'Unknown' }
+            $lastBoot = if ($dc.LastBootUpTime) { $dc.LastBootUpTime.ToString('g') } else { 'Unknown' }
+            
+            # Disk space - show both C: and SYSVOL
+            $diskC = if ($dc.DiskSpace -and $dc.DiskSpace.'C:') { 
+                "$($dc.DiskSpace.'C:'.Free) free of $($dc.DiskSpace.'C:'.Total) ($($dc.DiskSpace.'C:'.PercentFree)%)" 
+            } else { 
+                'Unknown' 
+            }
+            
+            $diskSysvol = if ($dc.DiskSpace -and $dc.DiskSpace.'SYSVOL') { 
+                "$($dc.DiskSpace.'SYSVOL'.Free) free of $($dc.DiskSpace.'SYSVOL'.Total) ($($dc.DiskSpace.'SYSVOL'.PercentFree)%)" 
+            } else { 
+                'Unknown' 
+            }
+            
+            $msg = "Name: $($dc.Name)`nSite: $($dc.Site)`nLocation: $($dc.Location)`nIP Address: $($dc.IPv4Address)`nOperating System: $($dc.OperatingSystem)`nGlobal Catalog: $($dc.IsGlobalCatalog)`nFSMO Roles: $fsmoRoles`nReplication Health: $($dc.ReplicationHealth)`nLast Replication: $lastRep`nLast Boot: $lastBoot`nC: Drive: $diskC`nSYSVOL: $diskSysvol`nReplication Partners: $partners`n`n(Demo Mode)"
+            
+            if ($Global:VerboseMode) {
+                Debug-Log "VERBOSE: MessageBox content:"
+                Debug-Log "VERBOSE: Title: DC Properties"
+                Debug-Log "VERBOSE: Message:`n$msg"
+            }
+            
+            Show-Modal "DC Properties" $msg
         } else {
-            [Terminal.Gui.MessageBox]::Query(50, 7, "Not Found", "DC '$dcName' not found", "OK") | Out-Null
+            Show-Modal "Not Found" "DC '$dcName' not found"
         }
     } else {
-        # Production mode - show full AD DC properties
+        # Production mode
         try {
             $dc = Get-ADDomainController -Identity $dcName -ErrorAction Stop
             
-            $msg = @"
-Name: $($dc.Name)
-Hostname: $($dc.HostName)
-Site: $($dc.Site)
-Domain: $($dc.Domain)
-IPv4: $($dc.IPv4Address)
-OS: $($dc.OperatingSystem)
-Global Catalog: $($dc.IsGlobalCatalog)
-"@
-            [Terminal.Gui.MessageBox]::Query(70, 15, "DC Properties", $msg, "OK") | Out-Null
+            $msg = "Name: $($dc.Name)`nHostname: $($dc.HostName)`nSite: $($dc.Site)`nDomain: $($dc.Domain)`nIPv4: $($dc.IPv4Address)`nOS: $($dc.OperatingSystem)`nGlobal Catalog: $($dc.IsGlobalCatalog)"
+            
+            if ($Global:VerboseMode) {
+                Debug-Log "VERBOSE: MessageBox content:"
+                Debug-Log "VERBOSE: Title: DC Properties"
+                Debug-Log "VERBOSE: Message:`n$msg"
+            }
+            
+            Show-Modal "DC Properties" $msg
         } catch {
-            [Terminal.Gui.MessageBox]::Query(60, 8, "Error", "Failed to get DC properties:`n$_", "OK") | Out-Null
+            Show-Modal "Error" "Failed to get DC properties:`n$_"
         }
     }
 }
 
-# ------------------------- Context Menu Handler ------------------------
 # ------------------------- Context Menu Handler ------------------------
 function Show-ContextMenu {
     param(
@@ -3717,17 +4085,26 @@ function Show-ContextMenu {
         [string]$objectType
     )
     
-    # Clean the object name (remove prefixes like "(U) " or "(DC) ")
-    $cleanName = $objectName -replace '^\(.\)\s*', '' -replace '^[○⊗🔒]\s*', ''
-    
-    Debug-Log "DEBUG: Context menu for '$cleanName' (type: $objectType)"
-    
-    # Determine what type of object this is
-    $isUser = $objectType -eq "user" -or $objectName -like "(U)*"
-    $isGroup = $objectType -eq "group"
-    $isOU = $objectType -eq "ou"
-    $isDC = $objectType -eq "dc" -or $objectName -like "(DC)*"
-    $isComputer = $objectType -eq "computer"
+$selName = $tree.SelectedObject.Text
+Debug-Log "DEBUG: Selected object text: '$selName'"
+
+# Determine what type of object this is FIRST (before cleaning the name)
+$selType = if ($selName -like "(U)*") {"user"} 
+           elseif ($selName -like "(DC)*") {"dc"} 
+           else {"group"}
+Debug-Log "DEBUG: Detected type: $selType"
+
+# NOW clean the name - remove prefixes like "(U) " or "(DC) " and status icons
+$cleanName = $selName -replace '^\([^)]+\)\s*', '' -replace '^[○⊗🔒]\s*', ''
+Debug-Log "DEBUG: Cleaned name after removing prefix: '$cleanName'"
+
+# Extract just the name part if it has [SITE] suffix
+if ($cleanName -match '^(.+?)\s+\[.+\]$') {
+    $cleanName = $matches[1].Trim()
+    Debug-Log "DEBUG: Extracted name from [SITE] format: '$cleanName'"
+}
+
+Debug-Log "DEBUG: Final cleaned name: '$cleanName'"
     
     # Build menu items array for display
     $menuText = @()
@@ -3827,73 +4204,86 @@ $listView.add_OpenSelectedItem({
     [Terminal.Gui.Application]::Run($contextDialog)
 }
 
-# Debug version of Show-Properties
-# Show-Properties is the helper function which takes what is selected and transmogrifies
-# it to be a format the other funcitons such as Show-UserProperties and so on can use
 
+function Get-CleanObjectInfo {
+    param([string]$treeText)
+    
+    Debug-Log "DEBUG: Get-CleanObjectInfo called with: '$treeText'"
+    
+    # Determine type FIRST (before cleaning)
+    $objectType = if ($treeText -like "(U)*") { "user" } 
+                  elseif ($treeText -like "(DC)*") { "dc" } 
+                  else { "group" }
+    
+    Debug-Log "DEBUG: Detected type: $objectType"
+    
+    # Remove prefixes like "(U) " or "(DC) "
+    $cleanName = $treeText -replace '^\([^)]+\)\s*', ''
+    Debug-Log "DEBUG: After removing prefix: '$cleanName'"
+    
+    # Remove any non-letter, non-space characters from the start (status icons)
+    $cleanName = $cleanName -replace '^[^a-zA-Z]+\s*', ''
+    Debug-Log "DEBUG: After removing icons: '$cleanName'"
+    
+    # Extract just the name if it has [SITE] suffix (for DCs)
+    if ($cleanName -match '^(.+?)\s+\[.+\]$') {
+        $cleanName = $matches[1].Trim()
+        Debug-Log "DEBUG: Extracted name from [SITE] format: '$cleanName'"
+    }
+    
+    Debug-Log "DEBUG: Final cleaned name: '$cleanName'"
+    
+    return @{
+        Type = $objectType
+        Name = $cleanName
+    }
+}
+
+# Debug version of Show-Properties
 function Show-Properties {
     Debug-Log "DEBUG: Show-Properties called"
     
     if (-not $tree.SelectedObject) { 
         Debug-Log "DEBUG: No object selected"
-        [Terminal.Gui.MessageBox]::Query(50, 7, "Debug", "No object selected in tree", "OK") | Out-Null
+        Show-Modal "Debug" "No object selected in tree"
         return 
     }
     
     $selName = $tree.SelectedObject.Text
     Debug-Log "DEBUG: Selected object text: '$selName'"
     
-    # Remove prefixes like "(U) " or "(DC) " and status icons
-    $cleanName = $selName -replace '^\(.\)\s*', '' -replace '^[○⊗🔒]\s*', ''
-    Debug-Log "DEBUG: Cleaned name: '$cleanName'"
+    # Parse the tree text to get clean name and type
+    $objInfo = Get-CleanObjectInfo -treeText $selName
+    $cleanName = $objInfo.Name
+    $selType = $objInfo.Type
     
-    $selType = if ($selName -like "(U)*") {"user"} elseif ($selName -like "(DC)*") {"computer"} else {"group"}
-    Debug-Log "DEBUG: Detected type: $selType"
-
+    # Route to appropriate dialog
     if ($selType -eq "user") {
-        Debug-Log "DEBUG: Searching for user in Global:Users array (count: $($Global:Users.Count))"
-        
-        # Try to find the user
-        $selUser = $null
-        foreach ($u in $Global:Users) {
-            Debug-Log "DEBUG: Checking user: '$($u.Name)' against '$cleanName'"
-            if ($u.Name -eq $cleanName) {
-                $selUser = $u
-                Debug-Log "DEBUG: MATCH FOUND!"
-                break
-            }
-        }
+        $selUser = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
         
         if ($selUser) {
-            ############ Put troublshooting here #################
             Debug-Log "DEBUG: User found, calling Show-UserPropertiesDialog"
-            Debug-Log "DEBUG: User details: Name=$($selUser.Name), Disabled=$($selUser.Disabled), Locked=$($selUser.Locked)"
-Debug-Log "DEBUG: "
-
             try {
                 Show-UserPropertiesDialog -user $selUser
-                Debug-Log "DEBUG: Show-UserPropertiesDialog completed"
             } catch {
                 Debug-Log "ERROR: Exception in Show-UserPropertiesDialog: $_"
-                Debug-Log "ERROR: Stack trace: $($_.ScriptStackTrace)"
-                Show-Modal "Failed to show properties:`n$($_.Exception.Message)`n`nCheck console for details"
+                Show-Modal "Error" "Failed to show properties`n$($_.Exception.Message)`n`nCheck console for details"
             }
         } else {
             Debug-Log "DEBUG: User NOT found in Global:Users"
-            [Terminal.Gui.MessageBox]::Query(50, 9, "Debug", "User '$cleanName' not found in Global:Users array.`n`nAvailable users: $($Global:Users.Count)", "OK") | Out-Null
+            Show-Modal "Not Found" "User '$cleanName' not found"
         }
+    } elseif ($selType -eq "dc") {
+        Debug-Log "DEBUG: DC type selected: $cleanName"
+        Show-DCPropertiesDialog -dcName $cleanName
     } elseif ($selType -eq "group") {
         Debug-Log "DEBUG: Group type selected: $cleanName"
-        $groupName = $cleanName
-        $members = $Global:Users | Where-Object { $_.Groups -contains $groupName } | ForEach-Object { $_.Name } | Sort-Object
-        $desc = "<no description>"
-        $txt = "Group: $groupName`nDescription: $desc`nMembers:`n" + ($members -join "`n")
-        [Terminal.Gui.MessageBox]::Query(60, 20, "Group Properties", $txt, "OK") | Out-Null
-
+        Show-GroupPropertiesDialog -groupName $cleanName
     } else {
         Debug-Log "DEBUG: Selected object type $selType not handled yet."
     }
 }
+
 
 # Additional debug helper - call this to verify your demo data loaded correctly
 function Test-DemoData {
@@ -4828,15 +5218,6 @@ function Update-SelectionPanel {
     $panel.SetNeedsDisplay()
 }
 
-function Show-GroupPropertiesDialog {
-    param([string]$groupName)
-    
-    $members = $Global:Users | Where-Object { $_.Groups -contains $groupName } | ForEach-Object { $_.Name } | Sort-Object
-    $desc = "<no description>"
-    $txt = "Group: $groupName`nDescription: $desc`nMember Count: $($members.Count)`n`nMembers:`n" + ($members -join "`n")
-    [Terminal.Gui.MessageBox]::Query(60, 20, "Group Properties", $txt, "OK") | Out-Null
-}
-
 # Add/Remove Group Member Implementation
 # Replace the placeholder functions in your script
 
@@ -5153,21 +5534,21 @@ $tree.add_MouseClick({
 # This is a theme now. Danish Fruit soda based fun
 # Method to the madness
 function Show-BlaabaerInfo {
-    $dlg = [Terminal.Gui.Dialog]::new("Why Blaabaer? 🫐", 60, 12)
+    $dlg = [Terminal.Gui.Dialog]::new("Why $($Global:FruitName)? 🫐", 60, 12)
     
     $message = @"
-DSA-TUI is codenamed "Blaabaer" because:
+$($Global:ProjectName) is codenamed $Global:FruitName because:
 
 - I was drinking blueberry soda when writing the code
-- 'Blåbær' (Blaabaer) is Danish for blueberry
-- Føtex sells a rather nice Blaabaer soda
+- $($Global:FruitName) is Danish for blueberry
+- Føtex sells a rather nice $($Global:FruitName) soda
 - Every great project needs a forest-fruit mascot!
 "@
     
     $label = [Terminal.Gui.Label]::new(1, 1, $message)
     $dlg.Add($label)
     
-    Show-Modal "Why Blaabaer? 🫐" $message
+    Show-Modal "Why $($Global:FruitName)...? 🫐" $message
 }
 
 function Show-Modal { 
