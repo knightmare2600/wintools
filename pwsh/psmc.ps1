@@ -45,8 +45,14 @@ v1.6.1 -
   - Fix some typos
   - Improve Menu and Statusbar flow
 
-v1.6.2 - 
+v1.6.2 - Syntax Error fun
   - Add Error action code to track down silent failures
+
+v1.6.3 - Colour my life
+  - Fix theme switching by retrofitting the upstream colour picker
+  = Simplify and clean up initial theme code
+  - Use Debug-Log for verbosity for a cleaner runtime
+  - Fruity code names
 
 ================================================================================
 #>
@@ -54,15 +60,17 @@ v1.6.2 -
 param(
     [switch]$Verbose,
     [ValidateSet("light","dark","matrix","british")]
-    [string]$Theme = "dark"
+    [string]$Theme = "matrix"
 )
 
 # Set global flags immediately after param block - themes here
 $script:ThemeMode = $Theme
 $ErrorActionPreference = 'Continue'
-$Global:PSMC_Version = '1.6.2'
+$Global:ProjectName = "PSMC - PWSH Midnight Commander"
+$Global:FruitName = "Ananas"
+$Global:PSMC_Version = '1.6.3'
 
-Write-Host "Starting PSMC - Powershell commander"
+Write-Host "Starting $($Global:ProjectName) - Powershell commander ${Global:PSMC_Version}"
 
 # Load Terminal.Gui
 if (-not ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq 'Terminal.Gui' })) {
@@ -212,23 +220,6 @@ function Dump-ColorScheme {
     Debug-Log "HotNormal : $($Scheme.HotNormal)"
     Debug-Log "HotFocus  : $($Scheme.HotFocus)"
     Debug-Log "Disabled  : $($Scheme.Disabled)"
-}
-
-function Get-Theme {
-    param([string]$mode)
-    $cs = [Terminal.Gui.ColorScheme]::new()
-    if ($mode -eq 'light') {
-        $cs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
-        $cs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
-        $cs.HotNormal = $cs.Normal
-        $cs.HotFocus  = $cs.Focus
-    } else {
-        $cs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
-        $cs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::DarkGray)
-        $cs.HotNormal = $cs.Normal
-        $cs.HotFocus  = $cs.Focus
-    }
-    return $cs
 }
 
 function Build-DisplayNames {
@@ -402,8 +393,8 @@ function New-FilePane {
     $frame.Title = "$paneName : $($pane.Path)"
     $frame.Y = 0
     $frame.Height = [Terminal.Gui.Dim]::Fill()
-##    $frame.ColorScheme = Get-Theme $themeMode
-    $frame.ColorScheme = Get-Theme $themeMode
+    $themeData = Get-Theme $themeMode
+    $frame.ColorScheme = $themeData.MainWindow
 
     $list = [Terminal.Gui.ListView]::new()
     $list.X = 0
@@ -1643,10 +1634,10 @@ function Update-FocusIndicator {
 
 # Mehod to the madness
 function Show-AnanasInfo {
-    $dlg = [Terminal.Gui.Dialog]::new("Why Ananas? 🍍", 60, 12)
+    $dlg = [Terminal.Gui.Dialog]::new("Why $($Global:FruitName)? 🍍", 60, 12)
     
     $message = @"
-PSMC is codenamed "Ananas" because:
+$($Global:ProjectName) is codenamed "$($Global:FruitName)" because:
 
 - I was drinking pineapple soda when writing the code.
 - The Danish word for pineapple is Ananas which I find
@@ -1659,7 +1650,7 @@ PSMC is codenamed "Ananas" because:
     $label = [Terminal.Gui.Label]::new(1, 1, $message)
     $dlg.Add($label)
     
-   [Terminal.Gui.MessageBox]::Query("Why Ananas? 🍍", $message, @("OK"))
+   [Terminal.Gui.MessageBox]::Query("Why $($Global:FruitName)? 🍍", $message, @("OK"))
 }
 
 # Main UI Setup
@@ -1667,12 +1658,12 @@ $script:ThemeMode = 'dark'
 $script:CurrentFocusPane = 'LEFT'
 
 $start = (Get-Location).Path
-Debug-Log "=== PSMC Starting ==="
+Debug-Log "=== $($Global:ProjectName) v$($Global:PSMC_Version) Starting ==="
 
 $script:LeftPane = New-FilePane -initialPath $start -themeMode $script:ThemeMode -paneName 'LEFT'
 $script:RightPane = New-FilePane -initialPath $start -themeMode $script:ThemeMode -paneName 'RIGHT'
 
-$win = [Terminal.Gui.Window]::new("PSMC v$($Global:PSMC_Version) - Ananas Build")
+$win = [Terminal.Gui.Window]::new("$($Global:ProjectName) v$($Global:PSMC_Version) - $($Global:FruitName) Build")
 $win.X = 0
 $win.Y = 1
 $win.Width = [Terminal.Gui.Dim]::Fill()
@@ -1881,7 +1872,7 @@ $menuHelp = [Terminal.Gui.MenuBarItem]::new("_Help", @(
         Show-Modal "Shortcuts" "F1 Help`nTab - Switch Pane`nF2/F3 -Mkdir`nF4 - Go up`nF5 - Refresh`nF6 - Copy`nF7 - Change dir`nF8 - Delete`nF10 - Quit" 
     }),
     [Terminal.Gui.MenuItem]::new("_About", "About", [Action]{ 
-        Show-Modal "About" "PSMC v$($Global:PSMC_Version) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600" 
+        Show-Modal "About" "$($Global:ProjectName)`n`nCodename: $($Global:FruitName)`nv$($Global:PSMC_Version) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600" 
     }),,
     [Terminal.Gui.MenuItem]::new("Why _Ananas?", "", {
         Show-AnanasInfo
@@ -1904,7 +1895,7 @@ function Show-ThemeSelector {
     
   $btnApply = [Terminal.Gui.Button]::new("Apply")
 
-  $btnApply.add_Clicked({
+$btnApply.add_Clicked({
     $selectedTheme = $themes[$rdoThemes.SelectedItem]
     Debug-Log "Switching to theme: $selectedTheme"
     $script:ThemeMode = $selectedTheme
@@ -1913,30 +1904,23 @@ function Show-ThemeSelector {
     $newTheme = Get-Theme -mode $selectedTheme
         
     ## Apply to all components
+    Apply-Theme -ThemeData $newTheme -TopLevel ([Terminal.Gui.Application]::Top) -MainWindow $win -Menu $menu -Status $statusBar
 
-    ## Apply theme to all components
-    Apply-Theme -ThemeData $cs -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $StatusBar
-
+    ## Update the pane ColorSchemes explicitly
+    $script:LeftPane.Frame.ColorScheme = $newTheme.MainWindow
+    $script:RightPane.Frame.ColorScheme = $newTheme.MainWindow
+    
     ## Force redraw
-    $menu.ColorScheme = $newTheme.Global     ## <-- critical for menu bar
+    $script:LeftPane.Frame.SetNeedsDisplay()
+    $script:RightPane.Frame.SetNeedsDisplay()
     $menu.SetNeedsDisplay()
     $win.SetNeedsDisplay()
     [Terminal.Gui.Application]::Top.SetNeedsDisplay()
     [Terminal.Gui.Application]::Refresh()
-
-    ## Force redraw of components that do NOT auto-refresh
-    $Menu.SetNeedsDisplay()
-    $win.SetNeedsDisplay()
-    [Terminal.Gui.Application]::Top.SetNeedsDisplay()
-
-    ## Hard refresh screen
-    [Terminal.Gui.Application]::Refresh()
      
     Show-Modal "Theme Changed" "Theme changed to: ${selectedTheme}"
     [Terminal.Gui.Application]::RequestStop()
-  })
-
-
+})
   $dlg.AddButton($btnApply)
     
   $btnCancel = [Terminal.Gui.Button]::new("Cancel")
@@ -1951,8 +1935,7 @@ function Show-ThemeSelector {
 $script:ThemeMode = $Theme
 
 # Get the selected colour scheme
-$cs = Get-Theme -mode $Theme
-Apply-Theme -ThemeData $themeData -TopLevel $top -MainWindow $win -Menu $menu -Status $status
+$themeData = Get-Theme -mode $Theme
 
 $menu = [Terminal.Gui.MenuBar]::new(@($menuFile, $menuActions, $menuNav, $menuHelp))
 
@@ -1964,14 +1947,21 @@ $win.Add($script:LeftPane.Frame)
 $win.Add($divider)
 $win.Add($script:RightPane.Frame)
 
-$script:LeftPane.Frame.ColorScheme = Get-Theme $script:ThemeMode
-$script:RightPane.Frame.ColorScheme = Get-Theme $script:ThemeMode
+# Apply initial theme to all components
+Apply-Theme -ThemeData $themeData -TopLevel ([Terminal.Gui.Application]::Top) -MainWindow $win -Menu $menu -Status $statusBar
+
+# Update the pane ColorSchemes explicitly
+$script:LeftPane.Frame.ColorScheme = $themeData.MainWindow
+$script:RightPane.Frame.ColorScheme = $themeData.MainWindow
+
+# Force initial display refresh
+[Terminal.Gui.Application]::Refresh()
 
 try { 
     [Terminal.Gui.Application]::SetFocus($script:LeftPane.ListView) 
 } catch {}
 
-Debug-Log "=== PSMC v$($Global:PSMC_Version) Ready ==="
+Debug-Log "=== $($Global:ProjectName) v$($Global:PSMC_Version) Ready ==="
 Debug-Log "File | Actions | Navigate | Help"
 
 [Terminal.Gui.Application]::Run()
