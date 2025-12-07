@@ -29,7 +29,7 @@ param(
   [switch]$Logging,
   [string]$Verbose,
   [ValidateSet("light","dark","matrix","british")]
-  [string]$Theme = "dark"
+  [string]$Theme = "matrix"
 )
 
 ## -------------------------{ Load Terminal.Gui }-------------------------
@@ -47,7 +47,7 @@ if (-not ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName
 ## Define the build version, project name and fruit codename once only
 $Global:ProjectName = "Demo TUI Powershell App"
 $Global:FruitName = "Dansk Frugt Namen"
-$Global:BuildVersion = "1.2.4"
+$Global:BuildVersion = "1.2.8"
 
 ## Set global flags immediately after param block - themes here
 $Global:DemoMode = $DemoMode
