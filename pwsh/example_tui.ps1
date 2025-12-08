@@ -21,14 +21,39 @@ Historical Build Notes and Change Log
 1.2.8 (Globals)
  - Make use of global variables and use accordingly in dialogs and modals
  - Add codename Global and use accordingly
+1.2.9
+ - Add slider function
+ - Add colour picker
+ - add search inside file (think grep for PowerShell)
+ - New themes DSB Danish State Railways and Pan Am Airlines among others with a spruced up
+   theme selector
+ - start laying ground work for fancy debug messages too
 ===========================================================================================
+
+## TODO: The Debug-Log thing can be used and if the module isi nstalled, use fnacy, if not basic
+If (Get-Module -ListAvailable -Name PSWriteColor){
+  Write-Colour -LogFile "$Log_File" -LogTime $false -Encoding UTF8 -Text 'Module PSWriteColor exists. Proceeding...' -Color DarkGreen
+  }
+Else{
+  Write-Host "Module PSWriteColor not installed. Please run: Install-Module -Name PSWriteColor if you'd like colour output"
+  exit
+  }
+
+Write-Color -LogFile "$Log_File" -LogTime $false -Encoding UTF8 -Text "⚠️ something $variable, exiting on safety groundss" -Color Yellow
+Write-Color -LogFile "$Log_File" -LogTime $false -Encoding UTF8 -Text "✔  something $variable, exiting on safety groundss" -Color Green
+Write-Color -LogFile "$Log_File" -LogTime $false -Encoding UTF8 -Text "✖  something $variable, exiting on safety groundss" -Color Red
+Write-Color -LogFile "$Log_File" -LogTime $false -Encoding UTF8 -Text "ℹ️ something $variable, exiting on safety groundss" -Color Cyan
+
+############# Do the same for that icons ting and detect if hte ofnt is instlale too, then port over ot psmc ########################
+
+
 #>
 
 param(
   [switch]$DemoMode,
   [switch]$Logging,
   [string]$Verbose,
-  [ValidateSet("light","dark","matrix","british")]
+  [ValidateSet("light","dark","matrix","british", "panam", "dsb", "gemstones", "class91", "scotrail" )]
   [string]$Theme = "matrix"
 )
 
@@ -47,7 +72,7 @@ if (-not ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName
 ## Define the build version, project name and fruit codename once only
 $Global:ProjectName = "Demo TUI Powershell App"
 $Global:FruitName = "Dansk Frugt Namen"
-$Global:BuildVersion = "1.2.8"
+$Global:BuildVersion = "1.2.9"
 
 ## Set global flags immediately after param block - themes here
 $Global:DemoMode = $DemoMode
@@ -118,62 +143,103 @@ function Debug-Log {
 }
 
 ## ---------------------{ Pretty Theme Selections }--------------------
+## ---------------------{ Pretty Theme Selections }--------------------
 function Show-ThemeSelector {
-  $dlg = [Terminal.Gui.Dialog]::new("Select Theme", 50, 14)
-  $lbl = [Terminal.Gui.Label]::new("Choose a color theme:"); $lbl.X=2; $lbl.Y=1; $dlg.Add($lbl)
-  
-  $themes = @("light", "dark", "matrix", "british")
-  $currentIndex = $themes.IndexOf($Global:ThemeMode)
-  if ($currentIndex -lt 0) { $currentIndex = 1 } # default to dark
 
-  $rdoThemes = [Terminal.Gui.RadioGroup]::new($themes)
-  $rdoThemes.X=2; $rdoThemes.Y=3; $rdoThemes.SelectedItem=$currentIndex
-  $dlg.Add($rdoThemes)
-    
-  $btnApply = [Terminal.Gui.Button]::new("Apply")
+  $dlg = [Terminal.Gui.Dialog]::new("Select Theme", 60, 16)
+  $lbl = [Terminal.Gui.Label]::new("Choose a color theme:")
+  $lbl.X = 2; $lbl.Y = 1
+  $dlg.Add($lbl)
 
-  $btnApply.add_Clicked({
-    $selectedTheme = $themes[$rdoThemes.SelectedItem]
-    Debug-Log "Switching to theme: $selectedTheme"
-    $Global:ThemeMode = $selectedTheme
-        
-    ## Get new theme
-    $newTheme = Get-Theme -mode $selectedTheme
-        
-    ## Apply to all components
+  ## --- Theme list ---
+  $themes = @( "british","dark","dsb","light","matrix","panam","gemstones","class91","scotrail" )
 
-    ## Apply theme to all components
-    Apply-Theme -ThemeData $newTheme -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $StatusBar
+  ## Split into 2 roughly equal columns
+  $half = [math]::Ceiling($themes.Count / 2)
+  $leftThemes  = $themes[0..($half-1)]
+  $rightThemes = $themes[$half..($themes.Count-1)]
 
-    ## Force redraw
-    $menu.ColorScheme = $newTheme.Global     ## <-- critical for menu bar
-    $menu.SetNeedsDisplay()
-    $win.SetNeedsDisplay()
-    [Terminal.Gui.Application]::Top.SetNeedsDisplay()
-    [Terminal.Gui.Application]::Refresh()
+  ## Determine currently selected
+  $currentIndex = $themes.IndexOf($script:ThemeMode)
+  if ($currentIndex -lt 0) { $currentIndex = 1 }
 
-    ## Force redraw of components that do NOT auto-refresh
-    $Menu.SetNeedsDisplay()
-    $win.SetNeedsDisplay()
-    [Terminal.Gui.Application]::Top.SetNeedsDisplay()
+  ## Calculate which column the current selection is in
+  $leftSelected  = if ($currentIndex -lt $leftThemes.Count) { $currentIndex } else { -1 }
+  $rightSelected = if ($currentIndex -ge $leftThemes.Count) { $currentIndex - $leftThemes.Count } else { -1 }
 
-    ## Hard refresh screen
-    [Terminal.Gui.Application]::Refresh()
-     
-    Show-Modal "Theme Changed" "Theme changed to: ${selectedTheme}"
-    [Terminal.Gui.Application]::RequestStop()
+  ## --- RadioGroup: LEFT column ---
+  $rdoLeft = [Terminal.Gui.RadioGroup]::new($leftThemes)
+  $rdoLeft.X = 2
+  $rdoLeft.Y = 3
+  if ($leftSelected -ge 0) { $rdoLeft.SelectedItem = $leftSelected }
+  $dlg.Add($rdoLeft)
+
+  ## --- RadioGroup: RIGHT column ---
+  $rdoRight = [Terminal.Gui.RadioGroup]::new($rightThemes)
+  $rdoRight.X = 32
+  $rdoRight.Y = 3
+  if ($rightSelected -ge 0) { $rdoRight.SelectedItem = $rightSelected }
+  $dlg.Add($rdoRight)
+
+  ## --- Sync selection so only ONE group is active ---
+  $rdoLeft.add_SelectedItemChanged({
+    if ($rdoLeft.SelectedItem -ge 0) {
+      $rdoRight.SelectedItem = -1
+    }
   })
 
+  $rdoRight.add_SelectedItemChanged({
+    if ($rdoRight.SelectedItem -ge 0) {
+      $rdoLeft.SelectedItem = -1
+    }
+  })
+
+  ## ---------------- Apply Button ----------------
+  $btnApply = [Terminal.Gui.Button]::new("Apply")
+  $btnApply.add_Clicked({
+        
+  ## Determine selected theme
+  $sel = $(
+    if ($rdoLeft.SelectedItem -ge 0) {
+      $leftThemes[$rdoLeft.SelectedItem]
+    }
+    elseif ($rdoRight.SelectedItem -ge 0) {
+      $rightThemes[$rdoRight.SelectedItem]
+    }
+    else {
+      $themes[1]   # dark fallback
+    }
+  )
+
+  Debug-Log "Switching to theme: $sel"
+  $script:ThemeMode = $sel
+
+  $newTheme = Get-Theme -mode $sel
+  Apply-Theme -ThemeData $newTheme -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $StatusBar
+
+  ## Force redraw
+  $menu.ColorScheme = $newTheme.Global ## <-- critical for menu bar
+  $menu.SetNeedsDisplay()
+
+  ## Force redraw of components that do NOT auto-refresh
+  $win.SetNeedsDisplay()
+  [Terminal.Gui.Application]::Top.SetNeedsDisplay()
+  ## Hard refresh screen
+  [Terminal.Gui.Application]::Refresh()
+
+  Show-Modal "Theme Changed" "Theme changed to: ${sel}"
+  [Terminal.Gui.Application]::RequestStop()
+  })
 
   $dlg.AddButton($btnApply)
-    
+
+  ## Cancel
   $btnCancel = [Terminal.Gui.Button]::new("Cancel")
   $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
   $dlg.AddButton($btnCancel)
-    
+
   [Terminal.Gui.Application]::Run($dlg)
 }
-
 
 ## -------------------------{ Theme Definitions }------------------------
 function Get-Theme {
@@ -227,9 +293,38 @@ function Get-Theme {
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
       }
-
-    default {
-      ## fallback to dark
+    "panam" {
+      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+      }
+    "dsb" {
+      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
+      }
+    "gemstones" {
+      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
+      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::BrightMagenta)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightGreen)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
+      }
+    "scotrail" {
+      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
+      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::White)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightBlue)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      }
+    "class91" {
+      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
+      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::White)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
+      }
+    "default" {
+      # fallback to dark
       $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
       $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
@@ -305,6 +400,155 @@ $cs = Get-Theme -mode $Theme
 
 ## Apply theme to all components
 Apply-Theme -ThemeData $newTheme -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $StatusBar
+
+## ---------------------------{ Colour Picker }--------------------------
+function Show-ColorPickerDialog {
+    [Terminal.Gui.Application]::Init()
+
+    $dialog = [Terminal.Gui.Dialog]::new("Select Color", 60, 20)
+
+    # Create the ColorPicker control
+    $picker = [Terminal.Gui.ColorPicker]::new()
+    $picker.X = 1
+    $picker.Y = 1
+    $picker.Width  = 58
+    $picker.Height = 14
+
+    $dialog.Add($picker)
+
+    # Buttons
+    $ok = [Terminal.Gui.Button]::new(" OK ")
+    $ok.X = 15; $ok.Y = 16
+
+    $cancel = [Terminal.Gui.Button]::new(" Cancel ")
+    $cancel.X = 30; $cancel.Y = 16
+
+    $dialog.Add($ok)
+    $dialog.Add($cancel)
+
+    $result = $null
+
+    $ok.add_Click({
+        # SelectedColor is a Terminal.Gui.Color enum
+        $result = $picker.SelectedColor
+        $dialog.RequestStop()
+    })
+
+    $cancel.add_Click({
+        $result = $null
+        $dialog.RequestStop()
+    })
+
+    [Terminal.Gui.Application]::Run($dialog)
+    return $result
+}
+
+## ---------------------------{ Slider Modals }--------------------------
+function Show-MonthSliderDialog {
+    $dialog = [Terminal.Gui.Dialog]::new("Select Month", 50, 12)
+
+    # Slider: 1–12
+    $slider = [Terminal.Gui.Slider]::new()
+    $slider.X = 2
+    $slider.Y = 2
+    $slider.Width = 45
+    $slider.MinValue = 1
+    $slider.MaxValue = 12
+    $slider.Value = 1
+
+    # Dynamic month label
+    $monthLabel = [Terminal.Gui.Label]::new("Month: January")
+    $monthLabel.X = 2
+    $monthLabel.Y = 4
+
+    # Month name lookup
+    $months = @( "January","February","March","April","May","June", "July","August","September","October","November","December"
+    )
+
+    # Live update of the label
+    $slider.add_Changed({ $monthLabel.Text = "Month: " + $months[$slider.Value - 1] })
+
+    # Buttons
+    $ok = [Terminal.Gui.Button]::new(" OK ")
+    $ok.X = 10; $ok.Y = 7
+    $cancel = [Terminal.Gui.Button]::new(" Cancel ")
+    $cancel.X = 25; $cancel.Y = 7
+
+    $dialog.Add($slider)
+    $dialog.Add($monthLabel)
+    $dialog.Add($ok)
+    $dialog.Add($cancel)
+
+    $selectedMonth = $null
+
+    $ok.add_Click({
+        $selectedMonth = $months[$slider.Value - 1]
+        $dialog.RequestStop()
+    })
+    $cancel.add_Click({
+        $selectedMonth = $null
+        $dialog.RequestStop()
+    })
+
+    [Terminal.Gui.Application]::Run($dialog)
+    return $selectedMonth
+}
+
+## -------------------------{ Grep Modal }-------------------------
+function Show-FileSearchDialog {
+    param(
+        [string]$StartDir = "."
+    )
+
+    $file = Show-FileBrowserDialog -StartDir $StartDir -Title "Select File to Search" -Filter @("*.*")
+    if (-not $file) { return }
+
+    $dlgWidth = 80
+    $dlgHeight = 25
+
+    # Create Window
+    $dlg = [Terminal.Gui.Window]::new("File Search: $file")
+    $dlg.Width = $dlgWidth
+    $dlg.Height = $dlgHeight
+
+    # Search input
+    $lblSearch = [Terminal.Gui.Label]::new(1, 1, "Text to search for:")
+    $txtSearch = [Terminal.Gui.TextField]::new(18, 1, $dlgWidth - 20, "")
+
+    # Results frame (to hold TextView and simulate scrollbars)
+    $frame = [Terminal.Gui.FrameView]::new(0, 3, $dlgWidth, $dlgHeight - 6, "Results")
+
+    $txtResults = [Terminal.Gui.TextView]::new([Terminal.Gui.Rect]::new(0, 0, $frame.Width - 1, $frame.Height - 1))
+    $txtResults.ReadOnly = $true
+    $txtResults.WordWrap = $false
+    $txtResults.Overflow = [Terminal.Gui.Overflow]::Clip
+    $frame.Add($txtResults)
+
+    # Buttons
+    $btnSearch = [Terminal.Gui.Button]::new(1, $dlgHeight - 2, "Search")
+    $btnSearch.add_Clicked({
+        $pattern = $txtSearch.Text.ToString()
+        if (-not $pattern) { return }
+
+        try {
+            $lines = Get-Content $file
+            $matches = $lines | Where-Object { $_ -match $pattern }
+            $txtResults.Text = if ($matches.Count -gt 0) { ($matches -join "`n") } else { "No matches found." }
+        } catch {
+            $txtResults.Text = "Error reading file: $($_.Exception.Message)"
+        }
+    })
+
+    $btnClose = [Terminal.Gui.Button]::new(12, $dlgHeight - 2, "Close")
+    $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+
+    # Add controls
+    $dlg.Add($lblSearch, $txtSearch, $frame, $btnSearch, $btnClose)
+
+    # Add to top-level and run
+    [Terminal.Gui.Application]::Top.Add($dlg)
+    [Terminal.Gui.Application]::Run()
+}
 
 ## -------------------------{ Tools Modal }------------------------
 function Show-ToolsDialog {
@@ -551,6 +795,106 @@ $PasswordMenuAction = {
   [Terminal.Gui.Application]::Run($dialog)
 }
 
+# ----------------------------{ File Browser }---------------------------
+function Show-FileBrowserDialog {
+    param(
+        [string]$StartDir = ".",
+        [string]$Title = "Select File",
+        [string[]]$Filter = @("*.*")
+    )
+    
+    $script:selectedFile = $null  # Use script scope from the start
+    $currentPath = (Resolve-Path $StartDir).Path
+    $dialog = [Terminal.Gui.Dialog]::new($Title, 80, 24)
+    
+    # Current path label
+    $labelPath = [Terminal.Gui.Label]::new(2, 1, "Path: $currentPath")
+    $labelPath.Width = 74
+    $dialog.Add($labelPath)
+    
+    ## ListView for files/folders
+    $listView = [Terminal.Gui.ListView]::new()
+    $listView.X = 2; $listView.Y = 3
+    $listView.Width = 74; $listView.Height = 14
+    $dialog.Add($listView)
+    
+    ## Selected file label
+    $labelSelected = [Terminal.Gui.Label]::new(2, 18, "Selected: (none)")
+    $labelSelected.Width = 74
+    $dialog.Add($labelSelected)
+    
+    function Update-FileList {
+        param([string]$path)
+        $script:currentPath = $path
+        $labelPath.Text = [NStack.ustring]::Make("Path: $path")
+        $items = [System.Collections.Generic.List[string]]::new()
+        
+        ## Parent directory
+        if ($path -ne [System.IO.Path]::GetPathRoot($path)) { $items.Add("[..]") }
+        
+        ## Directories
+        try {
+            Get-ChildItem -Path $path -Directory -ErrorAction SilentlyContinue | Sort-Object Name |
+            ForEach-Object { $items.Add("[DIR] $($_.Name)") }
+            
+            ## Files matching filter
+            Get-ChildItem -Path $path -File -ErrorAction SilentlyContinue | 
+            Where-Object { $Filter -contains "*.*" -or $Filter -contains "*$($_.Extension)" } |
+            Sort-Object Name | ForEach-Object { $items.Add($_.Name) }
+        } catch { Show-Modal "Error" "Cannot access directory: $path" }
+        
+        if ($items.Count -eq 0) { $items.Add("(empty directory)") }
+        $listView.SetSource($items)
+    }
+    
+    ## Double-click or Enter to select
+    $listView.add_OpenSelectedItem({
+        $sel = $listView.Source.ToList()[$listView.SelectedItem]
+        if ($sel -eq "[..]") {
+            $parent = Split-Path -Parent $script:currentPath
+            if ($parent) { Update-FileList -path $parent }
+        }
+        elseif ($sel -match '^\[DIR\] (.+)$') {
+            $dirName = $Matches[1]
+            $newPath = Join-Path $script:currentPath $dirName
+            Update-FileList -path $newPath
+        }
+        elseif ($sel -ne "(empty directory)") {
+            $script:selectedFile = Join-Path $script:currentPath $sel
+            $labelSelected.Text = [NStack.ustring]::Make("Selected: $($script:selectedFile)")
+        }
+    })
+    
+    ## Select button
+    $btnSelect = [Terminal.Gui.Button]::new(2, 20, "Select")
+    $btnSelect.add_Clicked({
+        if ($script:selectedFile) {
+            Debug-Log "File selected: $($script:selectedFile)"
+            [Terminal.Gui.Application]::RequestStop()
+        } else { 
+            Show-Modal "No Selection" "Please select a file" 
+        }
+    })
+    $dialog.Add($btnSelect)
+    
+    ## Cancel button
+    $btnCancel = [Terminal.Gui.Button]::new(15, 20, "Cancel")
+    $btnCancel.add_Clicked({
+        $script:selectedFile = $null
+        [Terminal.Gui.Application]::RequestStop()
+    })
+    $dialog.Add($btnCancel)
+    
+    ## Initial population
+    Update-FileList -path $currentPath
+    
+    ## Run dialog
+    [Terminal.Gui.Application]::Run($dialog)
+    
+    return $script:selectedFile  # Return the script-scoped variable
+}
+
+
 ## -----------------------------------{ Menus }-----------------------------------
 
 ## ---------------------------{ MenuBar (File / Help) }---------------------------
@@ -561,14 +905,17 @@ $Menu = [Terminal.Gui.MenuBar]::new(@(
   [Terminal.Gui.MenuBarItem]::new("_File", @(
     [Terminal.Gui.MenuItem]::new("_Password Generator", "Random Password Generator (F2)", [Action]{ Generate-RandomPassword }),
     [Terminal.Gui.MenuItem]::new("_Show Tools", "Show Tools  (F3)", [Action]{ Show-ToolsDialog }),
+    [Terminal.Gui.MenuItem]::new("_Month", "Month Widget (F4)", [Action]{ Show-MonthSliderDialog }),
+    [Terminal.Gui.MenuItem]::new("_Grep", "Find text in file (F6)", [Action]{ Show-FileSearchDialog }),
     [Terminal.Gui.MenuItem]::new("_Undo", "Undo last action", [Action]{ Show-Modal "Not Implemented Yet" "Not yet`nCheck Future Builds" }),
+    [Terminal.Gui.MenuItem]::new("_Colours", "Colour Picker (F11)", [Action]{ Show-ColorPickerDialog }),
     [Terminal.Gui.MenuItem]::new("_Themes", "Theme Selector (F12)", [Action]{ Show-ThemeSelector }),
     [Terminal.Gui.MenuItem]::new("_Exit", "Exit (F10)", [Action]{ [Terminal.Gui.Application]::RequestStop() })
   )),
 
   ## Help/About menu
   [Terminal.Gui.MenuBarItem]::new("_Help", @(
-    [Terminal.Gui.MenuItem]::new("_Shortcuts", "Keyboard shortcuts (F1)", [Action]{ Show-Modal "Shortcuts" "F1 - Help`nF2 -Password Generator`nF3 Tools`n F10 - Quit`nF12 -Themes" }),
+    [Terminal.Gui.MenuItem]::new("_Shortcuts", "Keyboard shortcuts (F1)", [Action]{ Show-Modal "Shortcuts" "F1 - Help`nF2 -Password Generator`nF3 Tools`nF4 - Month`n F10 - Quit`nF11 Colour Picker`nF12 -Themes" }),
     [Terminal.Gui.MenuItem]::new("_Why Frught Namen?", "Danish Fruit Explainer", [Action]{ Show-DanskFrugtInfo }),
     [Terminal.Gui.MenuItem]::new("_About", "About ($Global:FruitName)", [Action]{
       Show-Modal "About" "$($Global:ProjectName)`n`nCodename: $($Global:FruitName)`nv$($Global:PSMC_Version) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600"
@@ -583,11 +930,14 @@ $menu.ColorScheme = $themeData.Global
 ## ------------------------------{ StatusBar }-----------------------------
 $StatusBar = [Terminal.Gui.StatusBar]::new(
   @(
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F1, "F1 - Help", { Show-Modal "Shortcuts" "F1 - Help`nF2 -Password Generator`nF3 Tools`n F10 - Quit`nF12 -Themes" }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F2, "F2 - Password Generator", { Show-PasswordGenerator }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F3, "F3 - Tools", { Show-ToolsDialog }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F10, "F10 - Quit", { [Terminal.Gui.Application]::RequestStop() }),
-    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F12, "F12 - Themes", { Show-ThemeSelector })
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F1,  "F1 - Help",               { Show-Modal "Shortcuts" "F1 - Help`nF2 -Password Generator`nF3 Tools`n F10 - Quit`nF11 Colour Picker`nF12 -Themes" }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F2,  "F2 - Password Generator", { Show-PasswordGenerator }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F3,  "F3 - Tools",              { Show-ToolsDialog }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F4,  "F4 - Month",              { Show-MonthSliderDialog }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F4,  "F6 - Grep",               { Show-FileSearchDialog }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F10, "F10 - Quit",              { [Terminal.Gui.Application]::RequestStop() }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F11, "F11 - Colour Picker",     { Show-ColorPickerDialog }),
+    [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F12, "F12 - Themes",            { Show-ThemeSelector })
   )
 )
 
