@@ -197,9 +197,21 @@ Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change 
   - Add gemstones scotrail and class91 (BR Intercity Swallow livery) themes
   - Rework theme selection to have two columns
 
+2.0.0.1  (Bug fix release)
+ - Fix window fill so it's leaving a single line for the status bar
+ - Debug log now also writes to a file if asked
+ - document- thogugh not yet fix the right click context menu issues (WIP)
+ - Modals such as displayname text boxes now 60 chars because Danes and Germans have long names
+ - Search user properties now dynamically searches again with addition of textChainged
+ - Cosmetic fixes for theme selection to be more intuitive
+ - Reflect if account is locked and/or disabled in the search modal too
+
 TODO:
-  - Modals such as displayname text boxes need to be wider
-    because Danes and Germans have long names
+ - Refresh Domian data kills the script
+ - if the pswritecoloour module is installed fancy up debug output
+ - print instrucitons on how to install missing modules
+ - misisng AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
+ - the terminal icons module, likewise if it's there great, if not fall back
 
 ===========================================================================================
 #>
@@ -210,13 +222,13 @@ param(
   [switch]$Verbose,
   [string]$Domain,  ## User can specify domain
   [ValidateSet("light","dark","matrix","british", "panam", "dsb", "gemstones", "class91", "scotrail" )]
-  [string]$Theme = "dark"
+  [string]$Theme
 )
 
 ## Define the build version once
 $Global:ProjectName = "DSA-TUI pwsh dsa.msc TUI"
 $Global:FruitName = "Blåbær"
-$Global:BuildVersion = "2.0.0.0"
+$Global:BuildVersion = "2.0.0.1"
 
 ## Get ready for the launch
 Write-Host "Starting $($Global:ProjectName) Codename: $($Global:FruitName) v$($Global:BuildVersion) in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode with $Theme theme..."
@@ -320,7 +332,7 @@ if (-not ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName
 $Global:DemoMode = $DemoMode
 
 ## Set global flags immediately after param block - themes here
-$script:ThemeMode = $Theme
+$Global:ThemeMode = $Theme
 
 Write-Host "Starting $($Global:ProjectName) in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode..."
 
@@ -335,38 +347,41 @@ if ($Global:DemoMode) {
     $Global:Domains = @('example.com', 'example.net')
     $Global:Sites = @('GLA', 'EDI', 'LND', 'CPH', 'KGE', 'ODE', 'BON', 'BRL', 'MUC')
 } else {
-    # Production mode - query AD
+    ## Production mode - query AD
     try {
-        $forest = Get-ADForest
+        ## If user specified a domain, query THAT domain's forest
+        if ($Domain) {
+            Write-Host "Querying domain: $Domain"
+            $targetDomain = Get-ADDomain -Server $Domain -ErrorAction Stop
+            $forest = Get-ADForest -Server $targetDomain.Forest -ErrorAction Stop
+        } else {
+            # No domain specified - use current user's domain
+            $targetDomain = Get-ADDomain -ErrorAction Stop
+            $forest = Get-ADForest -ErrorAction Stop
+        }
+        
         $Global:ForestName = $forest.Name.Split('.')[0].ToUpper()
         $Global:RootDomain = $forest.RootDomain
         $Global:Domains = $forest.Domains
         $Global:Sites = $forest.Sites | ForEach-Object { $_.Name }
+        
+        ## Set current domain to what user specified, or root domain
+        $Global:CurrentDomain = if ($Domain) { $Domain } else { $Global:RootDomain }
+        
     } catch {
+        Write-Error "Failed to query domain/forest: $_"
+        Write-Error "Make sure you have connectivity to '$Domain' and appropriate permissions"
+        
         # Fallback for Azure AD or disconnected
         $Global:ForestName = "DOMAIN"
-        $Global:RootDomain = $env:USERDNSDOMAIN
-        $Global:Domains = @($env:USERDNSDOMAIN)
+        $Global:RootDomain = if ($Domain) { $Domain } else { $env:USERDNSDOMAIN }
+        $Global:Domains = @($Global:RootDomain)
         $Global:Sites = @()
-    }
-}
-
-## Set current domain - use parameter if specified, otherwise default to root
-if ($Domain) {
-    ## User specified a domain via parameter
-    if ($Global:Domains -contains $Domain) {
-        $Global:CurrentDomain = $Domain
-    } else {
-        Write-Warning "Specified domain '$Domain' not found in forest. Using root domain."
         $Global:CurrentDomain = $Global:RootDomain
     }
-} else {
-    # No domain specified - use root domain
-    $Global:CurrentDomain = $Global:RootDomain
 }
 
-## Set legacy $Global:Domain for compatibility
-$Global:Domain = $Global:CurrentDomain
+$Global:Domain = $Global:CurrentDomain  ## For compatibility
 
 ## Initialize other globals
 $Global:CurrentDC = $null
@@ -414,12 +429,20 @@ class OUNode {
 
 ## --------------------------{ Debug Logging }-------------------------
 function Debug-Log {
-  param([string]$Message)
+    param([string]$Message)
+
     if ($Verbose) {
-      $ts = (Get-Date).ToString('HH:mm:ss')
-      Write-Host "[$ts] LOG: $Message" -ForegroundColor Cyan
+        $ts = Get-Date -Format 'HH:mm:ss'
+        $line = "[$ts] LOG: $Message"
+
+        # Console (with color)
+        Write-Host $line -ForegroundColor Cyan
+
+        # Log file (append)
+        $line | Tee-Object -FilePath 'dsa.log' -Append > $null
     }
 }
+
 
 ## ----------------------------{ Get Theme }---------------------------
 function Get-Theme {
@@ -573,7 +596,7 @@ function Dump-ColorScheme {
 }
 
 ## Select theme before proceeding. Save the mode string
-$script:ThemeMode = $Theme
+$Global:ThemeMode = $Theme
 
 ## Get the selected colour scheme
 $cs = Get-Theme -mode $Theme
@@ -617,106 +640,106 @@ function Show-LoadingDialog {
 }
 
 ## ------------------------{ Close Progressbar }-----------------------
-function Close-LoadingDialog {
-  param($loading)
-
-  if ($null -ne $loading.Timer) { $loading.Timer.Dispose() }
-  if ($null -ne $loading.Dialog) { [Terminal.Gui.Application]::End($loading.Dialog) }
-}
-
-## ---------------------{ Pretty Theme Selections }--------------------
 function Show-ThemeSelector {
 
-  $dlg = [Terminal.Gui.Dialog]::new("Select Theme", 60, 16)
-  $lbl = [Terminal.Gui.Label]::new("Choose a color theme:")
-  $lbl.X = 2; $lbl.Y = 1
-  $dlg.Add($lbl)
+    # --- Theme list ---
+    $themes = @("british","dark","dsb","light","matrix","panam","gemstones","class91","scotrail")
 
-  ## --- Theme list ---
-  $themes = @( "british","dark","dsb","light","matrix","panam","gemstones","class91","scotrail" )
+    # Split into two columns
+    $half = [math]::Ceiling($themes.Count / 2)
+    $leftThemes  = $themes[0..($half-1)]
+    $rightThemes = $themes[$half..($themes.Count-1)]
 
-  ## Split into 2 roughly equal columns
-  $half = [math]::Ceiling($themes.Count / 2)
-  $leftThemes  = $themes[0..($half-1)]
-  $rightThemes = $themes[$half..($themes.Count-1)]
+    # --- Determine current theme (case-insensitive) ---
+    $currentTheme = $Global:ThemeMode
+    Debug-Log "DEBUG: Global ThemeMode = ${Global:ThemeMode}"
+    Debug-Log "DEBUG: Current theme for selection = ${currentTheme}"
 
-  ## Determine currently selected
-  $currentIndex = $themes.IndexOf($script:ThemeMode)
-  if ($currentIndex -lt 0) { $currentIndex = 1 }
-
-  ## Calculate which column the current selection is in
-  $leftSelected  = if ($currentIndex -lt $leftThemes.Count) { $currentIndex } else { -1 }
-  $rightSelected = if ($currentIndex -ge $leftThemes.Count) { $currentIndex - $leftThemes.Count } else { -1 }
-
-  ## --- RadioGroup: LEFT column ---
-  $rdoLeft = [Terminal.Gui.RadioGroup]::new($leftThemes)
-  $rdoLeft.X = 2
-  $rdoLeft.Y = 3
-  if ($leftSelected -ge 0) { $rdoLeft.SelectedItem = $leftSelected }
-  $dlg.Add($rdoLeft)
-
-  ## --- RadioGroup: RIGHT column ---
-  $rdoRight = [Terminal.Gui.RadioGroup]::new($rightThemes)
-  $rdoRight.X = 32
-  $rdoRight.Y = 3
-  if ($rightSelected -ge 0) { $rdoRight.SelectedItem = $rightSelected }
-  $dlg.Add($rdoRight)
-
-  ## --- Sync selection so only ONE group is active ---
-  $rdoLeft.add_SelectedItemChanged({
-    if ($rdoLeft.SelectedItem -ge 0) {
-      $rdoRight.SelectedItem = -1
+    $currentIndex = -1
+    for ($i = 0; $i -lt $themes.Count; $i++) {
+        if ($themes[$i].ToLower() -eq $currentTheme.ToLower()) {
+            $currentIndex = $i
+            break
+        }
     }
-  })
 
-  $rdoRight.add_SelectedItemChanged({
-    if ($rdoRight.SelectedItem -ge 0) {
-      $rdoLeft.SelectedItem = -1
-    }
-  })
+    Debug-Log "DEBUG: Index of current theme in \$themes array = ${currentIndex}"
 
-## ---------------- Apply Button ----------------
-$btnApply = [Terminal.Gui.Button]::new("Apply")
-$btnApply.add_Clicked({
+    # Calculate which column gets the selection
+    $leftSelected  = if ($currentIndex -ge 0 -and $currentIndex -lt $leftThemes.Count) { $currentIndex } else { -1 }
+    $rightSelected = if ($currentIndex -ge $leftThemes.Count) { $currentIndex - $leftThemes.Count } else { -1 }
 
-  ## Determine selected theme
-  $sel = $(
-    if ($rdoLeft.SelectedItem -ge 0) {
-      $leftThemes[$rdoLeft.SelectedItem]
-    }
-    elseif ($rdoRight.SelectedItem -ge 0) {
-      $rightThemes[$rdoRight.SelectedItem]
-    }
-    else {
-      $themes[1]   ## dark fallback
-      }
-  )
+    Debug-Log "DEBUG: LeftSelected = ${leftSelected}, RightSelected = ${rightSelected}"
 
-  Debug-Log "Switching to theme: $sel"
-  $script:ThemeMode = $sel
+    # --- Create dialog ---
+    $dlg = [Terminal.Gui.Dialog]::new("Select Theme", 60, 16)
 
-  $newTheme = Get-Theme -mode $sel
-  Apply-Theme -ThemeData $newTheme -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $StatusBar
+    $lbl = [Terminal.Gui.Label]::new("Choose a color theme:")
+    $lbl.X = 2; $lbl.Y = 1
+    $dlg.Add($lbl)
 
-  ## Force redraw
-  $menu.ColorScheme = $newTheme.Global
-  $menu.SetNeedsDisplay()
-  $win.SetNeedsDisplay()
-  [Terminal.Gui.Application]::Top.SetNeedsDisplay()
-  [Terminal.Gui.Application]::Refresh()
+    # --- Left column RadioGroup ---
+    $rdoLeft = [Terminal.Gui.RadioGroup]::new($leftThemes)
+    $rdoLeft.X = 2
+    $rdoLeft.Y = 3
+    $rdoLeft.SelectedItem = $leftSelected
+    $dlg.Add($rdoLeft)
 
-  Show-Modal "Theme Changed" "Theme changed to: ${sel}"
-  [Terminal.Gui.Application]::RequestStop()
-  })
+    # --- Right column RadioGroup ---
+    $rdoRight = [Terminal.Gui.RadioGroup]::new($rightThemes)
+    $rdoRight.X = 32
+    $rdoRight.Y = 3
+    $rdoRight.SelectedItem = $rightSelected
+    $dlg.Add($rdoRight)
 
-  $dlg.AddButton($btnApply)
+    Debug-Log "DEBUG: rdoLeft.SelectedItem = ${rdoLeft.SelectedItem}, rdoRight.SelectedItem = ${rdoRight.SelectedItem}"
 
-  ## Cancel
-  $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-  $dlg.AddButton($btnCancel)
+    # --- Sync columns so only one can be selected ---
+    $rdoLeft.add_SelectedItemChanged({
+        if ($rdoLeft.SelectedItem -ge 0) { $rdoRight.SelectedItem = -1 }
+    })
+    $rdoRight.add_SelectedItemChanged({
+        if ($rdoRight.SelectedItem -ge 0) { $rdoLeft.SelectedItem = -1 }
+    })
 
-  [Terminal.Gui.Application]::Run($dlg)
+    # --- Apply Button ---
+    $btnApply = [Terminal.Gui.Button]::new("Apply")
+    $btnApply.add_Clicked({
+        $sel = if ($rdoLeft.SelectedItem -ge 0) {
+            $leftThemes[$rdoLeft.SelectedItem]
+        } elseif ($rdoRight.SelectedItem -ge 0) {
+            $rightThemes[$rdoRight.SelectedItem]
+        } else {
+            "dark"  # default if nothing selected
+        }
+
+        Debug-Log "DEBUG: Theme selected on Apply = ${sel}"
+
+        Debug-Log "Switching to theme: ${sel}"
+        $script:ThemeMode = $sel
+
+        $newTheme = Get-Theme -mode $sel
+        Apply-Theme -ThemeData $newTheme -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $StatusBar
+
+        # Force redraw
+        $menu.ColorScheme = $newTheme.Global
+        $menu.SetNeedsDisplay()
+        $win.SetNeedsDisplay()
+        [Terminal.Gui.Application]::Top.SetNeedsDisplay()
+        [Terminal.Gui.Application]::Refresh()
+
+        Show-Modal "Theme Changed" "Theme changed to: ${sel}"
+        [Terminal.Gui.Application]::RequestStop()
+    })
+    $dlg.AddButton($btnApply)
+
+    # --- Cancel Button ---
+    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+    $dlg.AddButton($btnCancel)
+
+    # --- Run the dialog ---
+    [Terminal.Gui.Application]::Run($dlg)
 }
 
 ## ------------------------{ Load Domain Data }------------------------
@@ -779,48 +802,137 @@ function Get-CleanObjectInfo {
 }
 
 ## -----------------------{ Refresh Domain Data }----------------------
+## -----------------------{ Refresh Domain Data }----------------------
 function Refresh-Data {
   param(
     [string]$domain = $Global:CurrentDomain,
     [switch]$RebuildTree = $true
-    )
+  )
     
-  Debug-Log "DEBUG: Refresh-Data called (DemoMode: $Global:DemoMode)"
+  Debug-Log "DEBUG: === Refresh-Data START ==="
+  Debug-Log "DEBUG: DemoMode: $Global:DemoMode"
+  Debug-Log "DEBUG: Domain: $domain"
+  Debug-Log "DEBUG: RebuildTree: $RebuildTree"
+  
+  # Flush log immediately
+  if ($Global:LogFile) { 
+    Get-Content $Global:LogFile -Tail 10 | Out-Host 
+  }
     
   try {
+    Debug-Log "DEBUG: Step 1 - Starting data refresh..."
+    
     if ($Global:DemoMode) {
-      ## Demo mode - reconvert existing data to refresh AD objects
-      Debug-Log "DEBUG: Refreshing demo data..."
+      Debug-Log "DEBUG: Step 2 - Demo mode refresh..."
+      
+      # Check if raw data exists
+      if (-not $Global:rawUsers) {
+        Debug-Log "ERROR: rawUsers is null!"
+        throw "Raw demo data not initialized"
+      }
+      
+      Debug-Log "DEBUG: Step 3 - Converting demo data..."
+      Debug-Log "DEBUG: rawUsers count: $($Global:rawUsers.Count)"
+      Debug-Log "DEBUG: rawDCs count: $($Global:rawDCs.Count)"
+      Debug-Log "DEBUG: rawDemoGroups count: $($Global:rawDemoGroups.Count)"
             
       $converted = Convert-DemoDataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Groups $Global:rawDemoGroups -Domain $domain
+      
+      Debug-Log "DEBUG: Step 4 - Conversion complete"
+      
       $Global:Users = $converted.Users
       $Global:DCs = $converted.DCs
       $Global:Groups = $converted.Groups
       $Global:ADObjects = $converted.Users + $converted.DCs + $converted.Groups
             
-      Debug-Log "DEBUG: Demo data refreshed - Users: $($Global:Users.Count), Groups: $($Global:Groups.Count), DCs: $($Global:DCs.Count)"
+      Debug-Log "DEBUG: Step 5 - Global variables updated"
+      Debug-Log "DEBUG: Users: $($Global:Users.Count), Groups: $($Global:Groups.Count), DCs: $($Global:DCs.Count)"
             
     } else {
-      # Production mode - reload from AD
-      Debug-Log "DEBUG: Reloading data from AD..."
+      Debug-Log "DEBUG: Step 2 - Production mode refresh..."
       Load-DomainData -domain $domain
+      Debug-Log "DEBUG: Step 3 - Production data loaded"
     }
+    
+    Debug-Log "DEBUG: Step 6 - Data refresh complete, checking RebuildTree flag..."
         
     ## Rebuild tree if requested
     if ($RebuildTree) {
-      [Terminal.Gui.Application]::MainLoop.Invoke({
-      Build-Tree -domain $domain
-      if ($filterStatusLabel) {
-        Update-FilterStatusLabel -label $filterStatusLabel
+      Debug-Log "DEBUG: Step 7 - RebuildTree is TRUE, preparing to rebuild..."
+      Debug-Log "DEBUG: Step 8 - About to call MainLoop.Invoke..."
+      
+      # Check if MainLoop exists
+      if (-not [Terminal.Gui.Application]::MainLoop) {
+        Debug-Log "ERROR: MainLoop is null!"
+        throw "Terminal.Gui MainLoop not initialized"
       }
-    })
-  }
-        
-  return $true
+      
+      Debug-Log "DEBUG: Step 9 - MainLoop exists, invoking..."
+      
+      [Terminal.Gui.Application]::MainLoop.Invoke({
+        try {
+          Debug-Log "DEBUG: Step 10 - INSIDE MainLoop.Invoke"
+          
+          # Check if tree exists
+          if (-not $tree) {
+            Debug-Log "ERROR: Tree object is null!"
+            return
+          }
+          
+          Debug-Log "DEBUG: Step 11 - Tree object exists, calling Build-Tree..."
+          Build-Tree -domain $domain
+          
+          Debug-Log "DEBUG: Step 12 - Build-Tree completed"
+          
+          if ($filterStatusLabel) {
+            Debug-Log "DEBUG: Step 13 - Updating filter status..."
+            Update-FilterStatusLabel -label $filterStatusLabel
+            Debug-Log "DEBUG: Step 14 - Filter status updated"
+          } else {
+            Debug-Log "DEBUG: Step 13 - filterStatusLabel is null, skipping"
+          }
+          
+          Debug-Log "DEBUG: Step 15 - MainLoop.Invoke completed successfully"
+        } catch {
+          Debug-Log "ERROR: Exception inside MainLoop.Invoke at step ???"
+          Debug-Log "ERROR: Message: $($_.Exception.Message)"
+          Debug-Log "ERROR: Type: $($_.Exception.GetType().FullName)"
+          Debug-Log "ERROR: Stack: $($_.ScriptStackTrace)"
+          
+          # Try to show error
+          try {
+            Show-Modal "Tree Error" "Failed to rebuild tree:`n$($_.Exception.Message)"
+          } catch {
+            Debug-Log "ERROR: Even Show-Modal failed!"
+          }
+        }
+      })
+      
+      Debug-Log "DEBUG: Step 16 - MainLoop.Invoke call returned"
+    } else {
+      Debug-Log "DEBUG: Step 7 - RebuildTree is FALSE, skipping tree rebuild"
+    }
+    
+    Debug-Log "DEBUG: Step 17 - Refresh-Data completed successfully"
+    Debug-Log "DEBUG: === Refresh-Data END (SUCCESS) ==="
+    return $true
         
   } catch {
-    Debug-Log "ERROR: Failed to refresh data: $($_.Exception.Message)"
-    Show-Modal "Error" "Failed to refresh data:`n$($_.Exception.Message)"
+    Debug-Log "ERROR: === OUTER CATCH TRIGGERED ==="
+    Debug-Log "ERROR: Message: $($_.Exception.Message)"
+    Debug-Log "ERROR: Type: $($_.Exception.GetType().FullName)"
+    Debug-Log "ERROR: Stack: $($_.ScriptStackTrace)"
+    
+    # Try to show error on UI thread
+    try {
+      [Terminal.Gui.Application]::MainLoop.Invoke({
+        Show-Modal "Error" "Failed to refresh data:`n$($_.Exception.Message)"
+      })
+    } catch {
+      Debug-Log "ERROR: Failed to show error modal: $_"
+    }
+    
+    Debug-Log "DEBUG: === Refresh-Data END (FAILURE) ==="
     return $false
   }
 }
@@ -1035,32 +1147,78 @@ function Load-DomainData {
   Write-Debug "DEBUG: ADObjects count: $($Global:ADObjects.Count)"
   } else {
   ## Production mode - real AD calls
-  try {
-    Import-Module ActiveDirectory -ErrorAction Stop
-    $loadingDlg = Show-LoadingDialog -Message "Loading AD objects for $domain..."
     try {
-
-    ## Domain Controllers
-    $Global:DCs = Get-ADDomainController -Discover -Domain $domain |
-    ForEach-Object { @{ Name=$_.HostName; OU='Domain Controllers'; Site=$_.Site } }
-      ## Get AD objects
-      $Global:ADObjects = Get-ADObjectsByType -domain $domain
-      ## Users
-      $Global:Users = $Global:ADObjects | Where-Object { $_.Type -eq 'user' } | ForEach-Object {
-        $ou = ($_.DN -split ',') | Where-Object { $_ -like 'OU=*' } | Select-Object -First 1
-        if ($ou) { $ou = $ou -replace '^OU=' ,'' } else { $ou = "" }
-          @{ Name=$_.Name; OU=$ou; Groups=$null; Title=$null; Email=$null; Country=$null; Disabled=$false }
+        Import-Module ActiveDirectory -ErrorAction Stop
+        
+        $loadingDlg = Show-LoadingDialog -Message "Loading AD objects for $Global:CurrentDomain..."
+        
+        try {
+            Write-Host "Loading data from domain: $Global:CurrentDomain"
+            
+            # Query the SPECIFIED domain using -Server parameter
+            $Global:DCs = Get-ADDomainController -Server $Global:CurrentDomain -Filter * -ErrorAction Stop
+            
+            # Get all users with properties
+            $adUsers = Get-ADUser -Server $Global:CurrentDomain -Filter * -Properties DisplayName,EmailAddress,Title,Department,Enabled,LockedOut,DistinguishedName -ErrorAction Stop
+            
+            # Convert to our format
+            $Global:Users = $adUsers | ForEach-Object {
+                $ou = ($_.DistinguishedName -split ',') | Where-Object { $_ -like 'OU=*' } | Select-Object -First 1
+                if ($ou) { $ou = $ou -replace '^OU=', '' } else { $ou = "" }
+                
+                # Get user's groups
+                $userGroups = Get-ADPrincipalGroupMembership -Server $Global:CurrentDomain -Identity $_ -ErrorAction SilentlyContinue | 
+                              Select-Object -ExpandProperty Name
+                
+                # Return user object
+                [PSCustomObject]@{
+                    Name = $_.Name
+                    DisplayName = $_.DisplayName
+                    EmailAddress = $_.EmailAddress
+                    Title = $_.Title
+                    Department = $_.Department
+                    OU = @($ou)
+                    Groups = $userGroups
+                    Disabled = -not $_.Enabled
+                    Locked = $_.LockedOut
+                    DistinguishedName = $_.DistinguishedName
+                    Domain = $Global:CurrentDomain
+                    # Add other properties as needed
+                }
+            }
+            
+            # Get all groups
+            $adGroups = Get-ADGroup -Server $Global:CurrentDomain -Filter * -Properties Description,Mail,ManagedBy,GroupScope,GroupCategory -ErrorAction Stop
+            
+            $Global:Groups = $adGroups | ForEach-Object {
+                [PSCustomObject]@{
+                    Name = $_.Name
+                    Description = $_.Description
+                    Mail = $_.Mail
+                    ManagedBy = $_.ManagedBy
+                    GroupScope = $_.GroupScope
+                    GroupCategory = $_.GroupCategory
+                    Domain = $Global:CurrentDomain
+                }
+            }
+            
+            $Global:ADObjects = $Global:Users + $Global:DCs + $Global:Groups
+            
+            Write-Host "Loaded $($Global:Users.Count) users, $($Global:Groups.Count) groups, $($Global:DCs.Count) DCs from $Global:CurrentDomain"
+            
+        } finally {
+            Close-LoadingDialog $loadingDlg
         }
-      ## Groups
-      $Global:Groups = $Global:ADObjects | Where-Object { $_.Type -eq 'group' } | ForEach-Object {
-        @{ Name=$_.Name }
-        }
-      } finally {
-        Close-LoadingDialog $loadingDlg
-        }
-      } catch {
-        Show-Modal "Error" "Failed to query domain ${domain}" ## <---- this needs to be the Global current domain
-        $Global:Users=@(); $Global:DCs=@(); $Global:Groups=@(); $Global:ADObjects=@()
+        
+    } catch {
+        Write-Error "Failed to load data from domain '$Global:CurrentDomain': $_"
+        Show-Modal "Error" "Failed to query domain $Global:CurrentDomain`n`n$($_.Exception.Message)"
+        
+        # Initialize empty arrays on failure
+        $Global:Users = @()
+        $Global:DCs = @()
+        $Global:Groups = @()
+        $Global:ADObjects = @()
     }
   }
 }
@@ -1479,7 +1637,7 @@ if ($themeData -and $themeData.Global) {
 
 ## ------------------------------{ Main Window }----------------------------
 $win = [Terminal.Gui.Window]::new("$($Global:ProjectName) — Active Directory ${BuildVersion} ${Global:FruitName}")
-$win.X=0; $win.Y=0; $win.Width=[Terminal.Gui.Dim]::Fill(); $win.Height=[Terminal.Gui.Dim]::Fill()
+$win.X=0; $win.Y=0; $win.Width=[Terminal.Gui.Dim]::Fill(); $win.Height=[Terminal.Gui.Dim]::Fill(1)
 
 # Apply theme to main window
 if ($themeData -and $themeData.MainWindow) {
@@ -2692,7 +2850,7 @@ function Show-UserPropertiesDialog {
 
     # ----- TabView -----
     $tabView = [Terminal.Gui.TabView]::new()
-    $tabView.X=0; $tabView.Y=0; $tabView.Width=[Terminal.Gui.Dim]::Fill(); $tabView.Height = [Terminal.Gui.Dim]::Fill(3)  # leave 2% at bottom
+    $tabView.X=0; $tabView.Y=0; $tabView.Width=[Terminal.Gui.Dim]::Fill(); $tabView.Height = [Terminal.Gui.Dim]::Fill(1)  # leave 1 line at bottom
 
     # ==================== General Tab ====================
     $generalTab = [Terminal.Gui.TabView+Tab]::new()
@@ -2702,39 +2860,39 @@ function Show-UserPropertiesDialog {
     $y = 1
     # Display Name
     $lbl = [Terminal.Gui.Label]::new("Display Name:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtName = [Terminal.Gui.TextField]::new($user.Name ?? ""); $txtName.X=20; $txtName.Y=$y; $txtName.Width=40
+    $txtName = [Terminal.Gui.TextField]::new($user.Name ?? ""); $txtName.X=20; $txtName.Y=$y; $txtName.Width=70
     $txtName.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtName)
     $y+=2
 
     # Description
     $lbl = [Terminal.Gui.Label]::new("Description:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtDesc = [Terminal.Gui.TextField]::new($user.Description ?? ""); $txtDesc.X=20; $txtDesc.Y=$y; $txtDesc.Width=40
+    $txtDesc = [Terminal.Gui.TextField]::new($user.Description ?? ""); $txtDesc.X=20; $txtDesc.Y=$y; $txtDesc.Width=70
     $txtDesc.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtDesc)
     $y+=2
 
     # Office
     $lbl = [Terminal.Gui.Label]::new("Office:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtOffice = [Terminal.Gui.TextField]::new($user.Office ?? ""); $txtOffice.X=20; $txtOffice.Y=$y; $txtOffice.Width=40
+    $txtOffice = [Terminal.Gui.TextField]::new($user.Office ?? ""); $txtOffice.X=20; $txtOffice.Y=$y; $txtOffice.Width=70
     $txtOffice.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtOffice)
     $y+=2
 
     # Telephone
     Write-Debug "DEBUG: User Phone value='$($selUser.OfficePhone)'"
     $lbl = [Terminal.Gui.Label]::new("Telephone:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtPhone = [Terminal.Gui.TextField]::new($user.OfficePhone ?? ""); $txtPhone.X=20; $txtPhone.Y=$y; $txtPhone.Width=40
+    $txtPhone = [Terminal.Gui.TextField]::new($user.OfficePhone ?? ""); $txtPhone.X=20; $txtPhone.Y=$y; $txtPhone.Width=70
     $txtPhone.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtPhone)
     $y+=2
 
     # Mobile Phone
     $lbl = [Terminal.Gui.Label]::new("Mobile Phone:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtMobile = [Terminal.Gui.TextField]::new($user.MobilePhone ?? ""); $txtMobile.X=20; $txtMobile.Y=$y; $txtMobile.Width=40
+    $txtMobile = [Terminal.Gui.TextField]::new($user.MobilePhone ?? ""); $txtMobile.X=20; $txtMobile.Y=$y; $txtMobile.Width=70
     $txtMobile.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtMobile)
     $y+=2
 
     # E-mail 
     Write-Debug "DEBUG: User Email value='$($selUser.EmailAddress)'"
     $lbl = [Terminal.Gui.Label]::new("E-mail:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtEmail = [Terminal.Gui.TextField]::new($user.EmailAddress ?? ""); $txtEmail.X=20; $txtEmail.Y=$y; $txtEmail.Width=40
+    $txtEmail = [Terminal.Gui.TextField]::new($user.EmailAddress ?? ""); $txtEmail.X=20; $txtEmail.Y=$y; $txtEmail.Width=70
     $txtEmail.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtEmail)
 
     $generalTab.View = $generalView
@@ -2809,13 +2967,13 @@ $addressView = [Terminal.Gui.View]::new()
 
 $y = 1
 $lbl = [Terminal.Gui.Label]::new("Street:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtStreet = [Terminal.Gui.TextField]::new($User.StreetAddress); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=40
+$txtStreet = [Terminal.Gui.TextField]::new($User.StreetAddress); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
 $txtStreet.add_TextChanged({ $script:changesMade = $true })
 $addressView.Add($txtStreet)
 $y+=2
 
 $lbl = [Terminal.Gui.Label]::new("City:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtCity = [Terminal.Gui.TextField]::new($User.City); $txtCity.X=20; $txtCity.Y=$y; $txtCity.Width=40
+$txtCity = [Terminal.Gui.TextField]::new($User.City); $txtCity.X=20; $txtCity.Y=$y; $txtCity.Width=70
 $txtCity.add_TextChanged({ $script:changesMade = $true })
 $addressView.Add($txtCity)
 $y+=2
@@ -2827,7 +2985,7 @@ $addressView.Add($txtPostal)
 $y+=2
 
 $lbl = [Terminal.Gui.Label]::new("Country:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtCountry = [Terminal.Gui.TextField]::new($User.Country); $txtCountry.X=20; $txtCountry.Y=$y; $txtCountry.Width=40
+$txtCountry = [Terminal.Gui.TextField]::new($User.Country); $txtCountry.X=20; $txtCountry.Y=$y; $txtCountry.Width=70
 $txtCountry.add_TextChanged({ $script:changesMade = $true })
 $addressView.Add($txtCountry)
 
@@ -2841,25 +2999,25 @@ $orgView = [Terminal.Gui.View]::new()
 
 $y = 1
 $lbl = [Terminal.Gui.Label]::new("Title:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
-$txtTitle = [Terminal.Gui.TextField]::new($user.Title); $txtTitle.X=20; $txtTitle.Y=$y; $txtTitle.Width=40
+$txtTitle = [Terminal.Gui.TextField]::new($user.Title); $txtTitle.X=20; $txtTitle.Y=$y; $txtTitle.Width=70
 $txtTitle.add_TextChanged({ $script:changesMade = $true })
 $orgView.Add($txtTitle)
 $y+=2
 
 $lbl = [Terminal.Gui.Label]::new("Department:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
-$txtDept = [Terminal.Gui.TextField]::new($user.Department); $txtDept.X=20; $txtDept.Y=$y; $txtDept.Width=40
+$txtDept = [Terminal.Gui.TextField]::new($user.Department); $txtDept.X=20; $txtDept.Y=$y; $txtDept.Width=70
 $txtDept.add_TextChanged({ $script:changesMade = $true })
 $orgView.Add($txtDept)
 $y+=2
 
 $lbl = [Terminal.Gui.Label]::new("Company:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
-$txtCompany = [Terminal.Gui.TextField]::new($user.Company); $txtCompany.X=20; $txtCompany.Y=$y; $txtCompany.Width=40
+$txtCompany = [Terminal.Gui.TextField]::new($user.Company); $txtCompany.X=20; $txtCompany.Y=$y; $txtCompany.Width=70
 $txtCompany.add_TextChanged({ $script:changesMade = $true })
 $orgView.Add($txtCompany)
 $y+=2
 
 $lbl = [Terminal.Gui.Label]::new("Manager:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
-$txtManager = [Terminal.Gui.TextField]::new($user.Manager); $txtManager.X=20; $txtManager.Y=$y; $txtManager.Width=40
+$txtManager = [Terminal.Gui.TextField]::new($user.Manager); $txtManager.X=20; $txtManager.Y=$y; $txtManager.Width=70
 $txtManager.add_TextChanged({ $script:changesMade = $true })
 $orgView.Add($txtManager)
 
@@ -3222,6 +3380,18 @@ $tabView.AddTab($memberTab, $false)
     $lblSearchFilter = [Terminal.Gui.Label]::new("Filter Results:"); $lblSearchFilter.X=48; $lblSearchFilter.Y=1; $searchView.Add($lblSearchFilter)
     $txtSearchFilter = [Terminal.Gui.TextField]::new(""); $txtSearchFilter.X=62; $txtSearchFilter.Y=1; $txtSearchFilter.Width=20; $searchView.Add($txtSearchFilter)
 
+    $txtSearchFilter.add_TextChanged({
+    if ($script:currentSearchOutputLines) {
+      $search = $txtSearchFilter.Text.ToString().Trim()
+      if ($search) {
+        $txtSearchOutput.Text = ($script:currentSearchOutputLines | Where-Object { $_ -match "(?i)$search" }) -join "`n"
+     } else {
+              $txtSearchOutput.Text = $script:currentSearchOutputLines -join "`n"
+          }
+      }
+  })
+
+
     $lblSearchResult = [Terminal.Gui.Label]::new("Results:"); $lblSearchResult.X=2; $lblSearchResult.Y=$y; $searchView.Add($lblSearchResult)
     $y+=1
     $txtSearchOutput = [Terminal.Gui.TextView]::new(); $txtSearchOutput.X=2; $txtSearchOutput.Y=$y
@@ -3271,6 +3441,8 @@ $tabView.AddTab($memberTab, $false)
             $script:currentSearchOutputLines = Get-UserOutputLines -userObj $user
             $chkSearchLocked.Checked = [bool]($user.Locked)
             $chkSearchLocked.Data = $user.Name
+            $chkSearchDisabled.Checked = [bool]($user.Disabled)
+            $chkSearchDisabled.Data    = $user.Name
         }
     })
 
@@ -3285,7 +3457,7 @@ $profileView = [Terminal.Gui.View]::new()
 
 $y = 1
 $lbl = [Terminal.Gui.Label]::new("Profile Dir:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=40
+$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
 $txtStreet.add_TextChanged({ $script:changesMade = $true })
 $addressView.Add($txtStreet)
 $y+=2
@@ -3300,7 +3472,7 @@ $RDPView = [Terminal.Gui.View]::new()
 
 $y = 1
 $lbl = [Terminal.Gui.Label]::new("RDP Profile Dir:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=40
+$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
 $txtStreet.add_TextChanged({ $script:changesMade = $true })
 $addressView.Add($txtStreet)
 $y+=2
@@ -3315,7 +3487,7 @@ $SessionsView = [Terminal.Gui.View]::new()
 
 $y = 1
 $lbl = [Terminal.Gui.Label]::new("Sessions:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=40
+$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
 $txtStreet.add_TextChanged({ $script:changesMade = $true })
 $addressView.Add($txtStreet)
 $y+=2
@@ -4472,6 +4644,9 @@ Debug-Log "DEBUG: Final cleaned name: '$cleanName'"
     
     # Build menu items array for display
     $menuText = @()
+
+    ################################### right-click or right click or rightclick This is where to clena the code ##########################
+    ################################### so it calls the same functions as the menu for less arsing about/bugs    ##########################
     
     if ($isUser) {
         $menuText = @("Properties", "Reset Password", "Disable Account", "Enable Account", "---", "Move to OU...", "---", "Delete", "---", "Refresh")
