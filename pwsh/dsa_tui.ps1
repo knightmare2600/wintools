@@ -6668,7 +6668,7 @@ $mADHealth = [Terminal.Gui.MenuItem]::new("_AD Health Status","AD Health And Rep
 $mShortcuts = [Terminal.Gui.MenuItem]::new("_Shortcuts","Keyboard shortcuts (F1)",[Action]{ Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`n`nF6 - Themes`nF7 - Search`nF7 - TODO`nF9 - Menus`nF10 - Quit`nF11 Full-Screen`nF12 Redraw" })
 $mAboutDSATUI = [Terminal.Gui.MenuItem]::new("_About","About $($Global:ProjectName)",[Action]{ Show-Modal "About" "$($Global:ProjectName)`n`nCodename: $($Global:FruitName)`nv$($Global:BuildVersion) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600)" })
 $mWhyBlaabaer = [Terminal.Gui.MenuItem]::new("Why _Blaabaer?","Why the $($Global:FruitName) codename?",[Action]{ Show-BlaabaerInfo })
-$mTheme = [Terminal.Gui.MenuItem]::new("_Theme","Change color theme (F6)",[Action]{ })
+$mTheme = [Terminal.Gui.MenuItem]::new("_Theme","Change color theme (F6)",[Action]{ Show-ThemeSelector })
 
 ## ------------------------- Menu Bar -------------------------
 $menu = [Terminal.Gui.MenuBar]::new(@(
