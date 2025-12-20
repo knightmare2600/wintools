@@ -316,6 +316,10 @@ NB: I don't believe Denmark uses 0000 but this is not confirmed!
 2.3.7.1
   - Initialize-DirectoryEmoji based on date. Special days use different emojis, e.g. Dec 25th
 
+2.3.7.2
+  - Fix some erroneous $Globals that were left in
+  - Fix group memership modal
+
 TODO:
  - misisng AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
  - the terminal icons module, likewise if it's there great, if not fall back
@@ -341,7 +345,7 @@ param(
 ## Define the build version, project and code names once only - up here to ease patching. The rest at main
 $Script:ProjectName = "DSA-TUI pwsh dsa.msc TUI"
 $Script:FruitName = "Blåbær"
-$Script:BuildVersion = "2.3.7.1"
+$Script:BuildVersion = "2.3.7.2"
 
 class OUNode {
   [string]$Name
@@ -3041,7 +3045,7 @@ function Health-Icon {
       "OK"   { return "(✓)" }
       "WARN" { return "(!)" }
       "FAIL" { return "(✗)" }
-      "default { return "(?)" }
+      "default" { return "(?)" }
     }
   }
 
@@ -3451,7 +3455,7 @@ function Show-LAPSSearchModal {
     #>
 
     # ---------------- Safety: AD availability ----------------
-    if (-not $Global:DemoMode) {
+    if (-not $Script:DemoMode) {
         if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
             Show-Modal -Title "LAPS Error" -Message "ActiveDirectory module not available." -Buttons @("OK")
             return
@@ -3485,7 +3489,7 @@ function Show-LAPSSearchModal {
         param($filter)
 
         try {
-            if ($Global:DemoMode) {
+            if ($Script:DemoMode) {
                 # ---- Demo stub ----
                 $computers = @(
                     [pscustomobject]@{
@@ -7505,11 +7509,8 @@ function Show-EditGroupMembershipDialog {
             $changeMsg += "Remove from $($toRemove.Count) group(s):`n  " + ($toRemove -join "`n  ")
         }
 
-        $confirm = [Terminal.Gui.MessageBox]::ErrorQuery(
-            "Confirm Changes",
-            "Apply these changes for $($User.Name)?`n`n$changeMsg",
-            "Yes", "No"
-        )
+        $confirm = [Terminal.Gui.MessageBox]::Query("Confirm Changes", "Apply these changes for $($User.Name)?`n`n$changeMsg", @("Yes","No"))
+
 
         if ($confirm -ne 0) {  # Not "Yes"
             return
@@ -7976,7 +7977,7 @@ $top = [Terminal.Gui.Application]::Top
 Initialize-DirectoryEmoji
 
 ## ------------------------- Main Window (ONLY ONCE) -------------------------
-$win = [Terminal.Gui.Window]::new("$($Script:ProjectName) $($Script:DirectoryEmoji) Active Directory $BuildVersion $($Global:FruitName)")
+$win = [Terminal.Gui.Window]::new("$($Script:ProjectName) $($Script:DirectoryEmoji) Active Directory $BuildVersion Codename: $($Script:FruitName)")
 $win.X = 0
 $win.Y = 0
 $win.Width  = [Terminal.Gui.Dim]::Fill()
