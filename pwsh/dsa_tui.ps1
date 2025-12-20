@@ -3,7 +3,70 @@
 DSA-TUI Text Mode version of dsa.msc for powershell
 Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change Domain fixed, fixed DC selection, full production AD object detection, properties modal, AD search popup
 
+Information one may find useful
+
 https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-hvem-pokker-har-fundet-paa-det-her
+
+Citations for the Active directory commands:
+
+  Reference URLs for AD Forest & Get-ADForest usage:
+
+  - Microsoft Official Documentation
+    https://learn.microsoft.com/powershell/module/activedirectory/get-adforest
+    https://learn.microsoft.com/windows-server/identity/ad-ds/plan/active-directory-forest-and-domain-guide
+
+  - General AD Forest Structure Explanations
+    https://learn.microsoft.com/windows-server/identity/ad-ds/plan/understanding-active-directory-domain-services
+    https://learn.microsoft.com/windows-server/identity/ad-ds/plan/designing-the-logical-structure
+
+  - Community / Confirmatory Sources
+    https://ss64.com/ps/get-adforest.html
+    https://4sysops.com/archives/get-adforest-cmdlet-what-it-does-and-how-to-use-it/
+    https://social.technet.microsoft.com/wiki/contents/articles/22953.active-directory-forest.aspx
+
+Notes:
+  - (Get-ADForest).RootDomain     Example Output: example.com
+  - (Get-ADForest).Domains        Example Output: example.com
+                                                  example.net
+
+  - (Get-ADForest).GlobalCatalogs Example Output: gc-de01.example.com
+                                                  gc-dk01.example.com
+                                                  gc-uk01.example.com
+                                                  gc-de01.example.net
+                                                  gc-dk01.example.net
+                                                  gc-uk01.example.net
+
+  - (Get-ADForest).$Script:Sites  Example Output: DE # Germany
+                                                  DK # Denmark
+                                                  UK # United Kingdom
+
+$forest = Get-ADForest
+
+Write-Host "FOREST:" $forest.Name
+Write-Host "ROOT DOMAIN:" $forest.RootDomain
+
+Write-Host "ALL DOMAINS IN FOREST:"
+$forest.Domains | ForEach-Object { " - $_" }
+
+## Group domains by trees (DNS namespace)
+Write-Host "DOMAIN TREES:
+$forest.Domains | Group-Object { ($_ -split '\.')[1..99] -join '.' } | ForEach-Object { Write-Host "Tree: $($_.Name)" $_.Group | ForEach-Object { Write-Host "   - $_" } }
+
+Write-Host "TRUSTS:"
+Get-ADTrust -Filter * | Format-Table Name, Source, Target, TrustType, TrustDirection
+
+A note on phone numbers:
+
+  - UK Phone Number Standards (Ofcom reserved ranges for fiction/testing):
+    - Glasgow: 0141 496 0xxx + Mobile: 07700 900xxx
+    - Edinburgh: 0131 496 0xxx + Mobile: 07700 900xxx
+    - London: 020 7946 0xxx / 01632 96xxxx + Mobile: 07700 900xxx
+
+  - Denmark Testing Numbers:
+    - Copenhagen landline: +45 0000-xxxx
+    - Denmark mobile: +45 2xxx xxxx
+
+NB: I don't believe Denmark uses 0000 but this is not confirmed!
 
 ===========================================================================================
  DSA-TUI Blåbær — Active Directory TUI Tool
@@ -94,7 +157,7 @@ https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-h
 
  1.6.0.2  (Bugfix)
  - Fixed MessageBox defaultButton index errors.
- - Fixed PasswordGenerator dialog always showing success regardless of click.
+ - Fixed Password Generator dialog always showing success regardless of click.
  - Corrected missing `.Visible = $false` on filter panel startup.
 
  1.6.3.0  (New Feature: Password Generator)
@@ -180,7 +243,7 @@ https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-h
   - Add misisng and former group memebrs of bands
   - Add Get-CleanObjectInfo to reduce code re-use
   - Fix buttons on user properties modal
-  - Bring forward $Global code for a more streamlined approach
+  - Bring forward $Script code for a more streamlined approach
 
 1.8.4.0  (Refactoring)
   - Refactor code, clean up spacing, unify comments, clean up stanza spacing, etc.
@@ -208,7 +271,7 @@ https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-h
  - Cosmetic fixes for theme selection to be more intuitive
  - Reflect if account is locked and/or disabled in the search modal too
 
-2.1.5.2  (Computers and refresh debug)
+2.1.5.2  (Computers, refresh debug, new bands, statusbar++)
   - Add computers to the mix
   - Allow properties of computers to display
   - Code to give more debug output to track down the refresh bug
@@ -224,12 +287,45 @@ https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-h
   - Domain data loading and refresh loads computers
   - New and improved status bar
   - More natural keyboard shortcuts
-  
+
+2.3.7.0 - (Logic, Order of operations, and Plumbing fixed)
+  - Tab views are now so complex we'll use functions as 1.16 does not support multiple tab lines in
+    window. This is scaffolding for implementing all (!!) dsa.msc properties for produciton.
+  - Clean up and standardis Debug-Log calls. Add Debug with a spanner and STOP SHOUTING in messages
+  - TWA Airlines Theme
+  - Move menus to a fnction
+  - Rebuild tabs to have two tab rows. This is not technically possible os call ti "faux" tab rows
+  - Refactor and introduce Steps (phases) of code so the order of operations is natural
+  - Add Debug-DumpViewTree to debug the application at runtime
+  - Clean-up redundant code and merge fitlering boxes into two panes
+  - Change domain text box reworked and inut box widened
+  - Refresh Domian data no longer kills the script, and status bar messages advise on progress
+  - Show-UserProperties renders demo and real world information properly
+  - Show-LAPSSearchModal modal to look up LAPS passwords
+  - Fixed the regression where themes apply just fine from Selector Modal but not from command line.
+  - Fix both the tree and the top left modal to not show different background colours.
+  - Improve the User and Computer properties with tabs
+  - Changing domain updates syatus bar during each step, and refreshes the tree
+  - Statusbar hotkeys don't work but code is there
+  - Password entrpoy strength follows colour scheme now, rather than always being green
+  - Use one statusbar inside a function, so updates and UX feedback to the user is consistent. also helps
+    with feedback during startup
+  - Allow copying, pasting and exporting of output of LDAP queries
+  - Move add and remove groups into functions and rework it to be aware if called from group or user properties tab
+
+2.3.7.1
+  - Initialize-DirectoryEmoji based on date. Special days use different emojis, e.g. Dec 25th
+
 TODO:
- - Refresh Domian data kills the script <-- edging closer to a fix TODO: Test
  - misisng AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
  - the terminal icons module, likewise if it's there great, if not fall back
-  
+ - show locked users actually shows computers under maintenence, which is... nice but not what you're asking for - add both
+ - Did the right click popup go away or is it broken...?
+
+ BUGS:
+  - Users don't get shown in real AD, one suspects it's too hardcoded on the heiraracy so needs ot actually detect it [X] Think this is fixed but confirm
+  - also it gives appearance of "hanging" because it doesn't exist before trying to switch. Needs to acknowledge it, repaint status bar and hten show loading enumraintg stuff [x] possibly fixed too
+
 ===========================================================================================
 #>
 
@@ -238,262 +334,14 @@ param(
   [switch]$Logging,
   [string]$LogFile,
   [string]$Domain,  ## User can specify domain
-  [ValidateSet("light","dark","matrix","british", "panam", "dsb", "gemstones", "class91", "scotrail" )]
+  [ValidateSet("light","dark","matrix","british", "panam", "dsb", "gemstones", "class91", "scotrail","twa" )]
   [string]$Theme
 )
 
-## Define the build version, project and code names once only
-$Global:ProjectName = "DSA-TUI pwsh dsa.msc TUI"
-$Global:FruitName = "Blåbær"
-$Global:BuildVersion = "2.1.5.2"
-
-## Debugging
-# DEBUG: Check what we received
-Write-Host "DemoMode: $DemoMode" -ForegroundColor Yellow
-Write-Host "Logging: $Logging" -ForegroundColor Yellow
-Write-Host "LogFile: $LogFile" -ForegroundColor Yellow
-
-# Initialize logging
-if ($Logging -or $LogFile) {
-    Write-Host "Logging condition TRUE" -ForegroundColor Green
-    
-    if (-not $LogFile) {
-        $LogFile = Join-Path $PSScriptRoot "dsa_tui_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
-        Write-Host "Auto-generated LogFile: $LogFile" -ForegroundColor Green
-    }
-
-    # Get full path - use current directory if not absolute path
-    if (-not [System.IO.Path]::IsPathRooted($LogFile)) {
-        $LogFile = Join-Path (Get-Location).Path $LogFile
-    }
-    
-    ## Logging
-    $Global:Logging = $true
-    $Global:LogFile = $LogFile
-    
-    ## Initialize spinner system
-    $Global:statusSpinner = @('|', '/', '-', '\')
-    $Global:statusSpinnerIndex = 0
-    
-    # Create a simple dummy object with a Title property
-    $Global:StatusItem = [PSCustomObject]@{
-    Title = "Initializing..."
-}
-
-
-    Write-Host "Attempting to create log at: $LogFile" -ForegroundColor Green
-    
-    try {
-        $Global:LogStream = [System.IO.StreamWriter]::new($LogFile, $false)
-        $Global:LogStream.AutoFlush = $true
-        Write-Host "SUCCESS: Log file created at $LogFile" -ForegroundColor Green
-        
-        # Write test line
-        $Global:LogStream.WriteLine("=== Log Started $(Get-Date) ===")
-
-       ## FORCE immediate write to create the file
-       $Global:LogStream.WriteLine("=== DSA-TUI Log Started $(Get-Date) ===")
-       $Global:LogStream.WriteLine("DemoMode: $DemoMode")
-       $Global:LogStream.WriteLine("Theme: $Theme")
-       $Global:LogStream.Flush()  # Force flush to disk NOW
-
-    } catch {
-        Write-Host "FAILED to create log: $_" -ForegroundColor Red
-        $Global:Logging = $false
-    }
-} else {
-    Write-Host "Logging condition FALSE - no logging enabled" -ForegroundColor Red
-}
-
-## Get ready for the launch
-Write-Host "Starting $($Global:ProjectName) Codename: $($Global:FruitName) v$($Global:BuildVersion) in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode with $Theme theme..."
-
-## For passwords expiring soon
-$sevenDaysFileTime = (Get-Date).AddDays(-7).ToFileTime()
-
-## TODO: Add the colourful module and check if it's loaded too, if not, default to "boridng" debug-log
-## There exists a powershell icons library and font. Put osmething in, if it isn't thee use old method
-## yes, that iwll also owrk wonders for PSMC
-function Test-RequiredModule {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Name,
-
-        [string]$MinimumVersion = $null
-    )
-
-    $module = Get-Module -ListAvailable -Name $Name -ErrorAction SilentlyContinue
-
-    if ($module) {
-        if ($MinimumVersion -and ($module.Version -lt [version]$MinimumVersion)) {
-            Write-Host "⚠️  Module '$Name' found but version is too old. Need $MinimumVersion or later."
-            return $false
-        }
-
-        # If Write-Colour is available, use it
-        if (Get-Module -ListAvailable -Name PSWriteColor) {
-            Write-Colour -Text "✔️  Module '$Name' is installed." -Color DarkGreen
-            Import-Module $Name -ErrorAction SilentlyContinue
-            $Global:HasPSWriteColor = $true
-
-        } else {
-            Write-Host "✔️  Module '$Name' is installed."
-        }
-
-        return $true
-    }
-    else {
-        Write-Host "❌ Module '$Name' is NOT installed. Please run:"
-        Write-Host "    Install-Module -Name $Name"
-        return $false
-    }
-}
-
-## --------------------------{ Module Checks }-------------------------
-$ok = $true
-
-## They aren't strictly needed, but we'll go with that for the moment
-$ok = $ok -and (Test-RequiredModule -Name "Microsoft.PowerShell.ConsoleGuiTools")
-
-if (-not $ok) {
-  Write-Host ""
-  Write-Host "❌ One or more required modules are missing. Exiting." -ForegroundColor Red
-  exit
-}
-
-## Optional Modules
-$adAvailable = Test-RequiredModule -Name "ActiveDirectory"
-if (-not $adAvailable) {
-    Write-Host "⚠️  ActiveDirectory module missing. Falling back to DEMO mode..." -ForegroundColor Yellow
-    $Global:DemoMode = $true
-}
-
-$wcAvailable = Test-RequiredModule -Name "PSWriteColor"
-if (-not $wcAvailable) {
-    Write-Host "⚠️  PSWriteColor module missing..." -ForegroundColor Yellow
-}
-
-$tiAvailable = Test-RequiredModule -Name "Terminal-Icons"
-if (-not $tiAvailable) {
-    Write-Host "⚠️  Terminal-Icons module missing..." -ForegroundColor Yellow
-}
-
-<#
-## -----------------------{ Check For Nerd font }----------------------
-# NOTE:
-# The most reliable way in Windows/Pwsh is to check whether a Nerd Font
-# appears in the installed font list. Most Nerd Fonts have names like:
-#   "Cascadia Code NF"
-#   "FiraCode Nerd Font"
-# etc.
-
-$installedFonts = (New-Object System.Drawing.Text.InstalledFontCollection).Families.Name
-
-$nerdFonts = $installedFonts | Where-Object {
-    $_ -match "Nerd Font|NF"
-}
-
-if ($nerdFonts.Count -gt 0) {
-    Write-Host "✔️  Nerd Font detected: $($nerdFonts -join ', ')"
-} else {
-    Write-Host "⚠️  No Nerd Font detected. Terminal-Icons may not display properly."
-    Write-Host "    See: https://ardalis.com/install-nerd-fonts-terminal-icons-pwsh-7-win-11/"
-}
-#>
-
-
-## ------------------------- Load Terminal.Gui ------------------------
-Write-Host "Checking Terminal.Gui assembly..."
-if (-not ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq 'Terminal.Gui' })) {
-    $mod = Get-Module -ListAvailable Microsoft.PowerShell.ConsoleGuiTools | Select-Object -First 1
-    if ($mod) {
-        $dll = Join-Path $mod.ModuleBase 'Terminal.Gui.dll'
-        if (Test-Path $dll) { Add-Type -Path $dll -ErrorAction Stop; Write-Host "Loaded Terminal.Gui from $dll" } 
-        else { Write-Error "Terminal.Gui.dll not found. Install Microsoft.PowerShell.ConsoleGuiTools."; return }
-    } else { Write-Error "Microsoft.PowerShell.ConsoleGuiTools module not found."; return }
-} else { Write-Host "Terminal.Gui assembly already loaded." }
-
-## Set global demo mode flag immediately
-$Global:DemoMode = $DemoMode
-
-## Set global flags immediately after param block - themes here
-$Global:ThemeMode = $Theme
-
-Write-Host "Starting $($Global:ProjectName) in $(if($DemoMode){'DEMO'}else{'PRODUCTION'}) mode..."
-
-### now that's done, set up a tree
-$Global:tree = [Terminal.Gui.TreeView]::new()
-
-## ------------------------- Globals ------------------------
-## At the start of script - GLOBALS section
-
-# Set up forest/domain structure
-if ($Global:DemoMode) {
-    ## Demo mode - hardcode forest structure
-    ## RFC 2606 and 6761 compliant
-    $Global:ForestName = "jukebox.example"
-    $Global:RootDomain = "example.com"
-    $Global:Domains = @('example.com', 'example.net', 'example.org')
-    $Global:Sites = @('GLA', 'EDI', 'LND', 'CPH', 'KGE', 'ODE', 'BON', 'BRL', 'MUC', 'NEW', 'LIV')
-} else {
-    ## Production mode - query AD
-    try {
-        ## If user specified a domain, query THAT domain's forest
-        if ($Domain) {
-            Write-Host "Querying domain: $Domain"
-            $targetDomain = Get-ADDomain -Server $Domain -ErrorAction Stop
-            $forest = Get-ADForest -Server $targetDomain.Forest -ErrorAction Stop
-        } else {
-            # No domain specified - use current user's domain
-            $targetDomain = Get-ADDomain -ErrorAction Stop
-            $forest = Get-ADForest -ErrorAction Stop
-        }
-        
-        $Global:ForestName = $forest.Name.Split('.')[0].ToUpper()
-        $Global:RootDomain = $forest.RootDomain
-        $Global:Domains = $forest.Domains
-        $Global:Sites = $forest.Sites | ForEach-Object { $_.Name }
-        
-        ## Set current domain to what user specified, or root domain
-        $Global:CurrentDomain = if ($Domain) { $Domain } else { $Global:RootDomain }
-        
-    } catch {
-        Write-Error "Failed to query domain/forest: $_"
-        Write-Error "Make sure you have connectivity to '$Domain' and appropriate permissions"
-        
-        # Fallback for Azure AD or disconnected
-        $Global:ForestName = "DOMAIN"
-        $Global:RootDomain = if ($Domain) { $Domain } else { $env:USERDNSDOMAIN }
-        $Global:Domains = @($Global:RootDomain)
-        $Global:Sites = @()
-        $Global:CurrentDomain = $Global:RootDomain
-    }
-}
-
-$Global:Domain = $Global:CurrentDomain  ## For compatibility
-
-## Initialize other globals
-$Global:CurrentDC = $null
-$Global:Users = @()
-$Global:Groups = @()
-$Global:DCs = @()
-$Global:ADObjects = @()
-$Global:SelectedObjects = @()
-$Global:SelectionMode = $false
-
-## Global Search filters:
-$Global:FilterOptions = @{
-  ShowDisabledUsers = $true
-  ShowEnabledUsers  = $true
-  ShowLockedUsers    = $true
-  ShowGroups        = $true
-  ShowDCs           = $true
-  ShowComputers     = $true
-  ShowOUs           = $true
-  NameFilter        = ""
-  SortBy            = "Name"
-  SortDescending    = $false
-}
+## Define the build version, project and code names once only - up here to ease patching. The rest at main
+$Script:ProjectName = "DSA-TUI pwsh dsa.msc TUI"
+$Script:FruitName = "Blåbær"
+$Script:BuildVersion = "2.3.7.1"
 
 class OUNode {
   [string]$Name
@@ -510,56 +358,189 @@ class OUNode {
   }
 }
 
-## .----------------------{ Functons Start Here }---------------------.
-## | Any functions you add in here. Make sure to keep Chronology when |
-## | calling them from inside other funcitons...                      |
-## '------------------------------------------------------------------'
+##################################################################################################################
+## Any functions added in here, make sure to keep chronology when calling them from inside other functions...   ##
+##################################################################################################################
+
+## -------------------{ Test For Required Modules }--------------------
+function Test-RequiredModule {
+  param(
+    [Parameter(Mandatory)]
+    [string]$Name,
+    [string]$MinimumVersion = $null,
+    [switch]$Optional
+  )
+
+  $module = Get-Module -ListAvailable -Name $Name -ErrorAction SilentlyContinue
+
+  if ($module) {
+    ## Check version if specified
+    if ($MinimumVersion -and ($module.Version -lt [version]$MinimumVersion)) {
+      Debug-Log "Module '$Name' found but version is too old. Need $MinimumVersion or later." -Type "Warn"
+      return $false
+    }
+
+    Debug-Log "Module '$Name' is installed." -Type "Success"
+
+    ## Try to import it
+    try {
+      Import-Module $Name -ErrorAction SilentlyContinue
+    } catch {
+      Debug-Log "Failed to import module '$Name': $_" -Type "Warn"
+    }
+
+    return $true
+  }
+  else {
+    if ($Optional) {
+      Debug-Log "Optional module '$Name' is NOT installed." -Type "Warn"
+    } else {
+      Debug-Log "Module '$Name' is NOT installed. Please run: Install-Module -Name $Name" -Type "Error"
+    }
+    return $false
+  }
+}
+
+function Debug-DumpViewTree {
+  param(
+    [Terminal.Gui.View]$View,
+    [int]$Indent = 0
+  )
+
+  if (-not $View) { return }
+
+  $pad = (' ' * ($Indent * 2))
+  $type = $View.GetType().Name
+
+  $x = if ($View.X) { $View.X.ToString() } else { "null" }
+  $y = if ($View.Y) { $View.Y.ToString() } else { "null" }
+  $w = if ($View.Width) { $View.Width.ToString() } else { "null" }
+  $h = if ($View.Height) { $View.Height.ToString() } else { "null" }
+
+  $vis = $View.Visible
+  $scheme = if ($View.ColorScheme) { "HasTheme" } else { "DefaultTheme" }
+
+  Debug-Log ("$pad$type | X=$x Y=$y W=$w H=$h Visible=$vis Theme=$scheme") -Type "Debug"
+
+  if ($View.Subviews -and $View.Subviews.Count -gt 0) {
+    foreach ($child in $View.Subviews) {
+      Debug-DumpViewTree -View $child -Indent ($Indent + 1)
+    }
+  }
+}
 
 ## --------------------------{ Debug Logging }-------------------------
 function Debug-Log {
-    param(
-        [string]$Message,
-        [ValidateSet('Info','Warn','Error','Success')]
-        [string]$Type = 'Info'
-    )
-    $ts = Get-Date -Format 'HH:mm:ss'
-    # Emoji + colors for each type
-    switch ($Type) {
-    'Info'    { $emoji = 'ⓘ'; $color = 'Cyan' }      # Circled i
-    'Warn'    { $emoji = '▲'; $color = 'Yellow' }    # Triangle
-    'Error'   { $emoji = '✗'; $color = 'Red' }       # X mark
-    'Success' { $emoji = '✓'; $color = 'Green' }     # Check mark
+  param(
+    [string]$Message,
+    [ValidateSet('Info','Warn','Error','Success','Debug')]
+    [string]$Type = 'Info'
+  )
+
+  $timestamp = Get-Date -Format 'HH:mm:ss'
+  ## Emoji + colors for each type
+  switch ($Type) {
+    'Info'    { $emoji = 'ⓘ' ; $color = 'Cyan' }   # Circled i
+    'Warn'    { $emoji = '▲' ; $color = 'Yellow' }  # Triangle
+    'Error'   { $emoji = '✗' ; $color = 'Red' }    # X mark
+    'Success' { $emoji = '✓' ; $color = 'Green' }  # Check mark
+    'Debug'   { $emoji = '🔧'; $color = 'Cyan'}  # Spanner (Wrench for left pondians)
+  }
+
+  $line = "[$timestamp] $emoji $Type $Message"
+
+  ## Show in console when Logging switch is enabled
+  if ($Script:Logging) {
+    ## Use PSWriteColor if available, otherwise fall back to Write-Host
+    if ($Script:HasPSWriteColor) {
+      try {
+        Write-Color -Encoding UTF8 -Text $line -Color $color
+      } catch {
+        Write-Host $line -ForegroundColor $color  # Fallback
+      }
+    } else {
+      Write-Host $line -ForegroundColor $color
     }
-    $line = "[$ts] $emoji $Type $Message"
-    
-    # Show in console when Logging switch is enabled
-    if ($Global:Logging) {
-        # Use PSWriteColor if available, otherwise fall back to Write-Host
-        if ($Global:HasPSWriteColor) {
-            try {
-                Write-Color -Encoding UTF8 -Text $line -Color $color
-            } catch {
-                Write-Host $line -ForegroundColor $color  # Fallback
-            }
-        } else {
-            Write-Host $line -ForegroundColor $color
-        }
-    }
-    
-    # Write to log file if enabled
-    if ($Global:Logging -and $Global:LogStream) {
-        try {
-            $Global:LogStream.WriteLine($line)
-        } catch { }
-    }
+  }
+
+  ## Write to log file if enabled
+  if ($Script:Logging -and $Script:LogStream) {
+    try {
+      $Script:LogStream.WriteLine($line)
+    } catch { }
+  }
+}
+
+## ---------------------------{ Set Up Tree }--------------------------
+function Initialize-Tree {
+  if (-not $Script:tree) { $Script:tree = [Terminal.Gui.TreeView]::new() }
+}
+
+function Build-MainMenu {
+  [CmdletBinding()]
+  param()
+
+  Debug-Log ": Building main menu..." -Type "Info"
+
+  ## ------------------------- Menu Items -------------------------
+  $mFile  = [Terminal.Gui.MenuItem]::new("_Exit","Exit application (F10)",[Action]{ [Terminal.Gui.Application]::RequestStop() })
+  $mNew   = [Terminal.Gui.MenuItem]::new("New Object","Create a new object (F3)",[Action]{ Show-NewObjectWizard })
+  $mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-Properties })
+
+  $mUndo         = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Debug-Log (": Undo placeholder") -Type "Info" })
+  $mChangeDomain = [Terminal.Gui.MenuItem]::new("Change _Domain","Select domain",[Action]{ Show-ChangeDomainDialog })
+  $mChangeDC     = [Terminal.Gui.MenuItem]::new("Change _Domain Controller","Select DC",[Action]{ Show-ChangeDCDialog })
+  $mSearchAD     = [Terminal.Gui.MenuItem]::new("_Search AD","Search Active Directory (F7)",[Action]{ Show-ADSearchDialog })
+
+  $mRefresh = [Terminal.Gui.MenuItem]::new("_Refresh","Refresh AD data (F5)",[Action]{
+    Debug-Log (": Refresh menu clicked - scheduling refresh...") -Type "Info"
+    [Terminal.Gui.Application]::MainLoop.AddTimeout([TimeSpan]::FromMilliseconds(100), {
+    Debug-Log (": Timeout callback - starting refresh...") -Type "Info"
+    try {
+      Update-Status "Refreshing..." -spinner
+      $result = Refresh-Data -domain $Script:CurrentDomain -RebuildTree
+      if ($result) { Update-Status "Refresh complete" -final } else { Update-Status "Refresh failed" -final }
+        Debug-Log (": Refresh completed with result: $result") -Type "Info"
+      } catch {
+        Debug-Log (": Refresh crashed: $($_.Exception.Message)") -Type "Info"
+        Update-Status "Refresh error" -final
+      }
+        return $false
+    })
+      Debug-Log (": Refresh scheduled") -Type "Info"
+  })
+
+  $mQuickFilter       = [Terminal.Gui.MenuItem]::new("_Quick Filter","Apply quick filters",[Action]{ Show-QuickFilterDialog })
+  $mSelectionMode      = [Terminal.Gui.MenuItem]::new("_Selection Mode (Ctrl+S)","Toggle selection mode",[Action]{ Toggle-SelectionMode })
+  $mSelectAll         = [Terminal.Gui.MenuItem]::new("Select _All (Ctrl+A)","Select all objects",[Action]{ Select-AllObjects })
+  $mDeselectAll       = [Terminal.Gui.MenuItem]::new("_Deselect All (Ctrl+D)","Deselect all objects",[Action]{ Deselect-AllObjects })
+  $mBulkAddGroup      = [Terminal.Gui.MenuItem]::new("Add to _Group...","Add selected users to group",[Action]{ Invoke-BulkAddToGroup })
+  $mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator (F2)",[Action]{ Generate-RandomPassword })
+  $mLAPSPasswords     = [Terminal.Gui.MenuItem]::new("_LAPS Passwords","Lookup LAPS Creds (Fx)",[Action]{ Show-LAPSSearchModal })
+  $mADHealth          = [Terminal.Gui.MenuItem]::new("_AD Health Status","AD Health And Replication Status",[Action]{ Get-ADHealth })
+  $mShortcuts         = [Terminal.Gui.MenuItem]::new("_Shortcuts","Keyboard shortcuts (F1)",[Action]{ Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF10 - Quit" })
+  $mAboutDSATUI       = [Terminal.Gui.MenuItem]::new("_About","About $($Script:ProjectName)",[Action]{ Show-Modal "About" "$($Script:ProjectName)`n`nCodename: $($Script:FruitName)`nv$($Script:BuildVersion) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600)" })
+  $mWhyBlaabaer       = [Terminal.Gui.MenuItem]::new("Why _Blaabaer?","Why the $($Script:FruitName) codename?",[Action]{ Show-BlaabaerInfo })
+  $mTheme             = [Terminal.Gui.MenuItem]::new("_Theme","Change color theme (F6)",[Action]{ Show-ThemeSelector })
+
+  ## ------------------------- Menu Bar -------------------------
+  $menu = [Terminal.Gui.MenuBar]::new(@(
+    [Terminal.Gui.MenuBarItem]::new("_File", @($mRefresh, $mTheme, $mFile)),
+    [Terminal.Gui.MenuBarItem]::new("_Action", @($mNew, $mProps, $mQuickFilter, $mUndo, $mChangeDomain, $mLAPSPasswords, $mPasswordGenerator, $mChangeDC, $mSearchAD, $mADHealth)),
+    [Terminal.Gui.MenuBarItem]::new("_Selection", @($mSelectionMode, $mSelectAll, $mDeselectAll, $mBulkAddGroup)),
+    [Terminal.Gui.MenuBarItem]::new("_About", @($mShortcuts, $mAboutDSATUI, $mWhyBlaabaer))
+  ))
+
+  Debug-Log ": Main menu created successfully" -Type "Info"
+  return $menu
 }
 
 ## ----------------------------{ Get Theme }---------------------------
 function Get-Theme {
   param([string]$mode)
 
-  # Initialize color schemes and Ensure ColorSchemes are instantiated
-  if (-not $globalCs)     { $globalCs     = [Terminal.Gui.ColorScheme]::new() }
+  ## Initialize color schemes and Ensure ColorSchemes are instantiated
+  if (-not $ScriptCs)     { $ScriptCs     = [Terminal.Gui.ColorScheme]::new() }
   if (-not $mainWindowCs) { $mainWindowCs = [Terminal.Gui.ColorScheme]::new() }
 
   ## Normalize theme string: lowercase + ASCII
@@ -569,16 +550,16 @@ function Get-Theme {
 
   <# Leave me alone for I am documentation
 
-    Adding Themes:
-  
-    Add an option above in the [ValidateSet() then define a theme below:
+  Adding Themes:
 
-    "faxekondi" {
-      $globalCs.Normal     <-- Foreground borders and background colour for all modals
-      $globalCs.Focus      <-- Foreground and background for menus
-      $mainWindowCs.Normal <-- Main opening dialog and foreground text colour
-      $mainWindowCs.Focus  <-- Main opening window focus colours foreground nad background
-      }
+  Add an option above in the [ValidateSet]() then define a theme below:
+
+  "faxekondi" {
+    $ScriptCs.Normal     <-- Foreground borders and background colour for all modals
+    $ScriptCs.Focus      <-- Foreground and background for menus
+    $mainWindowCs.Normal <-- Main opening dialog and foreground text colour
+    $mainWindowCs.Focus  <-- Main opening window focus colours foreground nad background
+    }
 
   Valid colours: Black, Blue, Green, Cyan, Red, Magenta, Brown, Gray, DarkGray, BrightBlue,
                  BrightGreen, BrightCyan, BrightRed, BrightMagenta, BrightYellow, White
@@ -587,79 +568,92 @@ function Get-Theme {
 
   switch ($mode) {
     "light" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::Blue)
-      }
+    }
 
     "dark" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Red)
-      }
+    }
 
     "matrix" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::Black)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::Black)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Black)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Gray)
-      }
+    }
 
     "british" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
-      }
+    }
+
     "panam" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
-      }
+    }
+
     "dsb" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
-      }
+    }
+
     "gemstones" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::BrightMagenta)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::BrightMagenta)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightGreen)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
-      }
+    }
+
     "scotrail" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::White)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::White)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightBlue)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      }
+    }
+
     "class91" {
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::White)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
-      }
+    }
+
+    "twa" {
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::DarkGray)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::DarkGray)
+    }
+
     "default" {
       # fallback to dark
-      $globalCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
-      $globalCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::DarkGray)
-      }
+    }
   }
 
-  # Ensure HotNormal/HotFocus
-  $globalCs.HotNormal     = $globalCs.Normal
-  $globalCs.HotFocus      = $globalCs.Focus
+  ## Ensure HotNormal/HotFocus
+  $ScriptCs.HotNormal     = $ScriptCs.Normal
+  $ScriptCs.HotFocus      = $ScriptCs.Focus
   $mainWindowCs.HotNormal = $mainWindowCs.Normal
   $mainWindowCs.HotFocus  = $mainWindowCs.Focus
 
   return @{
-    Global     = $globalCs
+    Global     = $ScriptCs
     MainWindow = $mainWindowCs
   }
 }
@@ -684,6 +678,10 @@ function Apply-Theme {
   if ($Menu -and $Menu.PSObject.Properties.Name -contains 'ColorScheme') { $Menu.ColorScheme = $ThemeData.Global }
   ## --- StatusBar ---
   if ($StatusBar -and $StatusBar.PSObject.Properties.Name -contains 'ColorScheme') { $StatusBar.ColorScheme = $ThemeData.Global }
+  ## --- Tree
+  if ($Script:tree -and $Script:tree.PSObject.Properties.Name -contains 'ColorScheme') { $Script:tree.ColorScheme = $ThemeData.Global }
+  ## --- Filter Panel
+  if ($filterPanel -and $filterPanel.PSObject.Properties.Name -contains 'ColorScheme') { $filterPanel.ColorScheme = $ThemeData.Global }
 
   ## --- Terminal.Gui base colors ---
   [Terminal.Gui.Colors]::Base     = $ThemeData.Global
@@ -697,202 +695,400 @@ function Apply-Theme {
 ## Diagnostics helper to show what's inside a ColorScheme
 function Dump-ColorScheme {
   param([Terminal.Gui.ColorScheme]$Scheme)
-  if ($null -eq $Scheme) { Debug-Log ("ColorScheme is null") -Type "warn" ; return }
-  Debug-Log ("Normal    : $($Scheme.Normal)") -Type "info"
-  Debug-Log ("Focus     : $($Scheme.Focus)") -Type "info"
-  Debug-Log ("HotNormal : $($Scheme.HotNormal)") -Type "info"
-  Debug-Log ("HotFocus  : $($Scheme.HotFocus)") -Type "info"
-  Debug-Log ("Disabled  : $($Scheme.Disabled)") -Type "info"
+  if ($null -eq $Scheme) { Debug-Log ("ColorScheme is null") -Type "Warn" ; return }
+  Debug-Log ("Normal    : $($Scheme.Normal)") -Type "Info"
+  Debug-Log ("Focus     : $($Scheme.Focus)") -Type "Info"
+  Debug-Log ("HotNormal : $($Scheme.HotNormal)") -Type "Info"
+  Debug-Log ("HotFocus  : $($Scheme.HotFocus)") -Type "Info"
+  Debug-Log ("Disabled  : $($Scheme.Disabled)") -Type "Info"
 }
-
-## Select theme before proceeding. Save the mode string
-$Global:ThemeMode = $Theme
-
-## Get the selected colour scheme
-$cs = Get-Theme -mode $Theme
-Apply-Theme -ThemeData $themeData -TopLevel $TopLevel -MainWindow $MainWindow -Menu $Menu -Status $StatusBar
 
 ## ------------------------{ Show progress bar }-----------------------
 ## Helper: Show a simple loading/progress dialog with spinner
 function Show-LoadingDialog {
-    param(
-        [string]$Message = "Loading, please wait..."
-    )
-    
-    # Create dialog and label
-    $dlg = [Terminal.Gui.Dialog]::new("", 40, 7)
-    $lbl = [Terminal.Gui.Label]::new($Message)
-    $lbl.X = 2
-    $lbl.Y = 2
-    $dlg.Add($lbl)
-    
-    # Spinner label
-    $spinner = [Terminal.Gui.Label]::new("|")
-    $spinner.X = [Terminal.Gui.Pos]::Right($lbl) + 1
-    $spinner.Y = 2
-    $dlg.Add($spinner)
-    
-    ## CRITICAL FIX: Store frames in GLOBAL so timer thread can access it
-    $Global:spinnerFrames = @("|", "/", "-", "\")
-    $Global:spinnerFrameIndex = 0
-    
-    # Timer callback - ONLY access globals and invoke on MainLoop
-    $timer = [System.Threading.Timer]::new({
-        [Terminal.Gui.Application]::MainLoop.Invoke({
-            # Now safely on the UI thread with PowerShell runspace
-            $Global:spinnerFrameIndex = ($Global:spinnerFrameIndex + 1) % 4
-            $spinner.Text = $Global:spinnerFrames[$Global:spinnerFrameIndex]
-            ## Pretend we're polling real data for demo mode os oyu see progressbars
-            if ($Global:DemoMode) {
-              Start-Sleep -Milliseconds 350   # Adjust to taste
-            }
-        })
-    }, $null, 0, 150)
-    
-    # Start non-blocking dialog
-    [Terminal.Gui.Application]::Begin($dlg)
-    
-    # Return both dialog and timer so caller can close/stop cleanly
-    return [PSCustomObject]@{ Dialog = $dlg; Timer = $timer }
+  param(
+    [string]$Message = "Loading, please wait..."
+  )
+
+  ## --- Create the dialog ---
+  $dlg = [Terminal.Gui.Dialog]::new("", 40, 7)
+  $dlg.X = 2
+  $dlg.Y = 2
+
+  ## --- Message label ---
+  $lbl = [Terminal.Gui.Label]::new($Message)
+  $lbl.X = 2
+  $lbl.Y = 2
+  $dlg.Add($lbl)
+
+  ## --- Spinner label ---
+  $spinner = [Terminal.Gui.Label]::new("|")
+  $spinner.X = [Terminal.Gui.Pos]::Right($lbl) + 1
+  $spinner.Y = 2
+  $dlg.Add($spinner)
+
+  ## --- Spinner globals ---
+  $Script:spinnerFrames = @("|","/","-","\\")
+  $Script:spinnerFrameIndex = 0
+
+  ## --- Timer callback: update spinner safely on UI thread ---
+  $timer = [System.Threading.Timer]::new({
+    [Terminal.Gui.Application]::MainLoop.Invoke({
+      $Script:spinnerFrameIndex = ($Script:spinnerFrameIndex + 1) % $Script:spinnerFrames.Count
+      $spinner.Text = $Script:spinnerFrames[$Script:spinnerFrameIndex]
+
+      ## Optional demo mode slowdown
+      if ($Script:DemoMode) { Start-Sleep -Milliseconds 350 }
+    })
+  }, $null, 0, 150)  # 150ms interval
+
+  ## --- Show dialog in modal-safe, non-blocking way ---
+  [Terminal.Gui.Application]::BeginModal($dlg)
+
+  ## --- Return dialog and timer for clean-up ---
+  return [PSCustomObject]@{
+  Dialog = $dlg
+  Timer  = $timer
+  }
 }
 
 ## ------------------------{ Close Progressbar }-----------------------
 function Show-ThemeSelector {
 
-    # --- Theme list ---
-    $themes = @("british","dark","dsb","light","matrix","panam","gemstones","class91","scotrail")
+  ## --- Theme list ---
+  $themes = @("british","dark","dsb","light","matrix","panam","gemstones","class91","scotrail", "twa")
 
-    # Split into two columns
-    $half = [math]::Ceiling($themes.Count / 2)
-    $leftThemes  = $themes[0..($half-1)]
-    $rightThemes = $themes[$half..($themes.Count-1)]
+  ## Split into two columns
+  $half = [math]::Ceiling($themes.Count / 2)
+  $leftThemes  = $themes[0..($half-1)]
+  $rightThemes = $themes[$half..($themes.Count-1)]
 
-    # --- Determine current theme (case-insensitive) ---
-    $currentTheme = $Global:ThemeMode
-    Debug-Log ("DEBUG: Global ThemeMode = ${Global:ThemeMode}") -Type "info"
-    Debug-Log ("DEBUG: Current theme for selection = ${currentTheme}") -Type "info"
+  ## --- Determine current theme (case-insensitive) ---
+  $currentTheme = $Script:ThemeMode
+  Debug-Log (": Global ThemeMode = ${Global:ThemeMode}") -Type "Debug"
+  Debug-Log (": Current theme for selection = ${currentTheme}") -Type "Debug"
 
-    $currentIndex = -1
-    for ($i = 0; $i -lt $themes.Count; $i++) {
-        if ($themes[$i].ToLower() -eq $currentTheme.ToLower()) {
-            $currentIndex = $i
-            break
-        }
+  $currentIndex = -1
+  for ($i = 0; $i -lt $themes.Count; $i++) {
+    if ($themes[$i].ToLower() -eq $currentTheme.ToLower()) {
+      $currentIndex = $i
+      break
+    }
+  }
+
+  Debug-Log (": Index of current theme in $themes array = ${currentIndex}") -Type "Debug"
+
+  ## Calculate which column gets the selection
+  $leftSelected  = if ($currentIndex -ge 0 -and $currentIndex -lt $leftThemes.Count) { $currentIndex } else { -1 }
+  $rightSelected = if ($currentIndex -ge $leftThemes.Count) { $currentIndex - $leftThemes.Count } else { -1 }
+
+  Debug-Log (": LeftSelected = ${leftSelected}, RightSelected = ${rightSelected}") -Type "Debug"
+
+  ## --- Create dialog ---
+  $dlg = [Terminal.Gui.Dialog]::new("Select Theme", 60, 16)
+
+  $lbl = [Terminal.Gui.Label]::new("Choose a color theme:")
+  $lbl.X = 2; $lbl.Y = 1
+  $dlg.Add($lbl)
+
+  ## --- Left column RadioGroup ---
+  $rdoLeft = [Terminal.Gui.RadioGroup]::new($leftThemes)
+  $rdoLeft.X = 2
+  $rdoLeft.Y = 3
+  $rdoLeft.SelectedItem = $leftSelected
+  $dlg.Add($rdoLeft)
+
+  ## --- Right column RadioGroup ---
+  $rdoRight = [Terminal.Gui.RadioGroup]::new($rightThemes)
+  $rdoRight.X = 32
+  $rdoRight.Y = 3
+  $rdoRight.SelectedItem = $rightSelected
+  $dlg.Add($rdoRight)
+
+  Debug-Log (": rdoLeft.SelectedItem = ${rdoLeft.SelectedItem}, rdoRight.SelectedItem = ${rdoRight.SelectedItem}") -Type "Debug"
+
+  ## --- Sync columns so only one can be selected ---
+  $rdoLeft.add_SelectedItemChanged({
+    if ($rdoLeft.SelectedItem -ge 0) { $rdoRight.SelectedItem = -1 }
+  })
+  $rdoRight.add_SelectedItemChanged({
+    if ($rdoRight.SelectedItem -ge 0) { $rdoLeft.SelectedItem = -1 }
+  })
+
+  ## --- Apply Button ---
+  $btnApply = [Terminal.Gui.Button]::new("Apply")
+  $btnApply.add_Clicked({
+    $sel = if ($rdoLeft.SelectedItem -ge 0) {
+      $leftThemes[$rdoLeft.SelectedItem]
+    } elseif ($rdoRight.SelectedItem -ge 0) {
+      $rightThemes[$rdoRight.SelectedItem]
+    } else {
+      "dark"
     }
 
-    Debug-Log ("DEBUG: Index of current theme in $themes array = ${currentIndex}") -Type "info"
+    Debug-Log ": Theme selected on Apply = ${sel}" -Type "Debug"
+    Debug-Log "Switching to theme: ${sel}" -Type "Info"
 
-    # Calculate which column gets the selection
-    $leftSelected  = if ($currentIndex -ge 0 -and $currentIndex -lt $leftThemes.Count) { $currentIndex } else { -1 }
-    $rightSelected = if ($currentIndex -ge $leftThemes.Count) { $currentIndex - $leftThemes.Count } else { -1 }
+    $Script:ThemeMode = $sel
+    $newTheme = Get-Theme -mode $sel  # Get NEW theme
 
-    Debug-Log ("DEBUG: LeftSelected = ${leftSelected}, RightSelected = ${rightSelected}") -Type "info"
+    ## Apply to ALL components including tree frame
+    Apply-Theme -ThemeData $newTheme -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $Script:StatusBar
 
-    # --- Create dialog ---
-    $dlg = [Terminal.Gui.Dialog]::new("Select Theme", 60, 16)
+    ## Apply to tree frame specifically
+    if ($treeFrame -and $newTheme.MainWindow) {
+      $treeFrame.ColorScheme = $newTheme.MainWindow
+    }
 
-    $lbl = [Terminal.Gui.Label]::new("Choose a color theme:")
-    $lbl.X = 2; $lbl.Y = 1
-    $dlg.Add($lbl)
+    ## Apply to filter panel
+    if ($filterPanel -and $newTheme.MainWindow) {
+      $filterPanel.ColorScheme = $newTheme.MainWindow
+    }
 
-    # --- Left column RadioGroup ---
-    $rdoLeft = [Terminal.Gui.RadioGroup]::new($leftThemes)
-    $rdoLeft.X = 2
-    $rdoLeft.Y = 3
-    $rdoLeft.SelectedItem = $leftSelected
-    $dlg.Add($rdoLeft)
+    ## Apply to selected objects panel
+    if ($selectedObjectsPanel -and $newTheme.MainWindow) {
+      $selectedObjectsPanel.ColorScheme = $newTheme.MainWindow
+    }
 
-    # --- Right column RadioGroup ---
-    $rdoRight = [Terminal.Gui.RadioGroup]::new($rightThemes)
-    $rdoRight.X = 32
-    $rdoRight.Y = 3
-    $rdoRight.SelectedItem = $rightSelected
-    $dlg.Add($rdoRight)
+    ## Force redraw everything
+    [Terminal.Gui.Application]::Top.SetNeedsDisplay()
+    [Terminal.Gui.Application]::Refresh()
 
-    Debug-Log ("DEBUG: rdoLeft.SelectedItem = ${rdoLeft.SelectedItem}, rdoRight.SelectedItem = ${rdoRight.SelectedItem}") -Type "info"
+    Show-Modal "Theme Changed" "Theme changed to: ${sel}"
+    [Terminal.Gui.Application]::RequestStop()
+  })
+  $dlg.AddButton($btnApply)
 
-    # --- Sync columns so only one can be selected ---
-    $rdoLeft.add_SelectedItemChanged({
-        if ($rdoLeft.SelectedItem -ge 0) { $rdoRight.SelectedItem = -1 }
-    })
-    $rdoRight.add_SelectedItemChanged({
-        if ($rdoRight.SelectedItem -ge 0) { $rdoLeft.SelectedItem = -1 }
-    })
+  ## --- Cancel Button ---
+  $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+  $dlg.AddButton($btnCancel)
 
-    # --- Apply Button ---
-    $btnApply = [Terminal.Gui.Button]::new("Apply")
-    $btnApply.add_Clicked({
-        $sel = if ($rdoLeft.SelectedItem -ge 0) {
-            $leftThemes[$rdoLeft.SelectedItem]
-        } elseif ($rdoRight.SelectedItem -ge 0) {
-            $rightThemes[$rdoRight.SelectedItem]
-        } else {
-            "dark"  # default if nothing selected
+  ## --- Run the dialog ---
+  [Terminal.Gui.Application]::Run($dlg)
+}
+
+function Layout-Tabs {
+
+  Debug-Log "Reflowing tabs across rows" -Type "Debug"
+
+  if (-not $Script:AllTabs -or $Script:AllTabs.Count -eq 0) { return }
+
+  ## Clear all rows
+  foreach ($row in $Script:TabRows) {
+    while ($row.Tabs.Count -gt 0) { $row.RemoveTab($row.Tabs[0]) }
+  }
+
+  for ($i = 0; $i -lt $Script:AllTabs.Count; $i++) {
+
+    $rowIndex = [Math]::Floor($i / 6)
+    if ($rowIndex -ge $Script:TabRows.Count) { break }
+
+    $row = $Script:TabRows[$rowIndex]
+    $originalTab = $Script:AllTabs[$i]
+
+    ## Create a fresh tab
+    $tab = [Terminal.Gui.TabView+Tab]::new()
+
+    ## Convert ASCII numbers to readable text (works for log case)
+    $asciiString = "$($originalTab.Text)"
+    $tab.Text = ($asciiString -split '\s+' | ForEach-Object { [char][int]$_ }) -join ''
+
+    ## ✅ Attach a fresh View to avoid Visible exception
+    $tab.View = [Terminal.Gui.View]::new()
+    Debug-Log ("Layout-Tabs: rowIndex=$rowIndex i=$i tabType=$($tab.GetType().FullName) tabText='$($tab.Text)' hasView=$([bool]$tab.View)") -Type "Debug"
+
+    ## Add tab using 2-argument overload (required in 1.16)
+    $row.AddTab($tab, $false)
+  }
+
+  ## Select first tab
+  if ($Script:AllTabs.Count -gt 0) { Select-TabGlobal $Script:AllTabs[0] }
+}
+
+## ------------------------{ Faux Tab Builder }-----------------------
+function New-FauxTabContainer {
+  <#
+  .SYNOPSIS
+    Creates a multi-row tab container for Terminal.Gui dialogs.
+
+  .DESCRIPTION
+    This function sets up a faux multi-row tab container with keyboard navigation (Ctrl+Arrow) and a content host where individual tab Views can be displayed.
+    It returns a custom object containing the container view, the content host, and a helper function to select tabs programmatically.
+
+  .PARAMETER Tabs
+    An array of [Terminal.Gui.TabView+Tab] objects to be placed in the tab rows.
+
+  .PARAMETER Rows
+    Number of visible tab rows. Defaults to 2.
+
+  .PARAMETER Top
+    Y-offset for the container within the parent dialog. Defaults to 0.
+
+  .PARAMETER Height
+    Height of the container. Defaults to Fill minus row count.
+
+  .OUTPUTS
+    PSCustomObject with:
+      - Container -> outer view to add to dialog
+      - ContentHost -> view for tab contents
+      - SelectTab(tab) -> scriptblock to switch tabs
+  #>
+
+  param(
+    [Parameter(Mandatory)]
+    [array]$Tabs,
+
+    [int]$Rows = 2,
+    [int]$Top = 0,
+    [int]$Height = 0
+  )
+
+  ## Outer container
+  $container = [Terminal.Gui.View]::new()
+  $container.X = 0
+  $container.Y = $Top
+  $container.Width  = [Terminal.Gui.Dim]::Fill()
+  $container.Height = if ($Height -gt 0) { $Height } else { [Terminal.Gui.Dim]::Fill($Rows + 1) }
+
+  ## Create tab rows
+  $tabRows = @()
+  for ($i=0; $i -lt $Rows; $i++) {
+    $row = [Terminal.Gui.TabView]::new()
+    $row.X = 0
+    $row.Y = $i
+    $row.Width  = [Terminal.Gui.Dim]::Fill()
+    $row.Height = 1
+    $tabRows += $row
+
+    ## Wire up tab selection to global handler
+    $row.add_SelectedTabChanged({
+      param($sender, $args)
+      if ($Script:AllTabs -and $args.NewTab) {
+        $Script:ActiveTab = $args.NewTab
+        if ($container.ContentHost) {
+          $container.ContentHost.RemoveAll()
+          $container.ContentHost.Add($args.NewTab.View)
         }
-
-        Debug-Log ("DEBUG: Theme selected on Apply = ${sel}") -Type "info"
-
-        Debug-Log ("Switching to theme: ${sel}") -Type "info"
-        $script:ThemeMode = $sel
-
-        $newTheme = Get-Theme -mode $sel
-        Apply-Theme -ThemeData $newTheme -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $StatusBar
-
-        # Force redraw
-        $menu.ColorScheme = $newTheme.Global
-        $menu.SetNeedsDisplay()
-        $win.SetNeedsDisplay()
-        [Terminal.Gui.Application]::Top.SetNeedsDisplay()
-        [Terminal.Gui.Application]::Refresh()
-
-        Show-Modal "Theme Changed" "Theme changed to: ${sel}"
-        [Terminal.Gui.Application]::RequestStop()
+      }
     })
-    $dlg.AddButton($btnApply)
+  }
 
-    # --- Cancel Button ---
-    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-    $dlg.AddButton($btnCancel)
+  $Script:TabRows = $tabRows
+  $Script:AllTabs = $Tabs
+  $Script:ActiveTab = $Tabs[0]
 
-    # --- Run the dialog ---
-    [Terminal.Gui.Application]::Run($dlg)
+  ## Keyboard navigation: Ctrl+Arrows
+  $container.Add_KeyPress({
+    param($s, $e)
+    if (-not $Script:ActiveTab) { return }
+      $idx = $Script:AllTabs.IndexOf($Script:ActiveTab)
+
+      switch ($e.KeyEvent.Key) {
+        ([Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::CursorRight) {
+          if ($idx -lt ($Script:AllTabs.Count - 1)) {
+            $container.SelectTab.Invoke($Script:AllTabs[$idx + 1])
+            $e.Handled = $true
+          }
+        }
+        ([Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::CursorLeft) {
+          if ($idx -gt 0) {
+            $container.SelectTab.Invoke($Script:AllTabs[$idx - 1])
+            $e.Handled = $true
+          }
+        }
+        ([Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::CursorDown) {
+          if ($idx + $Rows -lt $Script:AllTabs.Count) {
+            $container.SelectTab.Invoke($Script:AllTabs[$idx + $Rows])
+            $e.Handled = $true
+          }
+        }
+        ([Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::CursorUp) {
+          if ($idx - $Rows -ge 0) {
+            $container.SelectTab.Invoke($Script:AllTabs[$idx - $Rows])
+            $e.Handled = $true
+          }
+        }
+      }
+  })
+
+  ## Visual separator below tabs
+  $separator = [Terminal.Gui.LineView]::new()
+  $separator.X = 0
+  $separator.Y = $Rows
+  $separator.Width = [Terminal.Gui.Dim]::Fill()
+  $separator.Height = 1
+
+  ## Content host
+  $contentHost = [Terminal.Gui.View]::new()
+  $contentHost.X = 0
+  $contentHost.Y = $Rows + 1
+  $contentHost.Width  = [Terminal.Gui.Dim]::Fill()
+  $contentHost.Height = [Terminal.Gui.Dim]::Fill()
+  $container.ContentHost = $contentHost
+
+  ## Add everything to container
+  foreach ($row in $tabRows) { $container.Add($row) }
+    $container.Add($separator)
+    $container.Add($contentHost)
+
+    ## Initial tab display
+    if ($Tabs.Count -gt 0) {
+      $container.ContentHost.Add($Tabs[0].View)
+    }
+
+    ## Function to select a tab programmatically
+    $selectTab = {
+      param($tab)
+      $Script:ActiveTab = $tab
+      $container.ContentHost.RemoveAll()
+      $container.ContentHost.Add($tab.View)
+      foreach ($row in $tabRows) {
+        if ($row.Tabs.Contains($tab)) { $row.SelectedTab = $tab }
+      }
+    }
+    $container.SelectTab = $selectTab
+
+    ## Return container object
+    return [PSCustomObject]@{
+      Container   = $container
+      ContentHost = $contentHost
+      SelectTab   = $selectTab
+      TabRows     = $tabRows
+    }
 }
 
 ############################### AD FUNCTIONS BELOW HERE ##################################
 function Invoke-AD {
-    param(
-        [scriptblock]$Script,
-        [switch]$SuppressError
-    )
-
-    try {
-        if (-not (Get-Module -Name ActiveDirectory)) {
-            Import-Module ActiveDirectory -ErrorAction Stop
-        }
-
-        return & $Script
+  param(
+    [scriptblock]$Script,
+    [switch]$SuppressError
+  )
+  try {
+    if (-not (Get-Module -Name ActiveDirectory)) { Import-Module ActiveDirectory -ErrorAction Stop }
+      return & $Script
     } catch {
-        Debug-Log ("AD call failed: $($_.Exception.Message)") -Type "Error"
+    Debug-Log ("AD call failed: $($_.Exception.Message)") -Type "Warn"
 
-        if (-not $SuppressError) {
-            Show-Modal "Error" "Active Directory query failed:`n$($_.Exception.Message)"
-        }
-
-        # Fallback to demo mode
-        $Global:DemoMode = $true
-        return $null
-    }
+    ## NEVER call Show-Modal here - it crashes Terminal.Gui! Just log and return null
+    ## Fallback to demo mode
+    $Script:DemoMode = $true
+    return $null
+  }
 }
 
 ## ------------------------{ Load Domain Data }------------------------
 function Get-ADObjectsByType {
   param([string]$domain)
+
+  ## Debug info
+  Debug-Log (": Get-ADObjectsByType DemoMode=${Script:DemoMode} Domain=${domain}") -Type "Debug"
+
   $objTypes = @("user","computer","group","organizationalUnit","contact")
   $allObjects = @()
   foreach ($type in $objTypes) {
     try {
-      $objs = if ($Global:DemoMode) {
+      $objs = if ($Script:DemoMode) {
       ## Demo objects already structured
       @()
       } else {
@@ -902,42 +1098,42 @@ function Get-ADObjectsByType {
       $allObjects += $objs
       } catch {
       ## minimal fix: string interpolation of exception object done via ToString()
-      Debug-Log ("DEBUG: Failed to enumerate ${type}: $($_.ToString())") -Type "error"
-      }
+      Debug-Log (": Failed to enumerate ${type}: $($_.ToString())") -Type "Debug"
+    }
   }
   return $allObjects
 }
 
 function Get-CleanObjectInfo {
-  param([string]$treeText)  # ← Remove $Global:
-    
-  Debug-Log ("DEBUG: Get-CleanObjectInfo called with: '$treeText'") -Type "info"  # ← Use $treeText
-    
+  param([string]$treeText)  # ← Remove $Script:
+
+  Debug-Log (": Get-CleanObjectInfo called with: '$treeText'") -Type "Info"  # ← Use $treeText
+
   ## Determine type FIRST (before cleaning)
-  $objectType = if ($treeText -like "(U)*") { "user" }  # ← Use $treeText
-                elseif ($treeText -like "(DC)*") { "dc" }  # ← Use $treeText
-                elseif ($treeText -like "(G)*") { "group" }  # ← Use $treeText
+  $objectType = if ($treeText -like "(U)*") { "user" }           # ← Use $treeText
+                elseif ($treeText -like "(DC)*") { "dc" }        # ← Use $treeText
+                elseif ($treeText -like "(G)*") { "group" }      # ← Use $treeText
                 elseif ($treeText -like "(PC)*") { "computer" }  # ← Use $treeText
                 else { "unknown" }
-                
-  Debug-Log ("DEBUG: Detected type: $objectType") -Type "info"
-    
+
+  Debug-Log (": Detected type: $objectType") -Type "Info"
+
   ## Remove prefixes like "(U) " or "(DC) " or "(G) "
   $cleanName = $treeText -replace '^\([^)]+\)\s*', ''  # ← Use $treeText
-  Debug-Log ("DEBUG: After removing prefix: $cleanName") -Type "info"
-    
+  Debug-Log (": After removing prefix: $cleanName") -Type "Info"
+
   ## Remove any non-letter, non-space characters from the start (status icons)
   $cleanName = $cleanName -replace '^[^a-zA-Z]+\s*', ''
-  Debug-Log ("DEBUG: After removing icons: $cleanName") -Type "info"
-    
+  Debug-Log (": After removing icons: $cleanName") -Type "Info"
+
   ## Extract just the name if it has [SITE] suffix (for DCs)
   if ($cleanName -match '^(.+?)\s+\[.+\]$') {
     $cleanName = $matches[1].Trim()
-    Debug-Log ("DEBUG: Extracted name from [SITE] format: $cleanName") -Type "info"
+    Debug-Log (": Extracted name from [SITE] format: $cleanName") -Type "Info"
   }
-    
-  Debug-Log ("DEBUG: Final cleaned name: $cleanName") -Type "info"
-    
+
+  Debug-Log (": Final cleaned name: $cleanName") -Type "Info"
+
   return @{
     Type = $objectType
     Name = $cleanName
@@ -946,186 +1142,204 @@ function Get-CleanObjectInfo {
 
 ## -----------------------{ Refresh Domain Data }----------------------
 function Refresh-Data {
-    param(
-        [string]$domain = $Global:CurrentDomain,
-        [switch]$RebuildTree = $true
-    )
-    
-    Debug-Log ("DEBUG: === Refresh-Data START ===") -Type "info"
-    Debug-Log ("DEBUG: Domain: $domain") -Type "info"
-    
-    try {
-        # STEP 1: Load data (this is the ONLY place we care about demo vs prod)
-        if ($Global:DemoMode) {
-            Update-Status "Loading demo data..." -spinner
-            Debug-Log ("DEBUG: Converting demo data...") -Type "info"
-            
-            $converted = Convert-DataToADObjects `
-                -Users $Global:rawUsers `
-                -DCs $Global:rawDCs `
-                -Groups $Global:rawDemoGroups `
-                -Computers $Global:rawComputers `
-                -Domain $domain
-            
-            $Global:Users = $converted.Users
-            $Global:DCs = $converted.DCs
-            $Global:Groups = $converted.Groups
-            $Global:Computers = $converted.Computers
-            
-        } else {
-            Update-Status "Querying Active Directory..." -spinner
-            Debug-Log ("DEBUG: Loading from AD...") -Type "info"
-            
-            Load-DomainData -domain $domain
-        }
-        
-        Debug-Log ("DEBUG: Data loaded - Users: $($Global:Users.Count), Groups: $($Global:Groups.Count)") -Type "success"
-        
-        # STEP 2: Rebuild tree (same for both demo and prod - just uses PSCustomObjects)
-        if ($RebuildTree) {
-            Update-Status "Rebuilding tree..." -spinner
-            Debug-Log ("DEBUG: Rebuilding tree...") -Type "info"
-            
-            [Terminal.Gui.Application]::MainLoop.Invoke({
-                try {
-                    Build-Tree -domain $domain
-                    
-                    if ($Global:FilterStatusLabel) {
-                        Update-FilterStatusLabel -label $Global:FilterStatusLabel
-                    }
-                    
-                    Debug-Log ("DEBUG: Tree rebuilt successfully") -Type "success"
-                    
-                } catch {
-                    Debug-Log ("ERROR: Tree rebuild failed: $($_.Exception.Message)") -Type "error"
-                    Update-Status "Tree rebuild failed" -final
-                }
-            })
-        }
+  param([string]$domain, [switch]$RebuildTree)
 
-        Update-Status "Refresh complete" -final
-        Debug-Log ("DEBUG: === Refresh-Data END (SUCCESS) ===") -Type "success"
-        return $true
-        
-    } catch {
-        Debug-Log ("ERROR: Refresh failed: $($_.Exception.Message)") -Type "error"
-        Update-Status "Refresh failed" -final
-        
+  ## If in demo mode, just reload demo data
+  if ($Script:DemoMode) {
+    try {
+      Update-Status "Refreshing demo data..." -spinner
+      $converted = Convert-DataToADObjects -Users $Script:rawUsers -DCs $Script:rawDCs -Groups $Script:rawDemoGroups -Computers $Script:rawComputers -Domain $domain
+
+      if ($RebuildTree) {
+        Update-Status "Rebuilding tree..." -spinner
+
+        ## Rebuild tree safely in the UI thread
         [Terminal.Gui.Application]::MainLoop.Invoke({
-            Update-Status "Refresh failed: $($_.Exception.Message)" -final
+          try {
+            $Script:tree.ClearObjects()
+            Build-Tree -domain $domain
+            [Terminal.Gui.Application]::Refresh()
+          } catch {
+            Debug-Log ("Tree rebuild error: $_") -Type "Error"
+          }
         })
-        
-        return $false
+      }
+
+      Update-Status "Demo data refreshed" -final
+      return $true
+
+    } catch {
+      Debug-Log ("Demo refresh error: $_") -Type "Warn"
+      Update-Status "Refresh error" -final
+      return $false
     }
+  }
+
+  ## Production mode - query AD
+  try {
+    Update-Status "Loading DCs..." -spinner
+    $dcs = Invoke-AD { Get-ADDomainController -Filter * -DomainName $domain -ErrorAction Stop } -SuppressError
+    Update-Status "Loading Users..." -spinner
+
+    $users = Invoke-AD { Get-ADUser -Filter * -Server $domain -Properties DisplayName,EmailAddress,Title,Department,Enabled,LockedOut,DistinguishedName -ErrorAction Stop } -SuppressError
+    Update-Status "Loading Groups..." -spinner
+
+    $groups = Invoke-AD { Get-ADGroup -Filter * -Server $domain -Properties Description,GroupCategory,GroupScope,Members,DistinguishedName -ErrorAction Stop } -SuppressError
+    Update-Status "Loading Computers..." -spinner
+
+    $computers = Invoke-AD { Get-ADComputer -Filter * -Server $domain -Properties OperatingSystem,OperatingSystemVersion,Enabled,LastLogonDate,DistinguishedName -ErrorAction Stop } -SuppressError
+
+    ## Check results
+    if ($null -eq $dcs -or $null -eq $users -or $null -eq $groups -or $null -eq $computers) {
+      Debug-Log ("Refresh failed - one or more queries returned null") -Type "Warn"
+      Update-Status "Refresh failed - check logs" -final
+      return $false
+    }
+
+    Update-Status "Converting data..." -spinner
+    $converted = Convert-DataToADObjects -Users $users -DCs $dcs -Groups $groups -Computers $computers -Domain $domain
+
+    if ($RebuildTree) {
+      Update-Status "Rebuilding tree..." -spinner
+
+      ## Rebuild tree safely in the UI thread
+      [Terminal.Gui.Application]::MainLoop.Invoke({
+      try {
+        $Script:tree.ClearObjects()
+        Build-Tree -domain $domain
+        [Terminal.Gui.Application]::Refresh()
+      } catch {
+        Debug-Log ("Tree rebuild error: $_") -Type "Warn"
+      }
+    })
+  }
+
+  Update-Status "Refresh complete" -final
+  return $true
+
+  } catch {
+    Debug-Log ("Refresh error: $_") -Type "Warn"
+    Update-Status "Refresh error" -final
+    return $false
+  }
 }
 
 ## -----------------------{ Apply Group Changes }----------------------
 function Apply-GroupChanges {
-    param($group, $fields)
+  param($group, $fields)
 
-    try {
-        if ($Global:DemoMode) {
-            # Apply changes to demo object
-            $group.Description = $fields.txtDesc.Text.ToString()
-            $group.Mail        = $fields.txtEmail.Text.ToString()
-            $group.ManagedBy   = $fields.txtManagedBy.Text.ToString()
+  try {
+    if ($Script:DemoMode) {
+      ## Apply changes to demo object
+      $group.Description = $fields.txtDesc.Text.ToString()
+      $group.Mail        = $fields.txtEmail.Text.ToString()
+      $group.ManagedBy   = $fields.txtManagedBy.Text.ToString()
 
-            # Update raw demo group
-            $rawGroup = $Global:rawDemoGroups |
-                Where-Object { $_.Name -eq $group.Name } |
-                Select-Object -First 1
+      ## Update raw demo group
+      $rawGroup = $Script:rawDemoGroups | Where-Object { $_.Name -eq $group.Name } | Select-Object -First 1
 
-            if ($rawGroup) {
-                $rawGroup.Description = $fields.txtDesc.Text.ToString()
-                $rawGroup.Email       = $fields.txtEmail.Text.ToString()
-                $rawGroup.ManagedBy   = $fields.txtManagedBy.Text.ToString()
-            }
+      if ($rawGroup) {
+        $rawGroup.Description = $fields.txtDesc.Text.ToString()
+        $rawGroup.Email       = $fields.txtEmail.Text.ToString()
+        $rawGroup.ManagedBy   = $fields.txtManagedBy.Text.ToString()
+      }
 
-            Debug-Log ("SUCCESS: Group changes applied (demo mode)") -Type "success"
-            Show-Modal "Success" "Changes applied successfully (demo mode)"
-
-            Refresh-Data -domain $Global:CurrentDomain
-        }
-        else {
-            # AD mode
-            $setParams = @{
-                Identity    = $group.Name
-                Description = $fields.txtDesc.Text.ToString()
-            }
-
-            if ($fields.txtEmail.Text.ToString()) {
-                $setParams['Mail'] = $fields.txtEmail.Text.ToString()
-            }
-
-            if ($fields.txtManagedBy.Text.ToString()) {
-                $setParams['ManagedBy'] = $fields.txtManagedBy.Text.ToString()
-            }
-
-            Set-ADGroup @setParams -ErrorAction Stop
-
-            Debug-Log ("SUCCESS: Group changes applied to AD") -Type "success"
-            Show-Modal "Success" "Changes applied successfully"
-
-            Refresh-Data -domain $Global:CurrentDomain
-        }
-
-        $script:groupChangesMade = $false
-        return $true
+      Debug-Log ("SUCCESS: Group changes applied (demo mode)") -Type "Success"
+      Show-Modal "Success" "Changes applied successfully (demo mode)"
+      Refresh-Data -domain $Script:CurrentDomain
     }
-    catch {
-        Show-Modal "Error" "Failed to apply changes:`n$($_.Exception.Message)"
-        return $false
+    else {
+      ## AD mode
+      $setParams = @{
+        Identity    = $group.Name
+        Description = $fields.txtDesc.Text.ToString()
+      }
+
+      if ($fields.txtEmail.Text.ToString()) {
+        $setParams['Mail'] = $fields.txtEmail.Text.ToString()
+      }
+
+      if ($fields.txtManagedBy.Text.ToString()) {
+        $setParams['ManagedBy'] = $fields.txtManagedBy.Text.ToString()
+      }
+
+      Set-ADGroup @setParams -ErrorAction Stop
+      Debug-Log ("SUCCESS: Group changes applied to AD") -Type "Success"
+      Show-Modal "Success" "Changes applied successfully"
+      Refresh-Data -domain $Script:CurrentDomain
     }
+
+    $Script:groupChangesMade = $false
+    return $true
+  }
+  catch {
+    Show-Modal "Error" "Failed to apply changes:`n$($_.Exception.Message)"
+    return $false
+  }
 }
 
-## ------------------------{ Danske Soda vand }------------------------
-## This is a theme now. Danish Fruit soda based fun. Method to the
-## madness
+## Is it a special day
+function Initialize-DirectoryEmoji {
+    <#
+        Determines which emoji to use for the Active Directory window title.
+        Uses Unicode escapes for flags to avoid editor issues.
+    #>
+
+    param(
+        [DateTime]$Date = (Get-Date)
+    )
+
+    $month = $Date.Month
+    $day   = $Date.Day
+
+    # Default: card index
+    $emoji = "🗂️"
+
+    switch ($true) {
+      { $month -eq 4 -and $day -eq 9 } { $emoji = "`u{1F1E9}`u{1F1F0}" ; break }      ## 9th Apr Danmarks besættelse (liberation day)
+      { $month -eq 5 -and $day -eq 4 } { $emoji = "🕯️" ; break }                     ## 4th May Candle for Besættelsen
+      { $month -eq 5 -and $day -eq 5 } { $emoji = "`u{1F1E9}`u{1F1F0}" ; break }      ## 5th May Constitution day in Denmark
+      { $month -eq 6 -and $day -eq 21 } { $emoji = "`u{1F1EC}`u{1F1F1}" ; break }     ## 21st May Grønland Day
+      { $month -eq 7 -and $day -eq 29 } { $emoji = "`u{1F1EB}`u{1F1F4}" ; break }     ## 29th Jul Faroe Islands
+      { $month -eq 9 -and $day -eq 9 } { $emoji = "`u{1F1E9}`u{1F1EA}" ; break }      ## 9th Nov Erich Honecker leck mich am Arsch!
+      { $month -eq 12 -and ($day -eq 24 -or $day -eq 25) } { $emoji = "🎄" ; break } ## 24th/25th Dec Tree for Jul / Christmas
+    }
+
+    Debug-Log ("Today's emoji is: $emoji") -Type "info"
+    $Script:DirectoryEmoji = $emoji
+}
+
+## --------------------------{ Danske Soda vand }--------------------------
+## This is a theme now. Danish Fruit soda based fun. Method to the madness
 function Show-BlaabaerInfo {
-  $dlg = [Terminal.Gui.Dialog]::new("Why $($Global:FruitName)? 🫐", 60, 12)
-    
+  $dlg = [Terminal.Gui.Dialog]::new("Why $($Script:FruitName)? 🫐", 60, 12)
+
   $message = @"
-$($Global:ProjectName) is codenamed $Global:FruitName because:
+$($Script:ProjectName) is codenamed $Script:FruitName because:
 
 - I was drinking blueberry soda when writing the code
-- $($Global:FruitName) is Danish for blueberry
-- Føtex sells a rather nice $($Global:FruitName) soda
+- $($Script:FruitName) is Danish for blueberry
+- Føtex sells a rather nice $($Script:FruitName) soda
 - Every great project needs a forest-fruit mascot!
 "@
-    
+
   $label = [Terminal.Gui.Label]::new(1, 1, $message)
   $dlg.Add($label)
-    
-  Show-Modal "Why $($Global:FruitName)...? 🫐" $message
+
+  Show-Modal "Why $($Script:FruitName)...? 🫐" $message
 }
 
 ## ------------------------{ Load Domain Data }------------------------
-<#
-A note on phone numbers:
-
-UK Phone Number Standards (Ofcom reserved ranges for fiction/testing):
-- Glasgow: 0141 496 0xxx + Mobile: 07700 900xxx
-- Edinburgh: 0131 496 0xxx + Mobile: 07700 900xxx
-- London: 020 7946 0xxx / 01632 96xxxx + Mobile: 07700 900xxx
-
-Denmark Testing Numbers:
-- Copenhagen landline: +45 0000-xxxx
-- Denmark mobile: +45 2xxx xxxx
-
-NB: I don't believe Denmark uses 0000 but this is not confirmed!
-#>
-
 function Load-DomainData {
-    param([string]$domain)
+  param([string]$domain)
+  if ($Logging) { Debug-Log (": Loading domain data for: $domain") -Type "Info" }
 
-    if ($Logging) { Write-Debug "DEBUG: Loading domain data for: $domain" }
-
-    # If DemoMode already enabled, just log it
-    if ($Global:DemoMode) {
-        Debug-Log ("Starting $($Global:ProjectName) in DEMO mode...") -Type "info"
+  ## If DemoMode already enabled, use demo data
+  if ($Script:DemoMode) {
+    Debug-Log ("Starting $($Script:ProjectName) in DEMO mode...") -Type "Debug"
 
     ## ------------------ Define Demo Users ------------------
-    $Global:rawUsers = @(
+    $Script:rawUsers = @(
     ## ========== Simple Minds (UK/Scotland/Glasgow) ==========
     @{ Name = 'Jim Kerr'; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Vocalists'); Title = 'Lead Vocalist'; Email = 'jim.kerr@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1111'; MobilePhone = '+44 7700 111111'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Lead vocalist for Simple Minds' },
     @{ Name = 'Charlie Burchill'; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Guitarists'); Title = 'Lead Guitarist'; Email = 'charlie.b@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1112'; MobilePhone = '+44 7700 111112'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = 'Jim Kerr'; Description = 'Guitarist and founding member of Simple Minds' },
@@ -1199,7 +1413,7 @@ function Load-DomainData {
     )
 
     ## ------------------ Define Demo Groups ------------------
-  $Global:rawDemoGroups = @(
+  $Script:rawDemoGroups = @(
     @{ Name = 'Simple Minds' ; Description = 'Scottish rock band formed in Glasgow in 1977' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Jim Kerr' ; Email = 'simpleminds@example.com' },
     @{ Name = 'Depeche Mode' ; Description = 'English electronic music band formed in Basildon in 1980' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Dave Gahan' ; Email = 'depechemode@example.com' },
     @{ Name = 'Erasure' ; Description = 'English synth-pop duo formed in London in 1985' ; Type = 'Security' ; Scope = 'Global' ; ManagedBy = 'Andy Bell' ; Email = 'erasure@example.com' },
@@ -1223,97 +1437,112 @@ function Load-DomainData {
   )
 
   ## ------------------ Define Demo Domain Controllers ------------------
-  $Global:rawDCs = @(
-    @{ Name = 'EXAGLADC01' ; Site = 'GLA' ; Location = 'Glasgow, Scotland' ; OS = 'Windows Server 2022 Standard' ; IPAddress = '192.168.4.20' ; IsGlobalCatalog = $true ; FSMORoles = @('Schema Master', 'Domain Naming Master', 'PDC Emulator') ; LastReplication = (Get-Date).AddMinutes(-12) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-45) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{  'C:' = @{Total = '120 GB'; Used = '45 GB'; Free = '75 GB'; PercentFree = 62} ; 'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84} } ; ReplicationPartners = @('EXALNDDC01', 'EXAEDIDC01') },
-    @{ Name = 'EXAEDIDC01' ; Site = 'EDI' ; Location = 'Edinburgh, Scotland' ; OS = 'Windows Server 2019 Standard' ; IPAddress = '192.168.3.20' ; IsGlobalCatalog = $true ; FSMORoles = @() ; LastReplication = (Get-Date).AddMinutes(-18) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-67) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '38 GB'; Free = '82 GB'; PercentFree = 68} ; 'SYSVOL' = @{Total = '50 GB'; Used = '6 GB'; Free = '44 GB'; PercentFree = 88} } ; ReplicationPartners = @('EXAGLADC01', 'EXALNDDC01','EXANEWDC01', 'EXALIVDC01') },
-    @{ Name = 'EXALNDDC01' ; Site = 'LND' ; Location = 'London, England' ; OS = 'Windows Server 2022 Standard' ; IPAddress = '192.168.2.20' ; IsGlobalCatalog = $true ; FSMORoles = @('RID Master', 'Infrastructure Master') ; LastReplication = (Get-Date).AddMinutes(-8) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-23) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '52 GB'; Free = '68 GB'; PercentFree = 57} ; 'SYSVOL' = @{Total = '50 GB'; Used = '12 GB'; Free = '38 GB'; PercentFree = 76} } ; ReplicationPartners = @('EXAGLADC01', 'EXAEDIDC01', 'EXAKGEDC01', 'EXACPHDC01') },
-    @{ Name = 'EXACPHDC01' ; Site = 'CPH' ; Location = 'Copenhagen, Denmark' ; OS = 'Windows Server 2022 Standard' ; IPAddress = '192.168.6.20' ; IsGlobalCatalog = $true ; FSMORoles = @() ; LastReplication = (Get-Date).AddMinutes(-10) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-34) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '41 GB'; Free = '79 GB'; PercentFree = 66} ; 'SYSVOL' = @{Total = '50 GB'; Used = '9 GB'; Free = '41 GB'; PercentFree = 82} } ; ReplicationPartners = @('EXALNDDC01', 'EXAKGEDC01') },
-    @{ Name = 'EXAKGEDC01' ; Site = 'KGE' ; Location = 'Køge, Denmark' ; OS = 'Windows Server 2016 Standard' ; IPAddress = '192.168.5.20' ; IsGlobalCatalog = $false ; FSMORoles = @() ; LastReplication = (Get-Date).AddHours(-4).AddMinutes(-35) ; ReplicationHealth = 'Warning - Out of Sync' ; LastBoot = (Get-Date).AddDays(-156) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '100 GB'; Used = '78 GB'; Free = '22 GB'; PercentFree = 22} ; 'SYSVOL' = @{Total = '40 GB'; Used = '28 GB'; Free = '12 GB'; PercentFree = 30} } ; ReplicationPartners = @('EXALNDDC01', 'EXACPHDC01') },
-    @{ Name = 'EXAODEDC01' ; Site = 'ODE' ; Location = 'Odense, Denmark' ; OS = 'Windows Server 2022 Standard' ; IPAddress = '192.168.7.20' ; IsGlobalCatalog = $true ; FSMORoles = @() ; LastReplication = (Get-Date).AddMinutes(-14) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-28) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '42 GB'; Free = '78 GB'; PercentFree = 65}; 'SYSVOL' = @{Total = '50 GB'; Used = '7 GB'; Free = '43 GB'; PercentFree = 86} } ; ReplicationPartners = @('EXACPHDC01', 'EXAKGEDC01') },
-    @{ Name = 'EXABONDC01' ; Site = 'BON' ; Location = 'Bonn, Germany' ; OS = 'Windows Server 2022 Standard' ; IPAddress = '192.168.22.20' ; IsGlobalCatalog = $true ; FSMORoles = @('Schema Master', 'Domain Naming Master') ; LastReplication = (Get-Date).AddMinutes(-11) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-38) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '48 GB'; Free = '72 GB'; PercentFree = 60} ; 'SYSVOL' = @{Total = '50 GB'; Used = '10 GB'; Free = '40 GB'; PercentFree = 80} } ; ReplicationPartners = @('EXABRLDC01') },
-    @{ Name = 'EXABRLDC01' ; Site = 'BRL' ; Location = 'West Berlin, Germany' ; OS = 'Windows Server 2019 Standard' ; IPAddress = '192.168.30.20' ; IsGlobalCatalog = $true ; FSMORoles = @('PDC Emulator', 'RID Master', 'Infrastructure Master') ; LastReplication = (Get-Date).AddMinutes(-9) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-51) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '55 GB'; Free = '65 GB'; PercentFree = 54} ; 'SYSVOL' = @{Total = '50 GB'; Used = '14 GB'; Free = '36 GB'; PercentFree = 72} } ; ReplicationPartners = @('EXABONDC01', 'EXAMUCDC01') },
-    @{ Name = 'EXAMUCDC01' ; Site = 'MUC' ; Location = 'Munich, Germany' ; OS = 'Windows Server 2022 Standard' ; IPAddress = '192.168.89.20' ; IsGlobalCatalog = $true ; FSMORoles = @() ; LastReplication = (Get-Date).AddMinutes(-13) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-42) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '44 GB'; Free = '76 GB'; PercentFree = 63} ; 'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84} ; } ; ReplicationPartners = @('EXABONDC01', 'EXABRLDC01') }    
-    @{ Name = 'EXANEWDC01' ; Site = 'NEW' ; Location = 'Newcastle, UK' ; OS = 'Windows Server 2022 Standard' ; IPAddress = '192.168.91.20' ; IsGlobalCatalog = $true ; FSMORoles = @() ; LastReplication = (Get-Date).AddMinutes(-13) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-42) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '24 GB'; Free = '96 GB'; PercentFree = 63} ; 'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84} ; } ; ReplicationPartners = @('EXALIVDC01', 'EXAEDIDC01', 'EXAGLADC01', 'EXALNDDC01' ) }
-    @{ Name = 'EXALIVDC01' ; Site = 'LIV' ; Location = 'Liverpool, UK' ; OS = 'Windows Server 2025 Advanced' ; IPAddress = '192.168.51.20' ; IsGlobalCatalog = $true ; FSMORoles = @() ; LastReplication = (Get-Date).AddMinutes(-13) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-42) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '46 GB'; Free = '76 GB'; PercentFree = 63} ; 'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84} ; } ; ReplicationPartners = @('EXABONDC01', 'EXABRLDC01') }
-  )
+  ## Updated Demo Domain Controllers - Matching Production AD Structure
+  ## Complete Demo Domain Controllers - Production Structure
 
-  ## --------{ Demo Computers (Workstations, Laptops, Printers) }--------
-  $Global:rawComputers = @(
-    @{ Name = 'GLA-WS-001' ; Type = 'Workstation' ; Location = 'Glasgow, Scotland' ; OU = @('Locations','UK','Scotland','Glasgow','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddHours(-2) ; IPv4Address = '192.168.4.50' ; Description = 'Hot desk workstation - Glasgow office'; Enabled = $true },
-    @{ Name = 'GLA-WS-002' ; Type = 'Workstation' ; Location = 'Glasgow, Scotland' ; OU = @('Locations','UK','Scotland','Glasgow','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddDays(-1) ; IPv4Address = '192.168.4.51' ; Description = 'Hot desk workstation - Glasgow office' ; Enabled = $true },
-    @{ Name = 'GLA-LT-001' ; Type = 'Laptop' ; Location = 'Glasgow, Scotland' ; OU = @('Locations','UK','Scotland','Glasgow','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddHours(-5) ; IPv4Address = '192.168.4.80' ; Description = 'Dell Latitude laptop - Pool device' ; Enabled = $true },
-    @{ Name = 'GLA-PR-001' ; Type = 'Printer' ; Location = 'Glasgow, Scotland' ; OU = @('Locations','UK','Scotland','Glasgow','Computers') ; OS = 'Printer' ; OSVersion = 'N/A' ; LastLogon = (Get-Date).AddMinutes(-30) ; IPv4Address = '192.168.4.100' ; Description = 'HP LaserJet Pro - Main floor' ; Enabled = $true }, 
-    @{ Name = 'LND-WS-001' ; Type = 'Workstation' ; Location = 'London, England' ; OU = @('Locations','UK','England','London','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddHours(-1) ; IPv4Address = '192.168.2.50' ; Description = 'Hot desk workstation - London office' ; Enabled = $true },
-    @{ Name = 'LND-PR-001' ; Type = 'Printer' ; Location = 'London, England' ; OU = @('Locations','UK','England','London','Computers') ; OS = 'Printer' ; OSVersion = 'N/A' ; LastLogon = (Get-Date).AddMinutes(-15) ; IPv4Address = '192.168.2.100' ; Description = 'Xerox WorkCentre - Reception' ; Enabled = $true },
-    @{ Name = 'BON-WS-001' ; Type = 'Workstation' ; Location = 'Bonn, Germany' ; OU = @('Locations','Germany','Bonn','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddHours(-3) ; IPv4Address = '192.168.22.50' ; Description = 'Hot desk workstation - Bonn office' ; Enabled = $true },
-    @{ Name = 'BON-LT-001' ; Type = 'Laptop' ; Location = 'Bonn, Germany' ; OU = @('Locations','Germany','Bonn','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddDays(-2) ; IPv4Address = '192.168.22.75' ; Description = 'Lenovo ThinkPad - Pool device' ; Enabled = $false  } ## Disabled for maintenance
-    @{ Name = 'LIV-MBP-001' ; Type = 'Macbook' ; Location = 'Liverpool, UK' ; OU = @('Locations','UK','Liverpool','Computers') ; OS = 'MacOS Tahoe' ; OSVersion = '26.0.1' ; LastLogon = (Get-Date).AddDays(-14) ; IPv4Address = '192.168.51.75' ; Description = 'Macbook Pro 2024 - Pool device' ; Enabled = $true  }
-    @{ Name = 'LIV-MAC-001' ; Type = 'iMac' ; Location = 'Newcastle, UK' ; OU = @('Locations','UK','Newcastle','Computers') ; OS = 'MacOS Tahoe' ; OSVersion = '26.0.1' ; LastLogon = (Get-Date).AddDays(-40) ; IPv4Address = '192.168.91.75' ; Description = 'Macbook Pro 2024 - Pool device' ; Enabled = $false  } ## Disabled for maintenance
-    
-  )
+$Script:rawDCs = @(
+  ## ===== UK DCs (example.com) =====
+  @{ Name = 'EXAGLADC01' ; HostName = 'EXAGLADC01.example.com' ; DNSHostName = 'EXAGLADC01.example.com' ; Site = 'GLA' ; Location = 'Glasgow, Scotland' ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.4.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('Schema Master', 'Domain Naming Master', 'PDC Emulator') ;  OperationMasterRoles = @('Schema Master', 'Domain Naming Master', 'PDC Emulator') ; LastReplication = (Get-Date).AddMinutes(-12) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-45) ; LastBootUpTime = (Get-Date).AddDays(-45) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '45 GB'; Free = '75 GB'; PercentFree = 62} ; 'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84} } ; ReplicationPartners = @('EXALNDDC01', 'EXAEDIDC01') },
+  @{ Name = 'EXAEDIDC01' ; HostName = 'EXAEDIDC01.example.com' ; DNSHostName = 'EXAEDIDC01.example.com' ; Site = 'EDI' ; Location = 'Edinburgh, Scotland' ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2019 Standard' ; OperatingSystemVersion = '10.0 (17763)' ; IPv4Address = '192.168.3.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @() ; OperationMasterRoles = @() ; LastReplication = (Get-Date).AddMinutes(-18) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-67) ; LastBootUpTime = (Get-Date).AddDays(-67) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '38 GB'; Free = '82 GB'; PercentFree = 68} ; 'SYSVOL' = @{Total = '50 GB'; Used = '6 GB'; Free = '44 GB'; PercentFree = 88} } ; ReplicationPartners = @('EXAGLADC01', 'EXALNDDC01','EXANEWDC01', 'EXALIVDC01') },
+  @{ Name = 'EXALNDDC01' ; HostName = 'EXALNDDC01.example.com' ; DNSHostName = 'EXALNDDC01.example.com' ; Site = 'LND' ; Location = 'London, England' ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.2.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('RID Master', 'Infrastructure Master') ; OperationMasterRoles = @('RID Master', 'Infrastructure Master') ; LastReplication = (Get-Date).AddMinutes(-8) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-23) ; LastBootUpTime = (Get-Date).AddDays(-23) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '52 GB'; Free = '68 GB'; PercentFree = 57} ; 'SYSVOL' = @{Total = '50 GB'; Used = '12 GB'; Free = '38 GB'; PercentFree = 76} } ; ReplicationPartners = @('EXAGLADC01', 'EXAEDIDC01', 'EXAKGEDC01', 'EXACPHDC01') },
+  @{ Name = 'EXANEWDC01' ; HostName = 'EXANEWDC01.example.com' ; DNSHostName = 'EXANEWDC01.example.com' ; Site = 'NEW' ; Location = 'Newcastle, UK' ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.91.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @() ; OperationMasterRoles = @() ; LastReplication = (Get-Date).AddMinutes(-13) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-42) ; LastBootUpTime = (Get-Date).AddDays(-42) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '24 GB'; Free = '96 GB'; PercentFree = 80} ; 'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84} } ; ReplicationPartners = @('EXALIVDC01', 'EXAEDIDC01', 'EXAGLADC01', 'EXALNDDC01') },
+  @{ Name = 'EXALIVDC01' ; HostName = 'EXALIVDC01.example.com' ; DNSHostName = 'EXALIVDC01.example.com' ; Site = 'LIV' ; Location = 'Liverpool, UK' ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2025 Standard' ; OperatingSystemVersion = '10.0 (26100)' ; IPv4Address = '192.168.51.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @() ; OperationMasterRoles = @() ; LastReplication = (Get-Date).AddMinutes(-15) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-12) ; LastBootUpTime = (Get-Date).AddDays(-12) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '46 GB'; Free = '74 GB'; PercentFree = 62} ; 'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84}  } ; ReplicationPartners = @('EXANEWDC01', 'EXAEDIDC01') },
+
+  # ===== Denmark DCs (example.com) =====
+  @{ Name = 'EXACPHDC01' ; HostName = 'EXACPHDC01.example.com' ; DNSHostName = 'EXACPHDC01.example.com' ; Site = 'CPH' ; Location = 'Copenhagen, Denmark' ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.6.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @() ; OperationMasterRoles = @() ; LastReplication = (Get-Date).AddMinutes(-10) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-34) ; LastBootUpTime = (Get-Date).AddDays(-34) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '41 GB'; Free = '79 GB'; PercentFree = 66} ; 'SYSVOL' = @{Total = '50 GB'; Used = '9 GB'; Free = '41 GB'; PercentFree = 82} } ; ReplicationPartners = @('EXALNDDC01', 'EXAKGEDC01', 'EXAODEDC01') },
+  @{ Name = 'EXAKGEDC01' ; HostName = 'EXAKGEDC01.example.com' ; DNSHostName = 'EXAKGEDC01.example.com' ; Site = 'KGE' ; Location = 'Køge, Denmark' ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2016 Standard' ; OperatingSystemVersion = '10.0 (14393)' ; IPv4Address = '192.168.5.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $false ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @() ; OperationMasterRoles = @() ; LastReplication = (Get-Date).AddHours(-4).AddMinutes(-35) ; ReplicationHealth = 'Warning - Out of Sync' ; LastBoot = (Get-Date).AddDays(-156) ; LastBootUpTime = (Get-Date).AddDays(-156) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '100 GB'; Used = '78 GB'; Free = '22 GB'; PercentFree = 22} ; 'SYSVOL' = @{Total = '40 GB'; Used = '28 GB'; Free = '12 GB'; PercentFree = 30} } ; ReplicationPartners = @('EXALNDDC01', 'EXACPHDC01') },
+  @{ Name = 'EXAODEDC01' ; HostName = 'EXAODEDC01.example.com' ; DNSHostName = 'EXAODEDC01.example.com' ; Site = 'ODE' ; Location = 'Odense, Denmark' ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.7.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @() ; OperationMasterRoles = @() ; LastReplication = (Get-Date).AddMinutes(-14) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-28) ; LastBootUpTime = (Get-Date).AddDays(-28) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '42 GB'; Free = '78 GB'; PercentFree = 65} ; 'SYSVOL' = @{Total = '50 GB'; Used = '7 GB'; Free = '43 GB'; PercentFree = 86} } ; ReplicationPartners = @('EXACPHDC01', 'EXAKGEDC01') },
+
+  # ===== Germany DCs (example.net) =====
+  @{ Name = 'EXABONDC01' ; HostName = 'EXABONDC01.example.net' ; DNSHostName = 'EXABONDC01.example.net' ; Site = 'BON' ; Location = 'Bonn, Germany' ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.22.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('Schema Master', 'Domain Naming Master') ; OperationMasterRoles = @('Schema Master', 'Domain Naming Master') ; LastReplication = (Get-Date).AddMinutes(-11) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-38) ; LastBootUpTime = (Get-Date).AddDays(-38) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '48 GB'; Free = '72 GB'; PercentFree = 60} ; 'SYSVOL' = @{Total = '50 GB'; Used = '10 GB'; Free = '40 GB'; PercentFree = 80} } ; ReplicationPartners = @('EXABRLDC01') },
+  @{ Name = 'EXABRLDC01' ; HostName = 'EXABRLDC01.example.net' ; DNSHostName = 'EXABRLDC01.example.net' ; Site = 'BRL' ; Location = 'West Berlin, Germany' ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2019 Standard' ; OperatingSystemVersion = '10.0 (17763)' ; IPv4Address = '192.168.30.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('PDC Emulator', 'RID Master', 'Infrastructure Master') ; OperationMasterRoles = @('PDC Emulator', 'RID Master', 'Infrastructure Master') ; LastReplication = (Get-Date).AddMinutes(-9) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-51) ; LastBootUpTime = (Get-Date).AddDays(-51) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '55 GB'; Free = '65 GB'; PercentFree = 54} ;'SYSVOL' = @{Total = '50 GB'; Used = '14 GB'; Free = '36 GB'; PercentFree = 72} } ; ReplicationPartners = @('EXABONDC01', 'EXAMUCDC01') },
+  @{ Name = 'EXAMUCDC01' ; HostName = 'EXAMUCDC01.example.net' ; DNSHostName = 'EXAMUCDC01.example.net' ; Site = 'MUC' ; Location = 'Munich, Germany' ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OperatingSystem = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.89.20' ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @() ; OperationMasterRoles = @() ; LastReplication = (Get-Date).AddMinutes(-13) ; ReplicationHealth = 'Healthy' ; LastBoot = (Get-Date).AddDays(-42) ; LastBootUpTime = (Get-Date).AddDays(-42) ; Services = @{DNS = 'Running'; DFSR = 'Running'; Netlogon = 'Running'; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '44 GB'; Free = '76 GB'; PercentFree = 63} ; 'SYSVOL' = @{Total = '50 GB'; Used = '8 GB'; Free = '42 GB'; PercentFree = 84} } ; ReplicationPartners = @('EXABONDC01', 'EXABRLDC01') }
+)
+
+Debug-Log ": Loaded $($Script:rawDCs.Count) demo domain controllers" -Type "Info"
+
+# Note: Add remaining DCs (EXACPHDC01, EXAKGEDC01, etc.) following the same structure
+# Each DC should have all the production properties listed above
+
+## --------{ Demo Computers (Workstations, Laptops, Printers) }--------
+$Script:rawComputers = @(
+  @{ Name = 'GLA-WKS-001' ; Type = 'Workstation' ; Location = 'Glasgow, Scotland' ; OU = @('Locations','UK','Scotland','Glasgow','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddHours(-2) ; IPv4Address = '192.168.4.50' ; Description = 'Hot desk workstation - Glasgow office'; Enabled = $true },
+  @{ Name = 'GLA-WKS-002' ; Type = 'Workstation' ; Location = 'Glasgow, Scotland' ; OU = @('Locations','UK','Scotland','Glasgow','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddDays(-1) ; IPv4Address = '192.168.4.51' ; Description = 'Hot desk workstation - Glasgow office' ; Enabled = $true },
+  @{ Name = 'GLA-LAP-001' ; Type = 'Laptop' ; Location = 'Glasgow, Scotland' ; OU = @('Locations','UK','Scotland','Glasgow','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddHours(-5) ; IPv4Address = '192.168.4.80' ; Description = 'Dell Latitude laptop - Pool device' ; Enabled = $true },
+  @{ Name = 'GLA-PRN-001' ; Type = 'Printer' ; Location = 'Glasgow, Scotland' ; OU = @('Locations','UK','Scotland','Glasgow','Computers') ; OS = 'Printer' ; OSVersion = 'N/A' ; LastLogon = (Get-Date).AddMinutes(-30) ; IPv4Address = '192.168.4.100' ; Description = 'HP LaserJet Pro - Main floor' ; Enabled = $true },
+  @{ Name = 'LND-WKS-001' ; Type = 'Workstation' ; Location = 'London, England' ; OU = @('Locations','UK','England','London','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddHours(-1) ; IPv4Address = '192.168.2.50' ; Description = 'Hot desk workstation - London office' ; Enabled = $true },
+  @{ Name = 'LND-PRN-001' ; Type = 'Printer' ; Location = 'London, England' ; OU = @('Locations','UK','England','London','Computers') ; OS = 'Printer' ; OSVersion = 'N/A' ; LastLogon = (Get-Date).AddMinutes(-15) ; IPv4Address = '192.168.2.100' ; Description = 'Xerox WorkCentre - Reception' ; Enabled = $true },
+  @{ Name = 'BON-WKS-001' ; Type = 'Workstation' ; Location = 'Bonn, Germany' ; OU = @('Locations','Germany','Bonn','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddHours(-3) ; IPv4Address = '192.168.22.50' ; Description = 'Hot desk workstation - Bonn office' ; Enabled = $true },
+  @{ Name = 'BON-LAP-001' ; Type = 'Laptop' ; Location = 'Bonn, Germany' ; OU = @('Locations','Germany','Bonn','Computers') ; OS = 'Windows 11 Pro' ; OSVersion = '10.0.22631' ; LastLogon = (Get-Date).AddDays(-2) ; IPv4Address = '192.168.22.75' ; Description = 'Lenovo ThinkPad - Pool device' ; Enabled = $false  } ## Disabled for maintenance
+  @{ Name = 'LIV-MBP-001' ; Type = 'Macbook' ; Location = 'Liverpool, UK' ; OU = @('Locations','UK','Liverpool','Computers') ; OS = 'MacOS Tahoe' ; OSVersion = '26.0.1' ; LastLogon = (Get-Date).AddDays(-14) ; IPv4Address = '192.168.51.75' ; Description = 'Macbook Pro 2024 - Pool device' ; Enabled = $true  }
+  @{ Name = 'LIV-MAC-001' ; Type = 'iMac' ; Location = 'Newcastle, UK' ; OU = @('Locations','UK','Newcastle','Computers') ; OS = 'MacOS Tahoe' ; OSVersion = '26.0.1' ; LastLogon = (Get-Date).AddDays(-40) ; IPv4Address = '192.168.91.75' ; Description = 'Macbook Pro 2024 - Pool device' ; Enabled = $false  } ## Disabled for maintenance
+)
+
+  Debug-Log ": Loaded $($Script:rawComputers.Count) demo computers and printers" -Type "Info"
 
   ## Load demo data
-  $converted = Convert-DataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Groups $Global:rawDemoGroups -Computers $Global:rawComputers -Domain $Global:CurrentDomain
-  return
-  }
-  
-  ## Production
-## Attempt to load ActiveDirectory module and fetch data
-try {
-    Debug-Log "Attempting to load production AD data for domain: $Global:CurrentDomain" -Type "info"
-    
-    # Get Domain Controllers
-    $dcs = Invoke-AD {
-        Get-ADDomainController -Filter * -Server $Global:CurrentDomain -ErrorAction Stop
-    } -SuppressError
-    
-    # Get Users
-    $users = Invoke-AD {
-        Get-ADUser -Filter * -Server $Global:CurrentDomain -Properties DisplayName,EmailAddress,Title,Department,Enabled,LockedOut,DistinguishedName -ErrorAction Stop
-    } -SuppressError
-    
-    # Get Groups
-    $groups = Invoke-AD {
-        Get-ADGroup -Filter * -Server $Global:CurrentDomain -Properties Description,GroupCategory,GroupScope,Members,DistinguishedName -ErrorAction Stop
-    } -SuppressError
-    
-    # Get Computers
-    $computers = Invoke-AD {
-        Get-ADComputer -Filter * -Server $Global:CurrentDomain -Properties OperatingSystem,OperatingSystemVersion,Enabled,LastLogonDate,DistinguishedName -ErrorAction Stop
-    } -SuppressError
-    
-    # Check if we got any data
-    if ($null -eq $dcs -or $null -eq $users -or $null -eq $groups -or $null -eq $computers) {
-        Debug-Log "One or more AD queries returned null - falling back to DEMO mode" -Type "warn"
-        $Global:DemoMode = $true
-        $converted = Convert-DataToADObjects `
-            -Users $Global:rawUsers `
-            -DCs $Global:rawDCs `
-            -Groups $Global:rawDemoGroups `
-            -Computers $Global:rawComputers `
-            -Domain $Global:CurrentDomain
-        return $converted
-    }
-    
-    Debug-Log "Successfully retrieved AD data: $($dcs.Count) DCs, $($users.Count) Users, $($groups.Count) Groups, $($computers.Count) Computers" -Type "info"
-    
-    # Convert to your object format (you may need to create this function or adapt Convert-DataToADObjects)
-    $converted = Convert-DataToADObjects -Users $users -DCs $dcs -Groups $groups -Computers $computers -Domain $Global:CurrentDomain
-    return $converted
-    
-} catch {
-    Debug-Log "Unexpected error loading production data: $_" -Type "error"
-    Write-Warning "Failed to load production Active Directory data. Falling back to DEMO mode."
-    $Global:DemoMode = $true
-    
-    # Load demo data
-    $converted = Convert-DataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Groups $Global:rawDemoGroups -Computers $Global:rawComputers -Domain $Global:CurrentDomain
-    return $converted
-  }
-  
+  $converted = Convert-DataToADObjects -Users $Script:rawUsers -DCs $Script:rawDCs -Groups $Script:rawDemoGroups -Computers $Script:rawComputers -Domain $Script:CurrentDomain
+  return $converted
 }
 
+## Production - get real AD data
+try {
+  Debug-Log ("Attempting to load production AD data for domain: $domain") -Type "Info"
 
+  ## Get Domain Controllers
+  Update-Status "Enumerating DCs..." -spinner
+  $dcs = Invoke-AD { Get-ADDomainController -Filter * -Server $domain -ErrorAction Stop } -SuppressError
+
+  ## Get Users
+  Update-Status "Enumerating Users..." -spinner
+  $users = Invoke-AD { Get-ADUser -Filter * -Server $domain -Properties DisplayName,EmailAddress,Title,Department,Enabled,LockedOut,DistinguishedName -ErrorAction Stop } -SuppressError
+
+  ## Get Groups
+  Update-Status "Enumerating Groups..." -spinner
+  $groups = Invoke-AD { Get-ADGroup -Filter * -Server $domain -Properties Description,GroupCategory,GroupScope,Members,DistinguishedName -ErrorAction Stop } -SuppressError
+
+  ## Get Computers
+  Update-Status "Enumerating Computers..." -spinner
+  $computers = Invoke-AD { Get-ADComputer -Filter * -Server $domain -Properties OperatingSystem,OperatingSystemVersion,Enabled,LastLogonDate,DistinguishedName -ErrorAction Stop } -SuppressError
+
+  ## Check if we got any data
+  if ($null -eq $dcs -or $null -eq $users -or $null -eq $groups -or $null -eq $computers) {
+    Debug-Log ("One or more AD queries returned null - falling back to DEMO mode") -Type "Warn"
+      $Script:DemoMode = $true
+      $converted = Convert-DataToADObjects -Users $Script:rawUsers -DCs $Script:rawDCs -Groups $Script:rawDemoGroups -Computers $Script:rawComputers -Domain $domain
+      return $converted
+    }
+
+    Debug-Log ("Successfully retrieved AD data: $($dcs.Count) DCs, $($users.Count) Users, $($groups.Count) Groups, $($computers.Count) Computers") -Type "Info"
+
+    ## In PRODUCTION, just set the Script variables directly - no conversion needed!
+    Update-Status "Setting AD data..." -spinner
+    $Script:Users = $users
+    $Script:Groups = $groups
+    $Script:DCs = $dcs
+    $Script:Computers = $computers
+    $Script:ADObjects = $users + $dcs + $groups + $computers
+
+    Debug-Log ("Script variables set: Users=$($Script:Users.Count), Groups=$($Script:Groups.Count), DCs=$($Script:DCs.Count), Computers=$($Script:Computers.Count)") -Type "Info"
+
+    ## Return hashtable for consistency
+    return @{
+      Users     = $users
+      DCs       = $dcs
+      Groups    = $groups
+      Computers = $computers
+    }
+
+  } catch {
+    Debug-Log ("Unexpected error loading production data: $_") -Type "Warn"
+    Write-Warning "Failed to load production Active Directory data. Falling back to DEMO mode."
+    $Script:DemoMode = $true
+
+    ## Load demo data
+    $converted = Convert-DataToADObjects -Users $Script:rawUsers -DCs $Script:rawDCs -Groups $Script:rawDemoGroups -Computers $Script:rawComputers -Domain $domain
+    return $converted
+  }
+}
 
 ## ----------------------{ Convert Domain Data }-----------------------
 function Convert-DataToADObjects {
@@ -1326,97 +1555,106 @@ function Convert-DataToADObjects {
     [string]$BaseDN = "DC=example,DC=com"
   )
 
-  Write-Debug "DEBUG: Converting demo data to AD-like objects..."
+  Debug-Log ": Converting demo data to AD-like objects..." -Type "Debug"
 
   ## Helper functions
   function New-FakeGuid { [guid]::NewGuid().ToString() }
-  function New-FakeSid { $rid = Get-Random -Minimum 1000 -Maximum 65535 ; "S-1-5-21-{0}-{1}-{2}-{3}" -f (Get-Random -Max 999999999), (Get-Random -Max 999999999), (Get-Random -Max 999999999), $rid }
+  function New-FakeSid {
+    $rid = Get-Random -Minimum 1000 -Maximum 65535
+    "S-1-5-21-{0}-{1}-{2}-{3}" -f (Get-Random -Max 999999999), (Get-Random -Max 999999999), (Get-Random -Max 999999999), $rid
+  }
 
-  ## Convert Users
+  ## ========================= Users =========================
   $convertedUsers = @()
   foreach ($user in $Users) {
+    ## SamAccountName derived from name
     $sam = ($user.Name -replace '\s+', '.').ToLower()
+    ## UPN: prefer email if present, else generate
     $upn = if ($user.Email) { $user.Email } else { "$sam@$Domain" }
 
-    # Derive domain from email BEFORE creating object
-    $userDomain = if ($user.Email -and $user.Email -match '@(.+)$') {
-        $matches[1]
-    } else {
-        'example.com'  # Default fallback
-    }
-    
-    # Build DN BEFORE creating object
+    ## Determine domain from email or default
+    $userDomain = if ($user.Email -and $user.Email -match '@(.+)$') { $matches[1] } else { $Domain }
+
+    ## Build DN properly: reverse OU array if present
     if ($user.OU) {
       $ouChain = $user.OU | ForEach-Object { "OU=$_" }
-      $dn = "CN=$($user.Name)," + ($ouChain[-1..0] -join ',') + ",$BaseDN"
+      [array]::Reverse($ouChain)   # reverse the array in-place
+      $dn = "CN=$($user.Name)," + ($ouChain -join ',') + ",$BaseDN"
     } else {
       $dn = "CN=$($user.Name),$BaseDN"
     }
 
-    # NOW create the object with calculated values
     $adUser = [PSCustomObject]@{
-      ObjectClass       = 'user'
-      Name              = $user.Name
-      Domain            = $userDomain  ## Automatically set from email
-      SamAccountName    = $sam
-      UserPrincipalName = $upn
-      DisplayName       = $user.Name
-      GivenName         = ($user.Name -split '\s+')[0]
-      Surname           = ($user.Name -split '\s+')[-1]
-      DistinguishedName = $dn
-      ObjectGUID        = New-FakeGuid
-      SID               = New-FakeSid
-      Enabled           = (-not $user.Disabled)
-      LockedOut         = [bool]$user.Locked
-      PasswordExpired   = [bool]$user.MustChangePassword
-
-      ## Contact info
-      Title       = $user.Title
-      Department  = $user.Department
-      Company     = $user.Company
-      Manager     = $user.Manager
-      EmailAddress= $user.Email
-      OfficePhone = $user.Phone
-      MobilePhone = $user.MobilePhone
-      Office      = $user.Office
-
-      ## Address
-      StreetAddress = $user.Street
-      City          = $user.City
-      PostalCode    = $user.PostalCode
-      Country       = $user.Country
-
-      ## Other
-      Description = $user.Description
-      MemberOf    = $user.Groups
-      CanonicalName = ($user.OU -join '/') + "/$($user.Name)"
-      whenCreated   = (Get-Date).AddDays(-90)
-      whenChanged   = (Get-Date).AddDays(-5)
-
-      ## Original demo properties
-      OU       = $user.OU
-      Groups   = $user.Groups
-      Disabled = $user.Disabled
-      Locked   = $user.Locked
+      ObjectClass                   = 'user'
+      Name                          = $user.Name
+      Domain                        = $userDomain
+      SamAccountName                = $sam
+      UserPrincipalName             = $upn
+      DisplayName                   = $user.Name
+      GivenName                     = ($user.Name -split '\s+')[0]
+      Surname                       = ($user.Name -split '\s+')[-1]
+      DistinguishedName             = $dn
+      ObjectGUID                    = New-FakeGuid
+      SID                           = New-FakeSid
+      Enabled                       = (-not $user.Disabled)
+      Disabled                      = [bool]$user.Disabled
+      LockedOut                     = [bool]$user.Locked
+      Locked                        = [bool]$user.Locked
+      PasswordExpired               = [bool]$user.MustChangePassword
+      PasswordLastSet               = (Get-Date).AddDays(-30)
+      PasswordNeverExpires          = $false
+      CannotChangePassword          = $false
+      PasswordNotRequired           = $false
+      pwdLastSet                    = if ($user.MustChangePassword) { 0 } else { 134091109521968821 }
+      LastLogonDate                 = (Get-Date).AddHours(-(Get-Random -Minimum 1 -Maximum 72))
+      LastBadPasswordAttempt        = if ($user.Locked) { (Get-Date).AddMinutes(-5) } else { $null }
+      BadLogonCount                 = if ($user.Locked) { (Get-Random -Minimum 3 -Maximum 10) } else { 0 }
+      badPwdCount                   = if ($user.Locked) { (Get-Random -Minimum 3 -Maximum 10) } else { 0 }
+      LogonCount                    = Get-Random -Minimum 100 -Maximum 10000
+      AccountExpirationDate         = $null
+      accountExpires                = 9223372036854775807
+      Title                         = $user.Title
+      Department                    = $user.Department
+      Company                       = $user.Company
+      Manager                       = $user.Manager
+      EmailAddress                  = $user.Email
+      mail                          = $user.Email
+      OfficePhone                   = $user.Phone
+      MobilePhone                   = $user.MobilePhone
+      Office                        = $user.Office
+      StreetAddress                 = $user.Street
+      City                          = $user.City
+      PostalCode                    = $user.PostalCode
+      Country                       = $user.Country
+      ProfilePath                   = ""
+      ScriptPath                    = ""
+      HomeDirectory                 = ""
+      HomeDrive                     = ""
+      HomedirRequired               = $false
+      TerminalServicesProfilePath   = ""
+      TerminalServicesHomeDirectory = ""
+      TerminalServicesHomeDrive     = ""
+      Description                   = $user.Description
+      MemberOf                      = $user.Groups
+      CanonicalName                 = ($user.OU -join '/') + "/$($user.Name)"
+      whenCreated                   = (Get-Date).AddDays(-90)
+      whenChanged                   = (Get-Date).AddDays(-5)
+      Created                       = (Get-Date).AddDays(-90)
+      Modified                      = (Get-Date).AddDays(-5)
+      OU                            = $user.OU
+      Groups                        = $user.Groups
     }
 
-    ## Make it look like AD user object
     $adUser.PSObject.TypeNames.Insert(0, 'Microsoft.ActiveDirectory.Management.ADUser')
     $convertedUsers += $adUser
   }
 
-  ## Convert DCs
+  ## ========================= DCs =========================
   $convertedDCs = @()
   foreach ($dc in $DCs) {
     $dn = "CN=$($dc.Name),OU=Domain Controllers,$BaseDN"
-    
-    ## Derive domain from DC location or IP subnet
-    $dcDomain = if ($dc.Location -match 'Germany') {
-        'example.net'
-    } else {
-        'example.com'
-    }
-    
+    $dcDomain = if ($dc.Location -match 'Germany') { 'example.net' } else { $Domain }
+
     $adDC = [PSCustomObject]@{
       ObjectClass               = 'computer'
       Name                      = $dc.Name
@@ -1442,23 +1680,18 @@ function Convert-DataToADObjects {
       whenCreated               = (Get-Date).AddDays(-180)
       OU                        = 'Domain Controllers'
     }
+
     $adDC.PSObject.TypeNames.Insert(0, 'Microsoft.ActiveDirectory.Management.ADComputer')
     $convertedDCs += $adDC
   }
 
-  ## Convert Groups
+  ## ========================= Groups =========================
   $convertedGroups = @()
   foreach ($group in $Groups) {
     $sam = ($group.Name -replace '\s+', '.').ToLower()
-    $dn = "CN=$($group.Name),OU=Groups,$BaseDN"
-    
-    ## Derive domain from email
-    $groupDomain = if ($group.Email -and $group.Email -match '@(.+)$') {
-        $matches[1]
-    } else {
-        'example.com'
-    }
-      
+    $dn  = "CN=$($group.Name),OU=Groups,$BaseDN"
+    $groupDomain = if ($group.Email -and $group.Email -match '@(.+)$') { $matches[1] } else { $Domain }
+
     $adGroup = [PSCustomObject]@{
       ObjectClass       = 'group'
       Name              = $group.Name
@@ -1475,67 +1708,61 @@ function Convert-DataToADObjects {
       whenCreated       = (Get-Date).AddDays(-180)
       whenChanged       = (Get-Date).AddDays(-10)
     }
-      
-    # Make it look like AD group object
+
     $adGroup.PSObject.TypeNames.Insert(0, 'Microsoft.ActiveDirectory.Management.ADGroup')
     $convertedGroups += $adGroup
   }
 
-  ## Convert Computers
+  ## ========================= Computers =========================
   $convertedComputers = @()
   foreach ($computer in $Computers) {
     $dn = if ($computer.OU) {
-        $ouChain = $computer.OU | ForEach-Object { "OU=$_" }
-        "CN=$($computer.Name)," + ($ouChain[-1..0] -join ',') + ",$BaseDN"
+      $ouChain = $computer.OU | ForEach-Object { "OU=$_" }
+      "CN=$($computer.Name)," + ($ouChain[-1..0] -join ',') + ",$BaseDN"
     } else {
-        "CN=$($computer.Name),CN=Computers,$BaseDN"
+      "CN=$($computer.Name),CN=Computers,$BaseDN"
     }
-    
-    # Derive domain from location
-    $compDomain = if ($computer.Location -match 'Germany') {
-        'example.net'
-    } else {
-        'example.com'
-    }
-    
+
+    $compDomain = if ($computer.Location -match 'Germany') { 'example.net' } else { $Domain }
+
     $adComputer = [PSCustomObject]@{
-        ObjectClass            = 'computer'
-        Name                   = $computer.Name
-        Domain                 = $compDomain
-        DNSHostName            = "$($computer.Name).$compDomain"
-        DistinguishedName      = $dn
-        ObjectGUID             = New-FakeGuid
-        SID                    = New-FakeSid
-        Enabled                = $computer.Enabled
-        OperatingSystem        = $computer.OS
-        OperatingSystemVersion = $computer.OSVersion
-        IPv4Address            = $computer.IPv4Address
-        LastLogonDate          = $computer.LastLogon
-        Location               = $computer.Location
-        Description            = $computer.Description
-        ComputerType           = $computer.Type  # Custom property
-        whenCreated            = (Get-Date).AddDays(-120)
-        OU                     = $computer.OU
+      ObjectClass            = 'computer'
+      Name                   = $computer.Name
+      Domain                 = $compDomain
+      DNSHostName            = "$($computer.Name).$compDomain"
+      DistinguishedName      = $dn
+      ObjectGUID             = New-FakeGuid
+      SID                    = New-FakeSid
+      Enabled                = $computer.Enabled
+      OperatingSystem        = $computer.OS
+      OperatingSystemVersion = $computer.OSVersion
+      IPv4Address            = $computer.IPv4Address
+      LastLogonDate          = $computer.LastLogon
+      Location               = $computer.Location
+      Description            = $computer.Description
+      ComputerType           = $computer.Type
+      whenCreated            = (Get-Date).AddDays(-120)
+      OU                     = $computer.OU
     }
-    
+
     $adComputer.PSObject.TypeNames.Insert(0, 'Microsoft.ActiveDirectory.Management.ADComputer')
     $convertedComputers += $adComputer
   }
 
-  ## Set global variables
-  $Global:Users     = $convertedUsers
-  $Global:Computers = $convertedComputers
-  $Global:DCs       = $convertedDCs
-  $Global:Groups    = $convertedGroups
-  $Global:ADObjects = $convertedUsers + $convertedDCs + $convertedGroups + $convertedComputers
+  ## ========================= Set global variables =========================
+  $Script:Users     = $convertedUsers
+  $Script:Computers = $convertedComputers
+  $Script:DCs       = $convertedDCs
+  $Script:Groups    = $convertedGroups
+  $Script:ADObjects = $convertedUsers + $convertedDCs + $convertedGroups + $convertedComputers
 
-  Write-Debug "DEBUG: Converted $($convertedUsers.Count) users, $($convertedDCs.Count) DCs, Computers: $($convertedComputers.Count) and $($convertedGroups.Count) groups to AD-like objects"
+  Debug-Log ": Converted $($convertedUsers.Count) users, $($convertedDCs.Count) DCs, $($convertedComputers.Count) computers, and $($convertedGroups.Count) groups to AD-like objects" -Type "Debug"
 
   ## Return hashtable
   return @{
-    Users = $convertedUsers
-    DCs = $convertedDCs
-    Groups = $convertedGroups
+    Users     = $convertedUsers
+    DCs       = $convertedDCs
+    Groups    = $convertedGroups
     Computers = $convertedComputers
   }
 }
@@ -1554,91 +1781,243 @@ function Convert-ToTreeNode {
 }
 
 ##-------------------{ Build Domain Content }-------------------
+
+## Helper Function: Parse Distinguished Name
+function Get-OUPathFromDN {
+  <#
+  .SYNOPSIS
+  Extracts OU hierarchy from a Distinguished Name
+
+  .DESCRIPTION
+  Parses an AD Distinguished Name and returns the OU path as an array,
+  ordered from top-level OU down to the immediate parent OU.
+
+  .PARAMETER DistinguishedName
+  The full Distinguished Name from Active Directory
+
+  .EXAMPLE
+  Get-OUPathFromDN "CN=John Doe,OU=UK,OU=Users,OU=here.corp,DC=here,DC=corp"
+  Returns: @("here.corp", "Users", "UK")
+
+  .EXAMPLE
+  Get-OUPathFromDN "CN=agadmin,CN=Users,DC=here,DC=corp"
+  Returns: @("Users")  # CN=Users is treated as an OU
+  #>
+
+  param(
+    [string]$DistinguishedName
+  )
+
+  if ([string]::IsNullOrWhiteSpace($DistinguishedName)) { return @() }
+
+  ## Split DN by comma (handling escaped commas in quotes)
+  $parts = $DistinguishedName -split ',(?=(?:[^"]*"[^"]*")*[^"]*$)'
+  $ouList = @()
+
+  foreach ($part in $parts) {
+    $part = $part.Trim()
+
+    ## Match OU= or CN= (CN=Users is a container, treat it like an OU)
+    if ($part -match '^(OU|CN)=(.+)$') {
+      $type = $matches[1]
+      $value = $matches[2]
+
+      ## Skip the actual user/group CN (first one)
+      if ($type -eq 'CN' -and $ouList.Count -eq 0) { continue }
+
+      ## Add to list (we'll reverse it later)
+      $ouList += $value
+    }
+
+    ## Stop at DC= (domain components)
+    elseif ($part -match '^DC=') { break }
+  }
+
+  ## Reverse to get top-down hierarchy
+  [array]::Reverse($ouList)
+  return $ouList
+}
+
+# Helper Function: Get Domain from DN
+function Get-DomainFromDN {
+  <#
+  .SYNOPSIS
+  Extracts domain name from Distinguished Name
+
+  .PARAMETER DistinguishedName
+  The full Distinguished Name from Active Directory
+
+  .EXAMPLE
+  Get-DomainFromDN "CN=John Doe,OU=UK,OU=Users,DC=here,DC=corp"
+  Returns: "here.corp"
+  #>
+
+  param(
+    [string]$DistinguishedName
+  )
+
+  if ([string]::IsNullOrWhiteSpace($DistinguishedName)) {
+    return $null
+  }
+
+  ## Extract all DC= parts
+  $dcParts = [regex]::Matches($DistinguishedName, 'DC=([^,]+)') |
+  ForEach-Object { $_.Groups[1].Value }
+
+  if ($dcParts.Count -gt 0) {
+    return $dcParts -join '.'
+  }
+
+  return $null
+}
+
 function Build-DomainContent {
+  param(
+    [Terminal.Gui.Trees.TreeNode]$domainNode,
+    [string]$domain
+  )
+
+  Debug-Log (": Building content for domain: $domain") -Type "Info"
+
+  ## Apply filters - filter users by domain
+  $nameFilter = $Script:FilterOptions.NameFilter.Trim()
+
+  ## Filter users for this specific domain
+  $domainUsers = $Script:Users | Where-Object {  $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
+  $filteredUsers = $domainUsers | Where-Object {  ($_.Disabled -and $Script:FilterOptions.ShowDisabledUsers) -or   (-not $_.Disabled -and $Script:FilterOptions.ShowEnabledUsers) }
+
+  if ($nameFilter) {
+    $filteredUsers = $filteredUsers | Where-Object {  $_.Name -like "*$nameFilter*" -or  $_.EmailAddress -like "*$nameFilter*" -or $_.mail -like "*$nameFilter*" -or $_.Title -like "*$nameFilter*" }
+  }
+
+  Debug-Log (": Filtered to $($filteredUsers.Count) users for domain $domain") -Type "Info"
+
+  ## Cache for finding nodes by path
+  $nodeCache = @{}
+
+  ## Helper function to get or create node
+  function Get-OrCreateChildNode {
     param(
-        [Terminal.Gui.Trees.TreeNode]$domainNode,
-        [string]$domain
+      [Terminal.Gui.Trees.TreeNode]$Parent,
+      [string]$Name,
+      [string]$FullPath
     )
-    
-    Debug-Log ("DEBUG: Building content for domain: $domain") -Type "info"
-    
-    ## Apply filters - filter users by domain
-    $nameFilter = $Global:FilterOptions.NameFilter.Trim()
-    
-    # Filter users for this specific domain
-    $domainUsers = $Global:Users | Where-Object { $_.Domain -eq $domain }
-    
-    $filteredUsers = $domainUsers | Where-Object { 
-        ($_.Disabled -and $Global:FilterOptions.ShowDisabledUsers) -or 
-        (-not $_.Disabled -and $Global:FilterOptions.ShowEnabledUsers) 
-    }
 
-    if ($nameFilter) {
-        $filteredUsers = $filteredUsers | Where-Object { 
-            $_.Name -like "*$nameFilter*" -or 
-            $_.EmailAddress -like "*$nameFilter*" -or 
-            $_.Title -like "*$nameFilter*" 
-        }
-    }
+    if ($nodeCache.ContainsKey($FullPath)) { return $nodeCache[$FullPath] }
 
-    Debug-Log ("DEBUG: Filtered to $($filteredUsers.Count) users for domain $domain") -Type "info"
+    $newNode = [Terminal.Gui.Trees.TreeNode]::new($Name)
 
-    ## Cache for finding nodes by path
-    $nodeCache = @{}
+    try {
+      if ($null -eq $Parent.Children) { $Parent | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]') }
+        $Parent.Children.Add($newNode)
+      } catch {
+        Debug-Log (": Could not add node $Name to parent: $_") -Type "Warn"
+      }
 
-    ## Helper function to get or create node
-    function Get-OrCreateChildNode {
-        param(
-            [Terminal.Gui.Trees.TreeNode]$Parent,
-            [string]$Name,
-            [string]$FullPath
-        )
+      $nodeCache[$FullPath] = $newNode
+      return $newNode
+  }
 
-        if ($nodeCache.ContainsKey($FullPath)) { return $nodeCache[$FullPath] }
+  ## Helper function to parse Distinguished Name and extract OU path
+  function Get-OUPathFromDN {
+    param([string]$DistinguishedName)
 
-        $newNode = [Terminal.Gui.Trees.TreeNode]::new($Name)
-        
-        try {
-            if ($null -eq $Parent.Children) {
-                $Parent | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+    if ([string]::IsNullOrWhiteSpace($DistinguishedName)) { return @() }
+
+    ## Split DN by comma (handling escaped commas in quotes)
+        $parts = $DistinguishedName -split ',(?=(?:[^"]*"[^"]*")*[^"]*$)'
+
+        $ouList = @()
+        $skipFirst = $true
+
+        foreach ($part in $parts) {
+            $part = $part.Trim()
+
+            # Match OU= or CN= (CN=Users is a container, treat it like an OU)
+            if ($part -match '^(OU|CN)=(.+)$') {
+                $type = $matches[1]
+                $value = $matches[2]
+
+                # Skip the actual user/group CN (first one only)
+                if ($skipFirst) {
+                    $skipFirst = $false
+                    continue
+                }
+
+                # Add to list (we'll reverse it later)
+                $ouList += $value
             }
-            $Parent.Children.Add($newNode)
-        } catch {
-            Debug-Log ("WARNING: Could not add node $Name to parent: $_") -Type "warn"
+            # Stop at DC= (domain components)
+            elseif ($part -match '^DC=') {
+                break
+            }
         }
 
-        $nodeCache[$FullPath] = $newNode
-        return $newNode
+        # Reverse to get top-down hierarchy
+        [array]::Reverse($ouList)
+
+        return $ouList
+    }
+
+    ## Helper function to get domain from DN
+    function Get-DomainFromDN {
+        param([string]$DistinguishedName)
+
+        if ([string]::IsNullOrWhiteSpace($DistinguishedName)) {
+            return $null
+        }
+
+        # Extract all DC= parts
+        $dcParts = [regex]::Matches($DistinguishedName, 'DC=([^,]+)') |
+            ForEach-Object { $_.Groups[1].Value }
+
+        if ($dcParts.Count -gt 0) {
+            return $dcParts -join '.'
+        }
+
+        return $null
     }
 
     ## Build OU hierarchy for this domain
-
     $userCount = 0
     foreach ($user in $filteredUsers) {
         $userCount++
-        
+
         # Update every 25 users to avoid spam
         if ($userCount % 25 -eq 0) {
             Update-Status "Building $domain - $userCount/$($filteredUsers.Count) users" -spinner
         }
 
-        if (-not $user.OU) { continue }
+        # Parse OU path from DistinguishedName
+        $ouPath = Get-OUPathFromDN $user.DistinguishedName
 
-        $ouPath = @($user.OU)
-        if ($ouPath.Count -eq 0) { continue }
+        if ($ouPath.Count -eq 0) {
+            Debug-Log (": User $($user.Name) has no OU path, skipping tree placement") -Type "Warn"
+            continue
+        }
 
         $currentNode = $domainNode
         $pathSoFar = ""
 
+        # Build the OU hierarchy
         foreach ($ouLevel in $ouPath) {
             $pathSoFar = if ($pathSoFar) { "$pathSoFar/$ouLevel" } else { $ouLevel }
             $currentNode = Get-OrCreateChildNode -Parent $currentNode -Name $ouLevel -FullPath "$domain/$pathSoFar"
         }
 
-        $statusIcon = if ($user.Locked) { "🔒" } elseif ($user.Disabled) { "⊗" } else { "○" }
+        # Determine status icon
+        $statusIcon = if ($user.LockedOut -or $user.Locked) {
+            "🔒"
+        } elseif (-not $user.Enabled -or $user.Disabled) {
+            "⊗"
+        } else {
+            "○"
+        }
+
+        # Create user node
         $userNode = [Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($user.Name)")
         $userNode.Tag = $user
-       
+
         if ($null -eq $currentNode.Children) {
             $currentNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
         }
@@ -1646,29 +2025,46 @@ function Build-DomainContent {
     }
 
     ## Add Groups for this domain
-    if ($Global:FilterOptions.ShowGroups) {
+    if ($Script:FilterOptions.ShowGroups) {
         Update-Status "Building $domain - adding groups" -spinner
-        $domainGroups = $Global:Groups | Where-Object { $_.Domain -eq $domain }
-        
-if ($domainGroups.Count -gt 0) {
-        $groupsNode = Get-OrCreateChildNode -Parent $domainNode -Name "Groups" -FullPath "$domain/_Groups"
-        
-        foreach ($group in ($domainGroups | Sort-Object -Property Name)) {
-            $groupNode = [Terminal.Gui.Trees.TreeNode]::new("(G) $($group.Name)")  # ADD PREFIX HERE
-            $groupNode.Tag = $group  # ADD THIS to store group object
-            $members = $filteredUsers | Where-Object { $_.Groups -contains $group.Name } | Sort-Object -Property Name
+
+        # Filter groups for this domain
+        $domainGroups = $Script:Groups | Where-Object {
+            $_.Domain -eq $domain -or
+            (Get-DomainFromDN $_.DistinguishedName) -eq $domain
+        }
+
+        if ($domainGroups.Count -gt 0) {
+            $groupsNode = Get-OrCreateChildNode -Parent $domainNode -Name "Groups" -FullPath "$domain/_Groups"
+
+            foreach ($group in ($domainGroups | Sort-Object -Property Name)) {
+                $groupNode = [Terminal.Gui.Trees.TreeNode]::new("(G) $($group.Name)")
+                $groupNode.Tag = $group
+
+                # Find members of this group
+                $members = $filteredUsers | Where-Object {
+                    $_.Groups -contains $group.Name -or
+                    $_.MemberOf -contains $group.DistinguishedName
+                } | Sort-Object -Property Name
 
                 foreach ($member in $members) {
-                    $statusIcon = if ($member.Locked) { "🔒" } elseif ($member.Disabled) { "⊗" } else { "○" }
+                    $statusIcon = if ($member.LockedOut -or $member.Locked) {
+                        "🔒"
+                    } elseif (-not $member.Enabled -or $member.Disabled) {
+                        "⊗"
+                    } else {
+                        "○"
+                    }
+
                     $memberNode = [Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($member.Name)")
                     $memberNode.Tag = $member
-                    
+
                     if ($null -eq $groupNode.Children) {
                         $groupNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
                     }
                     $groupNode.Children.Add($memberNode)
                 }
-                
+
                 if ($groupNode.Children -and $groupNode.Children.Count -gt 0) {
                     $groupsNode.Children.Add($groupNode)
                 }
@@ -1677,13 +2073,18 @@ if ($domainGroups.Count -gt 0) {
     }
 
     ## Add DCs for this domain
-    if ($Global:FilterOptions.ShowDCs) {
+    if ($Script:FilterOptions.ShowDCs) {
         Update-Status "Building $domain - adding DCs" -spinner
-        $domainDCs = $Global:DCs | Where-Object { $_.Domain -eq $domain }
-        
+
+        # Filter DCs for this domain
+        $domainDCs = $Script:DCs | Where-Object {
+            $_.Domain -eq $domain -or
+            (Get-DomainFromDN $_.DistinguishedName) -eq $domain
+        }
+
         if ($domainDCs.Count -gt 0) {
             $dcNode = Get-OrCreateChildNode -Parent $domainNode -Name "Domain Controllers" -FullPath "$domain/_DCs"
-            
+
             foreach ($dc in ($domainDCs | Sort-Object -Property Name)) {
                 $dcChildNode = [Terminal.Gui.Trees.TreeNode]::new("(DC) $($dc.Name) [$($dc.Site)]")
                 $dcChildNode.Tag = $dc
@@ -1692,313 +2093,371 @@ if ($domainGroups.Count -gt 0) {
         }
     }
 
-         ## Add Computers
-    if ($Global:FilterOptions.ShowComputers) {  # You'll need to add this filter option
-                  Update-Status "Building $domain - adding computers" -spinner
-    
-      $domainComputers = $Global:Computers | Where-Object { $_.Domain -eq $domain }
-    
-     if ($domainComputers.Count -gt 0) {
-      $computerNode = Get-OrCreateChildNode -Parent $domainNode -Name "Computers" -FullPath "$domain/_Computers"
-        
-        # Group by type
-        $byType = $domainComputers | Group-Object ComputerType
-        
-        foreach ($typeGroup in $byType) {
-            $typeNode = [Terminal.Gui.Trees.TreeNode]::new("$($typeGroup.Name)s")  # "Workstations", "Laptops", etc.
-            
-            foreach ($comp in ($typeGroup.Group | Sort-Object -Property Name)) {
-                $icon = if (-not $comp.Enabled) { "⊗" } else { "💻" }
-                $compNode = [Terminal.Gui.Trees.TreeNode]::new("(PC) $icon $($comp.Name)")
-                $compNode.Tag = $comp
-                
-                if ($null -eq $typeNode.Children) {
-                    $typeNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+    ## Add Computers
+    if ($Script:FilterOptions.ShowComputers) {
+        Update-Status "Building $domain - adding computers" -spinner
+
+        # Filter computers for this domain
+        $domainComputers = $Script:Computers | Where-Object {
+            $_.Domain -eq $domain -or
+            (Get-DomainFromDN $_.DistinguishedName) -eq $domain
+        }
+
+        if ($domainComputers.Count -gt 0) {
+            $computerNode = Get-OrCreateChildNode -Parent $domainNode -Name "Computers" -FullPath "$domain/_Computers"
+
+            # Group by type
+            $byType = $domainComputers | Group-Object ComputerType
+
+            foreach ($typeGroup in $byType) {
+                $typeNode = [Terminal.Gui.Trees.TreeNode]::new("$($typeGroup.Name)s")  # "Workstations", "Laptops", etc.
+
+                foreach ($comp in ($typeGroup.Group | Sort-Object -Property Name)) {
+                    $icon = if (-not $comp.Enabled) { "⊗" } else { "💻" }
+                    $compNode = [Terminal.Gui.Trees.TreeNode]::new("(PC) $icon $($comp.Name)")
+                    $compNode.Tag = $comp
+
+                    if ($null -eq $typeNode.Children) {
+                        $typeNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+                    }
+                    $typeNode.Children.Add($compNode)
                 }
-                $typeNode.Children.Add($compNode)
-            }
-            
-            if ($typeNode.Children -and $typeNode.Children.Count -gt 0) {
-                $computerNode.Children.Add($typeNode)
+
+                if ($typeNode.Children -and $typeNode.Children.Count -gt 0) {
+                    $computerNode.Children.Add($typeNode)
+                }
             }
         }
     }
-}
-    Update-Status "$domain complete" -final    
-    Debug-Log ("DEBUG: Finished building content for domain $domain - nodes in cache: $($nodeCache.Count)") -Type "success"
+
+    Update-Status "$domain complete" -final
+    Debug-Log (": Finished building content for domain $domain - nodes in cache: $($nodeCache.Count)") -Type "Success"
 }
 
 ##---------------------------{ Build The Tree }--------------------------
 function Build-Tree {
     param([string]$domain)
 
-    # If no domain was provided, fall back to the global selected one
     if (-not $domain) {
-        $domain = $Global:CurrentDomain
+        $domain = $Script:CurrentDomain
     }
 
-    Debug-Log ("DEBUG: Building tree...") -Type "info"
-    $Global:tree.ClearObjects()
+    Debug-Log ": Building tree..." -Type "Info"
+
+    # TreeView MUST already exist in 1.16
+    if ($null -eq $Script:tree) {
+        throw "Build-Tree failed: TreeView does not exist"
+    }
+
+    # Clear existing objects safely
+    try {
+        $Script:tree.ClearObjects()
+    } catch {
+        Debug-Log ": WARNING - ClearObjects failed: $_" -Type "Warn"
+    }
 
     $root = $null
 
-    ## ----------------------------------------------------
-    ## Multi-domain forest
-    ## ----------------------------------------------------
-    if ($Global:Domains.Count -gt 1) {
+    ## ================= Multi-domain forest =================
+    if ($Script:Domains.Count -gt 1) {
+        Debug-Log ": Creating multi-domain forest tree with root: $($Script:ForestName)" -Type "Info"
 
-        Debug-Log ("DEBUG: Creating multi-domain forest tree with root: $Global:ForestName") -Type "info"
-        $root = [Terminal.Gui.Trees.TreeNode]::new($Global:ForestName)
+        $root = [Terminal.Gui.Trees.TreeNode]::new($Script:ForestName)
 
-        foreach ($dom in $Global:Domains) {
+        foreach ($dom in $Script:Domains) {
+            Debug-Log ": Adding domain node: $($dom)" -Type "Info"
 
-            Debug-Log ("DEBUG: Adding domain node: $($dom)") -Type "info"
             $domainNode = [Terminal.Gui.Trees.TreeNode]::new($dom)
-
-            # Ensure children collection exists
-            if ($null -eq $root.Children) {
-                $root | Add-Member -Force -MemberType NoteProperty -Name Children -Value (
-                    New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]'
-                )
-            }
-
             $root.Children.Add($domainNode)
 
-            # Build domain subtree
             Build-DomainContent -domainNode $domainNode -domain $dom
         }
 
-        ## ----------------------------------------------------
-        ## FIX: Auto-select the correct domain for UI use
-        ## ----------------------------------------------------
-        if (-not $Global:CurrentDomain) {
-            $Global:CurrentDomain = $Global:Domains[0]
-            Debug-Log ("DEBUG: CurrentDomain was empty. Auto-selected: $Global:CurrentDomain") -Type "info"
+        if (-not $Script:CurrentDomain) {
+            $Script:CurrentDomain = $Script:Domains[0]
+            Debug-Log ": CurrentDomain was empty. Auto-selected: $($Script:CurrentDomain)" -Type "Info"
         }
-
     }
 
-    ## ----------------------------------------------------
-    ## Single-domain mode
-    ## ----------------------------------------------------
+    ## ================= Single-domain =================
     else {
-        Debug-Log ("DEBUG: Creating single-domain tree: $($Global:Domains[0])") -Type "info"
-        $root = [Terminal.Gui.Trees.TreeNode]::new($Global:Domains[0])
+        Debug-Log ": Creating single-domain tree: $($Script:Domains[0])" -Type "Info"
 
-        Build-DomainContent -domainNode $root -domain $Global:Domains[0]
+        $root = [Terminal.Gui.Trees.TreeNode]::new($Script:Domains[0])
+        Build-DomainContent -domainNode $root -domain $Script:Domains[0]
 
-        ## FIX: Set active domain if not set
-        if (-not $Global:CurrentDomain) {
-            $Global:CurrentDomain = $Global:Domains[0]
-            Debug-Log ("DEBUG: CurrentDomain set (single-domain): $Global:CurrentDomain") -Type "info"
+        if (-not $Script:CurrentDomain) {
+            $Script:CurrentDomain = $Script:Domains[0]
+            Debug-Log ": CurrentDomain set (single-domain): $($Script:CurrentDomain)" -Type "Info"
         }
     }
 
-    ## ----------------------------------------------------
-    ## Add root to TUI tree control
-    ## ----------------------------------------------------
-    $Global:tree.AddObject($root)
-    Debug-Log ("DEBUG: Tree built successfully") -Type "success"
+    if ($null -eq $root) {
+        throw "Build-Tree failed: root node is null"
+    }
 
-    ## ----------------------------------------------------
-    ## FIX: Auto-select the correct tree node
-    ## ----------------------------------------------------
+    ## ================= Attach root to TreeView =================
     try {
-        if ($Global:Domains.Count -gt 1) {
-            # Multi-domain: select the domain node that matches CurrentDomain
-            $selected = $root.Children | Where-Object { $_.Text -eq $Global:CurrentDomain } | Select-Object -First 1
+        $Script:tree.AddObject($root)
+        $Script:tree.SelectedObject = $root
+        Debug-Log ": Root node added to TreeView" -Type "Success"
+    } catch {
+        throw "Build-Tree failed while attaching root to TreeView: $_"
+    }
 
-            if ($selected) {
-                $Global:tree.SelectedObject = $selected
-                Debug-Log ("DEBUG: Tree auto-selected domain node: $($selected.Text)") -Type "info"
-            }
-            else {
-                Debug-Log ("WARN: Could not auto-select domain: $($Global:CurrentDomain)") -Type "warn"
-            }
-        }
-        else {
-            # Single-domain: root is the selected node
-            $Global:tree.SelectedObject = $root
-            Debug-Log ("DEBUG: Tree auto-selected single-domain root: $($root.Text)") -Type "info"
-        }
-    }
-    catch {
-        Debug-Log ("ERROR: Failed to auto-select tree node: $_") -Type "error"
-    }
+    Debug-Log ": Build-Tree completed successfully" -Type "Success"
 }
+
 
 ## -----------------------{ Update Filter Label }----------------------
 function Create-FilterStatusLabel {
-    Debug-Log ("DEBUG: Entered Create-FilterStatusLabel") -Type "info"
+    Debug-Log (": Entered Create-FilterStatusLabel") -Type "Info"
     try {
         $lblStatus = [Terminal.Gui.Label]::new("")
-        Debug-Log ("DEBUG: Created label object: $lblStatus") -Type "info"
+        Debug-Log (": Created label object: $lblStatus") -Type "Info"
         $lblStatus.X = 80
         $lblStatus.Y = 6
         $lblStatus.Width = 40
         return $lblStatus
     }
     catch {
-        Debug-Log ("ERROR in Create-FilterStatusLabel: $($_.Exception.Message)") -Type "error"
+        Debug-Log ("ERROR in Create-FilterStatusLabel: $($_.Exception.Message)") -Type "Warn"
         return $null
     }
 }
 
-
 ## -----------------------{ Update Filter Label }----------------------
 function Update-FilterStatusLabel {
   param($label)
-    
+
   if (-not $label) {
-    Debug-Log ("WARNING: label parameter is null in Update-FilterStatusLabel") -Type "warn"
+    Debug-Log (": label parameter is null in Update-FilterStatusLabel") -Type "Warn"
     return
   }
-    
+
   $activeFilters = @()
-  if (-not $Global:FilterOptions.ShowEnabledUsers) { $activeFilters += "No Enabled" }
-  if (-not $Global:FilterOptions.ShowDisabledUsers) { $activeFilters += "No Disabled" }
-  if (-not $Global:FilterOptions.ShowGroups) { $activeFilters += "No Groups" }
-  if (-not $Global:FilterOptions.ShowDCs) { $activeFilters += "No DCs" }
-  if ($Global:FilterOptions.NameFilter) { $activeFilters += "Name:$($Global:FilterOptions.NameFilter)" }
+  if (-not $Script:FilterOptions.ShowEnabledUsers) { $activeFilters += "No Enabled" }
+  if (-not $Script:FilterOptions.ShowDisabledUsers) { $activeFilters += "No Disabled" }
+  if (-not $Script:FilterOptions.ShowGroups) { $activeFilters += "No Groups" }
+  if (-not $Script:FilterOptions.ShowDCs) { $activeFilters += "No DCs" }
+  if ($Script:FilterOptions.NameFilter) { $activeFilters += "Name:$($Script:FilterOptions.NameFilter)" }
   if ($activeFilters.Count -gt 0) {
     $label.Text = "Active Filters: " + ($activeFilters -join ", ")
   } else {
+### TODO: This one needs adding into the filter modal not main window
     $label.Text = "No filters active (showing all)"
   }
 }
 
 ## ------------------------{ Update Status Bar }-----------------------
+function Start-Spinner {
+  param([string]$baseMessage)
+
+  $Script:SpinnerActive = $true
+  $Script:statusBaseMessage = $baseMessage
+  $Script:statusSpinnerIndex = 0
+
+  ## Cancel existing timer if any
+  if ($Script:SpinnerTimer) {
+    Stop-Spinner
+  }
+
+  ## Create a timer that updates every 200ms
+  $Script:SpinnerTimer = [System.Timers.Timer]::new(200)
+  $Script:SpinnerTimer.AutoReset = $true
+
+  ## Timer callback - updates spinner character
+  $Script:SpinnerTimer.Add_Elapsed({
+    if ($Script:SpinnerActive -and $Script:StatusItem) {
+      $Script:statusSpinnerIndex = ($Script:statusSpinnerIndex + 1) % 4
+      $spinChar = $Script:statusSpinner[$Script:statusSpinnerIndex]
+      $staticPrefix = "Forest: $($Script:ForestName) | Objs: $($Script:ADObjects.Count)"
+      $Script:StatusItem.Title = "$staticPrefix | $spinChar $($Script:statusBaseMessage)"
+
+      try {
+        if ($Script:statusBar) {
+          $Script:statusBar.SetNeedsDisplay()
+        }
+      } catch {
+        ## Ignore display errors
+        }
+      }
+  })
+
+  $Script:SpinnerTimer.Start()
+}
+
+function Stop-Spinner {
+  $Script:SpinnerActive = $false
+
+  if ($Script:SpinnerTimer) {
+    $Script:SpinnerTimer.Stop()
+    $Script:SpinnerTimer.Dispose()
+    $Script:SpinnerTimer = $null
+  }
+}
+
 function Update-Status {
-    param(
-        [string]$message,
-        [switch]$spinner,
-        [switch]$final
-    )
-    
-    Debug-Log ("DEBUG: Update-Status called - message='$message', spinner=$spinner, final=$final") -Type "info"
-    
-    # Check if UI is running before trying to update it
-    if (-not [Terminal.Gui.Application]::MainLoop) {
-        Debug-Log ("DEBUG: MainLoop not running, skipping UI update") -Type "info"
-        return
+  param(
+    [string]$message,
+    [switch]$spinner,
+    [switch]$final
+  )
+
+  Debug-Log (": Update-Status called - message='$message', spinner=$spinner, final=$final") -Type "Info"
+
+  if (-not $Script:StatusItem) {
+    Debug-Log (": StatusItem not available") -Type "Info"
+    return
+  }
+
+  $staticPrefix = "Forest: $($Script:ForestName) | Objs: $($Script:ADObjects.Count)"
+
+  if ($final) {
+    Stop-Spinner
+    $displayText = "$staticPrefix | ✓ $message"
+    Debug-Log (": Setting final status to: '$displayText'") -Type "Success"
+    $Script:StatusItem.Title = $displayText
+    Start-Sleep -milliseconds 50
+  } elseif ($spinner) {
+    ## Start the spinner with this message
+    Start-Spinner -baseMessage $message
+    Debug-Log (": $message") -Type "Info"
+    Start-Sleep -milliseconds 50
+  } else {
+    Stop-Spinner
+    Debug-Log (": Setting static status to: '$message'") -Type "Info"
+    $Script:StatusItem.Title = "$staticPrefix | $message"
+    Start-Sleep -milliseconds 50
+  }
+
+  try {
+    if ($Script:statusBar) {
+      $Script:statusBar.SetNeedsDisplay()
     }
-    
-    # Static prefix with forest and object counts
-    $staticPrefix = "Forest: $($Global:ForestName) | Objects: $($Global:ADObjects.Count)"
-    
-    if ($final) {
-        $displayText = "$staticPrefix | ✓ $message"
-        Debug-Log ("DEBUG: Setting final status to: '$displayText'") -Type "success"
-        
-        [Terminal.Gui.Application]::MainLoop.Invoke({
-            $Global:StatusItem.Title = $displayText
-            $Global:statusBar.SetNeedsDisplay()
-        })
-        
-    } elseif ($spinner) {
-        [Terminal.Gui.Application]::MainLoop.Invoke({
-            $Global:statusSpinnerIndex = ($Global:statusSpinnerIndex + 1) % 4
-            $spinChar = $Global:statusSpinner[$Global:statusSpinnerIndex]
-            $displayText = "$staticPrefix | $spinChar $message"
-            $Global:StatusItem.Title = $displayText
-            $Global:statusBar.SetNeedsDisplay()
-        })
-        Debug-Log ("STATUS: $message") -Type "info"
-        
-    } else {
-        Debug-Log ("DEBUG: Setting static status to: '$message'") -Type "info"
-        
-        [Terminal.Gui.Application]::MainLoop.Invoke({
-            $Global:StatusItem.Title = "$staticPrefix | $message"
-            $Global:statusBar.SetNeedsDisplay()
-        })
-    }
+  } catch {
+    ## Ignore
+  }
 }
 
 # ------------------------- Filter Panel (Add to main window) ------------------------
 function Create-FilterPanel {
+
+  ## Guard rail so the script doesn't blow up if this is not defined
+  if (-not $Script:FilterOptions) {
+    Debug-Log "FilterOptions not initialised — initialising defaults" -Type "Warn"
+    $Script:FilterOptions = @{
+      ShowDisabledUsers = $true
+      ShowEnabledUsers  = $true
+      ShowLockedUsers   = $true
+      ShowGroups        = $true
+      ShowDCs           = $true
+      ShowComputers     = $true
+      ShowOUs           = $true
+      NameFilter        = ""
+      SortBy            = "Name"
+      SortDescending    = $false
+    }
+  }
+
   ## Create a frame for filters
   $filterFrame = [Terminal.Gui.FrameView]::new("Filters")
   $filterFrame.X = 32  # Right of the tree
   $filterFrame.Y = 1
   $filterFrame.Width = 40
-  $filterFrame.Height = 12
+  $filterFrame.Height = 20  # Increased to fit status label
   $y = 0
-    
+
   ## Name filter
   $lblNameFilter = [Terminal.Gui.Label]::new("Name contains:"); $lblNameFilter.X=1; $lblNameFilter.Y=$y; $filterFrame.Add($lblNameFilter)
-  $txtNameFilter = [Terminal.Gui.TextField]::new($Global:FilterOptions.NameFilter)
+  $txtNameFilter = [Terminal.Gui.TextField]::new($Script:FilterOptions.NameFilter)
   $txtNameFilter.X=1; $txtNameFilter.Y=$y+1; $txtNameFilter.Width=35
-  $txtNameFilter.add_TextChanged({ $Global:FilterOptions.NameFilter = $txtNameFilter.Text.ToString() })
+  $txtNameFilter.add_TextChanged({ $Script:FilterOptions.NameFilter = $txtNameFilter.Text.ToString() })
   $filterFrame.Add($txtNameFilter)
   $y+=3
-    
+
   ## Show/Hide checkboxes
   $chkEnabled = [Terminal.Gui.CheckBox]::new("Show Enabled Users")
-  $chkEnabled.X=1; $chkEnabled.Y=$y; $chkEnabled.Checked=$Global:FilterOptions.ShowEnabledUsers
-  $chkEnabled.add_Toggled({ $Global:FilterOptions.ShowEnabledUsers = $chkEnabled.Checked })
+  $chkEnabled.X=1; $chkEnabled.Y=$y; $chkEnabled.Checked=$Script:FilterOptions.ShowEnabledUsers
+  $chkEnabled.add_Toggled({ $Script:FilterOptions.ShowEnabledUsers = $chkEnabled.Checked })
   $filterFrame.Add($chkEnabled)
   $y+=1
-    
+
+  $chkLocked = [Terminal.Gui.CheckBox]::new("Show Locked Users")
+  $chkLocked.X=1; $chkLocked.Y=$y; $chkLocked.Checked=$Script:FilterOptions.ShowLockedUsers
+  $chkLocked.add_Toggled({ $Script:FilterOptions.ShowLockedUsers = $chkLocked.Checked })
+  $filterFrame.Add($chkLocked)
+  $y+=1
+
   $chkDisabled = [Terminal.Gui.CheckBox]::new("Show Disabled Users")
-  $chkDisabled.X=1; $chkDisabled.Y=$y; $chkDisabled.Checked=$Global:FilterOptions.ShowDisabledUsers
-  $chkDisabled.add_Toggled({ $Global:FilterOptions.ShowDisabledUsers = $chkDisabled.Checked })
+  $chkDisabled.X=1; $chkDisabled.Y=$y; $chkDisabled.Checked=$Script:FilterOptions.ShowDisabledUsers
+  $chkDisabled.add_Toggled({ $Script:FilterOptions.ShowDisabledUsers = $chkDisabled.Checked })
   $filterFrame.Add($chkDisabled)
   $y+=1
-    
+
   $chkGroups = [Terminal.Gui.CheckBox]::new("Show Groups")
-  $chkGroups.X=1; $chkGroups.Y=$y; $chkGroups.Checked=$Global:FilterOptions.ShowGroups
-  $chkGroups.add_Toggled({ $Global:FilterOptions.ShowGroups = $chkGroups.Checked })
+  $chkGroups.X=1; $chkGroups.Y=$y; $chkGroups.Checked=$Script:FilterOptions.ShowGroups
+  $chkGroups.add_Toggled({ $Script:FilterOptions.ShowGroups = $chkGroups.Checked })
   $filterFrame.Add($chkGroups)
   $y+=1
-    
+
   $chkDCs = [Terminal.Gui.CheckBox]::new("Show Domain Controllers")
-  $chkDCs.X=1; $chkDCs.Y=$y; $chkDCs.Checked=$Global:FilterOptions.ShowDCs
-  $chkDCs.add_Toggled({ $Global:FilterOptions.ShowDCs = $chkDCs.Checked })
+  $chkDCs.X=1; $chkDCs.Y=$y; $chkDCs.Checked=$Script:FilterOptions.ShowDCs
+  $chkDCs.add_Toggled({ $Script:FilterOptions.ShowDCs = $chkDCs.Checked })
   $filterFrame.Add($chkDCs)
   $y+=2
-    
+
   ## Sort options
   $lblSort = [Terminal.Gui.Label]::new("Sort by:"); $lblSort.X=1; $lblSort.Y=$y; $filterFrame.Add($lblSort)
   $y+=1
-    
+
   $rdoSort = [Terminal.Gui.RadioGroup]::new(@("Name", "Type", "OU"))
   $rdoSort.X=1; $rdoSort.Y=$y; $rdoSort.SelectedItem=0
   $rdoSort.add_SelectedItemChanged({
-  switch ($rdoSort.SelectedItem) {
-    0 { $Global:FilterOptions.SortBy = "Name" }
-    1 { $Global:FilterOptions.SortBy = "Type" }
-    2 { $Global:FilterOptions.SortBy = "OU" }
-  }
-})
+    switch ($rdoSort.SelectedItem) {
+      0 { $Script:FilterOptions.SortBy = "Name" }
+      1 { $Script:FilterOptions.SortBy = "Type" }
+      2 { $Script:FilterOptions.SortBy = "OU" }
+    }
+  })
+  $filterFrame.Add($rdoSort)
+  $y+=4
+  Debug-Log "Y value is: $y" -Type "Debug"
 
-$filterFrame.Add($rdoSort)
-$y+=3
-    
-## Apply/Reset buttons
-$btnApplyFilter = [Terminal.Gui.Button]::new("Apply Filter")
-$btnApplyFilter.X=1; $btnApplyFilter.Y=$y
-$btnApplyFilter.add_Clicked({
-  Debug-Log ("DEBUG: Applying filters...") -Type "info"
-  Build-Tree -domain $Global:CurrentDomain
+  ## Apply/Reset buttons
+  $btnApplyFilter = [Terminal.Gui.Button]::new("Apply Filter")
+  $btnApplyFilter.X=1; $btnApplyFilter.Y=$y
+  $btnApplyFilter.add_Clicked({
+    Debug-Log "Applying filters..." -Type "Info"
+
+    # Rebuild tree with filters
+    $rootNode = Build-Tree -domain $Script:CurrentDomain
+    if ($rootNode) {
+      $Script:tree.ClearObjects()
+      $Script:tree.AddObject($rootNode)
+      [Terminal.Gui.Application]::Refresh()
+    }
+
+    # Update status label
+    Update-FilterStatusLabel -label $Script:FilterStatusLabel
   })
   $filterFrame.Add($btnApplyFilter)
-    
+
   $btnResetFilter = [Terminal.Gui.Button]::new("Reset")
-  $btnResetFilter.X=17; $btnResetFilter.Y=$y
+  $btnResetFilter.X=21; $btnResetFilter.Y=$y
   $btnResetFilter.add_Clicked({
-    Debug-Log ("DEBUG: Resetting filters...") -Type "info"
-    $Global:FilterOptions.ShowDisabledUsers = $true
-    $Global:FilterOptions.ShowEnabledUsers = $true
-    $Global:FilterOptions.ShowLockedUsers = $true
-    $Global:FilterOptions.ShowGroups = $true
-    $Global:FilterOptions.ShowDCs = $true
-    $Global:FilterOptions.ShowComputers = $true
-    $Global:FilterOptions.ShowOUs = $true
-    $Global:FilterOptions.NameFilter = ""
-    $Global:FilterOptions.SortBy = "Name"
-    $Global:FilterOptions.SortDescending = $false
-        
+    Debug-Log "Resetting filters..." -Type "Info"
+    $Script:FilterOptions.ShowDisabledUsers = $true
+    $Script:FilterOptions.ShowEnabledUsers = $true
+    $Script:FilterOptions.ShowLockedUsers = $true
+    $Script:FilterOptions.ShowGroups = $true
+    $Script:FilterOptions.ShowDCs = $true
+    $Script:FilterOptions.ShowComputers = $true
+    $Script:FilterOptions.ShowOUs = $true
+    $Script:FilterOptions.NameFilter = ""
+    $Script:FilterOptions.SortBy = "Name"
+    $Script:FilterOptions.SortDescending = $false
+
     ## Reset UI controls
     $chkEnabled.Checked = $true
     $chkDisabled.Checked = $true
@@ -2006,11 +2465,35 @@ $btnApplyFilter.add_Clicked({
     $chkDCs.Checked = $true
     $txtNameFilter.Text = ""
     $rdoSort.SelectedItem = 0
-       
-    Build-Tree -domain $Global:CurrentDomain
-  })
 
+    ## Rebuild tree
+    $rootNode = Build-Tree -domain $Script:CurrentDomain
+    if ($rootNode) {
+      $Script:tree.ClearObjects()
+      $Script:tree.AddObject($rootNode)
+      [Terminal.Gui.Application]::Refresh()
+    }
+
+    ## Update status label
+    Update-FilterStatusLabel -label $Script:FilterStatusLabel
+  })
   $filterFrame.Add($btnResetFilter)
+  $y+=2
+
+  ## -------------------- Filter Status Label (inside panel) --------------------
+  $Script:FilterStatusLabel = [Terminal.Gui.Label]::new("")
+  $Script:FilterStatusLabel.X = 1
+  $Script:FilterStatusLabel.Y = $y
+  $Script:FilterStatusLabel.Width = [Terminal.Gui.Dim]::Fill(1)
+  $filterFrame.Add($Script:FilterStatusLabel)
+
+  Debug-Log "FilterPanel created with embedded status label" -Type "Info"
+
+  ## Apply theme correctly
+  if ($Script:themeData -and $Script:themeData.MainWindow) {
+    $filterFrame.ColorScheme = $Script:themeData.MainWindow
+  }
+
   return $filterFrame
 }
 
@@ -2020,47 +2503,47 @@ function Show-QuickFilterDialog {
   $y = 1
   $lbl = [Terminal.Gui.Label]::new("Select a quick filter:"); $lbl.X=2; $lbl.Y=$y; $dlg.Add($lbl)
   $y+=2
-    
+
   $quickFilters = @(
     "Show All",
     "Locked Users Only",
     "Disabled Users Only",
-    "Enabled Users Only", 
+    "Enabled Users Only",
     "Users Never Logged In",
     "Users with No Manager",
     "Empty Groups",
     "Domain Admins Only"
   )
-    
+
   $lstFilters = [Terminal.Gui.ListView]::new($quickFilters)
   $lstFilters.X=2; $lstFilters.Y=$y; $lstFilters.Width=44; $lstFilters.Height=8
   $dlg.Add($lstFilters)
   $btnApply = [Terminal.Gui.Button]::new("Apply")
   $btnApply.add_Clicked({
     $selected = $quickFilters[$lstFilters.SelectedItem]
-    Debug-Log ("DEBUG: Applying quick filter: $selected") -Type "info"
-        
+    Debug-Log (": Applying quick filter: $selected") -Type "Info"
+
     switch ($selected) {
       "Show All" {
-        $Global:FilterOptions.ShowLockedUsers = $true
-        $Global:FilterOptions.ShowDisabledUsers = $true
-        $Global:FilterOptions.ShowEnabledUsers = $true
-        $Global:FilterOptions.ShowGroups = $true
-        $Global:FilterOptions.ShowDCs = $true
-        $Global:FilterOptions.NameFilter = ""
+        $Script:FilterOptions.ShowLockedUsers = $true
+        $Script:FilterOptions.ShowDisabledUsers = $true
+        $Script:FilterOptions.ShowEnabledUsers = $true
+        $Script:FilterOptions.ShowGroups = $true
+        $Script:FilterOptions.ShowDCs = $true
+        $Script:FilterOptions.NameFilter = ""
         }
       "Locked Users Only" {
-        $Global:FilterOptions.ShowLockedUsers = $true
-        $Global:FilterOptions.ShowEnabledUsers = $false
-        $Global:FilterOptions.ShowDisabledUsers = $false
+        $Script:FilterOptions.ShowLockedUsers = $true
+        $Script:FilterOptions.ShowEnabledUsers = $false
+        $Script:FilterOptions.ShowDisabledUsers = $false
         }
       "Disabled Users Only" {
-        $Global:FilterOptions.ShowDisabledUsers = $true
-        $Global:FilterOptions.ShowEnabledUsers = $false
+        $Script:FilterOptions.ShowDisabledUsers = $true
+        $Script:FilterOptions.ShowEnabledUsers = $false
         }
       "Enabled Users Only" {
-        $Global:FilterOptions.ShowDisabledUsers = $false
-        $Global:FilterOptions.ShowEnabledUsers = $true
+        $Script:FilterOptions.ShowDisabledUsers = $false
+        $Script:FilterOptions.ShowEnabledUsers = $true
         }
       "Users Never Logged In" {
         ## This would require additional logic to track last logon
@@ -2068,18 +2551,18 @@ function Show-QuickFilterDialog {
         }
       "Users with No Manager" {
         ## Filter users with no manager
-        $Global:FilterOptions.NameFilter = ""
+        $Script:FilterOptions.NameFilter = ""
         }
       "Empty Groups" {
         ## Show only groups with no members
         Show-Modal "Filter" "Filter applied: $selected"
         }
       "Domain Admins Only" {
-        $Global:FilterOptions.NameFilter = ""
+        $Script:FilterOptions.NameFilter = ""
         }
       }
-        
-      Build-Tree -domain $Global:CurrentDomain
+
+      Build-Tree -domain $Script:CurrentDomain
       [Terminal.Gui.Application]::RequestStop()
   })
 
@@ -2087,16 +2570,16 @@ function Show-QuickFilterDialog {
   $btnCancel = [Terminal.Gui.Button]::new("Cancel")
   $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
   $dlg.AddButton($btnCancel)
-    
+
   [Terminal.Gui.Application]::Run($dlg)
 }
 
 ## .----------------------------{ Get-ADHealth }----------------------------.
 ## | - Tabbed AD Health modal for DSA-TUI (Final: Tools row, Health icons,  |
 ## |   Alt-key accelerators, help line)                                     |
-## | - Uses $Global:CurrentDomain for the domain to query                   |
+## | - Uses $Script:CurrentDomain for the domain to query                   |
 ## | - auto-refresh Domain if it changes                                    |
-## | - No F-keys, no Ctrl+Q/Ctrl+D; uses Alt+... + Esc as requested         |
+## | - No F-keys, no Ctrl+Q/Ctrl+D; uses Alt+... + Esc as needed            |
 ## '------------------------------------------------------------------------'
 function Get-ADHealth {
 
@@ -2105,8 +2588,8 @@ function Get-ADHealth {
   $height = 36
 
   ## Ensure cache / state exists
-  if (-not $script:ADHealth) { $script:ADHealth = @{} }
-  if (-not $script:ADHealth.Cache) { $script:ADHealth.Cache = @{} }
+  if (-not $Script:ADHealth) { $Script:ADHealth = @{} }
+  if (-not $Script:ADHealth.Cache) { $Script:ADHealth.Cache = @{} }
 
   ## Safe external invocation helper
   function Invoke-External {
@@ -2124,21 +2607,21 @@ function Get-ADHealth {
 
   ## Initialize / Refresh caches and detect tools
   function Initialize-ADHealth {
-    if (-not $Global:CurrentDomain -or [string]::IsNullOrWhiteSpace($Global:CurrentDomain)) {
-      throw "Global variable `$Global:CurrentDomain is not set. Set `$Global:CurrentDomain before calling Get-ADHealth."
+    if (-not $Script:CurrentDomain -or [string]::IsNullOrWhiteSpace($Script:CurrentDomain)) {
+      throw "Global variable `$Script:CurrentDomain is not set. Set `$Script:CurrentDomain before calling Get-ADHealth."
     }
-    $domain = $Global:CurrentDomain
+    $domain = $Script:CurrentDomain
 
     ## If domain changed since last run, clear cached data
-    if ($script:ADHealth.Cache.Domain -ne $domain) {
-      $script:ADHealth.Cache = @{
+    if ($Script:ADHealth.Cache.Domain -ne $domain) {
+      $Script:ADHealth.Cache = @{
         Domain = $domain
         Timestamp = (Get-Date).ToString("s")
       }
     }
 
   ## Prepare blank data containers for fresh run
-  $script:ADHealth.Data = @{
+  $Script:ADHealth.Data = @{
     Domain = $domain
     Timestamp   = (Get-Date)
     DCStatus    = @{ Summary = @(); Details = "" ; Health = "UNKNOWN" }
@@ -2150,7 +2633,7 @@ function Get-ADHealth {
         }
 
     ## Detect available external utilities (like CertUI checks)
-    $script:ADHealth.Tools = @{
+    $Script:ADHealth.Tools = @{
       Repadmin = (Get-Command repadmin.exe -ErrorAction SilentlyContinue) -ne $null
       DcDiag   = (Get-Command dcdiag.exe -ErrorAction SilentlyContinue) -ne $null
       DfsrDiag = (Get-Command dfsrdiag.exe -ErrorAction SilentlyContinue) -ne $null
@@ -2166,11 +2649,11 @@ function Get-ADHealth {
     $sb = New-Object System.Text.StringBuilder
 
     try {
-      $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
+      $dcs = Get-ADDomainController -Filter * -Server $domain -ErrorAction Stop
     } catch {
-      $script:ADHealth.Data.DCStatus.Details = "Failed to enumerate DCs: $($_.Exception.Message)"
-      $script:ADHealth.Data.DCStatus.Summary = @("ERROR: Could not enumerate domain controllers.")
-      $script:ADHealth.Data.DCStatus.Health = "FAIL"
+      $Script:ADHealth.Data.DCStatus.Details = "Failed to enumerate DCs: $($_.Exception.Message)"
+      $Script:ADHealth.Data.DCStatus.Summary = @(": Could not enumerate domain controllers.")
+      $Script:ADHealth.Data.DCStatus.Health = "FAIL"
       return
     }
 
@@ -2212,9 +2695,9 @@ function Get-ADHealth {
     ## Determine simple health: if any Reachable=FAIL -> WARN, if many fails -> FAIL
     $fails = ($summary | Where-Object { $_.Reachable -ne "OK" }).Count
     if ($fails -eq 0) { $health = "OK" } elseif ($fails -lt ($summary.Count / 2)) { $health = "WARN" } else { $health = "FAIL" }
-      $script:ADHealth.Data.DCStatus.Summary = $summary
-      $script:ADHealth.Data.DCStatus.Details = $sb.ToString()
-      $script:ADHealth.Data.DCStatus.Health = $health
+      $Script:ADHealth.Data.DCStatus.Summary = $summary
+      $Script:ADHealth.Data.DCStatus.Details = $sb.ToString()
+      $Script:ADHealth.Data.DCStatus.Health = $health
     }
 
   ## Replication
@@ -2223,7 +2706,7 @@ function Get-ADHealth {
     $sb = New-Object System.Text.StringBuilder
     $summary = @()
 
-    if ($script:ADHealth.Tools.Repadmin) {
+    if ($Script:ADHealth.Tools.Repadmin) {
       $r = Invoke-External -Exe "repadmin.exe" -Args "/replsummary"
       $sb.AppendLine($r.StdOut)
       if ($r.ExitCode -eq 0) {
@@ -2233,7 +2716,7 @@ function Get-ADHealth {
         ## Simple health: if the output contains "failed" or "error" mark WARN
         if ($r.StdOut -imatch "(fail|error|last attempt)") { $health = "FAIL" }
       } else {
-        $summary += "repadmin returned error: $($r.StdErr)"
+        $summary += "repadmin returned : $($r.StdErr)"
         $health = "WARN"
       }
 
@@ -2259,9 +2742,9 @@ function Get-ADHealth {
           }
       }
 
-      $script:ADHealth.Data.Replication.Summary = $summary
-      $script:ADHealth.Data.Replication.Details = $sb.ToString()
-      $script:ADHealth.Data.Replication.Health = $health
+      $Script:ADHealth.Data.Replication.Summary = $summary
+      $Script:ADHealth.Data.Replication.Details = $sb.ToString()
+      $Script:ADHealth.Data.Replication.Health = $health
   }
 
   ## DNS
@@ -2286,7 +2769,7 @@ function Get-ADHealth {
 
     ## Per-DC DNS service status
     try {
-      $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
+      $dcs = Get-ADDomainController -Filter * -Server $domain -ErrorAction Stop
       foreach ($dc in $dcs) {
         try { $svc = (Get-Service -ComputerName $dc.HostName -Name "DNS" -ErrorAction SilentlyContinue).Status } catch { $svc = "Err" }
         $summary += "DNS on $($dc.HostName): $svc"
@@ -2300,9 +2783,9 @@ function Get-ADHealth {
   ## Health deduction
   $fails = ($summary -match "NOT FOUND|Err|Error").Count
   if ($fails -eq 0) { $health = "OK" } elseif ($fails -lt 2) { $health = "WARN" } else { $health = "FAIL" }
-    $script:ADHealth.Data.DNS.Summary = $summary
-    $script:ADHealth.Data.DNS.Details = $sb.ToString()
-    $script:ADHealth.Data.DNS.Health = $health
+    $Script:ADHealth.Data.DNS.Summary = $summary
+    $Script:ADHealth.Data.DNS.Details = $sb.ToString()
+    $Script:ADHealth.Data.DNS.Health = $health
   }
 
   ## SYSVOL / DFSR
@@ -2312,7 +2795,7 @@ function Get-ADHealth {
       $sb = New-Object System.Text.StringBuilder
 
       try {
-        $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
+        $dcs = Get-ADDomainController -Discover -Filter * -DomainName $domain -ErrorAction Stop
         foreach ($dc in $dcs) {
           try {
             $shares = Get-WmiObject -Class Win32_Share -ComputerName $dc.HostName -ErrorAction Stop
@@ -2330,7 +2813,7 @@ function Get-ADHealth {
             $sb.AppendLine("Error enumerating shares: $($_.Exception.Message)")
           }
 
-          if ($script:ADHealth.Tools.DfsrDiag) {
+          if ($Script:ADHealth.Tools.DfsrDiag) {
             $r = Invoke-External -Exe "dfsrdiag.exe" -Args "backlog /rgname:DOMAIN /v /sendingcomputer:$($dc.HostName) /receivingcomputer:$($dc.HostName)"
             $sb.AppendLine("dfsrdiag backlog for $($dc.HostName):")
             $sb.AppendLine($r.StdOut)
@@ -2344,563 +2827,600 @@ function Get-ADHealth {
       $fails = ($summary -match "MISSING|ERROR").Count
       if ($fails -eq 0) { $health = "OK" } elseif ($fails -lt 2) { $health = "WARN" } else { $health = "FAIL" }
 
-      $script:ADHealth.Data.SYSVOL.Summary = $summary
-      $script:ADHealth.Data.SYSVOL.Details = $sb.ToString()
-      $script:ADHealth.Data.SYSVOL.Health = $health
+      $Script:ADHealth.Data.SYSVOL.Summary = $summary
+      $Script:ADHealth.Data.SYSVOL.Details = $sb.ToString()
+      $Script:ADHealth.Data.SYSVOL.Health = $health
   }
-
-
-######################## cleaned to here ############################
 
   ## FSMO roles
   function Run-FSMOCheck {
-        param([string]$Domain)
-        $sb = New-Object System.Text.StringBuilder
-        $summary = @()
+    param([string]$Domain)
+    $sb = New-Object System.Text.StringBuilder
+    $summary = @()
 
-        try {
-            $forest = Get-ADForest -Identity $Domain -ErrorAction Stop
-            $domainObj = Get-ADDomain -Identity $Domain -ErrorAction Stop
+    try {
+      $forest = Get-ADForest -Identity $Domain -ErrorAction Stop
+      $domainObj = Get-ADDomain -Identity $Domain -ErrorAction Stop
+      $fsmoForest = @{
+        SchemaMaster = $forest.SchemaMaster
+        DomainNamingMaster = $forest.DomainNamingMaster
+      }
+      $fsmoDomain = @{
+        PDCEmulator = $domainObj.PDCEmulator
+        RIDMaster = $domainObj.RIDMaster
+        InfrastructureMaster = $domainObj.InfrastructureMaster
+      }
 
-            $fsmoForest = @{
-                SchemaMaster = $forest.SchemaMaster
-                DomainNamingMaster = $forest.DomainNamingMaster
-            }
-            $fsmoDomain = @{
-                PDCEmulator = $domainObj.PDCEmulator
-                RIDMaster = $domainObj.RIDMaster
-                InfrastructureMaster = $domainObj.InfrastructureMaster
-            }
+      $sb.AppendLine("Forest FSMO holders:")
+      $sb.AppendLine(($fsmoForest | Out-String).Trim())
+      $sb.AppendLine("Domain FSMO holders:")
+      $sb.AppendLine(($fsmoDomain | Out-String).Trim())
 
-            $sb.AppendLine("Forest FSMO holders:")
-            $sb.AppendLine(($fsmoForest | Out-String).Trim())
-            $sb.AppendLine("Domain FSMO holders:")
-            $sb.AppendLine(($fsmoDomain | Out-String).Trim())
+      foreach ($k in $fsmoForest.Keys) { $summary += "$k -> $($fsmoForest[$k])" }
+      foreach ($k in $fsmoDomain.Keys) { $summary += "$k -> $($fsmoDomain[$k])" }
 
-            foreach ($k in $fsmoForest.Keys) { $summary += "$k -> $($fsmoForest[$k])" }
-            foreach ($k in $fsmoDomain.Keys) { $summary += "$k -> $($fsmoDomain[$k])" }
-
-            # Health: check if any holder resolves and is reachable
-            $holders = ($fsmoForest.Values + $fsmoDomain.Values) | Where-Object { $_ -ne $null } | Select-Object -Unique
-            $unreachable = 0
-            foreach ($h in $holders) {
-                try { $ok = Test-Connection -ComputerName $h -Count 1 -Quiet -ErrorAction SilentlyContinue } catch { $ok = $false }
-                if (-not $ok) { $unreachable++ }
-            }
-            if ($unreachable -eq 0) { $health = "OK" } elseif ($unreachable -lt 2) { $health = "WARN" } else { $health = "FAIL" }
-        } catch {
-            $summary += "FSMO check failed: $($_.Exception.Message)"
-            $sb.AppendLine("FSMO error: $($_.Exception.Message)")
-            $health = "WARN"
-        }
-
-        $script:ADHealth.Data.FSMO.Summary = $summary
-        $script:ADHealth.Data.FSMO.Details = $sb.ToString()
-        $script:ADHealth.Data.FSMO.Health = $health
+      ## Health: check if any holder resolves and is reachable
+      $holders = ($fsmoForest.Values + $fsmoDomain.Values) | Where-Object { $_ -ne $null } | Select-Object -Unique
+      $unreachable = 0
+      foreach ($h in $holders) {
+        try { $ok = Test-Connection -ComputerName $h -Count 1 -Quiet -ErrorAction SilentlyContinue } catch { $ok = $false }
+        if (-not $ok) { $unreachable++ }
+      }
+      if ($unreachable -eq 0) { $health = "OK" } elseif ($unreachable -lt 2) { $health = "WARN" } else { $health = "FAIL" }
+    } catch {
+      $summary += "FSMO check failed: $($_.Exception.Message)"
+      $sb.AppendLine("FSMO error: $($_.Exception.Message)")
+      $health = "WARN"
     }
 
-    # ----------------------------
-    # GPO check
-    # ----------------------------
-    function Run-GPOCheck {
-        param([string]$Domain)
-        $sb = New-Object System.Text.StringBuilder
-        $summary = @()
+    $Script:ADHealth.Data.FSMO.Summary = $summary
+    $Script:ADHealth.Data.FSMO.Details = $sb.ToString()
+    $Script:ADHealth.Data.FSMO.Health = $health
+  }
 
+  # ----------------------------
+  # GPO check
+  # ----------------------------
+  function Run-GPOCheck {
+    param([string]$Domain)
+    $sb = New-Object System.Text.StringBuilder
+    $summary = @()
+
+    try {
+      $gpos = Get-GPO -All -Domain $Domain -ErrorAction Stop
+      $summary += "Total GPOs: $($gpos.Count)"
+      $sb.AppendLine("GPO list (top 50):")
+      $sb.AppendLine(($gpos | Select-Object DisplayName,Id | Select-Object -First 50 | Format-Table -AutoSize | Out-String).Trim())
+
+      ## Quick version compare for first 20 GPOs
+      foreach ($g in $gpos | Select-Object -First 20) {
         try {
-            $gpos = Get-GPO -All -Domain $Domain -ErrorAction Stop
-            $summary += "Total GPOs: $($gpos.Count)"
-            $sb.AppendLine("GPO list (top 50):")
-            $sb.AppendLine(($gpos | Select-Object DisplayName,Id | Select-Object -First 50 | Format-Table -AutoSize | Out-String).Trim())
-
-            # Quick version compare for first 20 GPOs
-            foreach ($g in $gpos | Select-Object -First 20) {
-                try {
-                    $xml = [xml](Get-GPOReport -Guid $g.Id -ReportType Xml -Domain $Domain -ErrorAction Stop)
-                    $ver = $xml.GPO.VersionInfo.Version
-                    $sb.AppendLine("GPO: $($g.DisplayName) Version: $ver")
-                } catch {
-                    $sb.AppendLine("Could not get GPOReport for $($g.DisplayName): $($_.Exception.Message)")
-                }
-            }
-            $health = "OK"
+          $xml = [xml](Get-GPOReport -Guid $g.Id -ReportType Xml -Domain $Domain -ErrorAction Stop)
+          $ver = $xml.GPO.VersionInfo.Version
+          $sb.AppendLine("GPO: $($g.DisplayName) Version: $ver")
         } catch {
-            $summary += "GPO check failed: $($_.Exception.Message)"
-            $sb.AppendLine("GPO error: $($_.Exception.Message)")
-            $health = "WARN"
+          $sb.AppendLine("Could not get GPOReport for $($g.DisplayName): $($_.Exception.Message)")
         }
+      }
+      $health = "OK"
+      } catch {
+        $summary += "GPO check failed: $($_.Exception.Message)"
+        $sb.AppendLine("GPO error: $($_.Exception.Message)")
+        $health = "WARN"
+      }
 
-        $script:ADHealth.Data.GPO.Summary = $summary
-        $script:ADHealth.Data.GPO.Details = $sb.ToString()
-        $script:ADHealth.Data.GPO.Health = $health
+      $Script:ADHealth.Data.GPO.Summary = $summary
+      $Script:ADHealth.Data.GPO.Details = $sb.ToString()
+      $Script:ADHealth.Data.GPO.Health = $health
     }
 
     # ----------------------------
     # Run all checks orchestrator
     # ----------------------------
     function Run-AllChecks {
-        param([string]$Domain)
-        Initialize-ADHealth
-        try { Run-DCStatusCheck -Domain $Domain } catch { $script:ADHealth.Data.DCStatus.Details = "DCStatus failed: $($_.Exception.Message)"; $script:ADHealth.Data.DCStatus.Health="WARN" }
-        try { Run-ReplicationCheck -Domain $Domain } catch { $script:ADHealth.Data.Replication.Details = "Replication failed: $($_.Exception.Message)"; $script:ADHealth.Data.Replication.Health="WARN" }
-        try { Run-DNSCheck -Domain $Domain } catch { $script:ADHealth.Data.DNS.Details = "DNS failed: $($_.Exception.Message)"; $script:ADHealth.Data.DNS.Health="WARN" }
-        try { Run-SYSVOLCheck -Domain $Domain } catch { $script:ADHealth.Data.SYSVOL.Details = "SYSVOL failed: $($_.Exception.Message)"; $script:ADHealth.Data.SYSVOL.Health="WARN" }
-        try { Run-FSMOCheck -Domain $Domain } catch { $script:ADHealth.Data.FSMO.Details = "FSMO failed: $($_.Exception.Message)"; $script:ADHealth.Data.FSMO.Health="WARN" }
-        try { Run-GPOCheck -Domain $Domain } catch { $script:ADHealth.Data.GPO.Details = "GPO failed: $($_.Exception.Message)"; $script:ADHealth.Data.GPO.Health="WARN" }
+      param([string]$Domain)
+      Initialize-ADHealth
+      try { Run-DCStatusCheck -Domain $Domain } catch { $Script:ADHealth.Data.DCStatus.Details = "DCStatus failed: $($_.Exception.Message)"; $Script:ADHealth.Data.DCStatus.Health="WARN" }
+      try { Run-ReplicationCheck -Domain $Domain } catch { $Script:ADHealth.Data.Replication.Details = "Replication failed: $($_.Exception.Message)"; $Script:ADHealth.Data.Replication.Health="WARN" }
+      try { Run-DNSCheck -Domain $Domain } catch { $Script:ADHealth.Data.DNS.Details = "DNS failed: $($_.Exception.Message)"; $Script:ADHealth.Data.DNS.Health="WARN" }
+      try { Run-SYSVOLCheck -Domain $Domain } catch { $Script:ADHealth.Data.SYSVOL.Details = "SYSVOL failed: $($_.Exception.Message)"; $Script:ADHealth.Data.SYSVOL.Health="WARN" }
+      try { Run-FSMOCheck -Domain $Domain } catch { $Script:ADHealth.Data.FSMO.Details = "FSMO failed: $($_.Exception.Message)"; $Script:ADHealth.Data.FSMO.Health="WARN" }
+      try { Run-GPOCheck -Domain $Domain } catch { $Script:ADHealth.Data.GPO.Details = "GPO failed: $($_.Exception.Message)"; $Script:ADHealth.Data.GPO.Health="WARN" }
 
-        $script:ADHealth.Cache.Timestamp = (Get-Date)
+      $Script:ADHealth.Cache.Timestamp = (Get-Date)
     }
 
     # ----------------------------
     # UI helpers
     # ----------------------------
     function Show-DetailsModal {
-        param([string]$Title, [string]$Content)
-        $w = [Terminal.Gui.Window]::new($Title)
-        $w.X = [Terminal.Gui.Pos]::Center()
-        $w.Y = [Terminal.Gui.Pos]::Center()
-        $w.Width = $width - 10
-        $w.Height = $height - 8
-        $w.Modal = $true
+      param([string]$Title, [string]$Content)
+      $w = [Terminal.Gui.Window]::new($Title)
+      $w.X = [Terminal.Gui.Pos]::Center()
+      $w.Y = [Terminal.Gui.Pos]::Center()
+      $w.Width = $width - 10
+      $w.Height = $height - 8
+      $w.Modal = $true
 
-        $tv = [Terminal.Gui.TextView]::new()
-        $tv.X = 1; $tv.Y = 1
-        $tv.Width = $w.Width - 2
-        $tv.Height = $w.Height - 4
-        $tv.ReadOnly = $true
-        $tv.Text = $Content
+      $tv = [Terminal.Gui.TextView]::new()
+      $tv.X = 1; $tv.Y = 1
+      $tv.Width = $w.Width - 2
+      $tv.Height = $w.Height - 4
+      $tv.ReadOnly = $true
+      $tv.Text = $Content
 
-        $btnClose = [Terminal.Gui.Button]::new( ($w.Width / 2) - 6, $w.Height - 3, "Close")
-        $btnClose.add_Click({ [Terminal.Gui.Application]::RequestStop() })
+      $btnClose = [Terminal.Gui.Button]::new( ($w.Width / 2) - 6, $w.Height - 3, "Close")
+      $btnClose.add_Click({ [Terminal.Gui.Application]::RequestStop() })
 
-        $w.Add($tv); $w.Add($btnClose)
-        [Terminal.Gui.Application]::Run($w)
+      $w.Add($tv); $w.Add($btnClose)
+      [Terminal.Gui.Application]::Run($w)
     }
 
     function Render-SummaryWithDetails {
-        param([Terminal.Gui.View]$Parent, [string[]]$SummaryLines, [string]$DetailsText)
-        # Show up to 10 lines and place Details button bottom-right
-        $Parent.RemoveAll()
-        $y = 1
-        $max = 10
-        for ($i = 0; $i -lt $SummaryLines.Count -and $i -lt $max; $i++) {
-            $lbl = [Terminal.Gui.Label]::new($SummaryLines[$i])
-            $lbl.X = 1; $lbl.Y = $y
-            $Parent.Add($lbl)
-            $y++
-        }
-        if ($SummaryLines.Count -gt $max) {
-            $lblMore = [Terminal.Gui.Label]::new("(... $($SummaryLines.Count - $max) more lines. Click Details...)")
-            $lblMore.X = 1; $lblMore.Y = $y
-            $Parent.Add($lblMore)
-            $y++
-        }
+      param([Terminal.Gui.View]$Parent, [string[]]$SummaryLines, [string]$DetailsText)
+      ## Show up to 10 lines and place Details button bottom-right
+      $Parent.RemoveAll()
+      $y = 1
+      $max = 10
+      for ($i = 0; $i -lt $SummaryLines.Count -and $i -lt $max; $i++) {
+        $lbl = [Terminal.Gui.Label]::new($SummaryLines[$i])
+        $lbl.X = 1; $lbl.Y = $y
+        $Parent.Add($lbl)
+        $y++
+      }
+      if ($SummaryLines.Count -gt $max) {
+        $lblMore = [Terminal.Gui.Label]::new("(... $($SummaryLines.Count - $max) more lines. Click Details...)")
+        $lblMore.X = 1; $lblMore.Y = $y
+        $Parent.Add($lblMore)
+        $y++
+      }
 
-        # Details button text uses an ampersand accelerator for Alt+E: we place & before 'e' in "Details"
-        $btnDetails = [Terminal.Gui.Button]::new($Parent.Width - 20, $Parent.Height - 3, "D&e tails...")
-        $btnDetails.add_Click({
-            if ($DetailsText -and $DetailsText.Length -gt 0) {
-                Show-DetailsModal -Title "Details" -Content $DetailsText
-            } else {
-                Show-Modal "Details" "No details available."
-            }
-        })
-        $Parent.Add($btnDetails)
+      ## Details button text uses an ampersand accelerator for Alt+E: we place & before 'e' in "Details"
+      $btnDetails = [Terminal.Gui.Button]::new($Parent.Width - 20, $Parent.Height - 3, "D&e tails...")
+      $btnDetails.add_Click({
+      if ($DetailsText -and $DetailsText.Length -gt 0) {
+        Show-DetailsModal -Title "Details" -Content $DetailsText
+       } else {
+         Show-Modal "Details" "No details available."
+       }
+      })
+      $Parent.Add($btnDetails)
     }
 
-    # ----------------------------
-    # UI: Build modal & controls
-    # ----------------------------
-    $modal = [Terminal.Gui.Window]::new("Active Directory Health Check - $($Global:CurrentDomain)")
-    $modal.X = [Terminal.Gui.Pos]::Center(); $modal.Y = [Terminal.Gui.Pos]::Center()
-    $modal.Width = $width; $modal.Height = $height; $modal.Modal = $true
+function Initialize-Globals {
+  $Script:tree = [Terminal.Gui.TreeView]::new()
+  $Script:TabRows = @()
+  $Script:AllTabs = @()
+}
 
-    # Tools row - single-line compact
-    $toolsView = [Terminal.Gui.View]::new()
-    $toolsView.X = 1; $toolsView.Y = 1; $toolsView.Width = $width - 2; $toolsView.Height = 1
-    $modal.Add($toolsView)
 
-    # Tab header view (below tools)
-    $tabHeader = [Terminal.Gui.View]::new()
-    $tabHeader.X = 1; $tabHeader.Y = 2; $tabHeader.Width = $width - 2; $tabHeader.Height = 1
-    $modal.Add($tabHeader)
+## ----------------------------
+## UI: Build modal & controls
+## ----------------------------
+$modal = [Terminal.Gui.Window]::new("Active Directory Health Check - $($Script:CurrentDomain)")
+$modal.X = [Terminal.Gui.Pos]::Center(); $modal.Y = [Terminal.Gui.Pos]::Center()
+$modal.Width = $width; $modal.Height = $height; $modal.Modal = $true
 
-    # Content frame
-    $contentView = [Terminal.Gui.FrameView]::new()
-    $contentView.X = 1; $contentView.Y = 4; $contentView.Width = $width - 2; $contentView.Height = $height - 10
-    $contentView.Border = "Ascii"
-    $modal.Add($contentView)
+## Tools row - single-line compact
+$toolsView = [Terminal.Gui.View]::new()
+$toolsView.X = 1; $toolsView.Y = 1; $toolsView.Width = $width - 2; $toolsView.Height = 1
+$modal.Add($toolsView)
 
-    # Help line (shortcuts)
-    $helpLine = [Terminal.Gui.Label]::new("Shortcuts: Alt+R=Refresh All | Alt+S=Refresh Tab | Alt+←/→=Switch Tabs | Alt+E=Details | Esc=Close")
-    $helpLine.X = 1; $helpLine.Y = $height - 5
-    $modal.Add($helpLine)
+## Tab header view (below tools)
+$tabHeader = [Terminal.Gui.View]::new()
+$tabHeader.X = 1; $tabHeader.Y = 2; $tabHeader.Width = $width - 2; $tabHeader.Height = 1
+$modal.Add($tabHeader)
 
-    # Buttons: use ampersand to set Alt-accelerators, avoiding reserved combos
-    $btnRefreshAll = [Terminal.Gui.Button]::new(2, $height - 4, "&Refresh All")   # Alt+R
-    $btnRefreshTab = [Terminal.Gui.Button]::new(20, $height - 4, "Re&scan Tab")    # Alt+S
-    $btnExport = [Terminal.Gui.Button]::new(40, $height - 4, "&Export")           # Alt+E for Export (convenient)
-    $btnClose = [Terminal.Gui.Button]::new(60, $height - 4, "Close (Esc)")
+## This could be the soruce of the mystery window
+## Content frame
+$contentView = [Terminal.Gui.FrameView]::new()
+$contentView.X = 1; $contentView.Y = 4; $contentView.Width = $width - 2; $contentView.Height = $height - 10
+$contentView.Border = "Ascii"
+$modal.Add($contentView)
 
-    $modal.Add($btnRefreshAll); $modal.Add($btnRefreshTab); $modal.Add($btnExport); $modal.Add($btnClose)
+## Help line (shortcuts)
+$helpLine = [Terminal.Gui.Label]::new("Shortcuts: Alt+R=Refresh All | Alt+S=Refresh Tab | Alt+←/→=Switch Tabs | Alt+E=Details | Esc=Close")
+$helpLine.X = 1; $helpLine.Y = $height - 5
+$modal.Add($helpLine)
 
-    # Tab definitions
-    $tabs = @("DC Status","Replication","DNS","SYSVOL","FSMO Roles","GPO Health")
-    $script:ActiveHealthTab = 0
+## Buttons: use ampersand to set Alt-accelerators, avoiding reserved combos
+$btnRefreshAll = [Terminal.Gui.Button]::new(2, $height - 4, "&Refresh All")   # Alt+R
+$btnRefreshTab = [Terminal.Gui.Button]::new(20, $height - 4, "Re&scan Tab")    # Alt+S
+$btnExport = [Terminal.Gui.Button]::new(40, $height - 4, "&Export")           # Alt+E for Export (convenient)
+$btnClose = [Terminal.Gui.Button]::new(60, $height - 4, "Close (Esc)")
+$modal.Add($btnRefreshAll); $modal.Add($btnRefreshTab); $modal.Add($btnExport); $modal.Add($btnClose)
 
-    # Function to compute simple health icon string
-    function Health-Icon {
-        param([string]$State)
-        switch ($State) {
-            "OK"   { return "(✓)" }
-            "WARN" { return "(!)" }
-            "FAIL" { return "(✗)" }
-            default { return "(?)" }
-        }
+## Tab definitions
+$tabs = @("DC Status","Replication","DNS","SYSVOL","FSMO Roles","GPO Health")
+$Script:ActiveHealthTab = 0
+
+## Function to compute simple health icon string
+function Health-Icon {
+  param([string]$State)
+    switch ($State) {
+      "OK"   { return "(✓)" }
+      "WARN" { return "(!)" }
+      "FAIL" { return "(✗)" }
+      "default { return "(?)" }
+    }
+  }
+
+   ## Render tools row (certUI-style)
+function Render-ToolsRow {
+  $toolsView.RemoveAll()
+  $offset = 0
+  $tools = $Script:ADHealth.Tools
+  $items = @(
+    @{ Name="repadmin"; Found = $tools.Repadmin },
+    @{ Name="dcdiag"; Found = $tools.DcDiag },
+    @{ Name="dfsrdiag"; Found = $tools.DfsrDiag },
+    @{ Name="nltest"; Found = $tools.Nltest },
+    @{ Name="dnscmd"; Found = $tools.Dnscmd }
+  )
+
+  foreach ($it in $items) {
+    $sym = if ($it.Found) { "[✓]" } else { "[✗]" }
+    $lbl = [Terminal.Gui.Label]::new(" $sym $($it.Name)  ")
+    $lbl.X = $offset; $lbl.Y = 0
+
+    ## Add click handler that shows tooltip-like message
+    $nameCopy = $it.Name
+    $foundCopy = $it.Found
+    $lbl.add_MouseClick({
+    param($args)
+    if ($foundCopy) {
+      Show-Modal "Tool Found" "$nameCopy detected - will be used where applicable."
+    } else {
+      Show-Modal "Tool Missing" "$nameCopy not found. Some detail modes will be disabled or fall back to PowerShell cmdlets."
+    }
+  })
+  $toolsView.Add($lbl)
+  $offset += ($lbl.Text.Length + 1)
+  }
+}
+
+## Render tab header with health icons
+function Render-ADHealthTabs {
+  $tabHeader.RemoveAll()
+  $offset = 0
+  for ($i = 0; $i -lt $tabs.Count; $i++) {
+    $name = $tabs[$i]
+    $health = $Script:ADHealth.Data.$((($name -split ' ')[0])) 2>$null
+    ## We stored health per named key (e.g., DCStatus, Replication, DNS...). fallback if not matching:
+    switch ($i) {
+      0 { $h = $Script:ADHealth.Data.DCStatus.Health }
+      1 { $h = $Script:ADHealth.Data.Replication.Health }
+      2 { $h = $Script:ADHealth.Data.DNS.Health }
+      3 { $h = $Script:ADHealth.Data.SYSVOL.Health }
+      4 { $h = $Script:ADHealth.Data.FSMO.Health }
+      5 { $h = $Script:ADHealth.Data.GPO.Health }
+      default { $h = "UNKNOWN" }
     }
 
-    # Render tools row (certUI-style)
-    function Render-ToolsRow {
-        $toolsView.RemoveAll()
-        $offset = 0
-        $tools = $script:ADHealth.Tools
-        $items = @(
-            @{ Name="repadmin"; Found = $tools.Repadmin },
-            @{ Name="dcdiag"; Found = $tools.DcDiag },
-            @{ Name="dfsrdiag"; Found = $tools.DfsrDiag },
-            @{ Name="nltest"; Found = $tools.Nltest },
-            @{ Name="dnscmd"; Found = $tools.Dnscmd }
-        )
-        foreach ($it in $items) {
-            $sym = if ($it.Found) { "[✓]" } else { "[✗]" }
-            $lbl = [Terminal.Gui.Label]::new(" $sym $($it.Name)  ")
-            $lbl.X = $offset; $lbl.Y = 0
-            # Add click handler that shows tooltip-like message
-            $nameCopy = $it.Name
-            $foundCopy = $it.Found
-            $lbl.add_MouseClick({
-                param($args)
-                if ($foundCopy) {
-                    Show-Modal "Tool Found" "$nameCopy detected - will be used where applicable."
-                } else {
-                    Show-Modal "Tool Missing" "$nameCopy not found. Some detail modes will be disabled or fall back to PowerShell cmdlets."
-                }
-            })
-            $toolsView.Add($lbl)
-            $offset += ($lbl.Text.Length + 1)
-        }
-    }
+    $icon = Health-Icon -State $h
+    $labelText = if ($i -eq $Script:ActiveHealthTab) { "[ $name $icon ]" } else { "  $name $icon  " }
+    $lbl = [Terminal.Gui.Label]::new($labelText)
+    $lbl.X = $offset; $lbl.Y = 0
+    $idx = $i
+    $lbl.add_MouseClick({
 
-    # Render tab header with health icons
-    function Render-ADHealthTabs {
-        $tabHeader.RemoveAll()
-        $offset = 0
-        for ($i = 0; $i -lt $tabs.Count; $i++) {
-            $name = $tabs[$i]
-            $health = $script:ADHealth.Data.$((($name -split ' ')[0])) 2>$null
-            # We stored health per named key (e.g., DCStatus, Replication, DNS...). fallback if not matching:
-            switch ($i) {
-                0 { $h = $script:ADHealth.Data.DCStatus.Health }
-                1 { $h = $script:ADHealth.Data.Replication.Health }
-                2 { $h = $script:ADHealth.Data.DNS.Health }
-                3 { $h = $script:ADHealth.Data.SYSVOL.Health }
-                4 { $h = $script:ADHealth.Data.FSMO.Health }
-                5 { $h = $script:ADHealth.Data.GPO.Health }
-                default { $h = "UNKNOWN" }
-            }
-            $icon = Health-Icon -State $h
-            $labelText = if ($i -eq $script:ActiveHealthTab) { "[ $name $icon ]" } else { "  $name $icon  " }
-            $lbl = [Terminal.Gui.Label]::new($labelText)
-            $lbl.X = $offset; $lbl.Y = 0
-            $idx = $i
-            $lbl.add_MouseClick({
-                param($args)
-                $script:ActiveHealthTab = $idx
-                Render-ADHealthTabs
-                Render-ADHealthContent -Tab $idx
-            })
-            $tabHeader.Add($lbl)
-            $offset += ($labelText.Length + 1)
-        }
-    }
+    param($args)
+      $Script:ActiveHealthTab = $idx
+      Render-ADHealthTabs
+      Render-ADHealthContent -Tab $idx
+    })
+    $tabHeader.Add($lbl)
+    $offset += ($labelText.Length + 1)
+  }
+}
 
-    # Render content for each tab
-    function Render-ADHealthContent {
-        param([int]$Tab)
-        $contentView.RemoveAll()
-        switch ($Tab) {
-            0 {
-                $sumObjs = $script:ADHealth.Data.DCStatus.Summary
-                if (-not $sumObjs -or $sumObjs.Count -eq 0) {
-                    $lbl = [Terminal.Gui.Label]::new("No DC status data. Press Alt+R to run checks.")
-                    $lbl.X = 1; $lbl.Y = 1; $contentView.Add($lbl)
-                } else {
-                    $lines = @()
-                    $lines += "Name`tIP`tSite`tReach`tUptime`tNTDS`tDNS"
-                    foreach ($o in $sumObjs) {
-                        $lines += ("{0}`t{1}`t{2}`t{3}`t{4}`t{5}`t{6}" -f $o.Name, $o.IP, $o.Site, $o.Reachable, $o.UptimeDays, $o.NTDS, $o.DNS)
-                    }
-                    Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $script:ADHealth.Data.DCStatus.Details
-                }
-            }
-            1 {
-                $lines = $script:ADHealth.Data.Replication.Summary
-                if (-not $lines) { $lines = @("No replication data. Press Alt+R.") }
-                Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $script:ADHealth.Data.Replication.Details
-            }
-            2 {
-                $lines = $script:ADHealth.Data.DNS.Summary
-                if (-not $lines) { $lines = @("No DNS data. Press Alt+R.") }
-                Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $script:ADHealth.Data.DNS.Details
-            }
-            3 {
-                $lines = $script:ADHealth.Data.SYSVOL.Summary
-                if (-not $lines) { $lines = @("No SYSVOL data. Press Alt+R.") }
-                Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $script:ADHealth.Data.SYSVOL.Details
-            }
-            4 {
-                $lines = $script:ADHealth.Data.FSMO.Summary
-                if (-not $lines) { $lines = @("No FSMO data. Press Alt+R.") }
-                Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $script:ADHealth.Data.FSMO.Details
-            }
-            5 {
-                $lines = $script:ADHealth.Data.GPO.Summary
-                if (-not $lines) { $lines = @("No GPO data. Press Alt+R.") }
-                Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $script:ADHealth.Data.GPO.Details
-            }
+## Render content for each tab
+function Render-ADHealthContent {
+  param([int]$Tab)
+    $contentView.RemoveAll()
+    switch ($Tab) {
+      0 {
+        $sumObjs = $Script:ADHealth.Data.DCStatus.Summary
+        if (-not $sumObjs -or $sumObjs.Count -eq 0) {
+          $lbl = [Terminal.Gui.Label]::new("No DC status data. Press Alt+R to run checks.")
+          $lbl.X = 1; $lbl.Y = 1; $contentView.Add($lbl)
+        } else {
+          $lines = @()
+          $lines += "Name`tIP`tSite`tReach`tUptime`tNTDS`tDNS"
+          foreach ($o in $sumObjs) {
+            $lines += ("{0}`t{1}`t{2}`t{3}`t{4}`t{5}`t{6}" -f $o.Name, $o.IP, $o.Site, $o.Reachable, $o.UptimeDays, $o.NTDS, $o.DNS)
+          }
+          Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $Script:ADHealth.Data.DCStatus.Details
         }
+      }
+      1 {
+         $lines = $Script:ADHealth.Data.Replication.Summary
+         if (-not $lines) { $lines = @("No replication data. Press Alt+R.") }
+         Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $Script:ADHealth.Data.Replication.Details
+      }
+      2 {
+        $lines = $Script:ADHealth.Data.DNS.Summary
+        if (-not $lines) { $lines = @("No DNS data. Press Alt+R.") }
+        Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $Script:ADHealth.Data.DNS.Details
+      }
+      3 {
+        $lines = $Script:ADHealth.Data.SYSVOL.Summary
+        if (-not $lines) { $lines = @("No SYSVOL data. Press Alt+R.") }
+        Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $Script:ADHealth.Data.SYSVOL.Details
+      }
+      4 {
+        $lines = $Script:ADHealth.Data.FSMO.Summary
+        if (-not $lines) { $lines = @("No FSMO data. Press Alt+R.") }
+        Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $Script:ADHealth.Data.FSMO.Details
+      }
+      5 {
+        $lines = $Script:ADHealth.Data.GPO.Summary
+        if (-not $lines) { $lines = @("No GPO data. Press Alt+R.") }
+        Render-SummaryWithDetails -Parent $contentView -SummaryLines $lines -DetailsText $Script:ADHealth.Data.GPO.Details
+      }
     }
+  }
 
-    # ----------------------------
-    # Button actions
-    # ----------------------------
-    $btnRefreshAll.add_Click({
-        # Show a tiny busy modal while checks run
-        $busy = [Terminal.Gui.Window]::new("Refreshing...")
-        $busy.X = [Terminal.Gui.Pos]::Center(); $busy.Y = [Terminal.Gui.Pos]::Center()
-        $busy.Width = 36; $busy.Height = 5
-        $busy.Add([Terminal.Gui.Label]::new("Running AD health checks, please wait..."))
-        [Terminal.Gui.Application]::Run($busy)
-        try { Run-AllChecks -Domain $Global:CurrentDomain } finally { [Terminal.Gui.Application]::RequestStop() }
-        Render-ADHealthTabs; Render-ADHealthContent -Tab $script:ActiveHealthTab
+  ## ----------------------------
+  ## Button actions
+  ## ----------------------------
+  $btnRefreshAll.add_Click({
+  ## Show a tiny busy modal while checks run
+  $busy = [Terminal.Gui.Window]::new("Refreshing...")
+  $busy.X = [Terminal.Gui.Pos]::Center(); $busy.Y = [Terminal.Gui.Pos]::Center()
+  $busy.Width = 36; $busy.Height = 5
+  $busy.Add([Terminal.Gui.Label]::new("Running AD health checks, please wait..."))
+  [Terminal.Gui.Application]::Run($busy)
+  try { Run-AllChecks -Domain $Script:CurrentDomain } finally { [Terminal.Gui.Application]::RequestStop() }
+    Render-ADHealthTabs; Render-ADHealthContent -Tab $Script:ActiveHealthTab
+  })
+
+  $btnRefreshTab.add_Click({
+  ## Run only the check for the active tab
+  switch ($Script:ActiveHealthTab) {
+    0 { Run-DCStatusCheck -Domain $Script:CurrentDomain }
+    1 { Run-ReplicationCheck -Domain $Script:CurrentDomain }
+    2 { Run-DNSCheck -Domain $Script:CurrentDomain }
+    3 { Run-SYSVOLCheck -Domain $Script:CurrentDomain }
+    4 { Run-FSMOCheck -Domain $Script:CurrentDomain }
+    5 { Run-GPOCheck -Domain $Script:CurrentDomain }
+  }
+  Render-ADHealthTabs; Render-ADHealthContent -Tab $Script:ActiveHealthTab
+  })
+
+  ## Export (plain-text)
+  $btnExport.add_Click({
+  $timestamp = (Get-Date).ToString("yyyyMMdd_HHmmss")
+  $fname = "ADHealth_${($Script:CurrentDomain -replace '[^a-zA-Z0-9\.-]','_')}_$timestamp.txt"
+  $full = Join-Path -Path (Get-Location) -ChildPath $fname
+  $sb = New-Object System.Text.StringBuilder
+  $sb.AppendLine("AD Health Report for $($Script:CurrentDomain) - $timestamp") | Out-Null
+  foreach ($tabName in $tabs) {
+    $sb.AppendLine("---- $tabName ----") | Out-Null
+    switch ($tabName) {
+      "DC Status"   { $sb.AppendLine($Script:ADHealth.Data.DCStatus.Details) | Out-Null }
+      "Replication" { $sb.AppendLine($Script:ADHealth.Data.Replication.Details) | Out-Null }
+      "DNS"         { $sb.AppendLine($Script:ADHealth.Data.DNS.Details) | Out-Null }
+      "SYSVOL"      { $sb.AppendLine($Script:ADHealth.Data.SYSVOL.Details) | Out-Null }
+      "FSMO Roles"  { $sb.AppendLine($Script:ADHealth.Data.FSMO.Details) | Out-Null }
+      "GPO Health"  { $sb.AppendLine($Script:ADHealth.Data.GPO.Details) | Out-Null }
+    }
+  }
+  try {
+    [System.IO.File]::WriteAllText($full, $sb.ToString())
+    Show-Modal "Export" "Report exported to`n$full"
+  } catch {
+    Show-Modal "Export Error" "Failed to write file: $($_.Exception.Message)"
+    }
+  })
+
+  $btnClose.add_Click({ [Terminal.Gui.Application]::RequestStop() })
+
+  ## Add Escape key handler to close the modal (conventional)
+  $modal.add_KeyDown({
+    param($args)
+      try {
+        if ($args.KeyEvent.Key -eq [Terminal.Gui.Key]::Escape) {
+          [Terminal.Gui.Application]::RequestStop()
+          $args.Handled = $true
+        }
+        ## Alt+Left / Alt+Right support: move tabs
+        if ($args.KeyEvent.IsAlt && $args.KeyEvent.Key -eq [Terminal.Gui.Key]::LeftArrow) {
+          $Script:ActiveHealthTab = [Math]::Max(0, $Script:ActiveHealthTab - 1)
+          Render-ADHealthTabs; Render-ADHealthContent -Tab $Script:ActiveHealthTab
+          $args.Handled = $true
+        } elseif ($args.KeyEvent.IsAlt && $args.KeyEvent.Key -eq [Terminal.Gui.Key]::RightArrow) {
+          $Script:ActiveHealthTab = [Math]::Min($tabs.Count - 1, $Script:ActiveHealthTab + 1)
+          Render-ADHealthTabs; Render-ADHealthContent -Tab $Script:ActiveHealthTab
+          $args.Handled = $true
+        }
+      } catch { }
     })
 
-    $btnRefreshTab.add_Click({
-        # Run only the check for the active tab
-        switch ($script:ActiveHealthTab) {
-            0 { Run-DCStatusCheck -Domain $Global:CurrentDomain }
-            1 { Run-ReplicationCheck -Domain $Global:CurrentDomain }
-            2 { Run-DNSCheck -Domain $Global:CurrentDomain }
-            3 { Run-SYSVOLCheck -Domain $Global:CurrentDomain }
-            4 { Run-FSMOCheck -Domain $Global:CurrentDomain }
-            5 { Run-GPOCheck -Domain $Global:CurrentDomain }
-        }
-        Render-ADHealthTabs; Render-ADHealthContent -Tab $script:ActiveHealthTab
-    })
-
-    # Export (plain-text)
-    $btnExport.add_Click({
-        $ts = (Get-Date).ToString("yyyyMMdd_HHmmss")
-        $fname = "ADHealth_${($Global:CurrentDomain -replace '[^a-zA-Z0-9\.-]','_')}_$ts.txt"
-        $full = Join-Path -Path (Get-Location) -ChildPath $fname
-        $sb = New-Object System.Text.StringBuilder
-        $sb.AppendLine("AD Health Report for $($Global:CurrentDomain) - $ts") | Out-Null
-        foreach ($tabName in $tabs) {
-            $sb.AppendLine("---- $tabName ----") | Out-Null
-            switch ($tabName) {
-                "DC Status" { $sb.AppendLine($script:ADHealth.Data.DCStatus.Details) | Out-Null }
-                "Replication" { $sb.AppendLine($script:ADHealth.Data.Replication.Details) | Out-Null }
-                "DNS" { $sb.AppendLine($script:ADHealth.Data.DNS.Details) | Out-Null }
-                "SYSVOL" { $sb.AppendLine($script:ADHealth.Data.SYSVOL.Details) | Out-Null }
-                "FSMO Roles" { $sb.AppendLine($script:ADHealth.Data.FSMO.Details) | Out-Null }
-                "GPO Health" { $sb.AppendLine($script:ADHealth.Data.GPO.Details) | Out-Null }
-            }
-        }
-        try {
-            [System.IO.File]::WriteAllText($full, $sb.ToString())
-            Show-Modal "Export" "Report exported to`n$full"
-        } catch {
-            Show-Modal "Export Error" "Failed to write file: $($_.Exception.Message)"
-        }
-    })
-
-    $btnClose.add_Click({ [Terminal.Gui.Application]::RequestStop() })
-
-    # Add Escape key handler to close the modal (conventional)
+    ## Also allow Alt+E to activate Details by simulating a click on the Details button in the content area
+    ## Note: Details button is created per content render; we'll also respond to Alt+E globally to open Details for current tab.
     $modal.add_KeyDown({
-        param($args)
+      param($args)
         try {
-            if ($args.KeyEvent.Key -eq [Terminal.Gui.Key]::Escape) {
-                [Terminal.Gui.Application]::RequestStop()
-                $args.Handled = $true
+          if ($args.KeyEvent.IsAlt -and $args.KeyEvent.Key -eq [Terminal.Gui.Key]::E) {
+            ## Determine details for current tab and show modal if present
+            switch ($Script:ActiveHealthTab) {
+              0 { $d = $Script:ADHealth.Data.DCStatus.Details }
+              1 { $d = $Script:ADHealth.Data.Replication.Details }
+              2 { $d = $Script:ADHealth.Data.DNS.Details }
+              3 { $d = $Script:ADHealth.Data.SYSVOL.Details }
+              4 { $d = $Script:ADHealth.Data.FSMO.Details }
+              5 { $d = $Script:ADHealth.Data.GPO.Details }
             }
-            # Alt+Left / Alt+Right support: move tabs
-            if ($args.KeyEvent.IsAlt && $args.KeyEvent.Key -eq [Terminal.Gui.Key]::LeftArrow) {
-                $script:ActiveHealthTab = [Math]::Max(0, $script:ActiveHealthTab - 1)
-                Render-ADHealthTabs; Render-ADHealthContent -Tab $script:ActiveHealthTab
-                $args.Handled = $true
-            } elseif ($args.KeyEvent.IsAlt && $args.KeyEvent.Key -eq [Terminal.Gui.Key]::RightArrow) {
-                $script:ActiveHealthTab = [Math]::Min($tabs.Count - 1, $script:ActiveHealthTab + 1)
-                Render-ADHealthTabs; Render-ADHealthContent -Tab $script:ActiveHealthTab
-                $args.Handled = $true
-            }
+            if ($d -and $d.Length -gt 0) { Show-DetailsModal -Title "Details" -Content $d } else { Show-Modal "Details" "No details available for this tab." }
+              $args.Handled = $true
+          }
         } catch { }
     })
 
-    # Also allow Alt+E to activate Details by simulating a click on the Details button in the content area
-    # Note: Details button is created per content render; we'll also respond to Alt+E globally to open Details for current tab.
-    $modal.add_KeyDown({
-        param($args)
-        try {
-            if ($args.KeyEvent.IsAlt -and $args.KeyEvent.Key -eq [Terminal.Gui.Key]::E) {
-                # Determine details for current tab and show modal if present
-                switch ($script:ActiveHealthTab) {
-                    0 { $d = $script:ADHealth.Data.DCStatus.Details }
-                    1 { $d = $script:ADHealth.Data.Replication.Details }
-                    2 { $d = $script:ADHealth.Data.DNS.Details }
-                    3 { $d = $script:ADHealth.Data.SYSVOL.Details }
-                    4 { $d = $script:ADHealth.Data.FSMO.Details }
-                    5 { $d = $script:ADHealth.Data.GPO.Details }
-                }
-                if ($d -and $d.Length -gt 0) { Show-DetailsModal -Title "Details" -Content $d } else { Show-Modal "Details" "No details available for this tab." }
-                $args.Handled = $true
-            }
-        } catch { }
-    })
-
-    # ----------------------------
-    # Initial run & render
-    # ----------------------------
-    Run-AllChecks -Domain $Global:CurrentDomain
+    ## ----------------------------
+    ## Initial run & render
+    ## ----------------------------
+    Run-AllChecks -Domain $Script:CurrentDomain
     Render-ToolsRow
     Render-ADHealthTabs
     Render-ADHealthContent -Tab 0
 
-    # Run the modal
+    ## Run the modal
     [Terminal.Gui.Application]::Run($modal)
 }
-# End Get-ADHealth
 
-
-# Generate Random Password modal
+## Generate Random Password modal
 function Generate-RandomPassword {
+  ## Helper function
+  function Get-PasswordEntropy {
+    param([int]$poolSize, [int]$length)
+    if ($poolSize -le 0 -or $length -le 0) { return 0 }
+    return [Math]::Log($poolSize, 2) * $length
+  }
 
-    # Helper function
-    function Get-PasswordEntropy {
-        param([int]$poolSize, [int]$length)
-        if ($poolSize -le 0 -or $length -le 0) { return 0 }
-        return [Math]::Log($poolSize, 2) * $length
+  $UpperCase = @('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z')
+  $LowerCase = @('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z')
+  $Numbers   = @('1','2','3','4','5','6','7','8','9','0')
+  $Symbols   = @('!','@','$','?','<','>','*','&')
+  $Script:actualPassword = ""
+
+  ## --- Generate-RandomPassword UI ---
+  $dlg = [Terminal.Gui.Dialog]::new("Generate Random Password", 66, 14)
+
+  ## 2x2 checkbox layout
+  $chkUpper = [Terminal.Gui.CheckBox]::new(2,1,"Include Uppercase (A-Z)", $true)
+  $chkLower = [Terminal.Gui.CheckBox]::new(30,1,"Include Lowercase (a-z)", $true)
+  $chkNums  = [Terminal.Gui.CheckBox]::new(2,3,"Include Numbers (0-9)", $true)
+  $chkSyms  = [Terminal.Gui.CheckBox]::new(30,3,"Include Symbols (!,@,$)", $true)
+  $dlg.Add($chkUpper, $chkLower, $chkNums, $chkSyms)
+
+  ## Length input
+  $dlg.Add([Terminal.Gui.Label]::new(2,5,"Length (1-127):"))
+  $txtLen = New-Object Terminal.Gui.TextField
+  $txtLen.X = 18; $txtLen.Y = 5; $txtLen.Width = 6
+  $txtLen.Text = "12"
+  $dlg.Add($txtLen)
+
+  ## Password display box
+  $dlg.Add([Terminal.Gui.Label]::new(2,7,"Generated Password:"))
+  $txtPwd = New-Object Terminal.Gui.TextField
+  $txtPwd.X = 2; $txtPwd.Y = 8; $txtPwd.Width = 25
+  $txtPwd.Text = ""
+  $dlg.Add($txtPwd)
+
+  ## --- ENTROPY DISPLAY ---
+  $lblStrength = [Terminal.Gui.Label]::new(30,7,"Strength: Not generated")
+  $lblStrength.Width = 30
+  $dlg.Add($lblStrength)
+  $progEntropy = [Terminal.Gui.ProgressBar]::new()
+  $progEntropy.X = 30; $progEntropy.Y = 8; $progEntropy.Width = 25
+  $progEntropy.Fraction = 0.0
+  $progEntropy = [Terminal.Gui.ProgressBar]::new()
+  $progEntropy.X = 30; $progEntropy.Y = 8; $progEntropy.Width = 25
+  $progEntropy.Fraction = 0.0
+
+  ## Apply theme colors to progress bar
+  if ($Script:ThemeMode) {
+    $themeData = Get-Theme -mode $Script:ThemeMode
+    if ($themeData -and $themeData.MainWindow) {
+      ## Create a custom ColorScheme for the progress bar
+      $progColorScheme = [Terminal.Gui.ColorScheme]::new()
+
+      ## Use MainWindow colors for the background (matches dialog background)
+      $progColorScheme.Normal = [Terminal.Gui.Attribute]::Make(
+        $themeData.MainWindow.Normal.Foreground,
+        $themeData.MainWindow.Normal.Background
+      )
+
+      $progColorScheme.Focus = [Terminal.Gui.Attribute]::Make(
+        $themeData.MainWindow.Normal.Foreground,
+        $themeData.MainWindow.Normal.Background
+      )
+
+      ## The filled bar - use MainWindow Focus colors to stand out
+      $progColorScheme.HotNormal = [Terminal.Gui.Attribute]::Make(
+        $themeData.MainWindow.Focus.Foreground,
+        $themeData.MainWindow.Focus.Background
+      )
+
+      $progColorScheme.HotFocus = [Terminal.Gui.Attribute]::Make(
+        $themeData.MainWindow.Focus.Foreground,
+        $themeData.MainWindow.Focus.Background
+      )
+
+      $progEntropy.ColorScheme = $progColorScheme
     }
+  }
 
-    $UpperCase = @('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z')
-    $LowerCase = @('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z')
-    $Numbers   = @('1','2','3','4','5','6','7','8','9','0')
-    $Symbols   = @('!','@','$','?','<','>','*','&')
+  $dlg.Add($progEntropy)
 
-    $script:actualPassword = ""
+  ## Show Password checkbox
+  $chkShowPwd = [Terminal.Gui.CheckBox]::new(30,5,"Show Password",$false)
+  $dlg.Add($chkShowPwd)
 
-    # --- Generate-RandomPassworild UI ---
-    $dlg = [Terminal.Gui.Dialog]::new("Generate Random Password", 66, 14)
+  ## Buttons
+  $btnGenerate = [Terminal.Gui.Button]::new("Generate"); $btnGenerate.X=2; $btnGenerate.Y=10
+  $btnCopy     = [Terminal.Gui.Button]::new("Copy");     $btnCopy.X=15; $btnCopy.Y=10
+  $btnClose    = [Terminal.Gui.Button]::new("Close");    $btnClose.X=28; $btnClose.Y=10
+  $dlg.Add($btnGenerate, $btnCopy, $btnClose)
 
-    # 2x2 checkbox layout
-    $chkUpper = [Terminal.Gui.CheckBox]::new(2,1,"Include Uppercase (A-Z)", $true)
-    $chkLower = [Terminal.Gui.CheckBox]::new(30,1,"Include Lowercase (a-z)", $true)
-    $chkNums  = [Terminal.Gui.CheckBox]::new(2,3,"Include Numbers (0-9)", $true)
-    $chkSyms  = [Terminal.Gui.CheckBox]::new(30,3,"Include Symbols (!,@,$)", $true)
-    $dlg.Add($chkUpper, $chkLower, $chkNums, $chkSyms)
+  ## --- Generate Logic ---
+  $btnGenerate.add_Clicked({
+    $len = $txtLen.Text -as [int]
+    if (-not $len) { $len = 12 }
+      if ($len -lt 1 -or $len -gt 127) {
+        Show-Modal "Invalid Length" "Password length must be 1-127."
+        return
+      }
 
-    # Length input
-    $dlg.Add([Terminal.Gui.Label]::new(2,5,"Length (1-127):"))
-    $txtLen = New-Object Terminal.Gui.TextField
-    $txtLen.X = 18; $txtLen.Y = 5; $txtLen.Width = 6
-    $txtLen.Text = "12"
-    $dlg.Add($txtLen)
+      $pool = @()
+      if ($chkUpper.Checked) { $pool += $UpperCase }
+      if ($chkLower.Checked) { $pool += $LowerCase }
+      if ($chkNums.Checked)  { $pool += $Numbers }
+      if ($chkSyms.Checked)  { $pool += $Symbols }
 
-    # Password display box
-    $dlg.Add([Terminal.Gui.Label]::new(2,7,"Generated Password:"))
-    $txtPwd = New-Object Terminal.Gui.TextField
-    $txtPwd.X = 2; $txtPwd.Y = 8; $txtPwd.Width = 25
-    $txtPwd.Text = ""
-    $dlg.Add($txtPwd)
+      if ($pool.Count -eq 0) {
+        Show-Modal "No Character Types" "Select at least one character type."
+        return
+      }
 
-    # --- ENTROPY DISPLAY ---
-    $lblStrength = [Terminal.Gui.Label]::new(30,7,"Strength: Not generated")
-    $lblStrength.Width = 30
-    $dlg.Add($lblStrength)
+      $Script:actualPassword = -join (1..$len | ForEach-Object { $pool | Get-Random })
 
-    $progEntropy = [Terminal.Gui.ProgressBar]::new()
-    $progEntropy.X = 30; $progEntropy.Y = 8; $progEntropy.Width = 25
-    $progEntropy.Fraction = 0.0
-    $dlg.Add($progEntropy)
+      $entropy = Get-PasswordEntropy -poolSize $pool.Count -length $len
+      $strengthCategory = ""
+      $fraction = 0.0
+      if ($entropy -lt 40) { $strengthCategory="Weak"; $fraction=0.2 }
+      elseif ($entropy -lt 60) { $strengthCategory="Fair"; $fraction=0.4 }
+      elseif ($entropy -lt 80) { $strengthCategory="Good"; $fraction=0.6 }
+      elseif ($entropy -lt 100) { $strengthCategory="Strong"; $fraction=0.8 }
+      else { $strengthCategory="Very Strong"; $fraction=1.0 }
 
-    # Show Password checkbox
- $chkShowPwd = [Terminal.Gui.CheckBox]::new(30,5,"Show Password",$false)
- $dlg.Add($chkShowPwd)
-
-    # Buttons
-    $btnGenerate = [Terminal.Gui.Button]::new("Generate"); $btnGenerate.X=2; $btnGenerate.Y=10
-    $btnCopy     = [Terminal.Gui.Button]::new("Copy");     $btnCopy.X=15; $btnCopy.Y=10
-    $btnClose    = [Terminal.Gui.Button]::new("Close");    $btnClose.X=28; $btnClose.Y=10
-    $dlg.Add($btnGenerate, $btnCopy, $btnClose)
-
-    # --- Generate Logic ---
-    $btnGenerate.add_Clicked({
-        $len = $txtLen.Text -as [int]
-        if (-not $len) { $len = 12 }
-        if ($len -lt 1 -or $len -gt 127) {
-            Show-Modal "Invalid Length" "Password length must be 1-127."
-            return
-        }
-
-        $pool = @()
-        if ($chkUpper.Checked) { $pool += $UpperCase }
-        if ($chkLower.Checked) { $pool += $LowerCase }
-        if ($chkNums.Checked)  { $pool += $Numbers }
-        if ($chkSyms.Checked)  { $pool += $Symbols }
-
-        if ($pool.Count -eq 0) {
-            Show-Modal "No Character Types" "Select at least one character type."
-            return
-        }
-
-        $script:actualPassword = -join (1..$len | ForEach-Object { $pool | Get-Random })
-
-        # --- Entropy update ---
-        $entropy = Get-PasswordEntropy -poolSize $pool.Count -length $len
-        $strengthCategory = ""
-        $fraction = 0.0
-        if ($entropy -lt 40) { $strengthCategory="Weak"; $fraction=0.2 }
-        elseif ($entropy -lt 60) { $strengthCategory="Fair"; $fraction=0.4 }
-        elseif ($entropy -lt 80) { $strengthCategory="Good"; $fraction=0.6 }
-        elseif ($entropy -lt 100) { $strengthCategory="Strong"; $fraction=0.8 }
-        else { $strengthCategory="Very Strong"; $fraction=1.0 }
-
-        $lblStrength.Text = "Strength ($([int]$entropy) bits): $strengthCategory"
-        $progEntropy.Fraction = $fraction
-        # --- End Entropy update ---
+      $lblStrength.Text = "Strength ($([int]$entropy) bits): $strengthCategory"
+      $progEntropy.Fraction = $fraction
 
         if ($chkShowPwd.Checked) {
-            $txtPwd.Text = $script:actualPassword
+            $txtPwd.Text = $Script:actualPassword
         } else {
-            $txtPwd.Text = ('*' * $script:actualPassword.Length)
+            $txtPwd.Text = ('*' * $Script:actualPassword.Length)
         }
     })
 
     # --- Show Password toggle ---
     $chkShowPwd.add_Toggled({
         if ($chkShowPwd.Checked) {
-            $txtPwd.Text = $script:actualPassword
+            $txtPwd.Text = $Script:actualPassword
         } else {
-            $txtPwd.Text = ('*' * $script:actualPassword.Length)
+            $txtPwd.Text = ('*' * $Script:actualPassword.Length)
         }
     })
 
     # --- Copy to Clipboard ---
     $btnCopy.add_Clicked({
-        if (-not $script:actualPassword) { return }
-        if ($IsWindows) { Set-Clipboard -Value $script:actualPassword }
-        elseif ($IsMacOS) { $script:actualPassword | pbcopy }
-        else { $script:actualPassword | xsel --clipboard --input }
+        if (-not $Script:actualPassword) { return }
+        if ($IsWindows) { Set-Clipboard -Value $Script:actualPassword }
+        elseif ($IsMacOS) { $Script:actualPassword | pbcopy }
+        else { $Script:actualPassword | xsel --clipboard --input }
         Show-Modal "Copied" "Password copied to clipboard."
     })
 
@@ -2908,7 +3428,178 @@ function Generate-RandomPassword {
     $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
 
     [Terminal.Gui.Application]::Run($dlg)
-    return $script:actualPassword
+    return $Script:actualPassword
+}
+
+## Show LAPS Passwords
+function Show-LAPSSearchModal {
+    <#
+        Modal LAPS lookup UI
+        - Browse all LAPS-enabled computers
+        - Search by computer name
+        - Masked password with press-to-reveal
+        - Copy-to-clipboard (timeout currently DISABLED)
+        - Expiry warning highlighting
+        - DemoMode support
+
+        NOTE ON CLIPBOARD TIMEOUT:
+        --------------------------
+        Clipboard auto-clear is intentionally DISABLED for now.
+        To re-enable later, search for the section marked:
+            ### CLIPBOARD TIMEOUT (DISABLED) ###
+        and uncomment the timer block.
+    #>
+
+    # ---------------- Safety: AD availability ----------------
+    if (-not $Global:DemoMode) {
+        if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
+            Show-Modal -Title "LAPS Error" -Message "ActiveDirectory module not available." -Buttons @("OK")
+            return
+        }
+        Import-Module ActiveDirectory -ErrorAction Stop
+    }
+
+    # ---------------- Modal ----------------
+    $dialog = [Terminal.Gui.Dialog]::new("LAPS Password Lookup", 90, 26)
+
+    $lblSearch = [Terminal.Gui.Label]::new(1,1,"Computer name (blank = all):")
+    $dialog.Add($lblSearch)
+
+    $txtSearch = [Terminal.Gui.TextField]::new("")
+    $txtSearch.X = 1
+    $txtSearch.Y = 2
+    $txtSearch.Width = 40
+    $dialog.Add($txtSearch)
+
+    $lstComputers = [Terminal.Gui.ListView]::new()
+    $lstComputers.X = 1
+    $lstComputers.Y = 4
+    $lstComputers.Width = 86
+    $lstComputers.Height = 13
+    $dialog.Add($lstComputers)
+
+    $computers = @()
+
+    # ---------------- Data loader ----------------
+    $loadComputers = {
+        param($filter)
+
+        try {
+            if ($Global:DemoMode) {
+                # ---- Demo stub ----
+                $computers = @(
+                    [pscustomobject]@{
+                        Name = 'DEMO-PC-01'
+                        'msLAPS-AccountName' = 'Administrator'
+                        'msLAPS-Password' = 'DemoPassword!123'
+                        'msLAPS-PasswordExpirationTime' = (Get-Date).AddDays(5).ToFileTimeUtc()
+                    }
+                )
+            }
+            else {
+                if ([string]::IsNullOrWhiteSpace($filter)) {
+                    $computers = Get-ADComputer -Filter * -Properties msLAPS-Password,msLAPS-AccountName,msLAPS-PasswordExpirationTime |
+                        Where-Object { $_.'msLAPS-Password' }
+                }
+                else {
+                    $computers = Get-ADComputer -Filter "Name -like '*$filter*'" -Properties msLAPS-Password,msLAPS-AccountName,msLAPS-PasswordExpirationTime |
+                        Where-Object { $_.'msLAPS-Password' }
+                }
+            }
+
+            $lstComputers.SetSource($computers.Name)
+        }
+        catch {
+            Show-Modal -Title "Error" -Message $_.Exception.Message -Buttons @("OK")
+        }
+    }
+
+    & $loadComputers ""
+
+    # ---------------- Buttons ----------------
+    $btnSearch = [Terminal.Gui.Button]::new("Search")
+    $btnSearch.X = 45
+    $btnSearch.Y = 2
+    $btnSearch.Add_Clicked({ & $loadComputers $txtSearch.Text.ToString() })
+    $dialog.Add($btnSearch)
+
+    $btnView = [Terminal.Gui.Button]::new("View")
+    $btnView.X = 60
+    $btnView.Y = 18
+    $dialog.Add($btnView)
+
+    $btnClose = [Terminal.Gui.Button]::new("Close")
+    $btnClose.X = 72
+    $btnClose.Y = 18
+    $btnClose.Add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+    $dialog.Add($btnClose)
+
+    # ---------------- View handler ----------------
+    $btnView.Add_Clicked({
+        if ($lstComputers.SelectedItem -lt 0) { return }
+
+        $computer = $computers[$lstComputers.SelectedItem]
+        $expires = [DateTime]::FromFileTimeUtc($computer.'msLAPS-PasswordExpirationTime')
+        $daysLeft = ($expires - (Get-Date)).Days
+
+        # ---- Mask password ----
+        $masked = ('*' * ($computer.'msLAPS-Password'.Length))
+
+        $warn = if ($daysLeft -le 3) { "WARNING: Password expires in ${daysLeft} day(s)" } else { "Expires in ${daysLeft} days" }
+
+        $msg = @"
+Computer : ${computer.Name}
+
+LAPS User:
+${computer.'msLAPS-AccountName'}
+
+LAPS Password (masked):
+${masked}
+
+${warn}
+
+[Press Reveal to show password]
+"@
+
+        $detailDlg = [Terminal.Gui.Dialog]::new("LAPS Details", 70, 20)
+
+        $lbl = [Terminal.Gui.Label]::new(1,1,$msg)
+        $detailDlg.Add($lbl)
+
+        $btnReveal = [Terminal.Gui.Button]::new("Reveal")
+        $btnReveal.X = 1
+        $btnReveal.Y = 14
+        $detailDlg.Add($btnReveal)
+
+        $btnCopy = [Terminal.Gui.Button]::new("Copy Password")
+        $btnCopy.X = 12
+        $btnCopy.Y = 14
+        $detailDlg.Add($btnCopy)
+
+        $btnOk = [Terminal.Gui.Button]::new("OK")
+        $btnOk.X = 30
+        $btnOk.Y = 14
+        $btnOk.Add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+        $detailDlg.Add($btnOk)
+
+        $btnReveal.Add_Clicked({
+            $lbl.Text = $lbl.Text + "\n\nUNMASKED PASSWORD:\n${computer.'msLAPS-Password'}"
+        })
+
+        $btnCopy.Add_Clicked({
+            Set-Clipboard -Value $computer.'msLAPS-Password'
+
+            ### CLIPBOARD TIMEOUT (DISABLED) ###
+            # To re-enable later:
+            # Start-Job { Start-Sleep 15; Set-Clipboard -Value "" }
+
+            Show-Modal -Title "Clipboard" -Message "Password copied to clipboard." -Buttons @("OK")
+        })
+
+        [Terminal.Gui.Application]::Run($detailDlg)
+    })
+
+    [Terminal.Gui.Application]::Run($dialog)
 }
 
 function Update-UserObjectFromFields($user) {
@@ -2930,15 +3621,15 @@ function Update-UserObjectFromFields($user) {
     $user.Locked      = $chkLocked.Checked
 }
 
-# First, create the Apply-UserChanges function (put this before Show-UserPropertiesDialog):
+## First, create the Apply-UserChanges function (put this before Show-UserPropertiesDialog):
 
 function Apply-UserChanges {
     param($user, $fields)
-    
-    Debug-Log ("DEBUG: Applying changes for user: $($user.Name)") -Type "info"
-    
+
+    Debug-Log (": Applying changes for user: $($user.Name)") -Type "Info"
+
     try {
-        if ($Global:DemoMode) {
+        if ($Script:DemoMode) {
             # Update demo user object
             $user.Name = $fields.txtName.Text.ToString()
             $user.Description = $fields.txtDesc.Text.ToString()
@@ -2956,18 +3647,18 @@ function Apply-UserChanges {
             $user.Department = $fields.txtDept.Text.ToString()
             $user.Company = $fields.txtCompany.Text.ToString()
             $user.Manager = $fields.txtManager.Text.ToString()
-            
-            Debug-Log ("SUCCESS: User changes applied (demo mode)") -Type "info"
+
+            Debug-Log ("SUCCESS: User changes applied (demo mode)") -Type "Info"
             Show-Modal "Success" "Changes applied successfully (demo mode)"
-            
+
             # Rebuild tree to reflect changes
             [Terminal.Gui.Application]::MainLoop.Invoke({
-                Build-Tree -domain $Global:CurrentDomain
+                Build-Tree -domain $Script:CurrentDomain
                 if ($filterStatusLabel) {
-                    Update-FilterStatusLabel -label $Global:FilterStatusLabel
+                    Update-FilterStatusLabel -label $Script:FilterStatusLabel
                 }
             })
-            
+
         } else {
             # Production mode - use Set-ADUser
             $setParams = @{
@@ -2987,803 +3678,613 @@ function Apply-UserChanges {
                 Company = $fields.txtCompany.Text.ToString()
                 Manager = $fields.txtManager.Text.ToString()
             }
-            
+
             Set-ADUser @setParams -ErrorAction Stop
-            
+
             # Handle account status separately
             if ($fields.chkDisabled.Checked -and $user.Enabled) {
                 Disable-ADAccount -Identity $user.SamAccountName -ErrorAction Stop
             } elseif (-not $fields.chkDisabled.Checked -and -not $user.Enabled) {
                 Enable-ADAccount -Identity $user.SamAccountName -ErrorAction Stop
             }
-            
+
             if ($fields.chkLocked.Checked -eq $false -and $user.LockedOut) {
                 Unlock-ADAccount -Identity $user.SamAccountName -ErrorAction Stop
             }
-            
-            Debug-Log ("SUCCESS: User changes applied to AD") -Type "info"
+
+            Debug-Log ("SUCCESS: User changes applied to AD") -Type "Info"
             Show-Modal "Success" "Changes applied successfully"
-            
+
             # Reload AD data
-Refresh-Data -domain $Global:CurrentDomain
+Refresh-Data -domain $Script:CurrentDomain
             if ($filterStatusLabel) {
-                Update-FilterStatusLabel -label $Global:FilterStatusLabel
+                Update-FilterStatusLabel -label $Script:FilterStatusLabel
             }
         }
-        
-        $script:changesMade = $false
+
+        $Script:changesMade = $false
         return $true
-        
+
     } catch {
-        Debug-Log ("ERROR: Failed to apply changes: $($_.Exception.Message)") -Type "error"
+        Debug-Log (": Failed to apply changes: $($_.Exception.Message)") -Type "Warn"
         Show-Modal "Error" "Failed to apply changes:`n$($_.Exception.Message)"
         return $false
     }
 }
 
+# =====================================================
+# Global Helper Functions for Multi-Row Tab System
+# =====================================================
+
+# ---------------------- Select-TabGlobal Function ----------------------
+function Select-TabGlobal {
+    param(
+        $tab,
+        $contentHost
+    )
+
+    try {
+        if ($Script:IsInitializing) {
+            Debug-Log (": Skipping tab selection - still initializing") -Type "Info"
+            return
+        }
+
+        $tabText = if ($tab -and $tab.Text) { [System.Text.Encoding]::UTF8.GetString($tab.Text) } else { "null" }
+        Debug-Log (": Select-TabGlobal called for tab: $tabText") -Type "Info"
+
+        if (-not $tab) {
+            Debug-Log (": Tab is null, aborting") -Type "Warn"
+            return
+        }
+
+        if (-not $contentHost) {
+            Debug-Log (": ContentHost is null, aborting") -Type "Warn"
+            return
+        }
+
+        # Hide all tab views
+        if ($Script:AllTabs) {
+            foreach ($t in $Script:AllTabs) {
+                if ($t -and $t.View) {
+                    $t.View.Visible = $false
+                }
+            }
+        }
+
+        # Show selected tab view
+        if ($tab.View) {
+            $tab.View.Visible = $true
+            $Script:ActiveTab = $tab
+            Debug-Log (": Tab view set to visible for: $tabText") -Type "Info"
+        } else {
+            Debug-Log (": WARNING - Tab has no View property") -Type "Warn"
+            return
+        }
+
+        # Update visual selection in both rows
+        if ($Script:TabRows) {
+            foreach ($row in $Script:TabRows) {
+                if ($row) {
+                    $row.SelectedTab = $tab
+                }
+            }
+            Debug-Log (": Updated row selections") -Type "Info"
+        }
+
+        # Clear and add the selected tab's view to content host
+        $contentHost.RemoveAll()
+        $contentHost.Add($tab.View)
+        $contentHost.SetNeedsDisplay()
+        Debug-Log (": Added tab view to content host for: $tabText") -Type "Success"
+    } catch {
+        Debug-Log (": ERROR in Select-TabGlobal: $($_.Exception.Message)") -Type "Error"
+        throw
+    }
+}
+
+# ---------------------- Register-Tab Function ----------------------
+function Register-Tab {
+    param(
+        [Terminal.Gui.TabView+Tab]$Tab,
+        [int]$Row = 0,
+        $contentHost
+    )
+
+    try {
+        # Convert tab text to string properly
+        $tabText = if ($Tab.Text -is [byte[]]) {
+            [System.Text.Encoding]::UTF8.GetString($Tab.Text)
+        } elseif ($Tab.Text) {
+            $Tab.Text.ToString()
+        } else {
+            "Unknown"
+        }
+
+        Debug-Log (": Register-Tab starting for tab: $tabText, Row: $Row") -Type "Info"
+
+        # Pick which row to add the tab to
+        $targetRow = $Script:TabRows[$Row]
+
+        if ($null -eq $targetRow) {
+            throw "Target row $Row is null"
+        }
+
+        Debug-Log (": Target row found, adding tab") -Type "Info"
+
+        # Use AddTab method instead of Tabs.Add
+        $targetRow.AddTab($Tab, $false)  # false = don't select automatically
+
+        Debug-Log (": Tab added to row, updating global list") -Type "Info"
+
+        # Add to global tab list for navigation
+        $Script:AllTabs += $Tab
+
+        Debug-Log (": Tab added to global list, checking if first tab") -Type "Info"
+
+        # Don't auto-select during initialization - we'll do it manually after all tabs are registered
+        if (-not $Script:IsInitializing -and -not $Script:ActiveTab) {
+            Debug-Log (": First tab after initialization, selecting it") -Type "Info"
+            Select-TabGlobal -tab $Tab -contentHost $contentHost
+        }
+
+        Debug-Log (": Register-Tab completed for tab: $tabText") -Type "Success"
+    } catch {
+        Debug-Log (": ERROR in Register-Tab: $($_.Exception.Message) at line $($_.InvocationInfo.ScriptLineNumber)") -Type "Error"
+        throw
+    }
+}
+
+# =====================================================
+# Main Dialog Function
+# =====================================================
+
 function Show-UserPropertiesDialog {
     param($user)
 
-   # Safety checks
-    if (-not $user) { 
-        Debug-Log ("ERROR: User object is null") -Type "warn"
-        return 
-    }
-    
-    Debug-Log ("DEBUG: Show-UserPropertiesDialog starting for: $($user.Name)") -Type "info"
-
-    #    # Safety checks
-    #    if (-not $user) { Write-Error "User object is null"; return }
-    #    if (-not $Global:CurrentDomain) { $Global:CurrentDomain = "" }
-    #    if ($Global:DemoMode -and -not $Global:Users) { $Global:Users = @() }
-
-    # ----- Create buttons FIRST -----
-    $btnOK = [Terminal.Gui.Button]::new("OK")
-    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnApply = [Terminal.Gui.Button]::new("Apply")
-
-    # ----- Create dialog WITH buttons -----
-    $dlg = [Terminal.Gui.Dialog]::new("User Properties", 100, 40, $btnOK, $btnCancel, $btnApply)
-
-    # ----- TabView -----
-    $tabView = [Terminal.Gui.TabView]::new()
-    $tabView.X=0; $tabView.Y=0; $tabView.Width=[Terminal.Gui.Dim]::Fill(); $tabView.Height = [Terminal.Gui.Dim]::Fill(1)  # leave 1 line at bottom
-
-    # ==================== General Tab ====================
-    $generalTab = [Terminal.Gui.TabView+Tab]::new()
-    $generalTab.Text = "General"
-    $generalView = [Terminal.Gui.View]::new()
-
-    $y = 1
-    # Display Name
-    $lbl = [Terminal.Gui.Label]::new("Display Name:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtName = [Terminal.Gui.TextField]::new($user.Name ?? ""); $txtName.X=20; $txtName.Y=$y; $txtName.Width=70
-    $txtName.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtName)
-    $y+=2
-
-    # Description
-    $lbl = [Terminal.Gui.Label]::new("Description:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtDesc = [Terminal.Gui.TextField]::new($user.Description ?? ""); $txtDesc.X=20; $txtDesc.Y=$y; $txtDesc.Width=70
-    $txtDesc.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtDesc)
-    $y+=2
-
-    # Office
-    $lbl = [Terminal.Gui.Label]::new("Office:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtOffice = [Terminal.Gui.TextField]::new($user.Office ?? ""); $txtOffice.X=20; $txtOffice.Y=$y; $txtOffice.Width=70
-    $txtOffice.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtOffice)
-    $y+=2
-
-    # Telephone
-    Write-Debug "DEBUG: User Phone value='$($selUser.OfficePhone)'"
-    $lbl = [Terminal.Gui.Label]::new("Telephone:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtPhone = [Terminal.Gui.TextField]::new($user.OfficePhone ?? ""); $txtPhone.X=20; $txtPhone.Y=$y; $txtPhone.Width=70
-    $txtPhone.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtPhone)
-    $y+=2
-
-    # Mobile Phone
-    $lbl = [Terminal.Gui.Label]::new("Mobile Phone:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtMobile = [Terminal.Gui.TextField]::new($user.MobilePhone ?? ""); $txtMobile.X=20; $txtMobile.Y=$y; $txtMobile.Width=70
-    $txtMobile.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtMobile)
-    $y+=2
-
-    # E-mail 
-    Write-Debug "DEBUG: User Email value='$($selUser.EmailAddress)'"
-    $lbl = [Terminal.Gui.Label]::new("E-mail:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtEmail = [Terminal.Gui.TextField]::new($user.EmailAddress ?? ""); $txtEmail.X=20; $txtEmail.Y=$y; $txtEmail.Width=70
-    $txtEmail.add_TextChanged({ $script:changesMade = $true }); $generalView.Add($txtEmail)
-
-    $generalTab.View = $generalView
-    $tabView.AddTab($generalTab, $false)
-
-    # ==================== Account Tab ====================
-    $accountTab = [Terminal.Gui.TabView+Tab]::new()
-    $accountTab.Text = "Account"
-    $accountView = [Terminal.Gui.View]::new()
-
-    $y = 1
-    $lbl = [Terminal.Gui.Label]::new("User logon name:"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl)
-    $txtLogon = [Terminal.Gui.TextField]::new(($user.Name ?? "").ToLower().Replace(' ','.')); $txtLogon.X=20; $txtLogon.Y=$y; $txtLogon.Width=30
-    $accountView.Add($txtLogon)
-    $y+=2
-
-    $lbl = [Terminal.Gui.Label]::new("Account Status:"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl)
-    $statusText = if ($user.Locked) { "🔒 Locked" } elseif ($user.Disabled) { "⊗ Disabled" } else { "○ Enabled" }
-    $lblStatus = [Terminal.Gui.Label]::new($statusText); $lblStatus.X=20; $lblStatus.Y=$y; $accountView.Add($lblStatus)
-    $y+=2
-
-    $chkDisabled = [Terminal.Gui.CheckBox]::new("Account is disabled"); $chkDisabled.X=2; $chkDisabled.Y=$y
-    $chkDisabled.Checked = if ($user.Disabled -is [bool]) { $user.Disabled } else { $false }
-    $accountView.Add($chkDisabled)
-    $chkDisabled.add_Toggled({
-        if ($chkLocked.Checked) { $lblStatus.Text = "🔒 Locked" }
-        elseif ($chkDisabled.Checked) { $lblStatus.Text = "⊗ Disabled" }
-        else { $lblStatus.Text = "○ Enabled" }
-        $script:changesMade = $true
-    })
-    $y+=1
-
-    $chkLocked = [Terminal.Gui.CheckBox]::new("Account is locked"); $chkLocked.X=2; $chkLocked.Y=$y
-    $chkLocked.Checked = if ($user.Locked -is [bool]) { $user.Locked } else { $false }
-    $accountView.Add($chkLocked)
-    $chkLocked.add_Toggled({
-        if ($chkLocked.Checked) { $lblStatus.Text = "🔒 Locked" }
-        elseif ($chkDisabled.Checked) { $lblStatus.Text = "⊗ Disabled" }
-        else { $lblStatus.Text = "○ Enabled" }
-        $script:changesMade = $true
-    })
-    $y+=2
-
-    $chkPwdExpire = [Terminal.Gui.CheckBox]::new("Password never expires"); $chkPwdExpire.X=2; $chkPwdExpire.Y=$y; $chkPwdExpire.Checked=$false
-    $accountView.Add($chkPwdExpire)
-    $chkPwdExpire.add_Toggled({ $script:changesMade = $true })
-    $y+=2
-
-    $chkChangePwd = [Terminal.Gui.CheckBox]::new("User cannot change password"); $chkChangePwd.X=2; $chkChangePwd.Y=$y; $chkChangePwd.Checked=$false
-    $accountView.Add($chkChangePwd)
-    $chkChangePwd.add_Toggled({ $script:changesMade = $true })
-    $y+=2
-
-    $btnResetPwd = [Terminal.Gui.Button]::new("Reset Password..."); $btnResetPwd.X=2; $btnResetPwd.Y=$y; $accountView.Add($btnResetPwd)
-    $btnResetPwd.add_Clicked({
-        $newPwd = Generate-RandomPassword
-        if (-not $newPwd) { Show-Modal "Cancelled" "Password generation cancelled."; return }
-        $confirm = [Terminal.Gui.MessageBox]::Query(70, 10, "Apply Password", "Apply the following password to user:`n`n$($user.Name)`n`nPassword:`n$newPwd`n", "Apply", "Cancel" )
-        if ($confirm -ne 0) { Show-Modal "Cancelled" "Password reset cancelled."; return }
-        Write-Debug "DEBUG: Password reset for $($user.Name) to: $newPwd"
-        Show-Modal "Success" "Password reset (demo mode)."
-    })
-
-    $accountTab.View = $accountView
-    $tabView.AddTab($accountTab, $false)
-
-
-# ----- Address Tab -----
-$addressTab = [Terminal.Gui.TabView+Tab]::new()
-$addressTab.Text = "Address"
-$addressView = [Terminal.Gui.View]::new()
-
-$y = 1
-$lbl = [Terminal.Gui.Label]::new("Street:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtStreet = [Terminal.Gui.TextField]::new($User.StreetAddress); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
-$txtStreet.add_TextChanged({ $script:changesMade = $true })
-$addressView.Add($txtStreet)
-$y+=2
-
-$lbl = [Terminal.Gui.Label]::new("City:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtCity = [Terminal.Gui.TextField]::new($User.City); $txtCity.X=20; $txtCity.Y=$y; $txtCity.Width=70
-$txtCity.add_TextChanged({ $script:changesMade = $true })
-$addressView.Add($txtCity)
-$y+=2
-
-$lbl = [Terminal.Gui.Label]::new("Postal Code:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtPostal = [Terminal.Gui.TextField]::new($User.PostalCode); $txtPostal.X=20; $txtPostal.Y=$y; $txtPostal.Width=20
-$txtPostal.add_TextChanged({ $script:changesMade = $true })
-$addressView.Add($txtPostal)
-$y+=2
-
-$lbl = [Terminal.Gui.Label]::new("Country:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtCountry = [Terminal.Gui.TextField]::new($User.Country); $txtCountry.X=20; $txtCountry.Y=$y; $txtCountry.Width=70
-$txtCountry.add_TextChanged({ $script:changesMade = $true })
-$addressView.Add($txtCountry)
-
-$addressTab.View = $addressView
-$tabView.AddTab($addressTab, $false)
-
-# ----- Organization Tab -----
-$orgTab = [Terminal.Gui.TabView+Tab]::new()
-$orgTab.Text = "Organization"
-$orgView = [Terminal.Gui.View]::new()
-
-$y = 1
-$lbl = [Terminal.Gui.Label]::new("Title:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
-$txtTitle = [Terminal.Gui.TextField]::new($user.Title); $txtTitle.X=20; $txtTitle.Y=$y; $txtTitle.Width=70
-$txtTitle.add_TextChanged({ $script:changesMade = $true })
-$orgView.Add($txtTitle)
-$y+=2
-
-$lbl = [Terminal.Gui.Label]::new("Department:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
-$txtDept = [Terminal.Gui.TextField]::new($user.Department); $txtDept.X=20; $txtDept.Y=$y; $txtDept.Width=70
-$txtDept.add_TextChanged({ $script:changesMade = $true })
-$orgView.Add($txtDept)
-$y+=2
-
-$lbl = [Terminal.Gui.Label]::new("Company:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
-$txtCompany = [Terminal.Gui.TextField]::new($user.Company); $txtCompany.X=20; $txtCompany.Y=$y; $txtCompany.Width=70
-$txtCompany.add_TextChanged({ $script:changesMade = $true })
-$orgView.Add($txtCompany)
-$y+=2
-
-$lbl = [Terminal.Gui.Label]::new("Manager:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
-$txtManager = [Terminal.Gui.TextField]::new($user.Manager); $txtManager.X=20; $txtManager.Y=$y; $txtManager.Width=70
-$txtManager.add_TextChanged({ $script:changesMade = $true })
-$orgView.Add($txtManager)
-
-$orgTab.View = $orgView
-$tabView.AddTab($orgTab, $false)
-
-# ============================= Group Memebrship ==========================
-    # ----- Member Of Tab -----
-    $memberTab = [Terminal.Gui.TabView+Tab]::new()
-    $memberTab.Text = "Member Of"
-    $memberView = [Terminal.Gui.View]::new()
-    
-    # Load groups if not already loaded
-    if (-not $user.Groups) {
-        try {
-            if ($Global:DemoMode) {
-                # Already loaded in demo mode
-            } else {
-                $user.Groups = @(Get-ADPrincipalGroupMembership -Identity $user.Name | Select-Object -ExpandProperty Name)
-            }
-        } catch { $user.Groups=@() }
-    }
-    
-    $lbl = [Terminal.Gui.Label]::new("Member of the following groups:"); $lbl.X=2; $lbl.Y=1; $memberView.Add($lbl)
-    $lstGroups = [Terminal.Gui.ListView]::new($user.Groups)
-    $lstGroups.X=2; $lstGroups.Y=3; $lstGroups.Width=[Terminal.Gui.Dim]::Fill(2); $lstGroups.Height=[Terminal.Gui.Dim]::Fill(8)
-    $memberView.Add($lstGroups)
-
-         # Add/Remove buttons for group membership
-# Add button with FIXED scope handling
-$btnAddGroup = [Terminal.Gui.Button]::new("Add..."); $btnAddGroup.X=2; $btnAddGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
-$btnAddGroup.add_Clicked({
-    # Store reference in a variable that will be captured
-    $currentUser = $user
-    
-    Write-Debug "DEBUG: Add to group clicked for user: $($currentUser.Name)"
-    
-    # Get list of all available groups
-    if ($Global:DemoMode) {
-        $allGroups = @()
-        foreach ($u in $Global:Users) {
-            if ($u.ContainsKey('Groups') -and $u['Groups']) {
-                $allGroups += $u['Groups']
-            }
-        }
-        $availableGroups = $allGroups | Select-Object -Unique | Sort-Object
-    } else {
-        try {
-            $availableGroups = Get-ADGroup -Filter * | Select-Object -ExpandProperty Name | Sort-Object
-        } catch {
-            Show-Modal "Error" "Failed to retrieve groups"
-            return
-        }
-    }
-    
-    # Filter out current groups
-    $currentGroups = if ($currentUser['Groups']) { $currentUser['Groups'] } else { @() }
-    $groupsToAdd = $availableGroups | Where-Object { $currentGroups -notcontains $_ }
-    
-    Write-Debug "DEBUG: Available groups to add: $($groupsToAdd.Count)"
-    
-    if ($groupsToAdd.Count -eq 0) {
-      Show-Modal "No Groups" "User is already in all groups!"
+    # ---------------------- Safety Checks ----------------------
+    if (-not $user) {
+        Debug-Log ": User object is null" -Type "Warn"
         return
     }
-    
-    # Create dialog
-    $grpDlg = [Terminal.Gui.Dialog]::new("Add to Group - $($currentUser.Name)", 60, 20)
-    $lblGrp = [Terminal.Gui.Label]::new("Select group to add $($currentUser.Name) to:")
-    $lblGrp.X=2; $lblGrp.Y=1
-    $grpDlg.Add($lblGrp)
-    
-    $lstAvailGroups = [Terminal.Gui.ListView]::new()
-    $lstAvailGroups.SetSource($groupsToAdd)
-    $lstAvailGroups.X=2; $lstAvailGroups.Y=3
-    $lstAvailGroups.Width=[Terminal.Gui.Dim]::Fill(2)
-    $lstAvailGroups.Height=[Terminal.Gui.Dim]::Fill(2)
-    $grpDlg.Add($lstAvailGroups)
-    
-    # Reference to the groups ListView from parent scope
-    $parentGroupsList = $lstGroups
-    
-    $btnAddOK = [Terminal.Gui.Button]::new("Add")
-    $btnAddOK.add_Clicked({
-        Write-Debug "DEBUG: Add OK clicked, SelectedItem = $($lstAvailGroups.SelectedItem)"
-        Write-Debug "DEBUG: Current user in handler: '$($currentUser.Name)'"
-        
-        if ($lstAvailGroups.SelectedItem -eq -1) {
-            Show-Modal "No Selection" "Please select a group"
-            return
-        }
-        
-        if (-not $groupsToAdd -or $groupsToAdd.Count -eq 0) {
-            Debug-Log ("ERROR: groupsToAdd is null or empty") -Type "warn"
-            Show-Modal "Error" "No groups available"
-            return
-        }
-        
-        if ($lstAvailGroups.SelectedItem -ge $groupsToAdd.Count) {
-            Debug-Log ("ERROR: SelectedItem ($($lstAvailGroups.SelectedItem)) >= groupsToAdd.Count ($($groupsToAdd.Count))") -Type "error"
-            Show-Modal "Error" "Invalid selection index"
-            return
-        }
-        
-        $selectedGroup = $groupsToAdd[$lstAvailGroups.SelectedItem]
-        Write-Debug "DEBUG: Selected group: $selectedGroup"
-        
-        try {
-            if ($Global:DemoMode) {
-                # Initialize Groups if needed
-                if (-not $currentUser.ContainsKey('Groups') -or $null -eq $currentUser['Groups']) {
-                    Write-Debug "DEBUG: Initializing Groups array"
-                    $currentUser['Groups'] = @()
-                }
-                
-                # Ensure it's an array
-                if ($currentUser['Groups'] -isnot [array]) {
-                    Write-Debug "DEBUG: Converting Groups to array"
-                    $currentUser['Groups'] = @($currentUser['Groups'])
-                }
-                
-                # Add the group
-                Write-Debug "DEBUG: Current groups before add: $($currentUser['Groups'] -join ', ')"
-                $currentUser['Groups'] += $selectedGroup
-                $currentUser['Groups'] = $currentUser['Groups'] | Sort-Object -Unique
-                Write-Debug "DEBUG: Current groups after add: $($currentUser['Groups'] -join ', ')"
-      Write-Debug "DEBUG: User $($currentUser.Name) added to group $selectedGroup (demo mode)"
-                
-                # Close dialog first
-                [Terminal.Gui.Application]::RequestStop()
-                
-                # Then update UI with error handling
-                [Terminal.Gui.Application]::MainLoop.Invoke({
-                    try {
-                        Write-Debug "DEBUG: Updating parent groups list..."
-                        $parentGroupsList.SetSource($currentUser['Groups'])
-                        Write-Debug "DEBUG: Parent groups list updated"
-                        
-                        # Skip tree rebuild - will happen when properties dialog closes
-                        # Build-Tree -domain $Global:CurrentDomain
-                        
-                        Write-Debug "DEBUG: Updating filter status label..."
-                        if ($filterStatusLabel) {
-                            Update-FilterStatusLabel -label $Global:FilterStatusLabel
-                            Write-Debug "DEBUG: Filter status label updated"
-                        } else {
-                            Debug-Log ("WARNING: filterStatusLabel is null, skipping update") -Type "info"
-                        }
-                    } catch {
-                        Debug-Log ("ERROR in MainLoop.Invoke: $($_.Exception.Message)") -Type "error"
-                        Debug-Log ("ERROR: Stack trace: $($_.ScriptStackTrace)") -Type "error"
-                    }
-                })
-                
-                $script:changesMade = $true
-                
-                # Success message
-                Debug-Log ("SUCCESS: Added $($currentUser.Name) to group $selectedGroup") -Type "success"
+    Debug-Log ": Show-UserPropertiesDialog starting for: $($user.Name)" -Type "Info"
 
-                } else {
-                # Production mode
-                Add-ADGroupMember -Identity $selectedGroup -Members $currentUser.Name -ErrorAction Stop
-                
-                Write-Debug "DEBUG: User $($currentUser.Name) added to group $selectedGroup in AD"
-                
-                # Reload from AD
-                $currentUser['Groups'] = @(Get-ADPrincipalGroupMembership -Identity $currentUser.Name | Select-Object -ExpandProperty Name | Sort-Object)
-                
-                # Close dialog first
-                [Terminal.Gui.Application]::RequestStop()
-                
-                # Then update UI with error handling
-                [Terminal.Gui.Application]::MainLoop.Invoke({
-                    try {
-                        Write-Debug "DEBUG: Updating parent groups list..."
-                        $parentGroupsList.SetSource($currentUser['Groups'])
-                        Write-Debug "DEBUG: Parent groups list updated"
-                        
-                        Write-Debug "DEBUG: Rebuilding tree..."
-                        Build-Tree -domain $Global:CurrentDomain
-                        Write-Debug "DEBUG: Tree rebuilt"
-                        
-                        Write-Debug "DEBUG: Updating filter status label..."
-                        if ($filterStatusLabel) {
-                            Update-FilterStatusLabel -label $Global:FilterStatusLabel
-                            Write-Debug "DEBUG: Filter status label updated"
-                        } else {
-                            Debug-Log ("WARNING: filterStatusLabel is null, skipping update") -Type "warn"
-                        }
-                    } catch {
-                        Debug-Log ("ERROR in MainLoop.Invoke: $($_.Exception.Message)") -Type "error"
-                        Debug-Log ("ERROR: Stack trace: $($_.ScriptStackTrace)") -Type "error"
-                    }
-                })
-                
-                $script:changesMade = $true
-                
-                Debug-Log ("SUCCESS: Added $($currentUser.Name) to group $selectedGroup") -Type "success"
-            }
-       } catch {
-            Debug-Log ("ERROR: Failed to add to group: $($_.Exception.Message)") -Type "error"
-            Debug-Log ("ERROR: Exception type: $($_.Exception.GetType().FullName)") -Type "error"
-            Debug-Log ("ERROR: Stack trace: $($_.ScriptStackTrace)")  -Type "error"
-            Show-Modal "Error" "Failed to add to group:`n$($_.Exception.Message)"
-        }
-    }.GetNewClosure())
-    $grpDlg.AddButton($btnAddOK)
-    
-    $btnAddCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnAddCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-    $grpDlg.AddButton($btnAddCancel)
-    
-    $lstAvailGroups.add_OpenSelectedItem({ 
-        if ($btnAddOK) { 
-            $btnAddOK.OnClicked()
-        }
-    })
-    
-[Terminal.Gui.Application]::Run($grpDlg)
-}.GetNewClosure())
-$memberView.Add($btnAddGroup)
-   
-# Remove button
-$btnRemoveGroup = [Terminal.Gui.Button]::new("Remove")
-$btnRemoveGroup.X=[Terminal.Gui.Pos]::Right($btnAddGroup)+2
-$btnRemoveGroup.Y=[Terminal.Gui.Pos]::Bottom($lstGroups)+1
-$btnRemoveGroup.add_Clicked({
-    # Store reference in a variable that will be captured
-    $currentUser = $user
-    
-    Write-Debug "DEBUG: Remove from group clicked for user: $($currentUser.Name)"
-    
-    # Check if a group is selected
-    if ($lstGroups.SelectedItem -eq -1) {
-        Show-Modal "No Selection" "Please select a group to remove"
-        return
-    }
-    
-    # Verify user has groups
-    if (-not $currentUser.ContainsKey('Groups') -or -not $currentUser['Groups'] -or $currentUser['Groups'].Count -eq 0) {
-     Show-Modal "No Groups" "User is not a member of any groups"
-        return
-    }
-    
-    # Verify selected index is valid
-    if ($lstGroups.SelectedItem -ge $currentUser['Groups'].Count) {
-        Debug-Log ("ERROR: SelectedItem out of range") -Type "error"
-       Show-Modal "Error" "Invalid group selection"
-        return
-    }
-    
-    # Get the selected group
-    $selectedGroup = $currentUser['Groups'][$lstGroups.SelectedItem]
-    Write-Debug "DEBUG: Selected group to remove: $selectedGroup"
-    
-    # Confirm removal - FIXED: Store message first
-    $confirmMessage = "Remove $($currentUser.Name) from group '$selectedGroup'?"
-    
     try {
-        $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Confirm Removal", $confirmMessage, @("Yes", "No"))
-    } catch {
-        Debug-Log ("ERROR: MessageBox failed: $($_.Exception.Message)") -Type "error"
-        # Fall back to no confirmation, just do it
-        $result = 0
-    }
-    
-    if ($result -eq 0) {
-        Write-Debug "DEBUG: User confirmed removal"
-        
-        try {
-            if ($Global:DemoMode) {
-                # Demo mode: remove from array
-                Write-Debug "DEBUG: Current groups before remove: $($currentUser['Groups'] -join ', ')"
-                $currentUser['Groups'] = $currentUser['Groups'] | Where-Object { $_ -ne $selectedGroup }
-                Write-Debug "DEBUG: Current groups after remove: $($currentUser['Groups'] -join ', ')"
-                
-                Write-Debug "DEBUG: User $($currentUser.Name) removed from group $selectedGroup (demo mode)"
-                
-                # Update the groups list display
-                # Update the groups list display
-                [Terminal.Gui.Application]::MainLoop.Invoke({
-                    try {
-                        Write-Debug "DEBUG: Updating groups list..."
-                        $lstGroups.SetSource($currentUser['Groups'])
-                        $lstGroups.SetNeedsDisplay()
-                        $lstGroups.Redraw($lstGroups.Bounds)
-                        Write-Debug "DEBUG: Groups list updated"
-                    } catch {
-                        Debug-Log ("ERROR in MainLoop.Invoke: $($_.Exception.Message)") -Type "error"
-                    }
-                })                
-                $script:changesMade = $true
-                
-                Debug-Log ("SUCCESS: Removed $($currentUser.Name) from group $selectedGroup") -Type "error"
-                
-            } else {
-                # Production mode: remove from AD
-                Remove-ADGroupMember -Identity $selectedGroup -Members $currentUser.Name -Confirm:$false -ErrorAction Stop
-                
-                Write-Debug "DEBUG: User $($currentUser.Name) removed from group $selectedGroup in AD"
-                
-                # Reload group membership from AD
-                $currentUser['Groups'] = @(Get-ADPrincipalGroupMembership -Identity $currentUser.Name | Select-Object -ExpandProperty Name | Sort-Object)
-                
-                # Update the groups list display
-                [Terminal.Gui.Application]::MainLoop.Invoke({
-                    try {
-                        Write-Debug "DEBUG: Updating groups list..."
-                        $lstGroups.SetSource($currentUser['Groups'])
-                        $lstGroups.SetNeedsDisplay()
-                        $lstGroups.Redraw($lstGroups.Bounds)
-                        Write-Debug "DEBUG: Groups list updated"
-                    } catch {
-                        Debug-Log ("ERROR in MainLoop.Invoke: $($_.Exception.Message)") -Type "error"
-                    }
-                })
-                
-                $script:changesMade = $true
-                
-                Debug-Log ("SUCCESS: Removed $($currentUser.Name) from group $selectedGroup") -Type "success"
-            }
-            
-        } catch {
-            Debug-Log ("ERROR: Failed to remove from group: $($_.Exception.Message)") -Type "error"
-            Debug-Log ("ERROR: Stack trace: $($_.ScriptStackTrace)") -Type "error"
-             Show-Modal "Error" "Failed to remove from group:`n$($_.Exception.Message)"
-        }
-    } else {
-        Write-Debug "DEBUG: User cancelled removal"
-    }
-}.GetNewClosure())
-$memberView.Add($btnRemoveGroup)
-# Add the Member Of tab to the tabview
-$memberTab.View = $memberView
-$tabView.AddTab($memberTab, $false)    
+        # ---------------------- Buttons ----------------------
+        $btnOK = [Terminal.Gui.Button]::new("OK")
+        $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+        $btnApply = [Terminal.Gui.Button]::new("Apply")
 
-
-    # ==================== Search/Lookup Tab ====================
-
-# ----- Search/Lookup Filter Tab -----
-    $searchTab = [Terminal.Gui.TabView+Tab]::new()
-    $searchTab.Text = "Search/Lookup"
-    $searchView = [Terminal.Gui.View]::new()
-
-    $y = 1
-    $lblSearchDomain = [Terminal.Gui.Label]::new("Domain:"); $lblSearchDomain.X=2; $lblSearchDomain.Y=$y; $searchView.Add($lblSearchDomain)
-    $txtSearchDomain = [Terminal.Gui.TextField]::new($Global:CurrentDomain ?? ""); $txtSearchDomain.X=15; $txtSearchDomain.Y=$y; $txtSearchDomain.Width=30; $searchView.Add($txtSearchDomain)
-    $y+=2
-
-    $lblSearchName = [Terminal.Gui.Label]::new("Name:"); $lblSearchName.X=2; $lblSearchName.Y=$y; $searchView.Add($lblSearchName)
-    $txtSearchUser = [Terminal.Gui.TextField]::new($user.Name ?? ""); $txtSearchUser.X=15; $txtSearchUser.Y=$y; $txtSearchUser.Width=30; $searchView.Add($txtSearchUser)
-    $y+=2
-
-    $lblSearchType = [Terminal.Gui.Label]::new("Type:"); $lblSearchType.X=2; $lblSearchType.Y=$y; $searchView.Add($lblSearchType)
-    $cmbSearchType = [Terminal.Gui.ComboBox]::new(); $cmbSearchType.X=15; $cmbSearchType.Y=$y; $cmbSearchType.Width=20
-    $cmbSearchType.SetSource(@("User","Group","OU")); $cmbSearchType.SelectedItem = 0
-    $searchView.Add($cmbSearchType)
-    $y+=2
-
-    $lblSearchFilter = [Terminal.Gui.Label]::new("Filter Results:"); $lblSearchFilter.X=48; $lblSearchFilter.Y=1; $searchView.Add($lblSearchFilter)
-    $txtSearchFilter = [Terminal.Gui.TextField]::new(""); $txtSearchFilter.X=62; $txtSearchFilter.Y=1; $txtSearchFilter.Width=20; $searchView.Add($txtSearchFilter)
-
-    $txtSearchFilter.add_TextChanged({
-    if ($script:currentSearchOutputLines) {
-      $search = $txtSearchFilter.Text.ToString().Trim()
-      if ($search) {
-        $txtSearchOutput.Text = ($script:currentSearchOutputLines | Where-Object { $_ -match "(?i)$search" }) -join "`n"
-     } else {
-              $txtSearchOutput.Text = $script:currentSearchOutputLines -join "`n"
-          }
-      }
-  })
-
-
-    $lblSearchResult = [Terminal.Gui.Label]::new("Results:"); $lblSearchResult.X=2; $lblSearchResult.Y=$y; $searchView.Add($lblSearchResult)
-    $y+=1
-    $txtSearchOutput = [Terminal.Gui.TextView]::new(); $txtSearchOutput.X=2; $txtSearchOutput.Y=$y
-    $txtSearchOutput.Width=[Terminal.Gui.Dim]::Fill(2); $txtSearchOutput.Height=[Terminal.Gui.Dim]::Fill(4)
-    $txtSearchOutput.ReadOnly=$true; $txtSearchOutput.WordWrap=$false
-    $searchView.Add($txtSearchOutput)
-
-    $chkSearchLocked = [Terminal.Gui.CheckBox]::new("Account Locked"); $chkSearchLocked.X=2; $chkSearchLocked.Y=[Terminal.Gui.Pos]::Bottom($txtSearchOutput)+1
-    $chkSearchLocked.CanFocus=$true; $chkSearchLocked.Data=""; $searchView.Add($chkSearchLocked)
-
-    $chkSearchDisabled = [Terminal.Gui.CheckBox]::new("Account Disabled"); $chkSearchDisabled.X=2; $chkSearchDisabled.Y=[Terminal.Gui.Pos]::Bottom($chkSearchLocked)+1
-    $chkSearchDisabled.CanFocus=$true; $chkSearchDisabled.Data=""; $searchView.Add($chkSearchDisabled)
-
-    $btnDoSearch = [Terminal.Gui.Button]::new("Search"); $btnDoSearch.X=48; $btnDoSearch.Y=3; $searchView.Add($btnDoSearch)
-
-    # Helper function and remaining code unchanged...
-    function Get-UserOutputLines($userObj) { 
-        return @(
-            "Name                     : $($userObj.Name ?? '')",
-            "Email                    : $($userObj.Email ?? '')",
-            "Title                    : $($userObj.Title ?? '')",
-            "Department               : $($userObj.Department ?? '')",
-            "Office                   : $($userObj.Office ?? '')",
-            "Phone                    : $($userObj.Phone ?? '')",
-            "MobilePhone              : $($userObj.MobilePhone ?? '')",
-            "OU                       : $($userObj.OU ?? '')",
-            "Groups                   : $($userObj.Groups -join ', ')",
-            "Manager                  : $($userObj.Manager ?? '')",
-            "Company                  : $($userObj.Company ?? '')",
-            "Street                   : $($userObj.Street ?? '')",
-            "City                     : $($userObj.City ?? '')",
-            "PostalCode               : $($userObj.PostalCode ?? '')",
-            "Country                  : $($userObj.Country ?? '')",
-            "Disabled                 : $($userObj.Disabled)",
-            "Locked                   : $($userObj.Locked)",
-            "Description              : $($userObj.Description ?? '')"
-        )
-    }
-
-    $searchTab.View = $searchView
-    $tabView.AddTab($searchTab, $false)
-
-    # Auto-populate search results
-    [Terminal.Gui.Application]::MainLoop.Invoke({
-        if ($user) {
-            $txtSearchOutput.Text = (Get-UserOutputLines -userObj $user) -join "`n"
-            $script:currentSearchOutputLines = Get-UserOutputLines -userObj $user
-            $chkSearchLocked.Checked = [bool]($user.Locked)
-            $chkSearchLocked.Data = $user.Name
-            $chkSearchDisabled.Checked = [bool]($user.Disabled)
-            $chkSearchDisabled.Data    = $user.Name
-        }
-    })
-
-#####################################################################################################
-## placeholder menu items. Place tabs chronologically as to see them in order, 1.16
-## doesn't support any other type of ordering
-
-# ----- Profile -----
-$profileTab = [Terminal.Gui.TabView+Tab]::new()
-$profileTab.Text = "Proifle"
-$profileView = [Terminal.Gui.View]::new()
-
-$y = 1
-$lbl = [Terminal.Gui.Label]::new("Profile Dir:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
-$txtStreet.add_TextChanged({ $script:changesMade = $true })
-$addressView.Add($txtStreet)
-$y+=2
-
-$profileTab.View = $profileView
-$tabView.AddTab($profileTab, $false)
-
-# ----- Remote Desktop Services -----
-$RDPTab = [Terminal.Gui.TabView+Tab]::new()
-$RDPTab.Text = "Remote Desktop Services"
-$RDPView = [Terminal.Gui.View]::new()
-
-$y = 1
-$lbl = [Terminal.Gui.Label]::new("RDP Profile Dir:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
-$txtStreet.add_TextChanged({ $script:changesMade = $true })
-$addressView.Add($txtStreet)
-$y+=2
-
-$RDPTab.View = $RDPView
-$tabView.AddTab($RDPTab, $false)
-
-# ----- Sessions -----
-$SessionsTab = [Terminal.Gui.TabView+Tab]::new()
-$SessionsTab.Text = "Profile"
-$SessionsView = [Terminal.Gui.View]::new()
-
-$y = 1
-$lbl = [Terminal.Gui.Label]::new("Sessions:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
-$txtStreet = [Terminal.Gui.TextField]::new('Under Construction'); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
-$txtStreet.add_TextChanged({ $script:changesMade = $true })
-$addressView.Add($txtStreet)
-$y+=2
-
-$SessionsTab.View = $SessionsView
-$tabView.AddTab($SessionsTab, $false)
-
-
-#####################################################################################################
-
-    # ----- Add TabView to Dialog -----
-    $dlg.Add($tabView)
-
-# ----- Wire up button actions (DON'T add them again!) -----
-$btnOK.add_Clicked({
-    # Apply changes and close
-    if (Apply-UserChanges -user $user -fields $fields) {
-        [Terminal.Gui.Application]::RequestStop()
-    }
-}.GetNewClosure())
-
-$btnCancel.add_Clicked({
-    # Check if changes were made
-    if ($script:changesMade) {
-        $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Unsaved Changes", "You have unsaved changes. Discard them?",  @("Yes", "No"))
-        if ($result -eq 0) {
-            $script:changesMade = $false
+        # Button handlers
+        $btnOK.add_Clicked({
+            Debug-Log ": OK clicked" -Type "Info"
             [Terminal.Gui.Application]::RequestStop()
+        })
+
+        $btnCancel.add_Clicked({
+            Debug-Log ": Cancel clicked" -Type "Info"
+            [Terminal.Gui.Application]::RequestStop()
+        })
+
+        $btnApply.add_Clicked({
+            Debug-Log ": Apply clicked - changes would be saved here" -Type "Info"
+        })
+
+        # ---------------------- Dialog ----------------------
+        $dlg = [Terminal.Gui.Dialog]::new("User Properties - $($user.Name)", 100, 40, $btnOK, $btnCancel, $btnApply)
+
+        # ---------------------- Standard TabView ----------------------
+        $tabView = [Terminal.Gui.TabView]::new()
+        $tabView.X = 0
+        $tabView.Y = 0
+        $tabView.Width = [Terminal.Gui.Dim]::Fill()
+        $tabView.Height = [Terminal.Gui.Dim]::Fill(1)  # Leave room for buttons
+
+        # ==================== General Tab ====================
+        Debug-Log ": Creating General tab" -Type "Info"
+        $generalTab = [Terminal.Gui.TabView+Tab]::new()
+        $generalTab.Text = "General"
+        $generalView = [Terminal.Gui.View]::new()
+        $generalView.X = 0; $generalView.Y = 0
+        $generalView.Width = [Terminal.Gui.Dim]::Fill()
+        $generalView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        # Basic Info
+        $lbl = [Terminal.Gui.Label]::new("User Information"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Name:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtName = [Terminal.Gui.Label]::new($user.Name ?? ""); $txtName.X=20; $txtName.Y=$y
+        $generalView.Add($txtName); $y+=1
+
+        $lbl = [Terminal.Gui.Label]::new("Display Name:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtDisplayName = [Terminal.Gui.TextField]::new($user.DisplayName ?? ""); $txtDisplayName.X=20; $txtDisplayName.Y=$y; $txtDisplayName.Width=60
+        $generalView.Add($txtDisplayName); $y+=1
+
+        $lbl = [Terminal.Gui.Label]::new("Email:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $emailAddr = if ($user.EmailAddress) { $user.EmailAddress } elseif ($user.mail) { $user.mail } else { "" }
+        $txtEmail = [Terminal.Gui.TextField]::new($emailAddr); $txtEmail.X=20; $txtEmail.Y=$y; $txtEmail.Width=60
+        $generalView.Add($txtEmail); $y+=1
+
+        $lbl = [Terminal.Gui.Label]::new("Description:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtDescription = [Terminal.Gui.TextField]::new($user.Description ?? ""); $txtDescription.X=20; $txtDescription.Y=$y; $txtDescription.Width=60
+        $generalView.Add($txtDescription); $y+=2
+
+        # Phone numbers
+        $lbl = [Terminal.Gui.Label]::new("Contact Information"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Office:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtOfficePhone = [Terminal.Gui.TextField]::new($user.OfficePhone ?? ""); $txtOfficePhone.X=20; $txtOfficePhone.Y=$y; $txtOfficePhone.Width=30
+        $generalView.Add($txtOfficePhone); $y+=1
+
+        $lbl = [Terminal.Gui.Label]::new("Mobile:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtMobilePhone = [Terminal.Gui.TextField]::new($user.MobilePhone ?? ""); $txtMobilePhone.X=20; $txtMobilePhone.Y=$y; $txtMobilePhone.Width=30
+        $generalView.Add($txtMobilePhone); $y+=1
+
+        $generalTab.View = $generalView
+        $tabView.AddTab($generalTab, $false)
+
+        # ==================== Account Tab ====================
+        Debug-Log ": Creating Account tab" -Type "Info"
+        $accountTab = [Terminal.Gui.TabView+Tab]::new()
+        $accountTab.Text = "Account"
+        $accountView = [Terminal.Gui.View]::new()
+        $accountView.X = 0; $accountView.Y = 0
+        $accountView.Width = [Terminal.Gui.Dim]::Fill()
+        $accountView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        # Account Status
+        $lbl = [Terminal.Gui.Label]::new("Account Status"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
+
+        $isEnabled = if ($user.PSObject.Properties['Enabled']) { $user.Enabled } else { -not $user.Disabled }
+        $chkEnabled = [Terminal.Gui.CheckBox]::new("Account Enabled"); $chkEnabled.X=4; $chkEnabled.Y=$y; $chkEnabled.Checked=$isEnabled
+        $accountView.Add($chkEnabled); $y+=1
+
+        $isLocked = if ($user.PSObject.Properties['LockedOut']) { $user.LockedOut } else { $user.Locked ?? $false }
+        $chkLocked = [Terminal.Gui.CheckBox]::new("Account Locked"); $chkLocked.X=4; $chkLocked.Y=$y; $chkLocked.Checked=$isLocked; $chkLocked.Enabled=$false
+        $accountView.Add($chkLocked); $y+=2
+
+        # Password Settings
+        $lbl = [Terminal.Gui.Label]::new("Password Settings"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
+        $chkPasswordExpired = [Terminal.Gui.CheckBox]::new("Password Expired"); $chkPasswordExpired.X=4; $chkPasswordExpired.Y=$y; $chkPasswordExpired.Checked=($user.PasswordExpired??$false); $chkPasswordExpired.Enabled=$false
+        $accountView.Add($chkPasswordExpired); $y+=1
+
+        $chkMustChangePassword = [Terminal.Gui.CheckBox]::new("User must change password at next logon"); $chkMustChangePassword.X=4; $chkMustChangePassword.Y=$y
+        $chkMustChangePassword.Checked = if ($user.PasswordNeverExpires){$false}else{ if ($user.PSObject.Properties['pwdLastSet']){ $user.pwdLastSet -eq 0 } else { $false } }
+        $accountView.Add($chkMustChangePassword); $y+=1
+
+        $chkCannotChangePassword = [Terminal.Gui.CheckBox]::new("User cannot change password"); $chkCannotChangePassword.X=4; $chkCannotChangePassword.Y=$y; $chkCannotChangePassword.Checked=($user.CannotChangePassword??$false)
+        $accountView.Add($chkCannotChangePassword); $y+=1
+
+        $chkPasswordNeverExpires = [Terminal.Gui.CheckBox]::new("Password never expires"); $chkPasswordNeverExpires.X=4; $chkPasswordNeverExpires.Y=$y; $chkPasswordNeverExpires.Checked=($user.PasswordNeverExpires??$false)
+        $accountView.Add($chkPasswordNeverExpires); $y+=2
+
+        # Logon Information
+        $lbl = [Terminal.Gui.Label]::new("Logon Information"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
+        $lbl = [Terminal.Gui.Label]::new("Last logon: "+($user.LastLogonDate?.ToString('yyyy-MM-dd HH:mm') ?? 'Never')); $lbl.X=4; $lbl.Y=$y
+        $accountView.Add($lbl); $y+=1
+
+        if ($user.PSObject.Properties['PasswordLastSet'] -and $user.PasswordLastSet) {
+            $lbl = [Terminal.Gui.Label]::new("Password last set: "+$user.PasswordLastSet.ToString('yyyy-MM-dd HH:mm')); $lbl.X=4; $lbl.Y=$y
+            $accountView.Add($lbl); $y+=1
         }
-    } else {
-        [Terminal.Gui.Application]::RequestStop()
+
+        if ($user.PSObject.Properties['LogonCount'] -or $user.PSObject.Properties['logonCount']) {
+            $logonCount = if ($user.LogonCount) { $user.LogonCount } else { $user.logonCount }
+            $lbl = [Terminal.Gui.Label]::new("Logon count: $logonCount"); $lbl.X=4; $lbl.Y=$y
+            $accountView.Add($lbl); $y+=1
+        }
+
+        $accountTab.View = $accountView
+        $tabView.AddTab($accountTab, $false)
+
+        # ==================== Address Tab ====================
+        Debug-Log ": Creating Address tab" -Type "Info"
+        $addressTab = [Terminal.Gui.TabView+Tab]::new()
+        $addressTab.Text = "Address"
+        $addressView = [Terminal.Gui.View]::new()
+        $addressView.X = 0; $addressView.Y = 0
+        $addressView.Width = [Terminal.Gui.Dim]::Fill()
+        $addressView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Street:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
+        $txtStreet = [Terminal.Gui.TextField]::new($user.StreetAddress ?? ""); $txtStreet.X=20; $txtStreet.Y=$y; $txtStreet.Width=70
+        $addressView.Add($txtStreet); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("City:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
+        $txtCity = [Terminal.Gui.TextField]::new($user.City ?? ""); $txtCity.X=20; $txtCity.Y=$y; $txtCity.Width=70
+        $addressView.Add($txtCity); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Postal Code:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
+        $txtPostal = [Terminal.Gui.TextField]::new($user.PostalCode ?? ""); $txtPostal.X=20; $txtPostal.Y=$y; $txtPostal.Width=20
+        $addressView.Add($txtPostal); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Country:"); $lbl.X=2; $lbl.Y=$y; $addressView.Add($lbl)
+        $txtCountry = [Terminal.Gui.TextField]::new($user.Country ?? ""); $txtCountry.X=20; $txtCountry.Y=$y; $txtCountry.Width=70
+        $addressView.Add($txtCountry); $y+=1
+
+        $addressTab.View = $addressView
+        $tabView.AddTab($addressTab, $false)
+
+        # ==================== Profile Tab ====================
+        Debug-Log ": Creating Profile tab" -Type "Info"
+        $profileTab = [Terminal.Gui.TabView+Tab]::new()
+        $profileTab.Text = "Profile"
+        $profileView = [Terminal.Gui.View]::new()
+        $profileView.X = 0; $profileView.Y = 0
+        $profileView.Width = [Terminal.Gui.Dim]::Fill()
+        $profileView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("User Profile"); $lbl.X=2; $lbl.Y=$y; $profileView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Profile path:"); $lbl.X=4; $lbl.Y=$y; $profileView.Add($lbl)
+        $txtProfilePath = [Terminal.Gui.TextField]::new($user.ProfilePath ?? ""); $txtProfilePath.X=20; $txtProfilePath.Y=$y; $txtProfilePath.Width=70
+        $profileView.Add($txtProfilePath); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Logon script:"); $lbl.X=4; $lbl.Y=$y; $profileView.Add($lbl)
+        $txtLogonScript = [Terminal.Gui.TextField]::new($user.ScriptPath ?? ""); $txtLogonScript.X=20; $txtLogonScript.Y=$y; $txtLogonScript.Width=70
+        $profileView.Add($txtLogonScript); $y+=3
+
+        # Home Folder
+        $lbl = [Terminal.Gui.Label]::new("Home Folder"); $lbl.X=2; $lbl.Y=$y; $profileView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Home directory:"); $lbl.X=4; $lbl.Y=$y; $profileView.Add($lbl)
+        $txtHomeDirectory = [Terminal.Gui.TextField]::new($user.HomeDirectory ?? ""); $txtHomeDirectory.X=20; $txtHomeDirectory.Y=$y; $txtHomeDirectory.Width=70
+        $profileView.Add($txtHomeDirectory); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Home drive:"); $lbl.X=4; $lbl.Y=$y; $profileView.Add($lbl)
+        $txtHomeDrive = [Terminal.Gui.TextField]::new($user.HomeDrive ?? ""); $txtHomeDrive.X=20; $txtHomeDrive.Y=$y; $txtHomeDrive.Width=5
+        $profileView.Add($txtHomeDrive); $y+=1
+
+        $profileTab.View = $profileView
+        $tabView.AddTab($profileTab, $false)
+
+        # ==================== Organization Tab ====================
+        Debug-Log ": Creating Organization tab" -Type "Info"
+        $orgTab = [Terminal.Gui.TabView+Tab]::new()
+        $orgTab.Text = "Organization"
+        $orgView = [Terminal.Gui.View]::new()
+        $orgView.X = 0; $orgView.Y = 0
+        $orgView.Width = [Terminal.Gui.Dim]::Fill()
+        $orgView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Title:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
+        $txtTitle = [Terminal.Gui.TextField]::new($user.Title ?? ""); $txtTitle.X=20; $txtTitle.Y=$y; $txtTitle.Width=70
+        $orgView.Add($txtTitle); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Department:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
+        $txtDept = [Terminal.Gui.TextField]::new($user.Department ?? ""); $txtDept.X=20; $txtDept.Y=$y; $txtDept.Width=70
+        $orgView.Add($txtDept); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Company:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
+        $txtCompany = [Terminal.Gui.TextField]::new($user.Company ?? ""); $txtCompany.X=20; $txtCompany.Y=$y; $txtCompany.Width=70
+        $orgView.Add($txtCompany); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Manager:"); $lbl.X=2; $lbl.Y=$y; $orgView.Add($lbl)
+        $txtManager = [Terminal.Gui.TextField]::new($user.Manager ?? ""); $txtManager.X=20; $txtManager.Y=$y; $txtManager.Width=70
+        $orgView.Add($txtManager); $y+=1
+
+        $orgTab.View = $orgView
+        $tabView.AddTab($orgTab, $false)
+
+# ==================== Member Of Tab ====================
+Debug-Log ": Creating Member Of tab" -Type "Info"
+$memberTab = [Terminal.Gui.TabView+Tab]::new()
+$memberTab.Text = "Member Of"
+$memberView = [Terminal.Gui.View]::new()
+$memberView.X = 0; $memberView.Y = 0
+$memberView.Width = [Terminal.Gui.Dim]::Fill()
+$memberView.Height = [Terminal.Gui.Dim]::Fill(3)
+
+$y = 1
+$lbl = [Terminal.Gui.Label]::new("Group Memberships:"); $lbl.X=2; $lbl.Y=$y; $memberView.Add($lbl); $y+=2
+
+# Create ListView for groups
+$lstGroups = [Terminal.Gui.ListView]::new()
+$lstGroups.X = 2
+$lstGroups.Y = $y
+$lstGroups.Width = [Terminal.Gui.Dim]::Fill(2)
+$lstGroups.Height = 25  # Fixed height
+
+# Get group list
+$groupList = @()
+if ($user.Groups) {
+    $groupList = $user.Groups
+} elseif ($user.MemberOf) {
+    # Extract group names from DNs
+    $groupList = $user.MemberOf | ForEach-Object {
+        if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
     }
-}.GetNewClosure())
-
-$btnApply.add_Clicked({
-    # Apply changes but keep dialog open
-    Apply-UserChanges -user $user -fields $fields
-}.GetNewClosure())
-
-# Run the dialog (ONLY ONCE!)
-Debug-Log ("DEBUG: Show-UserPropertiesDialog running") -Type "info"
-[Terminal.Gui.Application]::Run($dlg)
-Debug-Log ("DEBUG: Show-UserPropertiesDialog completed") -Type "info"
 }
 
+if ($groupList.Count -gt 0) {
+    $lstGroups.SetSource($groupList)
+} else {
+    $lstGroups.SetSource(@("(No group memberships)"))
+}
+
+$memberView.Add($lstGroups)
+
+# Add to Group button
+$btnAdd = [Terminal.Gui.Button]::new("Add to Group...")
+$btnAdd.X = 2
+$btnAdd.Y = 28  # y(1) + label(1) + list(25) + gap(1)
+$btnAdd.add_Clicked({
+    Show-EditGroupMembershipDialog -User $user -OnUpdate {
+        Debug-Log ": Refreshing group list after add" -Type "Info"
+
+        # Re-extract the group list from the updated user object
+        $refreshedGroups = @()
+        if ($user.Groups) {
+            $refreshedGroups = $user.Groups
+        } elseif ($user.MemberOf) {
+            # Extract group names from DNs
+            $refreshedGroups = $user.MemberOf | ForEach-Object {
+                if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
+            }
+        }
+
+        # Update the ListView
+        if ($refreshedGroups.Count -gt 0) {
+            $lstGroups.SetSource($refreshedGroups)
+        } else {
+            $lstGroups.SetSource(@("(No group memberships)"))
+        }
+
+        # Also update the $groupList variable used by Remove button
+        $groupList = $refreshedGroups
+        Debug-Log ": Group list refreshed, now showing $($refreshedGroups.Count) groups" -Type "Success"
+    }
+})
+$memberView.Add($btnAdd)
+
+# Remove from Group button
+$btnRemove = [Terminal.Gui.Button]::new("Remove from Group")
+$btnRemove.X = 22
+$btnRemove.Y = 28
+$btnRemove.add_Clicked({
+    $selectedIndex = $lstGroups.SelectedItem
+
+    # Get current group list
+    $currentGroups = @()
+    if ($user.Groups) {
+        $currentGroups = $user.Groups
+    } elseif ($user.MemberOf) {
+        $currentGroups = $user.MemberOf | ForEach-Object {
+            if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
+        }
+    }
+
+    if ($selectedIndex -ge 0 -and $selectedIndex -lt $currentGroups.Count) {
+        $selectedGroup = $currentGroups[$selectedIndex]
+
+        # Don't allow removal from "(No group memberships)" placeholder
+        if ($selectedGroup -eq "(No group memberships)") {
+            Show-Modal "Info" "No group selected"
+            return
+        }
+
+        ## Confirm removal
+        $confirmDlg = [Terminal.Gui.MessageBox]::Query(60, 10, "Confirm Removal", "Remove $($user.Name) from group '$selectedGroup'?",  "Yes", "No")
+
+        if ($confirmDlg -eq 0) {  # Yes clicked
+            try {
+                if ($Script:DemoMode) {
+                    # Demo mode - just update the list
+                    $user.Groups = $user.Groups | Where-Object { $_ -ne $selectedGroup }
+                    Debug-Log ": Removed $($user.Name) from group $selectedGroup (demo mode)" -Type "Success"
+                } else {
+                    # Production mode
+                    Remove-ADGroupMember -Identity $selectedGroup -Members $user.SamAccountName -Confirm:$false
+                    Debug-Log ": Removed $($user.Name) from group $selectedGroup" -Type "Success"
+                }
+
+                # Refresh the list
+                $updatedGroups = @()
+                if ($user.Groups) {
+                    $updatedGroups = $user.Groups
+                } elseif ($user.MemberOf) {
+                    $updatedGroups = $user.MemberOf | Where-Object { $_ -ne $selectedGroup } | ForEach-Object {
+                        if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
+                    }
+                }
+
+                if ($updatedGroups.Count -gt 0) {
+                    $lstGroups.SetSource($updatedGroups)
+                } else {
+                    $lstGroups.SetSource(@("(No group memberships)"))
+                }
+
+                $groupList = $updatedGroups
+
+                Show-Modal "Success" "Successfully removed $($user.Name) from group '$selectedGroup'"
+
+            } catch {
+                Show-Modal "Error" "Failed to remove from group:`n$($_.Exception.Message)"
+                Debug-Log ": Failed to remove from group: $($_.Exception.Message)" -Type "Error"
+            }
+        }
+    } else {
+        Show-Modal "Info" "Please select a group to remove"
+    }
+})
+$memberView.Add($btnRemove)
+
+$memberTab.View = $memberView
+$tabView.AddTab($memberTab, $false)
+
+# Add TabView to dialog
+$dlg.Add($tabView)
+
+Debug-Log ": All tabs added, running dialog" -Type "Success"
+
+# Run the dialog
+[Terminal.Gui.Application]::Run($dlg)
+Debug-Log ": Dialog closed normally" -Type "Info"
+
+} catch {
+    Debug-Log ": Exception in Show-UserPropertiesDialog: $($_.Exception.Message)" -Type "Error"
+    Debug-Log ": Stack trace: $($_.ScriptStackTrace)" -Type "Error"
+    Show-Modal "Error" "Failed to display user properties:`n$($_.Exception.Message)"
+}
+}
 # DSA-TUI Object Management Module v1.0
 # Create, Delete, and Move AD Objects
 
 # ------------------------- Create New Object Wizard ------------------------
 function Show-NewObjectWizard {
     $dlg = [Terminal.Gui.Dialog]::new("New Object Wizard", 74, 30)
-    
+
     # Step 1: Select object type
     $lblType = [Terminal.Gui.Label]::new("Select object type to create:"); $lblType.X=2; $lblType.Y=1; $dlg.Add($lblType)
-    
+
     $rdoType = [Terminal.Gui.RadioGroup]::new(@("User", "Group", "Organizational Unit", "Computer", "Contact"))
     $rdoType.X=2; $rdoType.Y=3; $rdoType.Height=5
     $dlg.Add($rdoType)
-    
+
     # Common fields
     $y = 9
     $lblName = [Terminal.Gui.Label]::new("Name:"); $lblName.X=2; $lblName.Y=$y; $dlg.Add($lblName)
     $txtName = [Terminal.Gui.TextField]::new(""); $txtName.X=20; $txtName.Y=$y; $txtName.Width=45; $dlg.Add($txtName)
     $y+=2
-    
+
     $lblDisplayName = [Terminal.Gui.Label]::new("Display Name:"); $lblDisplayName.X=2; $lblDisplayName.Y=$y; $dlg.Add($lblDisplayName)
     $txtDisplayName = [Terminal.Gui.TextField]::new(""); $txtDisplayName.X=20; $txtDisplayName.Y=$y; $txtDisplayName.Width=45; $dlg.Add($txtDisplayName)
     $y+=2
-    
+
     $lblOU = [Terminal.Gui.Label]::new("Organizational Unit:"); $lblOU.X=2; $lblOU.Y=$y; $dlg.Add($lblOU)
-    
+
     # Get list of OUs
-    $ouList = if ($Global:DemoMode) {
-        $Global:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
+    $ouList = if ($Script:DemoMode) {
+        $Script:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
     } else {
         try {
-            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName | 
+            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName |
                 Select-Object -ExpandProperty DistinguishedName | Sort-Object
         } catch { @("CN=Users,DC=example,DC=com") }
     }
-    
+
     $cmbOU = [Terminal.Gui.ComboBox]::new()
     $cmbOU.X=20; $cmbOU.Y=$y; $cmbOU.Width=45
     $cmbOU.SetSource($ouList)
     $dlg.Add($cmbOU)
     $y+=2
-    
+
     # User-specific fields (shown/hidden based on type)
     $lblSam = [Terminal.Gui.Label]::new("Username (SAM):"); $lblSam.X=2; $lblSam.Y=$y; $dlg.Add($lblSam)
     $txtSam = [Terminal.Gui.TextField]::new(""); $txtSam.X=20; $txtSam.Y=$y; $txtSam.Width=45; $dlg.Add($txtSam)
     $y+=2
-    
+
     $lblEmail = [Terminal.Gui.Label]::new("Email:"); $lblEmail.X=2; $lblEmail.Y=$y; $dlg.Add($lblEmail)
     $txtEmail = [Terminal.Gui.TextField]::new(""); $txtEmail.X=20; $txtEmail.Y=$y; $txtEmail.Width=45; $dlg.Add($txtEmail)
     $y+=2
-    
+
     $lblPassword = [Terminal.Gui.Label]::new("Password:"); $lblPassword.X=2; $lblPassword.Y=$y; $dlg.Add($lblPassword)
     $txtPassword = [Terminal.Gui.TextField]::new(""); $txtPassword.X=20; $txtPassword.Y=$y; $txtPassword.Width=45; $txtPassword.Secret=$true; $dlg.Add($txtPassword)
-    
+
     # Show/hide fields based on type
     $rdoType.add_SelectedItemChanged({
         $isUser = $rdoType.SelectedItem -eq 0
@@ -3794,7 +4295,7 @@ function Show-NewObjectWizard {
         $lblPassword.Visible = $isUser
         $txtPassword.Visible = $isUser
     })
-    
+
     # Create button
     $btnCreate = [Terminal.Gui.Button]::new("Create")
     $btnCreate.add_Clicked({
@@ -3802,14 +4303,14 @@ function Show-NewObjectWizard {
         $name = $txtName.Text.ToString().Trim()
         $displayName = $txtDisplayName.Text.ToString().Trim()
         $ou = $cmbOU.Text.ToString()
-        
+
         if (-not $name) {
            Show-Modal "Error" "Name is required!"
             return
         }
-        
+
         try {
-if ($Global:DemoMode) {
+if ($Script:DemoMode) {
     # Demo mode - add to in-memory structures
     switch ($objType) {
         "User" {
@@ -3817,7 +4318,7 @@ if ($Global:DemoMode) {
             $email = $txtEmail.Text.ToString().Trim()
             if (-not $sam) { $sam = $name.ToLower().Replace(' ', '.') }
             if (-not $email) { $email = "$sam@example.com" }
-            
+
             # Add to RAW user data
             $newUser = @{
                 Name = $name
@@ -3840,17 +4341,17 @@ if ($Global:DemoMode) {
                 Manager = ""
                 Description = $displayName
             }
-            
+
             # Add to raw users array
-            $Global:rawUsers += $newUser
-            
-            # Reconvert to update $Global:Users with AD-like objects
-            $converted = Convert-DataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Groups $Global:rawDemoGroups -Domain $Global:CurrentDomain
-            $Global:Users = $converted.Users
-            
-            Debug-Log ("DEBUG: Created user $name in demo mode") -Type "info"
+            $Script:rawUsers += $newUser
+
+            # Reconvert to update $Script:Users with AD-like objects
+            $converted = Convert-DataToADObjects -Users $Script:rawUsers -DCs $Script:rawDCs -Groups $Script:rawDemoGroups -Domain $Script:CurrentDomain
+            $Script:Users = $converted.Users
+
+            Debug-Log (": Created user $name in demo mode") -Type "Info"
         }
-        
+
         "Group" {
             # Add to RAW group data
             $newGroup = @{
@@ -3861,62 +4362,62 @@ if ($Global:DemoMode) {
                 ManagedBy = ''
                 Email = ''
             }
-            
+
             # Add to raw groups array
-            $Global:rawDemoGroups += $newGroup
-            
-            # Reconvert to update $Global:Groups with AD-like objects
-            $converted = Convert-DataToADObjects -Users $Global:rawUsers -DCs $Global:rawDCs -Groups $Global:rawDemoGroups -Domain $Global:CurrentDomain
-            $Global:Groups = $converted.Groups
-            
-            Debug-Log ("DEBUG: Created group $name in demo mode") -Type "info"
+            $Script:rawDemoGroups += $newGroup
+
+            # Reconvert to update $Script:Groups with AD-like objects
+            $converted = Convert-DataToADObjects -Users $Script:rawUsers -DCs $Script:rawDCs -Groups $Script:rawDemoGroups -Domain $Script:CurrentDomain
+            $Script:Groups = $converted.Groups
+
+            Debug-Log (": Created group $name in demo mode") -Type "Info"
         }
-        
+
         "OrganizationalUnit" {
             # For OUs, we need to track them in a structure
             # OUs are built from the OU arrays in users, so we could either:
-            # 1. Add a $Global:rawOUs array (cleaner)
+            # 1. Add a $Script:rawOUs array (cleaner)
             # 2. Just ensure the OU path exists when we rebuild the tree
-            
+
             # For now, let's just ensure it's tracked
-            if (-not $Global:rawOUs) {
-                $Global:rawOUs = @()
+            if (-not $Script:rawOUs) {
+                $Script:rawOUs = @()
             }
-            
+
             $newOU = @{
                 Name = $name
                 Path = $ou
                 Description = $displayName
             }
-            
-            $Global:rawOUs += $newOU
-            
-            Debug-Log ("DEBUG: Created OU $name in demo mode") -Type "info"
+
+            $Script:rawOUs += $newOU
+
+            Debug-Log (": Created OU $name in demo mode") -Type "Info"
         }
-        
+
         "Computer" {
             # Similar to users, add to a computers array
-            if (-not $Global:rawComputers) {
-                $Global:rawComputers = @()
+            if (-not $Script:rawComputers) {
+                $Script:rawComputers = @()
             }
-            
+
             $newComputer = @{
                 Name = $name
                 OU = $ou
                 Description = $displayName
             }
-            
-            $Global:rawComputers += $newComputer
-            
-            Debug-Log ("DEBUG: Created computer $name in demo mode") -Type "info"
+
+            $Script:rawComputers += $newComputer
+
+            Debug-Log (": Created computer $name in demo mode") -Type "Info"
         }
     }
-    
+
     Show-Modal "Success" "$objType '$name' created successfully (demo mode)"
-    Build-Tree -domain $Global:CurrentDomain
-    Update-FilterStatusLabel -label $Global:FilterStatusLabel
+    Build-Tree -domain $Script:CurrentDomain
+    Update-FilterStatusLabel -label $Script:FilterStatusLabel
     [Terminal.Gui.Application]::RequestStop()
-    
+
             } else {
                 # Production mode - create in AD
                 switch ($objType) {
@@ -3924,34 +4425,34 @@ if ($Global:DemoMode) {
                         $sam = $txtSam.Text.ToString().Trim()
                         $email = $txtEmail.Text.ToString().Trim()
                         $pwd = $txtPassword.Text.ToString()
-                        
+
                         if (-not $sam) {
                             Show-Modal "Error" "Username (SAM) is required for users!"
                             return
                         }
-                        
+
                         if (-not $pwd) {
                             Show-Modal "Error" "Password is required for users!"
                             return
                         }
-                        
+
                         $secPwd = ConvertTo-SecureString -String $pwd -AsPlainText -Force
-                        
+
                         $params = @{
                             Name = $name
                             SamAccountName = $sam
-                            UserPrincipalName = "$sam@$($Global:CurrentDomain)"
+                            UserPrincipalName = "$sam@$($Script:CurrentDomain)"
                             AccountPassword = $secPwd
                             Enabled = $true
                             Path = $ou
                             ChangePasswordAtLogon = $true
                         }
-                        
+
                         if ($displayName) { $params['DisplayName'] = $displayName }
                         if ($email) { $params['EmailAddress'] = $email }
-                        
+
                         New-ADUser @params -ErrorAction Stop
-                        Debug-Log ("DEBUG: Created user $name in AD") -Type "info"
+                        Debug-Log (": Created user $name in AD") -Type "Info"
                     }
                     "Group" {
                         $params = @{
@@ -3960,31 +4461,31 @@ if ($Global:DemoMode) {
                             GroupCategory = "Security"
                             Path = $ou
                         }
-                        
+
                         if ($displayName) { $params['Description'] = $displayName }
-                        
+
                         New-ADGroup @params -ErrorAction Stop
-                        Debug-Log ("DEBUG: Created group $name in AD") -Type "info"
+                        Debug-Log (": Created group $name in AD") -Type "Info"
                     }
                     "OrganizationalUnit" {
                         $params = @{
                             Name = $name
                             Path = $ou
                         }
-                        
+
                         if ($displayName) { $params['Description'] = $displayName }
-                        
+
                         New-ADOrganizationalUnit @params -ErrorAction Stop
-                        Debug-Log ("DEBUG: Created OU $name in AD") -Type "info"
+                        Debug-Log (": Created OU $name in AD") -Type "Info"
                     }
                     "Computer" {
                         $params = @{
                             Name = $name
                             Path = $ou
                         }
-                        
+
                         New-ADComputer @params -ErrorAction Stop
-                        Debug-Log ("DEBUG: Created computer $name in AD") -Type "info"
+                        Debug-Log (": Created computer $name in AD") -Type "Info"
                     }
                     "Contact" {
                         $params = @{
@@ -3992,40 +4493,40 @@ if ($Global:DemoMode) {
                             Type = "Contact"
                             Path = $ou
                         }
-                        
+
                         if ($displayName) { $params['DisplayName'] = $displayName }
-                        
+
                         New-ADObject @params -ErrorAction Stop
-                        Debug-Log ("DEBUG: Created contact $name in AD") -Type "info"
+                        Debug-Log (": Created contact $name in AD") -Type "Info"
                     }
                 }
-                
+
                 Show-Modal "Success" "$objType '$name' created successfully"
-                
+
                 # Refresh data
-                Refresh-Data -domain $Global:CurrentDomain
-                Update-FilterStatusLabel -label $Global:FilterStatusLabel
+                Refresh-Data -domain $Script:CurrentDomain
+                Update-FilterStatusLabel -label $Script:FilterStatusLabel
                 [Terminal.Gui.Application]::RequestStop()
             }
-            
+
         } catch {
             $errMsg = $_.Exception.Message
             Show-Modal "Error" "Failed to create $objType`:`n$errMsg"
         }
     })
     $dlg.AddButton($btnCreate)
-    
+
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $dlg.AddButton($btnCancel)
-    
+
     [Terminal.Gui.Application]::Run($dlg)
 }
 
 # ------------------------- Delete Object ------------------------
 function Show-DeleteObjectDialog {
     param([string]$objectName, [string]$objectType)
-    
+
            # Remove prefixes and ALL leading non-alphanumeric characters
 # Remove prefixes like "(U) " or "(DC) "
 
@@ -4033,70 +4534,70 @@ function Show-DeleteObjectDialog {
     $objInfo = Get-CleanObjectInfo -treeText $objectName
     $cleanName = $objInfo.Name
 
-Debug-Log ("DEBUG: After removing prefix: '$cleanName'") -Type "info"
+Debug-Log (": After removing prefix: '$cleanName'") -Type "Info"
 
     # Extra confirmation for destructive action
-    $result = [Terminal.Gui.MessageBox]::Query(70, 11, "DELETE CONFIRMATION", 
-        "⚠️ WARNING: You are about to DELETE:`n`n  Type: $objectType`n  Name: $cleanName`n`nThis action CANNOT be undone!`n`nAre you absolutely sure?", 
+    $result = [Terminal.Gui.MessageBox]::Query(70, 11, "DELETE CONFIRMATION",
+        "⚠️ WARNING: You are about to DELETE:`n`n  Type: $objectType`n  Name: $cleanName`n`nThis action CANNOT be undone!`n`nAre you absolutely sure?",
         "Yes, DELETE", "No, Cancel")
-    
+
     if ($result -eq 0) {
         try {
-            if ($Global:DemoMode) {
+            if ($Script:DemoMode) {
                 # Demo mode - remove from in-memory structures
                 switch ($objectType.ToLower()) {
                     "user" {
-                        $Global:Users = $Global:Users | Where-Object { $_.Name -ne $cleanName }
-                        Debug-Log ("DEBUG: Deleted user $cleanName (demo mode)") -Type "info"
+                        $Script:Users = $Script:Users | Where-Object { $_.Name -ne $cleanName }
+                        Debug-Log (": Deleted user $cleanName (demo mode)") -Type "Info"
                     }
                     "group" {
                         # Remove group from all users
-                        foreach ($u in $Global:Users) {
+                        foreach ($u in $Script:Users) {
                             $u.Groups = $u.Groups | Where-Object { $_ -ne $cleanName }
                         }
-                        Debug-Log ("DEBUG: Deleted group $cleanName (demo mode)") -Type "info"
+                        Debug-Log (": Deleted group $cleanName (demo mode)") -Type "Info"
                     }
                     default {
-                        Debug-Log ("DEBUG: Deleted $objectType $cleanName (demo mode)") -Type "info"
+                        Debug-Log (": Deleted $objectType $cleanName (demo mode)") -Type "Info"
                     }
                 }
-                
+
                 Show-Modal "Deleted" "$objectType '$cleanName' deleted (demo mode)"
-                Build-Tree -domain $Global:CurrentDomain
-                Update-FilterStatusLabel -label $Global:FilterStatusLabel
-                
+                Build-Tree -domain $Script:CurrentDomain
+                Update-FilterStatusLabel -label $Script:FilterStatusLabel
+
             } else {
                 # Production mode - delete from AD
                 switch ($objectType.ToLower()) {
                     "user" {
                         Remove-ADUser -Identity $cleanName -Confirm:$false -ErrorAction Stop
-                        Debug-Log ("DEBUG: Deleted user $cleanName from AD") -Type "info"
+                        Debug-Log (": Deleted user $cleanName from AD") -Type "Info"
                     }
                     "group" {
                         Remove-ADGroup -Identity $cleanName -Confirm:$false -ErrorAction Stop
-                        Debug-Log ("DEBUG: Deleted group $cleanName from AD") -Type "info"
+                        Debug-Log (": Deleted group $cleanName from AD") -Type "Info"
                     }
                     "ou" {
                         Remove-ADOrganizationalUnit -Identity $cleanName -Confirm:$false -ErrorAction Stop
-                        Debug-Log ("DEBUG: Deleted OU $cleanName from AD") -Type "info"
+                        Debug-Log (": Deleted OU $cleanName from AD") -Type "Info"
                     }
                     "computer" {
                         Remove-ADComputer -Identity $cleanName -Confirm:$false -ErrorAction Stop
-                        Debug-Log ("DEBUG: Deleted computer $cleanName from AD") -Type "info"
+                        Debug-Log (": Deleted computer $cleanName from AD") -Type "Info"
                     }
                     default {
                         Remove-ADObject -Identity $cleanName -Confirm:$false -ErrorAction Stop
-                        Debug-Log ("DEBUG: Deleted $objectType $cleanName from AD") -Type "info"
+                        Debug-Log (": Deleted $objectType $cleanName from AD") -Type "Info"
                     }
                 }
-                
+
                 Show-Modal "Deleted" "$objectType '$cleanName' deleted successfully"
-                
+
                 # Refresh data
-                Refresh-Data -domain $Global:CurrentDomain
-                Update-FilterStatusLabel -label $Global:FilterStatusLabel
+                Refresh-Data -domain $Script:CurrentDomain
+                Update-FilterStatusLabel -label $Script:FilterStatusLabel
             }
-            
+
         } catch {
             $errMsg = $_.Exception.Message
            Show-Modal "Delete Failed" "Failed to delete $objectType`:`n$errMsg"
@@ -4107,89 +4608,89 @@ Debug-Log ("DEBUG: After removing prefix: '$cleanName'") -Type "info"
 # ------------------------- Move Object ------------------------
 function Show-MoveObjectDialog {
     param([string]$objectName, [string]$objectType)
-    
+
           # Parse the tree text to get clean name and type
           $objInfo = Get-CleanObjectInfo -treeText $objectName
           $cleanName = $objInfo.Name
-    
+
     $dlg = [Terminal.Gui.Dialog]::new("Move Object - $cleanName", 70, 18)
-    
+
     $lblCurrent = [Terminal.Gui.Label]::new("Current location:"); $lblCurrent.X=2; $lblCurrent.Y=1; $dlg.Add($lblCurrent)
-    
+
     # Get current OU
     $currentOU = "N/A"
     if ($objectType.ToLower() -eq "user") {
-        $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+        $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
         if ($user) { $currentOU = $user.OU }
     }
-    
+
     $lblCurrentOU = [Terminal.Gui.Label]::new($currentOU); $lblCurrentOU.X=20; $lblCurrentOU.Y=1; $dlg.Add($lblCurrentOU)
-    
+
     $lblTarget = [Terminal.Gui.Label]::new("Move to OU:"); $lblTarget.X=2; $lblTarget.Y=3; $dlg.Add($lblTarget)
-    
+
     # Get list of OUs
-    $ouList = if ($Global:DemoMode) {
-        $Global:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
+    $ouList = if ($Script:DemoMode) {
+        $Script:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
     } else {
         try {
-            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName | 
+            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName |
                 Select-Object -ExpandProperty DistinguishedName | Sort-Object
         } catch { @("CN=Users,DC=example,DC=com") }
     }
-    
+
     $lstOU = [Terminal.Gui.ListView]::new($ouList)
     $lstOU.X=2; $lstOU.Y=4; $lstOU.Width=[Terminal.Gui.Dim]::Fill(2); $lstOU.Height=8
     $dlg.Add($lstOU)
-    
+
     $btnMove = [Terminal.Gui.Button]::new("Move")
     $btnMove.add_Clicked({
         if ($lstOU.SelectedItem -lt 0) {
             Show-Modal "Error" "Please select a target OU"
             return
         }
-        
+
         $targetOU = $ouList[$lstOU.SelectedItem]
-        
+
         if ($targetOU -eq $currentOU) {
           Show-Modal "Error" "Object is already in that OU"
             return
         }
-        
-        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Move", 
-            "Move '$cleanName' to:`n$targetOU?", 
+
+        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Move",
+            "Move '$cleanName' to:`n$targetOU?",
             "Yes", "No")
-        
+
         if ($confirm -eq 0) {
             try {
-                if ($Global:DemoMode) {
+                if ($Script:DemoMode) {
                     # Demo mode - update in-memory
                     if ($objectType.ToLower() -eq "user") {
-                        $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+                        $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
                         if ($user) {
                             $user.OU = $targetOU
-                            Debug-Log ("DEBUG: Moved user $cleanName to $targetOU (demo mode)") -Type "info"
+                            Debug-Log (": Moved user $cleanName to $targetOU (demo mode)") -Type "Info"
                         }
                     }
-                    
+
                     Show-Modal "Success" "Object moved successfully (demo mode)"
-                    Build-Tree -domain $Global:CurrentDomain
-                    Update-FilterStatusLabel -label $Global:FilterStatusLabel
+                    Build-Tree -domain $Script:CurrentDomain
+                    Update-FilterStatusLabel -label $Script:FilterStatusLabel
                     [Terminal.Gui.Application]::RequestStop()
-                    
+
                 } else {
                     # Production mode - move in AD
                     $adObject = Get-ADObject -Filter "Name -eq '$cleanName'" -ErrorAction Stop
                     Move-ADObject -Identity $adObject.DistinguishedName -TargetPath $targetOU -ErrorAction Stop
-                    
-                    Debug-Log ("DEBUG: Moved $cleanName to $targetOU in AD") -Type "info"
+
+                    Debug-Log (": Moved $cleanName to $targetOU in AD") -Type "Info"
                    Show-Modal "Success" "Object moved successfully"
-                    
-                    # Refresh data                    
-                    Refresh-Data -domain $Global:CurrentDomain
-                    Update-FilterStatusLabel -label $Global:FilterStatusLabel
+
+                    # Refresh data
+                    Refresh-Data -domain $Script:CurrentDomain
+                    Update-FilterStatusLabel -label $Script:FilterStatusLabel
                     [Terminal.Gui.Application]::RequestStop()
                 }
-                
+
             } catch {
                 $errMsg = $_.Exception.Message
                 Show-Modal "Move Failed" "Failed to move object:`n$errMsg"
@@ -4197,34 +4698,84 @@ function Show-MoveObjectDialog {
         }
     })
     $dlg.AddButton($btnMove)
-    
+
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $dlg.AddButton($btnCancel)
-    
+
     [Terminal.Gui.Application]::Run($dlg)
 }
 
 # ------------------------- Change Domain Dialog ------------------------
 function Show-ChangeDomainDialog {
-    $dlg = [Terminal.Gui.Dialog]::new("Change Domain",50,12)
-    $dlg.Add([Terminal.Gui.Label]::new("Domain Name:")) | Out-Null
-    $txtDomain = [Terminal.Gui.TextField]::new($Global:CurrentDomain); $txtDomain.X=15; $txtDomain.Y=0
+    $dlg = [Terminal.Gui.Dialog]::new("Change Domain", 50, 8)
+
+    $lbl = [Terminal.Gui.Label]::new("Domain Name:")
+    $lbl.X = 2
+    $lbl.Y = 1
+    $dlg.Add($lbl)
+
+    $txtDomain = [Terminal.Gui.TextField]::new($Script:CurrentDomain)
+    $txtDomain.X = 15
+    $txtDomain.Y = 1
+    $txtDomain.Width = 30
     $dlg.Add($txtDomain)
-    $okBtn = [Terminal.Gui.Button]::new("OK"); $okBtn.X=10; $okBtn.Y=2
+
+    $okBtn = [Terminal.Gui.Button]::new("OK")
+    $okBtn.X = 10
+    $okBtn.Y = 4
     $okBtn.add_Clicked({
         $domainString = -join ($txtDomain.Text | ForEach-Object { [char]$_ })
-        Debug-Log ("DEBUG: OK pressed, Domain = $domainString") -Type "info"
-        $Global:CurrentDomain = $domainString
-        Refresh-Data -domain $Global:CurrentDomain
-        # Add after Build-Tree calls:
-        Update-FilterStatusLabel -label $Global:FilterStatusLabel
+        Debug-Log (": OK pressed, Domain = $domainString") -Type "Info"
+
+        # Close the dialog first
         [Terminal.Gui.Application]::RequestStop()
+
+        # Schedule the domain change after dialog closes
+        [Terminal.Gui.Application]::MainLoop.Invoke({
+            try {
+                Update-Status "Changing domain to $domainString..." -spinner
+                Start-Sleep -Milliseconds 100  # Brief pause so user sees the message
+
+                # Update the current domain
+                $Script:CurrentDomain = $domainString
+                Debug-Log (": CurrentDomain set to: $Script:CurrentDomain") -Type "Info"
+
+                # Refresh data with tree rebuild
+                Update-Status "Loading domain data..." -spinner
+                $result = Refresh-Data -domain $Script:CurrentDomain -RebuildTree
+
+                if ($result) {
+                    Debug-Log (": Domain change successful") -Type "Success"
+                    Update-Status "Domain changed to $domainString" -final
+
+                    # Update filter status if it exists
+                    if ($Script:FilterStatusLabel) {
+                        Update-FilterStatusLabel -label $Script:FilterStatusLabel
+                    }
+                } else {
+                    Debug-Log (": Domain change failed - Refresh-Data returned false") -Type "Error"
+                    Update-Status "Failed to load domain $domainString" -final
+                    Show-Modal "Error" "Failed to load domain '$domainString'`n`nCheck logs for details"
+                }
+            } catch {
+                Debug-Log (": Domain change error: $($_.Exception.Message)") -Type "Error"
+                Update-Status "Domain change error" -final
+                Show-Modal "Error" "Error changing domain:`n`n$($_.Exception.Message)"
+            }
+        })
     })
     $dlg.Add($okBtn)
-    $cancelBtn = [Terminal.Gui.Button]::new("Cancel"); $cancelBtn.X=20; $cancelBtn.Y=2
-    $cancelBtn.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+
+    $cancelBtn = [Terminal.Gui.Button]::new("Cancel")
+    $cancelBtn.X = 25
+    $cancelBtn.Y = 4
+    $cancelBtn.add_Clicked({
+        Debug-Log (": Cancel pressed") -Type "Info"
+        [Terminal.Gui.Application]::RequestStop()
+    })
     $dlg.Add($cancelBtn)
+
     [Terminal.Gui.Application]::Run($dlg)
 }
 
@@ -4232,12 +4783,12 @@ function Show-ChangeDomainDialog {
 function Show-ChangeDCDialog {
     $dlg = [Terminal.Gui.Dialog]::new("Change Domain Controller",50,12)
     $dlg.Add([Terminal.Gui.Label]::new("Select Domain Controller:")) | Out-Null
-    $dcNames = $Global:DCs | ForEach-Object { $_.Name }
+    $dcNames = $Script:DCs | ForEach-Object { $_.Name }
     $listView = [Terminal.Gui.ListView]::new($dcNames); $listView.X=0; $listView.Y=1; $listView.Width=48; $listView.Height=6
     $dlg.Add($listView)
     $okBtn = [Terminal.Gui.Button]::new("OK"); $okBtn.X=10; $okBtn.Y=8
     $okBtn.add_Clicked({
-        if ($listView.SelectedItem -ge 0) { $Global:CurrentDC = $dcNames[$listView.SelectedItem]; $status.Items[1].Title = "DC: $Global:CurrentDC" }
+        if ($listView.SelectedItem -ge 0) { $Script:CurrentDC = $dcNames[$listView.SelectedItem]; $status.Items[1].Title = "DC: $Script:CurrentDC" }
         [Terminal.Gui.Application]::RequestStop()
     })
     $dlg.Add($okBtn)
@@ -4249,43 +4800,42 @@ function Show-ChangeDCDialog {
 
 # ------------------------- Tree Expand/Collapse ------------------------
 ## Check tree exists first or it blows things up If we're initalising, it is created later
-if ($null -ne $Global:tree) {
+if ($null -ne $Script:tree) {
   ## backup will remove for prod code
   ##  $tree.add_KeyPress({ param($sender,$keyArgs) if ($keyArgs.KeyEvent.Key -eq [Terminal.Gui.Key]::Enter -and $tree.SelectedObject) { $tree.SelectedObject.Expanded = -not $tree.SelectedObject.Expanded; $tree.SetNeedsDisplay(); $keyArgs.Handled = $true } })
-  $Global:tree.Add_KeyPress({
+  $Script:tree.Add_KeyPress({
     param($sender, $keyArgs)
 
     if ($keyArgs.KeyEvent.Key -ne [Terminal.Gui.Key]::Enter) { return }
 
-    $node = $Global:tree.SelectedNode
+    $node = $Script:tree.SelectedNode
     if (-not $node) {
-        Debug-Log ("Enter pressed but no selected node — ignoring safely.") -Type "info"
+        Debug-Log ("Enter pressed but no selected node — ignoring safely.") -Type "Info"
         return
     }
 
     # Toggle expand/collapse properly
     if ($node.IsExpanded) {
-        $Global:tree.CollapseNode($node)
+        $Script:tree.CollapseNode($node)
     } else {
-        $Global:tree.ExpandNode($node)
+        $Script:tree.ExpandNode($node)
     }
 
-    $Global:tree.SetNeedsDisplay()
+    $Script:tree.SetNeedsDisplay()
     $keyArgs.Handled = $true
   })
 } else {
-    Debug-Log "Attempted to attach KeyPress handler but $Global:tree is null" -Type "warn"
+    Debug-Log "Attempted to attach KeyPress handler but $Script:tree is null" -Type "Warn"
 }
 
 
 # ------------------------- AD Search Dialog ------------------------
 # DSA-TUI Advanced Search Module v1.0
-# Replace the Show-ADSearchDialog function with this enhanced version
 # Features: LDAP filters, saved searches, export results
 
 # Global for saved searches
-if (-not $Global:SavedSearches) {
-    $Global:SavedSearches = @(
+if (-not $Script:SavedSearches) {
+    $Script:SavedSearches = @(
         @{Name="Disabled Users"; Filter="(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=2))"; Type="User"},
         @{Name="Users Never Logged In"; Filter="(&(objectClass=user)(!(lastLogon=*)))"; Type="User"},
         @{Name="Computers (Active)"; Filter="(&(objectClass=computer)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))"; Type="Computer"},
@@ -4297,611 +4847,1444 @@ if (-not $Global:SavedSearches) {
     )
 }
 
-function Show-ADSearchDialog {
-    $dlg = [Terminal.Gui.Dialog]::new("Advanced Search - Active Directory",90,33)
-    $dlg.X = 2; $dlg.Y = 02
+function Invoke-ADSearch {
+    param(
+        [Parameter(Mandatory=$true)] [Terminal.Gui.TextField] $UserField,
+        [Parameter(Mandatory=$true)] [Terminal.Gui.TextField] $DomainField,
+        [Parameter(Mandatory=$true)] [Terminal.Gui.ComboBox] $ObjType,
+        [Parameter(Mandatory=$true)] [Terminal.Gui.TabView] $TabView,
+        [Parameter(Mandatory=$true)] [Terminal.Gui.TextView] $TxtOutput,
+        [Parameter(Mandatory=$true)] [Terminal.Gui.CheckBox] $ChkDisabledOnly,
+        [Parameter(Mandatory=$true)] [Terminal.Gui.TextView] $LdapFilter,
+        [Parameter(Mandatory=$true)] [Terminal.Gui.TabView+Tab] $AdvTab,
+        # New parameters for clipboard buttons
+        [Parameter(Mandatory=$false)] [Terminal.Gui.Button] $BtnCopyQuery,
+        [Parameter(Mandatory=$false)] [Terminal.Gui.Button] $BtnPasteQuery,
+        [Parameter(Mandatory=$false)] [Terminal.Gui.Button] $BtnCopyResults
+    )
 
-    # Create TabView for Basic vs Advanced search
-    $tabView = [Terminal.Gui.TabView]::new()
-    $tabView.X = 0
-    $tabView.Y = 0
-    $tabView.Width = [Terminal.Gui.Dim]::Fill()
-    ## “Take ALL remaining vertical space, minus Fill(n) rows. In other words the larger this number, the smaller the modal”
-    ##$tabView.Height = [Terminal.Gui.Dim]::Fill(12)
-    $tabView.Height = 16
+    $searchName = $UserField.Text.ToString().Trim()
+    $domain = $DomainField.Text.ToString().Trim()
+    $objType = $ObjType.Text.ToString()
+    $currentTab = $TabView.SelectedTab
 
-    # Store search results globally so export can access them
-    $script:lastSearchResults = @()
-    $script:lastSearchType = ""
+    try {
+        $objs = @()
 
-    # ----- Basic Search Tab -----
-    $basicTab = [Terminal.Gui.TabView+Tab]::new()
-    $basicTab.Text = "Basic Search"
-    $basicView = [Terminal.Gui.View]::new()
+        if ($currentTab -eq $AdvTab) {
+            # LDAP filter search
+            $filter = $LdapFilter.Text.ToString().Trim()
+            if (-not $filter) { $TxtOutput.Text="Please enter an LDAP filter."; return }
 
-    ## --- Domain Label ---
-    $y = 1 
-    $lblDomain = [Terminal.Gui.Label]::new("Domain:")
-    $lblDomain.X = 2
-    $lblDomain.Y = $y
-    $basicView.Add($lblDomain)
-
-    ## Ensure domains is always an array
-    $domainList = @($Global:Domains)
-
-    ## --- Domain ComboBox ---
-    $comboDomain = [Terminal.Gui.ComboBox]::new()
-    $comboDomain.X = 10
-    $comboDomain.Y = $y
-    $comboDomain.Width = 35
-    $comboDomain.Height = 5  # enough room for dropdown
-    $comboDomain.ReadOnly = $true   # user must pick from list
-    $comboDomain.SetSource($domainList)
-
-    ## Preselect current domain if available
-    $initialIndex = $domainList.IndexOf($Global:CurrentDomain)
-    if ($initialIndex -ge 0) {
-      $comboDomain.SelectedItem = $initialIndex
-    }
-
-    $basicView.Add($comboDomain)
-
-    ## --- Hidden text field to store selection (if you still need it) ---
-    $txtDomain = [Terminal.Gui.TextField]::new($Global:CurrentDomain)
-    $txtDomain.Visible = $false  # not shown, just stores the value
-    $basicView.Add($txtDomain)
-
-    ## Update txtDomain whenever domain changes
-    $comboDomain.add_SelectedItemChanged({
-      param($args)
-      $selected = $comboDomain.Text
-      $txtDomain.Text = $selected
-    })
-    $y+=2
-
-    $lblName = [Terminal.Gui.Label]::new("Name:"); $lblName.X=2; $lblName.Y=$y; $basicView.Add($lblName)
-    $txtUser = [Terminal.Gui.TextField]::new(""); $txtUser.X=10; $txtUser.Y=$y; $txtUser.Width=35; $basicView.Add($txtUser)
-    $y+=2
-
-    $lblType = [Terminal.Gui.Label]::new("Type:"); $lblType.X=2; $lblType.Y=$y; $basicView.Add($lblType)
-    $cmbObjType = [Terminal.Gui.ComboBox]::new(); $cmbObjType.X=10; $cmbObjType.Y=$y; $cmbObjType.Width=20
-    $cmbObjType.SetSource(@("User","Group","Computer","OU","Contact"))
-    $basicView.Add($cmbObjType)
-    $y+=2
-
-    $chkDisabledOnly = [Terminal.Gui.CheckBox]::new("Disabled accounts only"); $chkDisabledOnly.X=2; $chkDisabledOnly.Y=$y
-    $basicView.Add($chkDisabledOnly)
-
-    $basicTab.View = $basicView
-    $tabView.AddTab($basicTab, $false)
-
-    # ----- Advanced Search Tab -----
-    $advTab = [Terminal.Gui.TabView+Tab]::new()
-    $advTab.Text = "Advanced (LDAP)"
-    $advView = [Terminal.Gui.View]::new()
-
-    $y = 1
-    $lblLdap = [Terminal.Gui.Label]::new("LDAP Filter:"); $lblLdap.X=2; $lblLdap.Y=$y; $advView.Add($lblLdap)
-    $y+=1
-    $txtLdapFilter = [Terminal.Gui.TextView]::new(); $txtLdapFilter.X=2; $txtLdapFilter.Y=$y; $txtLdapFilter.Width=[Terminal.Gui.Dim]::Fill(2); $txtLdapFilter.Height=4
-    $txtLdapFilter.Text = "(&(objectClass=user)(name=*))"
-    $advView.Add($txtLdapFilter)
-    $y+=5
-
-    $lblExamples = [Terminal.Gui.Label]::new("Examples:"); $lblExamples.X=2; $lblExamples.Y=$y; $advView.Add($lblExamples)
-    $y+=1
-    $lblEx1 = [Terminal.Gui.Label]::new("Disabled users: (&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=2))"); $lblEx1.X=2; $lblEx1.Y=$y; $advView.Add($lblEx1)
-    $y+=1
-    $lblEx2 = [Terminal.Gui.Label]::new("Users in OU: (&(objectClass=user)(ou=Sales))"); $lblEx2.X=2; $lblEx2.Y=$y; $advView.Add($lblEx2)
-    $y+=1
-    $lblEx3 = [Terminal.Gui.Label]::new("Groups with members: (&(objectClass=group)(member=*))"); $lblEx3.X=2; $lblEx3.Y=$y; $advView.Add($lblEx3)
-
-    $advTab.View = $advView
-    $tabView.AddTab($advTab, $false)
-
-    # ----- Saved Searches Tab -----
-    $savedTab = [Terminal.Gui.TabView+Tab]::new()
-    $savedTab.Text = "Saved Searches"
-    $savedView = [Terminal.Gui.View]::new()
-
-    $lblSaved = [Terminal.Gui.Label]::new("Select a saved search:"); $lblSaved.X=2; $lblSaved.Y=1; $savedView.Add($lblSaved)
-    $savedNames = $Global:SavedSearches | ForEach-Object { "$($_.Name) [$($_.Type)]" }
-    $lstSaved = [Terminal.Gui.ListView]::new($savedNames); $lstSaved.X=2; $lstSaved.Y=3; $lstSaved.Width=[Terminal.Gui.Dim]::Fill(2); $lstSaved.Height=[Terminal.Gui.Dim]::Fill(4)
-    $savedView.Add($lstSaved)
-
-    $btnLoadSaved = [Terminal.Gui.Button]::new("Load Filter"); $btnLoadSaved.X=2; $btnLoadSaved.Y=[Terminal.Gui.Pos]::Bottom($lstSaved)+1
-    $btnLoadSaved.add_Clicked({
-        if ($lstSaved.SelectedItem -ge 0) {
-            $selected = $Global:SavedSearches[$lstSaved.SelectedItem]
-            $txtLdapFilter.Text = $selected.Filter
-            $tabView.SelectedTab = $advTab
-            Show-Modal "Loaded" "Loaded filter: $($selected.Name)"
-        }
-    })
-    $savedView.Add($btnLoadSaved)
-
-    $btnSaveCurrent = [Terminal.Gui.Button]::new("Save Current"); $btnSaveCurrent.X=[Terminal.Gui.Pos]::Right($btnLoadSaved)+2; $btnSaveCurrent.Y=[Terminal.Gui.Pos]::Bottom($lstSaved)+1
-    $btnSaveCurrent.add_Clicked({
-        $filter = $txtLdapFilter.Text.ToString().Trim()
-        if ($filter) {
-            # Simple input dialog for name
-            $nameDlg = [Terminal.Gui.Dialog]::new("Save Search", 60, 10)
-            $lbl = [Terminal.Gui.Label]::new("Search Name:"); $lbl.X=2; $lbl.Y=1; $nameDlg.Add($lbl)
-            $txtName = [Terminal.Gui.TextField]::new("My Search"); $txtName.X=2; $txtName.Y=3; $txtName.Width=54; $nameDlg.Add($txtName)
-            $okBtn = [Terminal.Gui.Button]::new("OK")
-            $okBtn.add_Clicked({
-                $newName = $txtName.Text.ToString()
-                $Global:SavedSearches += @{Name=$newName; Filter=$filter; Type="Custom"}
-                Debug-Log ("DEBUG: Saved search '$newName'") -Type "info"
-                [Terminal.Gui.Application]::RequestStop()
-            })
-            $nameDlg.AddButton($okBtn)
-            $cancelBtn = [Terminal.Gui.Button]::new("Cancel")
-            $cancelBtn.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-            $nameDlg.AddButton($cancelBtn)
-            [Terminal.Gui.Application]::Run($nameDlg)
-            
-            # Refresh list
-            $savedNames = $Global:SavedSearches | ForEach-Object { "$($_.Name) [$($_.Type)]" }
-            $lstSaved.SetSource($savedNames)
-        }
-    })
-    $savedView.Add($btnSaveCurrent)
-
-    $savedTab.View = $savedView
-    $tabView.AddTab($savedTab, $false)
-
-    $dlg.Add($tabView)
-
-    # ----- Results Section (below tabs) -----
-    $lblResults = [Terminal.Gui.Label]::new("Results:"); $lblResults.X=2; $lblResults.Y=[Terminal.Gui.Pos]::Bottom($tabView)+1; $dlg.Add($lblResults)
-    $txtOutput = [Terminal.Gui.TextView]::new()
-    ## results dialog you can chneg sizes here
-    $txtOutput.X=2; $txtOutput.Y=[Terminal.Gui.Pos]::Bottom($lblResults); $txtOutput.Width=[Terminal.Gui.Dim]::Fill(2); $txtOutput.Height=10; $txtOutput.ReadOnly=$true
-    $dlg.Add($txtOutput)
-
-    # ----- Search Button -----
-    $btnSearch = [Terminal.Gui.Button]::new("Search"); $btnSearch.X=2; $btnSearch.Y=[Terminal.Gui.Pos]::Bottom($txtOutput)+1; $dlg.Add($btnSearch)
-    
-    $btnSearch.add_Clicked({
-        $searchName = $txtUser.Text.ToString().Trim()
-        $domain = $txtDomain.Text.ToString().Trim()
-        $objType = $cmbObjType.Text.ToString()
-        $currentTab = $tabView.SelectedTab
-
-        try {
-            $objs = @()
-
-            # Determine search mode
-            if ($currentTab -eq $advTab) {
-                # LDAP Filter search
-                $filter = $txtLdapFilter.Text.ToString().Trim()
-                if (-not $filter) { $txtOutput.Text="Please enter an LDAP filter."; return }
-                
-                if ($Global:DemoMode) {
-                    $txtOutput.Text="LDAP search not supported in demo mode. Use Basic search."
-                    return
-                } else {
-                    $loadingDlg = Show-LoadingDialog -Message "Executing LDAP query..."
-                    try {
-                        $objs = Get-ADObject -LDAPFilter $filter -Properties Name,ObjectClass,DistinguishedName -ErrorAction Stop |
-                            Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={$_.ObjectClass}}, @{Name='DN';Expression={$_.DistinguishedName}}
-                        $script:lastSearchType = "LDAP"
-                    } finally { Close-LoadingDialog $loadingDlg }
-                }
+            if ($Script:DemoMode) {
+                $TxtOutput.Text="LDAP search not supported in demo mode. Use Basic search."
+                return
             } else {
-                # Basic search
-                if (-not $searchName) { $txtOutput.Text="Please enter a name."; return }
-
-                if ($Global:DemoMode) {
-                    switch ($objType) {
-                        "User" { $objs = $Global:Users | Where-Object { $_.Name -like "*$searchName*" } | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"user"}} }
-                        "Group" { 
-                            $matchedGroups = @(); foreach ($u in $Global:Users) { foreach ($g in $u.Groups) { if ($g -like "*$searchName*") { $matchedGroups += $g } } }
-                            $objs = ($matchedGroups | Sort-Object -Unique) | ForEach-Object { [PSCustomObject]@{ Name=$_; Type="group" } }
-                        }
-                        "OU" {
-                            $ouNames = ($Global:Users | Select-Object -ExpandProperty OU -Unique)
-                            $objs = ($ouNames | Where-Object { $_ -like "*$searchName*" }) | ForEach-Object { [PSCustomObject]@{ Name=$_; Type="organizationalUnit" } }
-                        }
-                    }
-                    $script:lastSearchType = "Basic ($objType)"
-                } else {
-                    $loadingDlg = Show-LoadingDialog -Message "Searching AD for $objType '$searchName'..."
-                    try {
-                        $filterStr = "Name -like '*$searchName*'"
-                        if ($chkDisabledOnly.Checked -and $objType -eq "User") {
-                            $filterStr = "Name -like '*$searchName*' -and Enabled -eq `$false"
-                        }
-
-                        switch ($objType) {
-                            "User" { $objs = Get-ADUser -Filter $filterStr -Properties Enabled -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"user"}}, @{Name='Enabled';Expression={$_.Enabled}} }
-                            "Group" { $objs = Get-ADGroup -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"group"}} }
-                            "Computer" { $objs = Get-ADComputer -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"computer"}} }
-                            "OU" { $objs = Get-ADOrganizationalUnit -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"organizationalUnit"}} }
-                            "Contact" { $objs = Get-ADObject -Filter "ObjectClass -eq 'contact' -and Name -like '*$searchName*'" -Properties Name -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"contact"}} }
-                            default { $objs=@() }
-                        }
-                        $script:lastSearchType = "Basic ($objType)"
-                    } finally { Close-LoadingDialog $loadingDlg }
-                }
+                $loading = Show-LoadingDialog -Message "Executing LDAP query..."
+                try {
+                    $objs = Get-ADObject -LDAPFilter $filter -Properties Name,ObjectClass,DistinguishedName -ErrorAction Stop |
+                        Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={$_.ObjectClass}}, @{Name='DN';Expression={$_.DistinguishedName}}
+                    $Script:lastSearchType = "LDAP"
+                } finally { Close-LoadingDialog $loading }
             }
+        } else {
+            # Basic search
+            if (-not $searchName) { $TxtOutput.Text="Please enter a name."; return }
 
-            # Store results for export
-            $script:lastSearchResults = $objs
+            if ($Script:DemoMode) {
+                switch ($objType) {
+                    "User" { $objs = $Script:Users | Where-Object { $_.Name -like "*$searchName*" } | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"user"}} }
+                    "Group" {
+                        $matchedGroups = @(); foreach ($u in $Script:Users) { foreach ($g in $u.Groups) { if ($g -like "*$searchName*") { $matchedGroups += $g } } }
+                        $objs = ($matchedGroups | Sort-Object -Unique) | ForEach-Object { [PSCustomObject]@{ Name=$_; Type="group" } }
+                    }
+                    "OU" {
+                        $ouNames = ($Script:Users | Select-Object -ExpandProperty OU -Unique)
+                        $objs = ($ouNames | Where-Object { $_ -like "*$searchName*" }) | ForEach-Object { [PSCustomObject]@{ Name=$_; Type="organizationalUnit" } }
+                    }
+                    "Computer" { $objs = @() }
+                    "Contact" { $objs = @() }
+                }
+                $Script:lastSearchType = "Basic ($objType)"
+            } else {
+                $loading = Show-LoadingDialog -Message "Searching AD for $objType '$searchName'..."
+                try {
+                    $filterStr = "Name -like '*$searchName*'"
+                    if ($ChkDisabledOnly.Checked -and $objType -eq "User") {
+                        $filterStr = "Name -like '*$searchName*' -and Enabled -eq `$false"
+                    }
 
-            if (-not $objs -or $objs.Count -eq 0) { $txtOutput.Text = "No results found"; return }
-
-            # Display results
-            $resultText = "Found $($objs.Count) object(s):`n`n"
-            $resultText += ($objs | ForEach-Object { "$($_.Name) [$($_.Type)]" }) -join "`n"
-            $txtOutput.Text = $resultText
-
-        } catch {
-            $errMsg = $_.Exception.Message
-            $txtOutput.Text = "Error: $errMsg"
+                    switch ($objType) {
+                        "User" { $objs = Get-ADUser -Filter $filterStr -Properties Enabled -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"user"}}, @{Name='Enabled';Expression={$_.Enabled}} }
+                        "Group" { $objs = Get-ADGroup -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"group"}} }
+                        "Computer" { $objs = Get-ADComputer -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"computer"}} }
+                        "OU" { $objs = Get-ADOrganizationalUnit -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"organizationalUnit"}} }
+                        "Contact" { $objs = Get-ADObject -Filter "ObjectClass -eq 'contact' -and Name -like '*$searchName*'" -Properties Name -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"contact"}} }
+                        default { $objs=@() }
+                    }
+                    $Script:lastSearchType = "Basic ($objType)"
+                } finally { Close-LoadingDialog $loading }
+            }
         }
-    })
 
-    # ----- Export Button -----
-    $btnExport = [Terminal.Gui.Button]::new("Export..."); $btnExport.X=[Terminal.Gui.Pos]::Right($btnSearch)+2; $btnExport.Y=[Terminal.Gui.Pos]::Bottom($txtOutput)+1; $dlg.Add($btnExport)
-    
-    $btnExport.add_Clicked({
-        if ($script:lastSearchResults.Count -eq 0) {
-          Show-Modal "No Results" "No search results to export. Run a search first."
+        # Store results for export
+        $Script:lastSearchResults = $objs
+
+        if (-not $objs -or $objs.Count -eq 0) { $TxtOutput.Text = "No results found"; return }
+
+        # Display results
+        $resultText = "Found $($objs.Count) object(s):`n`n"
+        $resultText += ($objs | ForEach-Object { "$($_.Name) [$($_.Type)]" }) -join "`n"
+        $TxtOutput.Text = $resultText
+
+    } catch {
+        $TxtOutput.Text = "Error: $($_.Exception.Message)"
+    }
+}
+
+# =====================================================
+# Clipboard Helper Functions
+# =====================================================
+
+function Copy-LDAPQueryToClipboard {
+    param([Terminal.Gui.TextView] $LdapFilter)
+
+    try {
+        $query = $LdapFilter.Text.ToString().Trim()
+
+        if (-not $query) {
+            Show-Modal "Info" "No LDAP query to copy"
             return
         }
 
-        # Export format dialog
-        $exportDlg = [Terminal.Gui.Dialog]::new("Export Results", 60, 12)
-        $lbl = [Terminal.Gui.Label]::new("Export format:"); $lbl.X=2; $lbl.Y=1; $exportDlg.Add($lbl)
-        
-        $rdoCsv = [Terminal.Gui.RadioGroup]::new(@("CSV (Comma-Separated)", "Text (Tab-Separated)", "Text (List)"))
-        $rdoCsv.X=2; $rdoCsv.Y=3; $rdoCsv.SelectedItem=0; $exportDlg.Add($rdoCsv)
+        Set-Clipboard -Value $query
+        Debug-Log ": Copied LDAP query to clipboard" -Type "Success"
+        Show-Modal "Success" "LDAP query copied to clipboard"
 
-        $lblFile = [Terminal.Gui.Label]::new("Filename:"); $lblFile.X=2; $lblFile.Y=7; $exportDlg.Add($lblFile)
-        $txtFilename = [Terminal.Gui.TextField]::new("search_results.csv"); $txtFilename.X=12; $txtFilename.Y=7; $txtFilename.Width=40; $exportDlg.Add($txtFilename)
-
-        $okBtn = [Terminal.Gui.Button]::new("Export")
-        $okBtn.add_Clicked({
-            $filename = $txtFilename.Text.ToString()
-            $format = $rdoCsv.SelectedItem
-
-            try {
-                switch ($format) {
-                    0 { # CSV
-                        $script:lastSearchResults | Export-Csv -Path $filename -NoTypeInformation -ErrorAction Stop
-                    }
-                    1 { # Tab-separated
-                        $content = $script:lastSearchResults | ForEach-Object { "$($_.Name)`t$($_.Type)" }
-                        $content | Out-File -FilePath $filename -ErrorAction Stop
-                    }
-                    2 { # List
-                        $content = $script:lastSearchResults | ForEach-Object { "Name: $($_.Name)`nType: $($_.Type)`n" }
-                        $content | Out-File -FilePath $filename -ErrorAction Stop
-                    }
-                }
-                Debug-Log ("DEBUG: Exported $($script:lastSearchResults.Count) results to $filename") -Type "info"
-                Show-Modal "Success" "Exported $($script:lastSearchResults.Count) results to:`n$filename"
-                [Terminal.Gui.Application]::RequestStop()
-            } catch {
-                $errMsg = $_.Exception.Message
-               Show-Modal "Export Failed" "Failed to export:`n$errMsg"
-            }
-        })
-        $exportDlg.AddButton($okBtn)
-
-        $cancelBtn = [Terminal.Gui.Button]::new("Cancel")
-        $cancelBtn.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-        $exportDlg.AddButton($cancelBtn)
-
-        [Terminal.Gui.Application]::Run($exportDlg)
-    })
-
-    # ----- Clear Button -----
-    $btnClear = [Terminal.Gui.Button]::new("Clear"); $btnClear.X=[Terminal.Gui.Pos]::Right($btnExport)+2; $btnClear.Y=[Terminal.Gui.Pos]::Bottom($txtOutput)+1; $dlg.Add($btnClear)
-    $btnClear.add_Clicked({ $txtUser.Text=""; $txtOutput.Text=""; $script:lastSearchResults=@() })
-
-    # ----- Close Button -----
-    $btnClose = [Terminal.Gui.Button]::new("Close"); $btnClose.X=[Terminal.Gui.Pos]::Right($btnClear)+2; $btnClose.Y=[Terminal.Gui.Pos]::Bottom($txtOutput)+1; $dlg.Add($btnClose)
-    $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-
-    [Terminal.Gui.Application]::Run($dlg)
+    } catch {
+        Debug-Log ": Failed to copy to clipboard: $($_.Exception.Message)" -Type "Error"
+        Show-Modal "Error" "Failed to copy to clipboard:`n$($_.Exception.Message)"
+    }
 }
 
-# DSA-TUI Context Menu & Refresh Module v1.0
-# Add these functions to your main script
+function Paste-LDAPQueryFromClipboard {
+    param([Terminal.Gui.TextView] $LdapFilter)
 
-# ------------------------- Refresh Tree Function ------------------------
+    try {
+        $clipboardText = Get-Clipboard -Raw
+
+        if (-not $clipboardText) {
+            Show-Modal "Info" "Clipboard is empty"
+            return
+        }
+
+        $LdapFilter.Text = $clipboardText
+        Debug-Log ": Pasted LDAP query from clipboard" -Type "Success"
+        [Terminal.Gui.Application]::Refresh()
+
+    } catch {
+        Debug-Log ": Failed to paste from clipboard: $($_.Exception.Message)" -Type "Error"
+        Show-Modal "Error" "Failed to paste from clipboard:`n$($_.Exception.Message)"
+    }
+}
+
+function Copy-SearchResultsToClipboard {
+    param([Terminal.Gui.TextView] $TxtOutput)
+
+    try {
+        if (-not $Script:lastSearchResults -or $Script:lastSearchResults.Count -eq 0) {
+            Show-Modal "Info" "No search results to copy"
+            return
+        }
+
+        # Format results for clipboard
+        $clipboardText = "# AD Search Results - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n"
+        $clipboardText += "# Search Type: $($Script:lastSearchType)`n"
+        $clipboardText += "# Total Results: $($Script:lastSearchResults.Count)`n"
+        $clipboardText += "`n"
+
+        # Add results in multiple formats for flexibility
+
+        # Format 1: Simple list
+        $clipboardText += "=== SIMPLE LIST ===`n"
+        foreach ($obj in $Script:lastSearchResults) {
+            $clipboardText += "$($obj.Name) [$($obj.Type)]`n"
+        }
+
+        $clipboardText += "`n=== CSV FORMAT ===`n"
+        $clipboardText += "Name,Type"
+        if ($Script:lastSearchResults[0].PSObject.Properties['DN']) {
+            $clipboardText += ",DistinguishedName"
+        }
+        if ($Script:lastSearchResults[0].PSObject.Properties['Enabled']) {
+            $clipboardText += ",Enabled"
+        }
+        $clipboardText += "`n"
+
+        # Format 2: CSV
+        foreach ($obj in $Script:lastSearchResults) {
+            $clipboardText += "`"$($obj.Name)`",`"$($obj.Type)`""
+            if ($obj.PSObject.Properties['DN']) {
+                $clipboardText += ",`"$($obj.DN)`""
+            }
+            if ($obj.PSObject.Properties['Enabled']) {
+                $clipboardText += ",`"$($obj.Enabled)`""
+            }
+            $clipboardText += "`n"
+        }
+
+        # Format 3: PowerShell array (if useful)
+        $clipboardText += "`n=== POWERSHELL NAMES ===`n"
+        $clipboardText += "@(`n"
+        $names = $Script:lastSearchResults | ForEach-Object { "    `"$($_.Name)`"" }
+        $clipboardText += ($names -join ",`n")
+        $clipboardText += "`n)`n"
+
+        Set-Clipboard -Value $clipboardText
+        Debug-Log ": Copied $($Script:lastSearchResults.Count) search results to clipboard" -Type "Success"
+        Show-Modal "Success" "Copied $($Script:lastSearchResults.Count) results to clipboard`n`nFormats included:`n• Simple list`n• CSV`n• PowerShell array"
+
+    } catch {
+        Debug-Log ": Failed to copy results to clipboard: $($_.Exception.Message)" -Type "Error"
+        Show-Modal "Error" "Failed to copy results to clipboard:`n$($_.Exception.Message)"
+    }
+}
+
+## TODO: Implement this:
+# =====================================================
+# Example: How to Add Clipboard Buttons to Your UI
+# =====================================================
+
+<# In your Search/Lookup tab creation, add these buttons:
+
+# LDAP Filter section
+$lbl = [Terminal.Gui.Label]::new("LDAP Filter:"); $lbl.X=2; $lbl.Y=$y; $advView.Add($lbl); $y+=1
+$txtLdapFilter = [Terminal.Gui.TextView]::new(); $txtLdapFilter.X=2; $txtLdapFilter.Y=$y; $txtLdapFilter.Width=[Terminal.Gui.Dim]::Fill(2); $txtLdapFilter.Height=4
+$advView.Add($txtLdapFilter); $y+=5
+
+# Clipboard buttons for LDAP query
+$btnCopyQuery = [Terminal.Gui.Button]::new("Copy Query"); $btnCopyQuery.X=2; $btnCopyQuery.Y=$y
+$btnCopyQuery.add_Clicked({ Copy-LDAPQueryToClipboard -LdapFilter $txtLdapFilter })
+$advView.Add($btnCopyQuery)
+
+$btnPasteQuery = [Terminal.Gui.Button]::new("Paste Query"); $btnPasteQuery.X=18; $btnPasteQuery.Y=$y
+$btnPasteQuery.add_Clicked({ Paste-LDAPQueryFromClipboard -LdapFilter $txtLdapFilter })
+$advView.Add($btnPasteQuery)
+$y+=2
+
+# Search button
+$btnSearch = [Terminal.Gui.Button]::new("Search"); $btnSearch.X=2; $btnSearch.Y=$y
+$btnSearch.add_Clicked({
+    Invoke-ADSearch -UserField $txtSearchName -DomainField $txtSearchDomain -ObjType $cmbSearchType `
+                    -TabView $searchTabView -TxtOutput $txtSearchOutput -ChkDisabledOnly $chkDisabledOnly `
+                    -LdapFilter $txtLdapFilter -AdvTab $advTab
+})
+$advView.Add($btnSearch); $y+=3
+
+# Results section
+$lbl = [Terminal.Gui.Label]::new("Results:"); $lbl.X=2; $lbl.Y=$y; $advView.Add($lbl); $y+=1
+$txtSearchOutput = [Terminal.Gui.TextView]::new(); $txtSearchOutput.X=2; $txtSearchOutput.Y=$y
+$txtSearchOutput.Width=[Terminal.Gui.Dim]::Fill(2); $txtSearchOutput.Height=[Terminal.Gui.Dim]::Fill(4); $txtSearchOutput.ReadOnly=$true
+$advView.Add($txtSearchOutput); $y+=[Terminal.Gui.Dim]::Fill(3)
+
+# Copy results button
+$btnCopyResults = [Terminal.Gui.Button]::new("Copy Results to Clipboard"); $btnCopyResults.X=2; $btnCopyResults.Y=[Terminal.Gui.Pos]::Bottom($txtSearchOutput)+1
+$btnCopyResults.add_Clicked({ Copy-SearchResultsToClipboard -TxtOutput $txtSearchOutput })
+$advView.Add($btnCopyResults)
+#>
+
+# DSA-TUI Context Menu & Refresh Module v1.0
+
+function Show-ADSearchDialog {
+    <#
+    .SYNOPSIS
+    Displays an AD Search dialog with Basic and Advanced LDAP search capabilities
+
+    .DESCRIPTION
+    Creates a modal dialog for searching Active Directory with:
+    - Basic search (by name and object type)
+    - Advanced LDAP filter search
+    - Clipboard support for queries and results
+    - Export functionality
+    #>
+
+    Debug-Log ": Opening AD Search Dialog" -Type "Info"
+
+    try {
+        # ---------------------- Buttons ----------------------
+        $btnClose = [Terminal.Gui.Button]::new("Close")
+        $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+
+        # ---------------------- Dialog ----------------------
+        $dlg = [Terminal.Gui.Dialog]::new("Active Directory Search", 120, 40, $btnClose)
+
+        # ---------------------- TabView for Basic/Advanced ----------------------
+        $searchTabView = [Terminal.Gui.TabView]::new()
+        $searchTabView.X = 0
+        $searchTabView.Y = 0
+        $searchTabView.Width = [Terminal.Gui.Dim]::Fill()
+        $searchTabView.Height = [Terminal.Gui.Dim]::Fill(1)
+
+        # ==================== Basic Search Tab ====================
+        $basicTab = [Terminal.Gui.TabView+Tab]::new()
+        $basicTab.Text = "Basic Search"
+        $basicView = [Terminal.Gui.View]::new()
+        $basicView.X = 0; $basicView.Y = 0
+        $basicView.Width = [Terminal.Gui.Dim]::Fill()
+        $basicView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+
+        # Domain
+        $lbl = [Terminal.Gui.Label]::new("Domain:"); $lbl.X=2; $lbl.Y=$y; $basicView.Add($lbl)
+        $txtDomain = [Terminal.Gui.TextField]::new($Script:CurrentDomain ?? ""); $txtDomain.X=20; $txtDomain.Y=$y; $txtDomain.Width=40
+        $basicView.Add($txtDomain); $y+=2
+
+        # Search Name
+        $lbl = [Terminal.Gui.Label]::new("Name:"); $lbl.X=2; $lbl.Y=$y; $basicView.Add($lbl)
+        $txtSearchName = [Terminal.Gui.TextField]::new(""); $txtSearchName.X=20; $txtSearchName.Y=$y; $txtSearchName.Width=40
+        $basicView.Add($txtSearchName); $y+=2
+
+        # Object Type
+        $lbl = [Terminal.Gui.Label]::new("Object Type:"); $lbl.X=2; $lbl.Y=$y; $basicView.Add($lbl)
+        $cmbObjectType = [Terminal.Gui.ComboBox]::new(); $cmbObjectType.X=20; $cmbObjectType.Y=$y; $cmbObjectType.Width=20
+        $cmbObjectType.SetSource(@("User", "Group", "Computer", "OU", "Contact"))
+        $cmbObjectType.SelectedItem = 0
+        $basicView.Add($cmbObjectType); $y+=2
+
+        # Disabled only checkbox (for users)
+        $chkDisabledOnly = [Terminal.Gui.CheckBox]::new("Disabled accounts only"); $chkDisabledOnly.X=20; $chkDisabledOnly.Y=$y
+        $basicView.Add($chkDisabledOnly); $y+=2
+
+        # Search button
+        $btnSearch = [Terminal.Gui.Button]::new("Search"); $btnSearch.X=20; $btnSearch.Y=$y
+        $basicView.Add($btnSearch); $y+=3
+
+        # Results
+        $lbl = [Terminal.Gui.Label]::new("Results:"); $lbl.X=2; $lbl.Y=$y; $basicView.Add($lbl); $y+=1
+        $txtResults = [Terminal.Gui.TextView]::new()
+        $txtResults.X = 2
+        $txtResults.Y = $y
+        $txtResults.Width = [Terminal.Gui.Dim]::Fill(2)
+        $txtResults.Height = [Terminal.Gui.Dim]::Fill(3)
+        $txtResults.ReadOnly = $true
+        $basicView.Add($txtResults)
+
+        # Copy Results button
+        $btnCopyResults = [Terminal.Gui.Button]::new("Copy Results to Clipboard")
+        $btnCopyResults.X = 2
+        $btnCopyResults.Y = [Terminal.Gui.Pos]::Bottom($txtResults) + 1
+        $btnCopyResults.add_Clicked({ Copy-SearchResultsToClipboard -TxtOutput $txtResults })
+        $basicView.Add($btnCopyResults)
+
+        $basicTab.View = $basicView
+        $searchTabView.AddTab($basicTab, $false)
+
+        # ==================== Advanced LDAP Tab ====================
+        $advTab = [Terminal.Gui.TabView+Tab]::new()
+        $advTab.Text = "Advanced (LDAP)"
+        $advView = [Terminal.Gui.View]::new()
+        $advView.X = 0; $advView.Y = 0
+        $advView.Width = [Terminal.Gui.Dim]::Fill()
+        $advView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+
+        # Domain
+        $lbl = [Terminal.Gui.Label]::new("Domain:"); $lbl.X=2; $lbl.Y=$y; $advView.Add($lbl)
+        $txtDomainAdv = [Terminal.Gui.TextField]::new($Script:CurrentDomain ?? ""); $txtDomainAdv.X=20; $txtDomainAdv.Y=$y; $txtDomainAdv.Width=40
+        $advView.Add($txtDomainAdv); $y+=2
+
+        # LDAP Filter
+        $lbl = [Terminal.Gui.Label]::new("LDAP Filter:"); $lbl.X=2; $lbl.Y=$y; $advView.Add($lbl); $y+=1
+
+        # Example filters label
+        $lblExamples = [Terminal.Gui.Label]::new("Examples: (&(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))");
+        $lblExamples.X=2; $lblExamples.Y=$y; $lblExamples.ColorScheme = [Terminal.Gui.Colors]::TopLevel
+        $advView.Add($lblExamples); $y+=1
+
+        $txtLdapFilter = [Terminal.Gui.TextView]::new()
+        $txtLdapFilter.X = 2
+        $txtLdapFilter.Y = $y
+        $txtLdapFilter.Width = [Terminal.Gui.Dim]::Fill(2)
+        $txtLdapFilter.Height = 5
+        $advView.Add($txtLdapFilter); $y+=6
+
+        # Clipboard buttons for LDAP query
+        $btnCopyQuery = [Terminal.Gui.Button]::new("Copy Query"); $btnCopyQuery.X=2; $btnCopyQuery.Y=$y
+        $btnCopyQuery.add_Clicked({ Copy-LDAPQueryToClipboard -LdapFilter $txtLdapFilter })
+        $advView.Add($btnCopyQuery)
+
+        $btnPasteQuery = [Terminal.Gui.Button]::new("Paste Query"); $btnPasteQuery.X=18; $btnPasteQuery.Y=$y
+        $btnPasteQuery.add_Clicked({ Paste-LDAPQueryFromClipboard -LdapFilter $txtLdapFilter })
+        $advView.Add($btnPasteQuery); $y+=2
+
+        # Search button
+        $btnSearchAdv = [Terminal.Gui.Button]::new("Execute LDAP Query"); $btnSearchAdv.X=2; $btnSearchAdv.Y=$y
+        $advView.Add($btnSearchAdv); $y+=3
+
+        # Results
+        $lbl = [Terminal.Gui.Label]::new("Results:"); $lbl.X=2; $lbl.Y=$y; $advView.Add($lbl); $y+=1
+        $txtResultsAdv = [Terminal.Gui.TextView]::new()
+        $txtResultsAdv.X = 2
+        $txtResultsAdv.Y = $y
+        $txtResultsAdv.Width = [Terminal.Gui.Dim]::Fill(2)
+        $txtResultsAdv.Height = [Terminal.Gui.Dim]::Fill(3)
+        $txtResultsAdv.ReadOnly = $true
+        $advView.Add($txtResultsAdv)
+
+        # Copy Results button
+        $btnCopyResultsAdv = [Terminal.Gui.Button]::new("Copy Results to Clipboard")
+        $btnCopyResultsAdv.X = 2
+        $btnCopyResultsAdv.Y = [Terminal.Gui.Pos]::Bottom($txtResultsAdv) + 1
+        $btnCopyResultsAdv.add_Clicked({ Copy-SearchResultsToClipboard -TxtOutput $txtResultsAdv })
+        $advView.Add($btnCopyResultsAdv)
+
+        $advTab.View = $advView
+        $searchTabView.AddTab($advTab, $false)
+
+        # ==================== Wire up Search Buttons ====================
+
+        # Basic Search
+        $btnSearch.add_Clicked({
+            Invoke-ADSearch -UserField $txtSearchName -DomainField $txtDomain -ObjType $cmbObjectType `
+                           -TabView $searchTabView -TxtOutput $txtResults -ChkDisabledOnly $chkDisabledOnly `
+                           -LdapFilter $txtLdapFilter -AdvTab $advTab
+        })
+
+        # Advanced Search
+        $btnSearchAdv.add_Clicked({
+            Invoke-ADSearch -UserField $txtSearchName -DomainField $txtDomainAdv -ObjType $cmbObjectType `
+                           -TabView $searchTabView -TxtOutput $txtResultsAdv -ChkDisabledOnly $chkDisabledOnly `
+                           -LdapFilter $txtLdapFilter -AdvTab $advTab
+        })
+
+        # Add TabView to dialog
+        $dlg.Add($searchTabView)
+
+        Debug-Log ": AD Search Dialog created, running" -Type "Success"
+
+        # Run the dialog
+        [Terminal.Gui.Application]::Run($dlg)
+
+        Debug-Log ": AD Search Dialog closed" -Type "Info"
+
+    } catch {
+        Debug-Log ": Exception in Show-ADSearchDialog: $($_.Exception.Message)" -Type "Error"
+        Show-Modal "Error" "Failed to open search dialog:`n$($_.Exception.Message)"
+    }
+}
+
+# =====================================================
+# Example Common LDAP Filters (for reference/docs)
+# =====================================================
+
+<#
+Common LDAP Filters:
+
+# All users
+(objectClass=user)
+
+# All enabled users
+(&(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))
+
+# All disabled users
+(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=2))
+
+# All groups
+(objectClass=group)
+
+# All computers
+(objectClass=computer)
+
+# Users with email
+(&(objectClass=user)(mail=*))
+
+# Users in specific OU (need DN)
+(&(objectClass=user)(distinguishedName=*,OU=IT,DC=example,DC=com))
+
+# Users created after date
+(&(objectClass=user)(whenCreated>=20240101000000.0Z))
+
+# Users whose password never expires
+(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=65536))
+
+# Users with admin in name
+(&(objectClass=user)(name=*admin*))
+
+# Security groups
+(&(objectClass=group)(groupType:1.2.840.113556.1.4.803:=2147483648))
+
+# Distribution groups
+(&(objectClass=group)(!(groupType:1.2.840.113556.1.4.803:=2147483648)))
+#>
+
+## ------------------------- Refresh Tree Function ------------------------
 function Refresh-TreeData {
-    Debug-Log ("DEBUG: Refreshing tree data...") -Type "info"
-    
+    Debug-Log (": Refreshing tree data...") -Type "Info"
+
     # Show loading dialog
     $loadingDlg = Show-LoadingDialog -Message "Refreshing Active Directory data..."
-    
+
     try {
         # Reload domain data
-        Load-DomainData -domain $Global:CurrentDomain
-        
+        Load-DomainData -domain $Script:CurrentDomain
+
         # Rebuild tree
-        Build-Tree -domain $Global:CurrentDomain
+        Build-Tree -domain $Script:CurrentDomain
         # Add after Build-Tree calls:
-        Update-FilterStatusLabel -label $Global:FilterStatusLabel
-        
-        Debug-Log ("DEBUG: Tree refreshed successfully") -Type "info"
+        Update-FilterStatusLabel -label $Script:FilterStatusLabel
+
+        Debug-Log (": Tree refreshed successfully") -Type "Info"
     } finally {
         Close-LoadingDialog $loadingDlg
     }
-    
+
     Show-Modal "Refreshed" "Active Directory data refreshed successfully"
 }
 
 function Show-DCPropertiesDialog {
-    param([string]$dcName)
-    
-    Debug-Log ("DEBUG: Showing DC properties for: $dcName") -Type "info"
-    
-    if ($Global:DemoMode) {
-        $dc = $Global:DCs | Where-Object { $_.Name -eq $dcName } | Select-Object -First 1
-        
-        if ($dc) {
-            Debug-Log ("DEBUG: DC object found: $($dc.Name)") -Type "info"
-            
-            # Safely get property values with fallbacks
-            $fsmoRoles = if ($dc.FSMORoles -and $dc.FSMORoles.Count -gt 0) { 
-                $dc.FSMORoles -join ', ' 
-            } else { 
-                'None' 
+    param($dc)
+
+    # Accept either DC object or DC name
+    if ($dc -is [string]) {
+        $dcName = $dc
+        Debug-Log ": Looking for DC: $dcName" -Type "Info"
+
+        # Check if DCs array exists
+        if (-not $Script:DCs) {
+            Debug-Log ": Script:DCs is null or not initialized" -Type "Error"
+            Show-Modal "Error" "Domain Controllers list is not loaded"
+            return
+        }
+
+        Debug-Log ": Script:DCs has $($Script:DCs.Count) entries" -Type "Info"
+
+        # Find the DC
+        $dc = $Script:DCs | Where-Object { $_.Name -eq $dcName } | Select-Object -First 1
+
+        if (-not $dc) {
+            Debug-Log ": DC '$dcName' not found in Script:DCs" -Type "Error"
+            Show-Modal "Not Found" "DC '$dcName' not found in the domain controllers list"
+            return
+        }
+
+        Debug-Log ": Found DC: $($dc.Name)" -Type "Success"
+    }
+
+    if (-not $dc) {
+        Debug-Log ": DC object is null after lookup" -Type "Error"
+        Show-Modal "Error" "DC object is null"
+        return
+    }
+
+    Debug-Log ": Showing DC properties for: $($dc.Name)" -Type "Info"
+
+    try {
+        # ---------------------- Buttons ----------------------
+        $btnOK = [Terminal.Gui.Button]::new("OK")
+        $btnOK.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+
+        # ---------------------- Dialog ----------------------
+        $dlg = [Terminal.Gui.Dialog]::new("Domain Controller Properties - $($dc.Name)", 110, 35, $btnOK)
+
+        # ---------------------- TabView ----------------------
+        $tabView = [Terminal.Gui.TabView]::new()
+        $tabView.X = 0
+        $tabView.Y = 0
+        $tabView.Width = [Terminal.Gui.Dim]::Fill()
+        $tabView.Height = [Terminal.Gui.Dim]::Fill(1)
+
+        # ==================== General Tab ====================
+        $generalTab = [Terminal.Gui.TabView+Tab]::new()
+        $generalTab.Text = "General"
+        $generalView = [Terminal.Gui.View]::new()
+        $generalView.X = 0; $generalView.Y = 0
+        $generalView.Width = [Terminal.Gui.Dim]::Fill()
+        $generalView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+
+        # Basic Information
+        $lbl = [Terminal.Gui.Label]::new("Domain Controller Information"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Name:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $lbl = [Terminal.Gui.Label]::new($dc.Name ?? "Unknown"); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+
+        $hostname = if ($dc.HostName) { $dc.HostName } elseif ($dc.DNSHostName) { $dc.DNSHostName } else { $dc.Name }
+        $lbl = [Terminal.Gui.Label]::new("Hostname:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $lbl = [Terminal.Gui.Label]::new($hostname); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+
+        if ($dc.Site) {
+            $lbl = [Terminal.Gui.Label]::new("Site:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.Site); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        if ($dc.Domain) {
+            $lbl = [Terminal.Gui.Label]::new("Domain:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.Domain); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        if ($dc.Forest) {
+            $lbl = [Terminal.Gui.Label]::new("Forest:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.Forest); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        if ($dc.Location) {
+            $lbl = [Terminal.Gui.Label]::new("Location:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.Location); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        $y+=1
+
+        # Network Information
+        $lbl = [Terminal.Gui.Label]::new("Network"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        if ($dc.IPv4Address -or $dc.IPAddress) {
+            $ip = if ($dc.IPv4Address) { $dc.IPv4Address } else { $dc.IPAddress }
+            $lbl = [Terminal.Gui.Label]::new("IPv4 Address:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($ip); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        if ($dc.IPv6Address) {
+            $lbl = [Terminal.Gui.Label]::new("IPv6 Address:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.IPv6Address); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        $y+=1
+
+        # Operating System
+        $lbl = [Terminal.Gui.Label]::new("Operating System"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        if ($dc.OperatingSystem -or $dc.OS) {
+            $os = if ($dc.OperatingSystem) { $dc.OperatingSystem } else { $dc.OS }
+            $lbl = [Terminal.Gui.Label]::new("OS:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($os); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        if ($dc.OperatingSystemVersion) {
+            $lbl = [Terminal.Gui.Label]::new("OS Version:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.OperatingSystemVersion); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        $y+=1
+
+        # Capabilities
+        $lbl = [Terminal.Gui.Label]::new("Capabilities"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        $isGC = if ($null -ne $dc.IsGlobalCatalog) { $dc.IsGlobalCatalog.ToString() } else { "Unknown" }
+        $lbl = [Terminal.Gui.Label]::new("Global Catalog:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $lbl = [Terminal.Gui.Label]::new($isGC); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+
+        if ($null -ne $dc.IsReadOnly) {
+            $lbl = [Terminal.Gui.Label]::new("Read-Only:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.IsReadOnly.ToString()); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        if ($null -ne $dc.Enabled) {
+            $lbl = [Terminal.Gui.Label]::new("Enabled:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.Enabled.ToString()); $lbl.X=25; $lbl.Y=$y; $generalView.Add($lbl); $y+=1
+        }
+
+        $generalTab.View = $generalView
+        $tabView.AddTab($generalTab, $false)
+
+        # ==================== Roles Tab ====================
+        $rolesTab = [Terminal.Gui.TabView+Tab]::new()
+        $rolesTab.Text = "Roles"
+        $rolesView = [Terminal.Gui.View]::new()
+        $rolesView.X = 0; $rolesView.Y = 0
+        $rolesView.Width = [Terminal.Gui.Dim]::Fill()
+        $rolesView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("FSMO Roles"); $lbl.X=2; $lbl.Y=$y; $rolesView.Add($lbl); $y+=2
+
+        # Get FSMO roles from either FSMORoles or OperationMasterRoles
+        $fsmoRoles = @()
+        if ($dc.PSObject.Properties['FSMORoles'] -and $dc.FSMORoles -and $dc.FSMORoles.Count -gt 0) {
+            $fsmoRoles = $dc.FSMORoles
+        } elseif ($dc.PSObject.Properties['OperationMasterRoles'] -and $dc.OperationMasterRoles -and $dc.OperationMasterRoles.Count -gt 0) {
+            $fsmoRoles = $dc.OperationMasterRoles
+        }
+
+        if ($fsmoRoles.Count -gt 0) {
+            foreach ($role in $fsmoRoles) {
+                $lbl = [Terminal.Gui.Label]::new("• $role"); $lbl.X=4; $lbl.Y=$y; $rolesView.Add($lbl); $y+=1
             }
-            
-            $partners = if ($dc.ReplicationPartners -and $dc.ReplicationPartners.Count -gt 0) {
-                $dc.ReplicationPartners -join ', '
-            } else {
-                'None'
-            }
-            
-            $lastRep = if ($dc.LastReplication) { $dc.LastReplication.ToString('g') } else { 'Unknown' }
-            $lastBoot = if ($dc.LastBootUpTime) { $dc.LastBootUpTime.ToString('g') } else { 'Unknown' }
-            
-            # Disk space - show both C: and SYSVOL
-            $diskC = if ($dc.DiskSpace -and $dc.DiskSpace.'C:') { 
-                "$($dc.DiskSpace.'C:'.Free) free of $($dc.DiskSpace.'C:'.Total) ($($dc.DiskSpace.'C:'.PercentFree)%)" 
-            } else { 
-                'Unknown' 
-            }
-            
-            $diskSysvol = if ($dc.DiskSpace -and $dc.DiskSpace.'SYSVOL') { 
-                "$($dc.DiskSpace.'SYSVOL'.Free) free of $($dc.DiskSpace.'SYSVOL'.Total) ($($dc.DiskSpace.'SYSVOL'.PercentFree)%)" 
-            } else { 
-                'Unknown' 
-            }
-            
-            $msg = "Name: $($dc.Name)`nSite: $($dc.Site)`nLocation: $($dc.Location)`nIP Address: $($dc.IPv4Address)`nOperating System: $($dc.OperatingSystem)`nGlobal Catalog: $($dc.IsGlobalCatalog)`nFSMO Roles: $fsmoRoles`nReplication Health: $($dc.ReplicationHealth)`nLast Replication: $lastRep`nLast Boot: $lastBoot`nC: Drive: $diskC`nSYSVOL: $diskSysvol`nReplication Partners: $partners`n`n(Demo Mode)"
-            
-            if ($Global:VerboseMode) {
-                Debug-Log ("VERBOSE: MessageBox content:") -Type "info"
-                Debug-Log ("VERBOSE: Title: DC Properties") -Type "info"
-                Debug-Log ("VERBOSE: Message:`n$msg") -Type "info"
-            }
-            
-            Show-Modal "DC Properties" $msg
         } else {
-            Show-Modal "Not Found" "DC '$dcName' not found"
+            $lbl = [Terminal.Gui.Label]::new("(None)"); $lbl.X=4; $lbl.Y=$y; $rolesView.Add($lbl); $y+=1
         }
-    } else {
-        # Production mode
-        try {
-            $dc = Get-ADDomainController -Identity $dcName -ErrorAction Stop
-            
-            $msg = "Name: $($dc.Name)`nHostname: $($dc.HostName)`nSite: $($dc.Site)`nDomain: $($dc.Domain)`nIPv4: $($dc.IPv4Address)`nOS: $($dc.OperatingSystem)`nGlobal Catalog: $($dc.IsGlobalCatalog)"
-            
-            if ($Global:VerboseMode) {
-                Debug-Log ("VERBOSE: MessageBox content:") -Type "info"
-                Debug-Log ("VERBOSE: Title: DC Properties") -Type "info"
-                Debug-Log ("VERBOSE: Message:`n$msg") -Type "info"
+
+        $rolesTab.View = $rolesView
+        $tabView.AddTab($rolesTab, $false)
+
+        # ==================== Replication Tab ====================
+        $replTab = [Terminal.Gui.TabView+Tab]::new()
+        $replTab.Text = "Replication"
+        $replView = [Terminal.Gui.View]::new()
+        $replView.X = 0; $replView.Y = 0
+        $replView.Width = [Terminal.Gui.Dim]::Fill()
+        $replView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Replication Status"); $lbl.X=2; $lbl.Y=$y; $replView.Add($lbl); $y+=2
+
+        if ($dc.ReplicationHealth) {
+            $lbl = [Terminal.Gui.Label]::new("Health:"); $lbl.X=4; $lbl.Y=$y; $replView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($dc.ReplicationHealth); $lbl.X=25; $lbl.Y=$y; $replView.Add($lbl); $y+=1
+        }
+
+        if ($dc.LastReplication) {
+            $lastRep = $dc.LastReplication.ToString('yyyy-MM-dd HH:mm:ss')
+            $lbl = [Terminal.Gui.Label]::new("Last Replication:"); $lbl.X=4; $lbl.Y=$y; $replView.Add($lbl)
+            $lbl = [Terminal.Gui.Label]::new($lastRep); $lbl.X=25; $lbl.Y=$y; $replView.Add($lbl); $y+=2
+        }
+
+        # Replication Partners
+        if ($dc.ReplicationPartners -and $dc.ReplicationPartners.Count -gt 0) {
+            $lbl = [Terminal.Gui.Label]::new("Replication Partners:"); $lbl.X=4; $lbl.Y=$y; $replView.Add($lbl); $y+=1
+
+            foreach ($partner in $dc.ReplicationPartners) {
+                $lbl = [Terminal.Gui.Label]::new("• $partner"); $lbl.X=6; $lbl.Y=$y; $replView.Add($lbl); $y+=1
             }
-            
-            Show-Modal "DC Properties" $msg
-        } catch {
-            Show-Modal "Error" "Failed to get DC properties:`n$_"
         }
+
+        $replTab.View = $replView
+        $tabView.AddTab($replTab, $false)
+
+        # ==================== Services Tab ====================
+        $servicesTab = [Terminal.Gui.TabView+Tab]::new()
+        $servicesTab.Text = "Services"
+        $servicesView = [Terminal.Gui.View]::new()
+        $servicesView.X = 0; $servicesView.Y = 0
+        $servicesView.Width = [Terminal.Gui.Dim]::Fill()
+        $servicesView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+
+        # Services Status
+        if ($dc.Services) {
+            $lbl = [Terminal.Gui.Label]::new("Service Status"); $lbl.X=2; $lbl.Y=$y; $servicesView.Add($lbl); $y+=2
+
+            foreach ($service in $dc.Services.Keys | Sort-Object) {
+                $status = $dc.Services[$service]
+                $lbl = [Terminal.Gui.Label]::new("${service}:"); $lbl.X=4; $lbl.Y=$y; $servicesView.Add($lbl)
+                $lbl = [Terminal.Gui.Label]::new($status); $lbl.X=20; $lbl.Y=$y; $servicesView.Add($lbl); $y+=1
+            }
+            $y+=1
+        }
+
+        # Boot Time
+        if ($dc.LastBoot -or $dc.LastBootUpTime) {
+            $lbl = [Terminal.Gui.Label]::new("System Information"); $lbl.X=2; $lbl.Y=$y; $servicesView.Add($lbl); $y+=2
+
+            $lastBoot = if ($dc.LastBootUpTime) { $dc.LastBootUpTime } else { $dc.LastBoot }
+            if ($lastBoot) {
+                $bootTime = $lastBoot.ToString('yyyy-MM-dd HH:mm:ss')
+                $uptime = (Get-Date) - $lastBoot
+                $uptimeStr = "$($uptime.Days) days, $($uptime.Hours) hours"
+
+                $lbl = [Terminal.Gui.Label]::new("Last Boot:"); $lbl.X=4; $lbl.Y=$y; $servicesView.Add($lbl)
+                $lbl = [Terminal.Gui.Label]::new($bootTime); $lbl.X=20; $lbl.Y=$y; $servicesView.Add($lbl); $y+=1
+
+                $lbl = [Terminal.Gui.Label]::new("Uptime:"); $lbl.X=4; $lbl.Y=$y; $servicesView.Add($lbl)
+                $lbl = [Terminal.Gui.Label]::new($uptimeStr); $lbl.X=20; $lbl.Y=$y; $servicesView.Add($lbl); $y+=1
+            }
+        }
+
+        $servicesTab.View = $servicesView
+        $tabView.AddTab($servicesTab, $false)
+
+        # ==================== Disk Space Tab ====================
+        $diskTab = [Terminal.Gui.TabView+Tab]::new()
+        $diskTab.Text = "Disk Space"
+        $diskView = [Terminal.Gui.View]::new()
+        $diskView.X = 0; $diskView.Y = 0
+        $diskView.Width = [Terminal.Gui.Dim]::Fill()
+        $diskView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+
+        if ($dc.DiskSpace) {
+            $lbl = [Terminal.Gui.Label]::new("Disk Usage"); $lbl.X=2; $lbl.Y=$y; $diskView.Add($lbl); $y+=2
+
+            foreach ($drive in $dc.DiskSpace.Keys | Sort-Object) {
+                $diskInfo = $dc.DiskSpace[$drive]
+
+                $lbl = [Terminal.Gui.Label]::new("Drive ${drive}"); $lbl.X=4; $lbl.Y=$y; $diskView.Add($lbl); $y+=1
+
+                if ($diskInfo.Total) {
+                    $lbl = [Terminal.Gui.Label]::new("  Total:"); $lbl.X=6; $lbl.Y=$y; $diskView.Add($lbl)
+                    $lbl = [Terminal.Gui.Label]::new($diskInfo.Total); $lbl.X=20; $lbl.Y=$y; $diskView.Add($lbl); $y+=1
+                }
+
+                if ($diskInfo.Used) {
+                    $lbl = [Terminal.Gui.Label]::new("  Used:"); $lbl.X=6; $lbl.Y=$y; $diskView.Add($lbl)
+                    $lbl = [Terminal.Gui.Label]::new($diskInfo.Used); $lbl.X=20; $lbl.Y=$y; $diskView.Add($lbl); $y+=1
+                }
+
+                if ($diskInfo.Free) {
+                    $lbl = [Terminal.Gui.Label]::new("  Free:"); $lbl.X=6; $lbl.Y=$y; $diskView.Add($lbl)
+                    $lbl = [Terminal.Gui.Label]::new($diskInfo.Free); $lbl.X=20; $lbl.Y=$y; $diskView.Add($lbl); $y+=1
+                }
+
+                if ($null -ne $diskInfo.PercentFree) {
+                    $lbl = [Terminal.Gui.Label]::new("  % Free:"); $lbl.X=6; $lbl.Y=$y; $diskView.Add($lbl)
+                    $lbl = [Terminal.Gui.Label]::new("$($diskInfo.PercentFree)%"); $lbl.X=20; $lbl.Y=$y; $diskView.Add($lbl); $y+=1
+                }
+
+                $y+=1
+            }
+        } else {
+            $lbl = [Terminal.Gui.Label]::new("(No disk space information available)"); $lbl.X=4; $lbl.Y=$y; $diskView.Add($lbl); $y+=1
+        }
+
+        $diskTab.View = $diskView
+        $tabView.AddTab($diskTab, $false)
+
+        # Add TabView to dialog
+        $dlg.Add($tabView)
+
+        Debug-Log ": All DC tabs added, running dialog" -Type "Success"
+
+        # Run the dialog
+        [Terminal.Gui.Application]::Run($dlg)
+        Debug-Log ": DC dialog closed normally" -Type "Info"
+
+    } catch {
+        Debug-Log ": Exception in Show-DCPropertiesDialog: $($_.Exception.Message)" -Type "Error"
+        Show-Modal "Error" "Failed to display DC properties:`n$($_.Exception.Message)"
     }
 }
 
 function Show-GroupPropertiesDialog {
     param([string]$groupName)
-    
-    Debug-Log ("DEBUG: Showing group properties dialog for: $groupName") -Type "info"
-    
+
+    Debug-Log (": Showing group properties dialog for: $groupName") -Type "Info"
+
     if (-not $groupName) {
-        Debug-Log ("ERROR: Group name is null") -Type "error"
+        Debug-Log (": Group name is null") -Type "Warn"
         return
     }
-    
+
     # Find the group
-    $group = $Global:Groups | Where-Object { $_.Name -eq $groupName } | Select-Object -First 1
-    
+    $group = $Script:Groups | Where-Object { $_.Name -eq $groupName } | Select-Object -First 1
     if (-not $group) {
         Show-Modal "Not Found" "Group '$groupName' not found"
         return
     }
-    
-    # Create buttons FIRST
-    $btnOK = [Terminal.Gui.Button]::new("OK")
+
+    # ---------------- Buttons ----------------
+    $btnOK     = [Terminal.Gui.Button]::new("OK")
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnApply = [Terminal.Gui.Button]::new("Apply")
-    
-    # Create dialog WITH buttons
-    $dlg = [Terminal.Gui.Dialog]::new("Group Properties - $groupName", 90, 35, $btnOK, $btnCancel, $btnApply)
-    
-    # TabView
+    $btnApply  = [Terminal.Gui.Button]::new("Apply")
+
+    # ---------------- Dialog ----------------
+    $dlg = [Terminal.Gui.Dialog]::new(
+        "Group Properties - $groupName",
+        90, 35,
+        $btnOK, $btnCancel, $btnApply
+    )
+
+    # ---------------- TabView ----------------
     $tabView = [Terminal.Gui.TabView]::new()
     $tabView.X = 0
     $tabView.Y = 0
-    $tabView.Width = [Terminal.Gui.Dim]::Fill()
+    $tabView.Width  = [Terminal.Gui.Dim]::Fill()
     $tabView.Height = [Terminal.Gui.Dim]::Fill(3)
-    
+
     # ==================== General Tab ====================
     $generalTab = [Terminal.Gui.TabView+Tab]::new()
     $generalTab.Text = "General"
+
     $generalView = [Terminal.Gui.View]::new()
-    
     $y = 1
-    $lbl = [Terminal.Gui.Label]::new("Group name:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtName = [Terminal.Gui.TextField]::new($group.Name ?? ""); $txtName.X=20; $txtName.Y=$y; $txtName.Width=50; $txtName.ReadOnly=$true
+
+    $lbl = [Terminal.Gui.Label]::new("Display Name:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $txtName = [Terminal.Gui.TextField]::new($user.Name ?? ""); $txtName.X=20; $txtName.Y=$y; $txtName.Width=70
+    $txtName.add_TextChanged({ $Script:groupChangesMade = $true })
     $generalView.Add($txtName)
-    $y+=2
-    
+    $y += 2
+
     $lbl = [Terminal.Gui.Label]::new("Description:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtDesc = [Terminal.Gui.TextField]::new($group.Description ?? ""); $txtDesc.X=20; $txtDesc.Y=$y; $txtDesc.Width=50
-    $txtDesc.add_TextChanged({ $script:groupChangesMade = $true })
+    $txtDesc = [Terminal.Gui.TextField]::new($user.Description ?? ""); $txtDesc.X=20; $txtDesc.Y=$y; $txtDesc.Width=70
+    $txtDesc.add_TextChanged({ $Script:groupChangesMade = $true })
     $generalView.Add($txtDesc)
-    $y+=2
-    
+    $y += 2
+
+    $lbl = [Terminal.Gui.Label]::new("Office:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $txtOffice = [Terminal.Gui.TextField]::new($user.Office ?? ""); $txtOffice.X=20; $txtOffice.Y=$y; $txtOffice.Width=70
+    $txtOffice.add_TextChanged({ $Script:groupChangesMade = $true })
+    $generalView.Add($txtOffice)
+    $y += 2
+
+    Debug-Log ": User Phone value='$($user.OfficePhone)'" -Type "Debug"
+    $lbl = [Terminal.Gui.Label]::new("Telephone:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $txtPhone = [Terminal.Gui.TextField]::new($user.OfficePhone ?? ""); $txtPhone.X=20; $txtPhone.Y=$y; $txtPhone.Width=70
+    $txtPhone.add_TextChanged({ $Script:groupChangesMade = $true })
+    $generalView.Add($txtPhone)
+    $y += 2
+
+    $lbl = [Terminal.Gui.Label]::new("Mobile Phone:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
+    $txtMobile = [Terminal.Gui.TextField]::new($user.MobilePhone ?? ""); $txtMobile.X=20; $txtMobile.Y=$y; $txtMobile.Width=70
+    $txtMobile.add_TextChanged({ $Script:groupChangesMade = $true })
+    $generalView.Add($txtMobile)
+    $y += 2
+
+    Debug-Log ": User Email value='$($user.EmailAddress)'" -Type "Debug"
     $lbl = [Terminal.Gui.Label]::new("E-mail:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtEmail = [Terminal.Gui.TextField]::new($group.Mail ?? ""); $txtEmail.X=20; $txtEmail.Y=$y; $txtEmail.Width=50
-    $txtEmail.add_TextChanged({ $script:groupChangesMade = $true })
+    $txtEmail = [Terminal.Gui.TextField]::new($user.EmailAddress ?? ""); $txtEmail.X=20; $txtEmail.Y=$y; $txtEmail.Width=70
+    $txtEmail.add_TextChanged({ $Script:groupChangesMade = $true })
     $generalView.Add($txtEmail)
-    $y+=2
-    
-    $lbl = [Terminal.Gui.Label]::new("Group type:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $lblType = [Terminal.Gui.Label]::new($group.GroupCategory ?? "Security"); $lblType.X=20; $lblType.Y=$y
-    $generalView.Add($lblType)
-    $y+=2
-    
-    $lbl = [Terminal.Gui.Label]::new("Group scope:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $lblScope = [Terminal.Gui.Label]::new($group.GroupScope ?? "Global"); $lblScope.X=20; $lblScope.Y=$y
-    $generalView.Add($lblScope)
-    $y+=2
-    
-    $lbl = [Terminal.Gui.Label]::new("Managed by:"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl)
-    $txtManagedBy = [Terminal.Gui.TextField]::new($group.ManagedBy ?? ""); $txtManagedBy.X=20; $txtManagedBy.Y=$y; $txtManagedBy.Width=50
-    $txtManagedBy.add_TextChanged({ $script:groupChangesMade = $true })
-    $generalView.Add($txtManagedBy)
-    
+
     $generalTab.View = $generalView
-    $tabView.AddTab($generalTab, $false)
-    
+    Register-Tab -Tab $generalTab
+
     # ==================== Members Tab ====================
     $membersTab = [Terminal.Gui.TabView+Tab]::new()
     $membersTab.Text = "Members"
+
     $membersView = [Terminal.Gui.View]::new()
-    
-    $members = $Global:Users | Where-Object { $_.Groups -contains $groupName } | ForEach-Object { $_.Name } | Sort-Object
-    
-    $lbl = [Terminal.Gui.Label]::new("Members:"); $lbl.X=2; $lbl.Y=1; $membersView.Add($lbl)
+    $members = $Script:Users | Where-Object { $_.Groups -contains $groupName } |
+               ForEach-Object { $_.Name } | Sort-Object
+
+    $lbl = [Terminal.Gui.Label]::new("Members:"); $lbl.X=2; $lbl.Y=1
+    $membersView.Add($lbl)
+
     $lstMembers = [Terminal.Gui.ListView]::new()
     $lstMembers.SetSource($members)
-    $lstMembers.X=2; $lstMembers.Y=3; $lstMembers.Width=[Terminal.Gui.Dim]::Fill(2); $lstMembers.Height=[Terminal.Gui.Dim]::Fill(4)
+    $lstMembers.X=2; $lstMembers.Y=3
+    $lstMembers.Width=[Terminal.Gui.Dim]::Fill(2)
+    $lstMembers.Height=[Terminal.Gui.Dim]::Fill(4)
     $membersView.Add($lstMembers)
-    
-    $btnAddMember = [Terminal.Gui.Button]::new("Add...")
-    $btnAddMember.X=2; $btnAddMember.Y=[Terminal.Gui.Pos]::Bottom($lstMembers)+1
-    $btnAddMember.add_Clicked({
-        Show-Modal "Add Member" "Add member functionality - to be implemented"
-        $script:groupChangesMade = $true
-    }.GetNewClosure())
-    $membersView.Add($btnAddMember)
-    
-    $btnRemoveMember = [Terminal.Gui.Button]::new("Remove")
-    $btnRemoveMember.X=[Terminal.Gui.Pos]::Right($btnAddMember)+2
-    $btnRemoveMember.Y=[Terminal.Gui.Pos]::Bottom($lstMembers)+1
-    $btnRemoveMember.add_Clicked({
-        if ($lstMembers.SelectedItem -eq -1) {
-            Show-Modal "No Selection" "Please select a member to remove"
-            return
-        }
-        
-        $selectedMember = $members[$lstMembers.SelectedItem]
-        $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Confirm", 
-            "Remove '$selectedMember' from group '$groupName'?", 
-            @("Yes", "No"))
-        
-        if ($result -eq 0) {
-            $memberUser = $Global:Users | Where-Object { $_.Name -eq $selectedMember } | Select-Object -First 1
-            if ($memberUser -and $memberUser.Groups) {
-                $memberUser.Groups = $memberUser.Groups | Where-Object { $_ -ne $groupName }
-                
-                $members = $Global:Users | Where-Object { $_.Groups -contains $groupName } | ForEach-Object { $_.Name } | Sort-Object
-                [Terminal.Gui.Application]::MainLoop.Invoke({
-                    $lstMembers.SetSource($members)
-                })
-                
-                $script:groupChangesMade = $true
-                Debug-Log ("DEBUG: Removed $selectedMember from group $groupName") -Type "info"
-            }
-        }
-    }.GetNewClosure())
-    $membersView.Add($btnRemoveMember)
-    
+
     $membersTab.View = $membersView
-    $tabView.AddTab($membersTab, $false)
-    
+    Register-Tab -Tab $membersTab
+
+    # ---------------- Attach TabView ----------------
     $dlg.Add($tabView)
-    
+
+    # ---------------- Buttons ----------------
     $fields = @{
-        txtDesc = $txtDesc
+        txtDesc  = $txtDesc
         txtEmail = $txtEmail
-        txtManagedBy = $txtManagedBy
     }
-    
+
     $btnOK.add_Clicked({
         if (Apply-GroupChanges -group $group -fields $fields) {
             [Terminal.Gui.Application]::RequestStop()
         }
     }.GetNewClosure())
-    
+
     $btnCancel.add_Clicked({
-        if ($script:groupChangesMade) {
-            $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Unsaved Changes", 
-                "You have unsaved changes. Discard them?", 
-                @("Yes", "No"))
+        if ($Script:groupChangesMade) {
+            $result = [Terminal.Gui.MessageBox]::Query(
+                60, 8,
+                "Unsaved Changes",
+                "You have unsaved changes. Discard them?",
+                @("Yes","No")
+            )
             if ($result -eq 0) {
-                $script:groupChangesMade = $false
+                $Script:groupChangesMade = $false
                 [Terminal.Gui.Application]::RequestStop()
             }
         } else {
             [Terminal.Gui.Application]::RequestStop()
         }
     }.GetNewClosure())
-    
+
     $btnApply.add_Clicked({
         Apply-GroupChanges -group $group -fields $fields
     }.GetNewClosure())
-    
-    Debug-Log ("DEBUG: Show-GroupPropertiesDialog running") -Type "info"
+
+    # ---------------- Run ----------------
+    Debug-Log (": Show-GroupPropertiesDialog running") -Type "Info"
+    Layout-Tabs
     [Terminal.Gui.Application]::Run($dlg)
-    Debug-Log ("DEBUG: Show-GroupPropertiesDialog completed") -Type "info"
+    Debug-Log (": Show-GroupPropertiesDialog completed") -Type "Info"
 }
+
 
 # ----------------------- Show Computer Properties ----------------------
 function Show-ComputerPropertiesDialog {
     param([string]$computerName)
-    
-    Debug-Log ("DEBUG: Showing computer properties for: $computerName") -Type "info"
-    
-    $computer = $Global:Computers | Where-Object { $_.Name -eq $computerName } | Select-Object -First 1
-    
+
+    Debug-Log (": Showing computer properties for: $computerName") -Type "Info"
+
+    $computer = $Script:Computers | Where-Object { $_.Name -eq $computerName } | Select-Object -First 1
+
     if (-not $computer) {
+        Debug-Log (": Computer NOT found in Script:Computers for name: $computerName") -Type "Info"
         Show-Modal "Not Found" "Computer '$computerName' not found"
         return
     }
-    
-    $status = if ($computer.Enabled) { "Enabled" } else { "Disabled" }
-    $lastLogon = if ($computer.LastLogonDate) { $computer.LastLogonDate.ToString('g') } else { "Never" }
-    
-    $msg = "Computer: $($computer.Name)`n" +
-           "Type: $($computer.ComputerType)`n" +
-           "Location: $($computer.Location)`n" +
-           "IP Address: $($computer.IPv4Address)`n" +
-           "Operating System: $($computer.OperatingSystem)`n" +
-           "OS Version: $($computer.OperatingSystemVersion)`n" +
-           "Status: $status`n" +
-           "Last Logon: $lastLogon`n" +
-           "Description: $($computer.Description)`n`n" +
-           "(Demo Mode)"
-    
-    Show-Modal "Computer Properties" $msg
+
+    Debug-Log (": Computer found: $($computer.Name)") -Type "Info"
+
+    try {
+        # ---------------------- Buttons ----------------------
+        $btnOK = [Terminal.Gui.Button]::new("OK")
+        $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+
+        $btnOK.add_Clicked({
+            Debug-Log ": OK clicked" -Type "Info"
+            [Terminal.Gui.Application]::RequestStop()
+        })
+
+        $btnCancel.add_Clicked({
+            Debug-Log ": Cancel clicked" -Type "Info"
+            [Terminal.Gui.Application]::RequestStop()
+        })
+
+        # ---------------------- Dialog ----------------------
+        $dlg = [Terminal.Gui.Dialog]::new("Computer Properties - $($computer.Name)", 100, 40, $btnOK, $btnCancel)
+
+        # ---------------------- TabView ----------------------
+        $tabView = [Terminal.Gui.TabView]::new()
+        $tabView.X = 0
+        $tabView.Y = 0
+        $tabView.Width = [Terminal.Gui.Dim]::Fill()
+        $tabView.Height = [Terminal.Gui.Dim]::Fill(1)
+
+        # ==================== General Tab ====================
+        Debug-Log ": Creating General tab" -Type "Info"
+        $generalTab = [Terminal.Gui.TabView+Tab]::new()
+        $generalTab.Text = "General"
+        $generalView = [Terminal.Gui.View]::new()
+        $generalView.X = 0; $generalView.Y = 0
+        $generalView.Width = [Terminal.Gui.Dim]::Fill()
+        $generalView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Computer Information"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Name:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtName = [Terminal.Gui.Label]::new($computer.Name ?? ""); $txtName.X=25; $txtName.Y=$y
+        $generalView.Add($txtName); $y+=1
+
+        $lbl = [Terminal.Gui.Label]::new("DNS Host Name:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtDNS = [Terminal.Gui.Label]::new($computer.DNSHostName ?? ""); $txtDNS.X=25; $txtDNS.Y=$y
+        $generalView.Add($txtDNS); $y+=1
+
+        $lbl = [Terminal.Gui.Label]::new("Domain:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtDomain = [Terminal.Gui.Label]::new($computer.Domain ?? ""); $txtDomain.X=25; $txtDomain.Y=$y
+        $generalView.Add($txtDomain); $y+=1
+
+        $lbl = [Terminal.Gui.Label]::new("Description:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtDescription = [Terminal.Gui.TextField]::new($computer.Description ?? ""); $txtDescription.X=25; $txtDescription.Y=$y; $txtDescription.Width=65
+        $generalView.Add($txtDescription); $y+=2
+
+        # Operating System
+        $lbl = [Terminal.Gui.Label]::new("Operating System"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("OS:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtOS = [Terminal.Gui.Label]::new($computer.OperatingSystem ?? ""); $txtOS.X=25; $txtOS.Y=$y
+        $generalView.Add($txtOS); $y+=1
+
+        $lbl = [Terminal.Gui.Label]::new("Version:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtOSVer = [Terminal.Gui.Label]::new($computer.OperatingSystemVersion ?? ""); $txtOSVer.X=25; $txtOSVer.Y=$y
+        $generalView.Add($txtOSVer); $y+=1
+
+        if ($computer.OperatingSystemServicePack) {
+            $lbl = [Terminal.Gui.Label]::new("Service Pack:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $txtSP = [Terminal.Gui.Label]::new($computer.OperatingSystemServicePack); $txtSP.X=25; $txtSP.Y=$y
+            $generalView.Add($txtSP); $y+=1
+        }
+
+        # Network
+        $y+=1
+        $lbl = [Terminal.Gui.Label]::new("Network"); $lbl.X=2; $lbl.Y=$y; $generalView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("IPv4 Address:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtIPv4 = [Terminal.Gui.Label]::new($computer.IPv4Address ?? ""); $txtIPv4.X=25; $txtIPv4.Y=$y
+        $generalView.Add($txtIPv4); $y+=1
+
+        if ($computer.IPv6Address) {
+            $lbl = [Terminal.Gui.Label]::new("IPv6 Address:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+            $txtIPv6 = [Terminal.Gui.Label]::new($computer.IPv6Address); $txtIPv6.X=25; $txtIPv6.Y=$y
+            $generalView.Add($txtIPv6); $y+=1
+        }
+
+        $lbl = [Terminal.Gui.Label]::new("Location:"); $lbl.X=4; $lbl.Y=$y; $generalView.Add($lbl)
+        $txtLocation = [Terminal.Gui.TextField]::new($computer.Location ?? ""); $txtLocation.X=25; $txtLocation.Y=$y; $txtLocation.Width=65
+        $generalView.Add($txtLocation); $y+=1
+
+        $generalTab.View = $generalView
+        $tabView.AddTab($generalTab, $false)
+
+        # ==================== Account Tab ====================
+        Debug-Log ": Creating Account tab" -Type "Info"
+        $accountTab = [Terminal.Gui.TabView+Tab]::new()
+        $accountTab.Text = "Account"
+        $accountView = [Terminal.Gui.View]::new()
+        $accountView.X = 0; $accountView.Y = 0
+        $accountView.Width = [Terminal.Gui.Dim]::Fill()
+        $accountView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Account Status"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
+
+        $chkEnabled = [Terminal.Gui.CheckBox]::new("Computer Account Enabled"); $chkEnabled.X=4; $chkEnabled.Y=$y; $chkEnabled.Checked=($computer.Enabled??$true)
+        $accountView.Add($chkEnabled); $y+=1
+
+        $chkLocked = [Terminal.Gui.CheckBox]::new("Account Locked"); $chkLocked.X=4; $chkLocked.Y=$y; $chkLocked.Checked=($computer.LockedOut??$false); $chkLocked.Enabled=$false
+        $accountView.Add($chkLocked); $y+=2
+
+        # Password Settings
+        $lbl = [Terminal.Gui.Label]::new("Password Settings"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
+
+        $chkPasswordExpired = [Terminal.Gui.CheckBox]::new("Password Expired"); $chkPasswordExpired.X=4; $chkPasswordExpired.Y=$y; $chkPasswordExpired.Checked=($computer.PasswordExpired??$false); $chkPasswordExpired.Enabled=$false
+        $accountView.Add($chkPasswordExpired); $y+=1
+
+        $chkPasswordNeverExpires = [Terminal.Gui.CheckBox]::new("Password never expires"); $chkPasswordNeverExpires.X=4; $chkPasswordNeverExpires.Y=$y; $chkPasswordNeverExpires.Checked=($computer.PasswordNeverExpires??$false); $chkPasswordNeverExpires.Enabled=$false
+        $accountView.Add($chkPasswordNeverExpires); $y+=1
+
+        $chkCannotChangePassword = [Terminal.Gui.CheckBox]::new("Cannot change password"); $chkCannotChangePassword.X=4; $chkCannotChangePassword.Y=$y; $chkCannotChangePassword.Checked=($computer.CannotChangePassword??$false); $chkCannotChangePassword.Enabled=$false
+        $accountView.Add($chkCannotChangePassword); $y+=1
+
+        $chkPasswordNotRequired = [Terminal.Gui.CheckBox]::new("Password not required"); $chkPasswordNotRequired.X=4; $chkPasswordNotRequired.Y=$y; $chkPasswordNotRequired.Checked=($computer.PasswordNotRequired??$false); $chkPasswordNotRequired.Enabled=$false
+        $accountView.Add($chkPasswordNotRequired); $y+=2
+
+        # Account Details
+        $lbl = [Terminal.Gui.Label]::new("Account Details"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("SAM Account:"); $lbl.X=4; $lbl.Y=$y; $accountView.Add($lbl)
+        $txtSAM = [Terminal.Gui.Label]::new($computer.SamAccountName ?? ""); $txtSAM.X=25; $txtSAM.Y=$y
+        $accountView.Add($txtSAM); $y+=1
+
+        if ($computer.PasswordLastSet) {
+            $lbl = [Terminal.Gui.Label]::new("Password last set: " + $computer.PasswordLastSet.ToString('yyyy-MM-dd HH:mm')); $lbl.X=4; $lbl.Y=$y
+            $accountView.Add($lbl); $y+=1
+        }
+
+        if ($computer.LastLogonDate) {
+            $lbl = [Terminal.Gui.Label]::new("Last logon: " + $computer.LastLogonDate.ToString('yyyy-MM-dd HH:mm')); $lbl.X=4; $lbl.Y=$y
+            $accountView.Add($lbl); $y+=1
+        }
+
+        if ($computer.logonCount) {
+            $lbl = [Terminal.Gui.Label]::new("Logon count: " + $computer.logonCount); $lbl.X=4; $lbl.Y=$y
+            $accountView.Add($lbl); $y+=1
+        }
+
+        if ($computer.AccountExpirationDate) {
+            $lbl = [Terminal.Gui.Label]::new("Account expires: " + $computer.AccountExpirationDate.ToString('yyyy-MM-dd')); $lbl.X=4; $lbl.Y=$y
+            $accountView.Add($lbl); $y+=1
+        }
+
+        $accountTab.View = $accountView
+        $tabView.AddTab($accountTab, $false)
+
+        # ==================== Security Tab ====================
+        Debug-Log ": Creating Security tab" -Type "Info"
+        $securityTab = [Terminal.Gui.TabView+Tab]::new()
+        $securityTab.Text = "Security"
+        $securityView = [Terminal.Gui.View]::new()
+        $securityView.X = 0; $securityView.Y = 0
+        $securityView.Width = [Terminal.Gui.Dim]::Fill()
+        $securityView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Delegation Settings"); $lbl.X=2; $lbl.Y=$y; $securityView.Add($lbl); $y+=2
+
+        $chkTrustedForDelegation = [Terminal.Gui.CheckBox]::new("Trusted for delegation"); $chkTrustedForDelegation.X=4; $chkTrustedForDelegation.Y=$y; $chkTrustedForDelegation.Checked=($computer.TrustedForDelegation??$false); $chkTrustedForDelegation.Enabled=$false
+        $securityView.Add($chkTrustedForDelegation); $y+=1
+
+        $chkTrustedToAuth = [Terminal.Gui.CheckBox]::new("Trusted to authenticate for delegation"); $chkTrustedToAuth.X=4; $chkTrustedToAuth.Y=$y; $chkTrustedToAuth.Checked=($computer.TrustedToAuthForDelegation??$false); $chkTrustedToAuth.Enabled=$false
+        $securityView.Add($chkTrustedToAuth); $y+=1
+
+        $chkAccountNotDelegated = [Terminal.Gui.CheckBox]::new("Account not delegated"); $chkAccountNotDelegated.X=4; $chkAccountNotDelegated.Y=$y; $chkAccountNotDelegated.Checked=($computer.AccountNotDelegated??$false); $chkAccountNotDelegated.Enabled=$false
+        $securityView.Add($chkAccountNotDelegated); $y+=1
+
+        $chkNoPreAuth = [Terminal.Gui.CheckBox]::new("Does not require Kerberos preauthentication"); $chkNoPreAuth.X=4; $chkNoPreAuth.Y=$y; $chkNoPreAuth.Checked=($computer.DoesNotRequirePreAuth??$false); $chkNoPreAuth.Enabled=$false
+        $securityView.Add($chkNoPreAuth); $y+=1
+
+        $chkUseDES = [Terminal.Gui.CheckBox]::new("Use DES encryption types"); $chkUseDES.X=4; $chkUseDES.Y=$y; $chkUseDES.Checked=($computer.UseDESKeyOnly??$false); $chkUseDES.Enabled=$false
+        $securityView.Add($chkUseDES); $y+=2
+
+        # Kerberos
+        $lbl = [Terminal.Gui.Label]::new("Kerberos Encryption"); $lbl.X=2; $lbl.Y=$y; $securityView.Add($lbl); $y+=2
+
+        if ($computer.KerberosEncryptionType) {
+            $kerbTypes = $computer.KerberosEncryptionType -join ', '
+            $lbl = [Terminal.Gui.Label]::new("Encryption types: " + $kerbTypes); $lbl.X=4; $lbl.Y=$y
+            $securityView.Add($lbl); $y+=1
+        }
+
+        if ($computer.'msDS-SupportedEncryptionTypes') {
+            $lbl = [Terminal.Gui.Label]::new("Supported encryption: " + $computer.'msDS-SupportedEncryptionTypes'); $lbl.X=4; $lbl.Y=$y
+            $securityView.Add($lbl); $y+=1
+        }
+
+        # SID
+        $y+=1
+        $lbl = [Terminal.Gui.Label]::new("Identifiers"); $lbl.X=2; $lbl.Y=$y; $securityView.Add($lbl); $y+=2
+
+        $sid = $computer.SID ?? $computer.objectSid
+        if ($sid) {
+            $lbl = [Terminal.Gui.Label]::new("SID:"); $lbl.X=4; $lbl.Y=$y; $securityView.Add($lbl)
+            $txtSID = [Terminal.Gui.Label]::new($sid.ToString()); $txtSID.X=25; $txtSID.Y=$y
+            $securityView.Add($txtSID); $y+=1
+        }
+
+        if ($computer.ObjectGUID) {
+            $lbl = [Terminal.Gui.Label]::new("Object GUID:"); $lbl.X=4; $lbl.Y=$y; $securityView.Add($lbl)
+            $txtGUID = [Terminal.Gui.Label]::new($computer.ObjectGUID.ToString()); $txtGUID.X=25; $txtGUID.Y=$y
+            $securityView.Add($txtGUID); $y+=1
+        }
+
+        $securityTab.View = $securityView
+        $tabView.AddTab($securityTab, $false)
+
+        # ==================== Member Of Tab ====================
+        Debug-Log ": Creating Member Of tab" -Type "Info"
+        $memberTab = [Terminal.Gui.TabView+Tab]::new()
+        $memberTab.Text = "Member Of"
+        $memberView = [Terminal.Gui.View]::new()
+        $memberView.X = 0; $memberView.Y = 0
+        $memberView.Width = [Terminal.Gui.Dim]::Fill()
+        $memberView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Group Memberships:"); $lbl.X=2; $lbl.Y=$y; $memberView.Add($lbl); $y+=2
+
+        $lstGroups = [Terminal.Gui.ListView]::new()
+        $lstGroups.X = 2
+        $lstGroups.Y = $y
+        $lstGroups.Width = [Terminal.Gui.Dim]::Fill(2)
+        $lstGroups.Height = 20  # Fixed height to leave room for buttons inside tab
+
+        $groupList = @()
+        if ($computer.MemberOf) {
+            $groupList = $computer.MemberOf | ForEach-Object {
+                if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
+            }
+        }
+
+        if ($groupList.Count -gt 0) {
+            $lstGroups.SetSource($groupList)
+        } else {
+            $lstGroups.SetSource(@("(No group memberships)"))
+        }
+
+        $memberView.Add($lstGroups)
+
+        # =====================================================
+# SNIPPET: Add/Remove Buttons for Member Of Tab
+# =====================================================
+# Add this code after you create the ListView ($lstGroups)
+# and before you set the tab view ($memberTab.View = $memberView)
+
+$memberView.Add($lstGroups)
+
+# Add/Remove buttons - FIXED POSITIONS
+$btnAdd = [Terminal.Gui.Button]::new("Add to Group...")
+$btnAdd.X = 2
+$btnAdd.Y = 23  # Hardcoded position (after ListView height of 20 + label + spacing)
+$btnAdd.add_Clicked({
+    Show-EditGroupMembershipDialog -User $user -OnUpdate {
+        # Refresh code here
+    }
+})
+$memberView.Add($btnAdd)
+
+$btnRemove = [Terminal.Gui.Button]::new("Remove from Group")
+$btnRemove.X = 22
+$btnRemove.Y = 23  # Same Y position as Add button
+$btnRemove.add_Clicked({
+    # Remove code here
+})
+$memberView.Add($btnRemove)
+$memberTab.View = $memberView
+
+        # ==================== Service Principal Names Tab ====================
+        Debug-Log ": Creating SPN tab" -Type "Info"
+        $spnTab = [Terminal.Gui.TabView+Tab]::new()
+        $spnTab.Text = "SPNs"
+        $spnView = [Terminal.Gui.View]::new()
+        $spnView.X = 0; $spnView.Y = 0
+        $spnView.Width = [Terminal.Gui.Dim]::Fill()
+        $spnView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Service Principal Names:"); $lbl.X=2; $lbl.Y=$y; $spnView.Add($lbl); $y+=2
+
+        $lstSPNs = [Terminal.Gui.ListView]::new()
+        $lstSPNs.X = 2
+        $lstSPNs.Y = $y
+        $lstSPNs.Width = [Terminal.Gui.Dim]::Fill(2)
+        $lstSPNs.Height = [Terminal.Gui.Dim]::Fill(2)
+
+        $spnList = @()
+        if ($computer.ServicePrincipalNames) {
+            $spnList = $computer.ServicePrincipalNames
+        } elseif ($computer.servicePrincipalName) {
+            $spnList = $computer.servicePrincipalName
+        }
+
+        if ($spnList.Count -gt 0) {
+            $lstSPNs.SetSource($spnList)
+        } else {
+            $lstSPNs.SetSource(@("(No SPNs configured)"))
+        }
+
+        $spnView.Add($lstSPNs)
+
+        $spnTab.View = $spnView
+        $tabView.AddTab($spnTab, $false)
+
+        # ==================== LAPS Tab ====================
+        Debug-Log ": Creating LAPS tab" -Type "Info"
+        $lapsTab = [Terminal.Gui.TabView+Tab]::new()
+        $lapsTab.Text = "LAPS"
+        $lapsView = [Terminal.Gui.View]::new()
+        $lapsView.X = 0; $lapsView.Y = 0
+        $lapsView.Width = [Terminal.Gui.Dim]::Fill()
+        $lapsView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Local Administrator Password Solution"); $lbl.X=2; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
+
+        # Check for LAPS in production mode
+        $lapsEnabled = $false
+        $lapsPassword = ""
+        $lapsExpiry = ""
+
+        if (-not $Script:DemoMode) {
+            try {
+                $lapsData = Get-ADComputer -Identity $computer.Name -Properties 'ms-Mcs-AdmPwd','ms-Mcs-AdmPwdExpirationTime' -ErrorAction SilentlyContinue
+                if ($lapsData.'ms-Mcs-AdmPwd') {
+                    $lapsEnabled = $true
+                    $lapsPassword = $lapsData.'ms-Mcs-AdmPwd'
+                    $lapsExpiry = if ($lapsData.'ms-Mcs-AdmPwdExpirationTime') {
+                        [DateTime]::FromFileTime($lapsData.'ms-Mcs-AdmPwdExpirationTime').ToString('yyyy-MM-dd HH:mm:ss')
+                    } else {
+                        "Unknown"
+                    }
+                }
+            } catch {
+                Debug-Log (": Failed to retrieve LAPS info: $_") -Type "Warn"
+            }
+        } elseif ($computer.'ms-Mcs-AdmPwd') {
+            # Demo mode with LAPS data
+            $lapsEnabled = $true
+            $lapsPassword = $computer.'ms-Mcs-AdmPwd'
+            $lapsExpiry = if ($computer.'ms-Mcs-AdmPwdExpirationTime') {
+                [DateTime]::FromFileTime($computer.'ms-Mcs-AdmPwdExpirationTime').ToString('yyyy-MM-dd HH:mm:ss')
+            } else {
+                "Unknown"
+            }
+        }
+
+        if ($lapsEnabled) {
+            $lbl = [Terminal.Gui.Label]::new("LAPS Status: ✓ Enabled"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
+
+            $lbl = [Terminal.Gui.Label]::new("Administrator Password:"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
+            $txtPassword = [Terminal.Gui.TextField]::new($lapsPassword); $txtPassword.X=4; $txtPassword.Y=$y; $txtPassword.Width=70; $txtPassword.ReadOnly=$true
+            $lapsView.Add($txtPassword); $y+=2
+
+            $lbl = [Terminal.Gui.Label]::new("Password Expires:"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
+            $txtExpiry = [Terminal.Gui.Label]::new($lapsExpiry); $txtExpiry.X=25; $txtExpiry.Y=$y
+            $lapsView.Add($txtExpiry); $y+=2
+
+            $lbl = [Terminal.Gui.Label]::new("⚠ This password provides full local administrator access"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
+            $lbl = [Terminal.Gui.Label]::new("  Handle with appropriate security controls"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
+        } else {
+            $lbl = [Terminal.Gui.Label]::new("LAPS Status: ✗ Not Enabled"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
+            $lbl = [Terminal.Gui.Label]::new("This computer does not have LAPS configured or you"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
+            $lbl = [Terminal.Gui.Label]::new("do not have permissions to view the password."); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
+        }
+
+        $lapsTab.View = $lapsView
+        $tabView.AddTab($lapsTab, $false)
+
+        # ==================== Advanced Tab ====================
+        Debug-Log ": Creating Advanced tab" -Type "Info"
+        $advancedTab = [Terminal.Gui.TabView+Tab]::new()
+        $advancedTab.Text = "Advanced"
+        $advancedView = [Terminal.Gui.View]::new()
+        $advancedView.X = 0; $advancedView.Y = 0
+        $advancedView.Width = [Terminal.Gui.Dim]::Fill()
+        $advancedView.Height = [Terminal.Gui.Dim]::Fill()
+
+        $y = 1
+        $lbl = [Terminal.Gui.Label]::new("Distinguished Name:"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
+        $txtDN = [Terminal.Gui.TextField]::new($computer.DistinguishedName ?? ""); $txtDN.X=2; $txtDN.Y=$y; $txtDN.Width=90; $txtDN.ReadOnly=$true
+        $advancedView.Add($txtDN); $y+=2
+
+        $lbl = [Terminal.Gui.Label]::new("Canonical Name:"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
+        $txtCN = [Terminal.Gui.TextField]::new($computer.CanonicalName ?? ""); $txtCN.X=2; $txtCN.Y=$y; $txtCN.Width=90; $txtCN.ReadOnly=$true
+        $advancedView.Add($txtCN); $y+=2
+
+        # Timestamps
+        $lbl = [Terminal.Gui.Label]::new("Timestamps"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
+
+        $created = if ($computer.Created -or $computer.whenCreated) {
+            ($computer.Created ?? $computer.whenCreated).ToString('yyyy-MM-dd HH:mm:ss')
+        } else { "Unknown" }
+        $lbl = [Terminal.Gui.Label]::new("Created: " + $created); $lbl.X=4; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
+
+        $modified = if ($computer.Modified -or $computer.whenChanged) {
+            ($computer.Modified ?? $computer.whenChanged).ToString('yyyy-MM-dd HH:mm:ss')
+        } else { "Unknown" }
+        $lbl = [Terminal.Gui.Label]::new("Modified: " + $modified); $lbl.X=4; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
+
+        if ($computer.LastBootUpTime) {
+            $lbl = [Terminal.Gui.Label]::new("Last Boot: " + $computer.LastBootUpTime.ToString('yyyy-MM-dd HH:mm:ss')); $lbl.X=4; $lbl.Y=$y
+            $advancedView.Add($lbl); $y+=1
+        }
+
+        # USN
+        $y+=1
+        $lbl = [Terminal.Gui.Label]::new("Update Sequence Numbers"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
+
+        if ($computer.uSNCreated) {
+            $lbl = [Terminal.Gui.Label]::new("USN Created: " + $computer.uSNCreated); $lbl.X=4; $lbl.Y=$y
+            $advancedView.Add($lbl); $y+=1
+        }
+
+        if ($computer.uSNChanged) {
+            $lbl = [Terminal.Gui.Label]::new("USN Changed: " + $computer.uSNChanged); $lbl.X=4; $lbl.Y=$y
+            $advancedView.Add($lbl); $y+=1
+        }
+
+        # Additional properties
+        $y+=1
+        $lbl = [Terminal.Gui.Label]::new("Additional Properties"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
+
+        if ($computer.isCriticalSystemObject) {
+            $lbl = [Terminal.Gui.Label]::new("✓ Critical System Object"); $lbl.X=4; $lbl.Y=$y
+            $advancedView.Add($lbl); $y+=1
+        }
+
+        if ($computer.ProtectedFromAccidentalDeletion) {
+            $lbl = [Terminal.Gui.Label]::new("✓ Protected from Accidental Deletion"); $lbl.X=4; $lbl.Y=$y
+            $advancedView.Add($lbl); $y+=1
+        }
+
+        if ($computer.PrimaryGroup) {
+            $lbl = [Terminal.Gui.Label]::new("Primary Group: " + $computer.PrimaryGroup); $lbl.X=4; $lbl.Y=$y
+            $advancedView.Add($lbl); $y+=1
+        }
+
+        $advancedTab.View = $advancedView
+        $tabView.AddTab($advancedTab, $false)
+
+        # Add TabView to dialog
+        $dlg.Add($tabView)
+
+        Debug-Log ": All tabs added, running dialog" -Type "Success"
+
+        # Run the dialog
+        [Terminal.Gui.Application]::Run($dlg)
+        Debug-Log ": Dialog closed normally" -Type "Info"
+
+    } catch {
+        Debug-Log ": Exception in Show-ComputerPropertiesDialog: $($_.Exception.Message)" -Type "Error"
+        Debug-Log ": Stack trace: $($_.ScriptStackTrace)" -Type "Error"
+        throw
+    }
 }
 
 # ------------------------- Context Menu Handler ------------------------
@@ -4910,34 +6293,34 @@ function Show-ContextMenu {
         [string]$objectName,
         [string]$objectType
     )
-    
-$selName = $Global:tree.SelectedObject.Text
-Debug-Log ("DEBUG: Selected object text: '$selName'") -Type "info"
+
+$selName = $Script:tree.SelectedObject.Text
+Debug-Log (": Selected object text: '$selName'") -Type "Info"
 
 # Determine what type of object this is FIRST (before cleaning the name)
-$selType = if ($selName -like "(U)*") {"user"} 
-           elseif ($selName -like "(DC)*") {"dc"} 
+$selType = if ($selName -like "(U)*") {"user"}
+           elseif ($selName -like "(DC)*") {"dc"}
            else {"group"}
-Debug-Log ("DEBUG: Detected type: $selType") -Type "info"
+Debug-Log (": Detected type: $selType") -Type "Info"
 
 # NOW clean the name - remove prefixes like "(U) " or "(DC) " and status icons
 $cleanName = $selName -replace '^\([^)]+\)\s*', '' -replace '^[○⊗🔒]\s*', ''
-Debug-Log ("DEBUG: Cleaned name after removing prefix: '$cleanName'") -Type "info"
+Debug-Log (": Cleaned name after removing prefix: '$cleanName'") -Type "Info"
 
 # Extract just the name part if it has [SITE] suffix
 if ($cleanName -match '^(.+?)\s+\[.+\]$') {
     $cleanName = $matches[1].Trim()
-    Debug-Log ("DEBUG: Extracted name from [SITE] format: '$cleanName'") -Type "info"
+    Debug-Log (": Extracted name from [SITE] format: '$cleanName'") -Type "Info"
 }
 
-Debug-Log ("DEBUG: Final cleaned name: '$cleanName'") -Type "info"
-    
+Debug-Log (": Final cleaned name: '$cleanName'") -Type "Info"
+
     # Build menu items array for display
     $menuText = @()
 
     ################################### right-click or right click or rightclick This is where to clena the code ##########################
     ################################### so it calls the same functions as the menu for less arsing about/bugs    ##########################
-    
+
     if ($isUser) {
         $menuText = @("Properties", "Reset Password", "Disable Account", "Enable Account", "---", "Move to OU...", "---", "Delete", "---", "Refresh")
     } elseif ($isGroup) {
@@ -4949,12 +6332,12 @@ Debug-Log ("DEBUG: Final cleaned name: '$cleanName'") -Type "info"
     } else {
         $menuText = @("Properties", "---", "Refresh")
     }
-    
+
     # Create dialog for context menu
     $contextDialog = [Terminal.Gui.Dialog]::new("Actions", 30, ($menuText.Count + 4))
     $contextDialog.X = [Terminal.Gui.Pos]::Center()
     $contextDialog.Y = [Terminal.Gui.Pos]::Center()
-    
+
     # Create list view
     $listView = [Terminal.Gui.ListView]::new()
     $listView.SetSource($menuText)
@@ -4963,51 +6346,51 @@ Debug-Log ("DEBUG: Final cleaned name: '$cleanName'") -Type "info"
     $listView.Width = [Terminal.Gui.Dim]::Fill()
     $listView.Height = [Terminal.Gui.Dim]::Fill(2)
     $contextDialog.Add($listView)
-    
+
 # Handle selection
 $listView.add_OpenSelectedItem({
     $selected = $menuText[$listView.SelectedItem]
-    
-    Debug-Log ("DEBUG: Menu item selected: $selected") -Type "info"
-    
+
+    Debug-Log (": Menu item selected: $selected") -Type "Info"
+
     [Terminal.Gui.Application]::RequestStop()
-    
+
     if ($selected -ne "---") {
-        Debug-Log ("DEBUG: Context menu selected: $selected") -Type "info"
-        
+        Debug-Log (": Context menu selected: $selected") -Type "Info"
+
         switch ($selected) {
-            "Properties" { 
-                Debug-Log ("DEBUG: Properties selected for type: isUser=$isUser, isGroup=$isGroup, isDC=$isDC") -Type "info"
-                
+            "Properties" {
+                Debug-Log (": Properties selected for type: isUser=$isUser, isGroup=$isGroup, isDC=$isDC") -Type "Info"
+
                 if ($isUser) {
-                    Debug-Log ("DEBUG: Looking for user: $cleanName") -Type "info"
-                    $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-                    
-                    if ($user) { 
-                        Debug-Log ("DEBUG: Found user, calling Show-UserPropertiesDialog") -Type "info"
-                        Debug-Log ("DEBUG: User type: $($user.GetType().Name)") -Type "info"
-                        Debug-Log ("DEBUG: User Name: $($user.Name)") -Type "info"
-                        
+                    Debug-Log (": Looking for user: $cleanName") -Type "Info"
+                    $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+
+                    if ($user) {
+                        Debug-Log (": Found user, calling Show-UserPropertiesDialog") -Type "Info"
+                        Debug-Log (": User type: $($user.GetType().Name)") -Type "Info"
+                        Debug-Log (": User Name: $($user.Name)") -Type "Info"
+
                         try {
-                            Show-UserPropertiesDialog -user $user  # REMOVED -Global $Global
-                            Debug-Log ("DEBUG: Show-UserPropertiesDialog returned") -Type "info"
+                            Show-UserPropertiesDialog -user $user  # REMOVED -Global $Script
+                            Debug-Log (": Show-UserPropertiesDialog returned") -Type "Info"
                         } catch {
-                            Debug-Log ("ERROR: Exception showing properties: $($_.Exception.Message)") -Type "error"
-                            Debug-Log ("ERROR: Stack trace: $($_.ScriptStackTrace)") -Type "error"
+                            Debug-Log (": Exception showing properties: $($_.Exception.Message)") -Type "Warn"
+                            Debug-Log (": Stack trace: $($_.ScriptStackTrace)") -Type "Warn"
                             Show-Modal "Error" "Failed to show properties:`n$($_.Exception.Message)"
                         }
                     } else {
-                        Debug-Log ("ERROR: User '$cleanName' not found in Global:Users") -Type "error"
+                        Debug-Log (": User '$cleanName' not found in Global:Users") -Type "Warn"
                         Show-Modal "Not Found" "User '$cleanName' not found"
                     }
                 } elseif ($isGroup) {
-                    Debug-Log ("DEBUG: Showing group properties") -Type "info"
+                    Debug-Log (": Showing group properties") -Type "Info"
                     Show-GroupPropertiesDialog -groupName $cleanName
                 } elseif ($isDC) {
-                    Debug-Log ("DEBUG: Showing DC properties") -Type "info"
+                    Debug-Log (": Showing DC properties") -Type "Info"
                     Show-DCPropertiesDialog -dcName $cleanName
                 } else {
-                    Debug-Log ("DEBUG: Showing generic properties") -Type "info"
+                    Debug-Log (": Showing generic properties") -Type "Info"
                     $msg = "Object: $cleanName`nType: $objectType"
                     Show-Modal "Properties" $msg
                 }
@@ -5017,87 +6400,95 @@ $listView.add_OpenSelectedItem({
             "Enable Account" { Toggle-UserAccount -userName $cleanName -disable $false }
             "Move to OU..." { Show-MoveObjectDialog -objectName $cleanName -objectType "User" }
             "Delete" { Show-DeleteObjectDialog -objectName $cleanName -objectType $objectType }
-            "Add Member..." { Show-AddGroupMemberDialog -groupName $cleanName }
-            "Remove Member..." { Show-RemoveGroupMemberDialog -groupName $cleanName }
+            "Add Member..." { Show-EditGroupMembershipDialog -groupName $cleanName }
+            "Remove Member..." { Show-EditGroupMembershipDialog -groupName $cleanName }
             "New Object..." { Show-NewObjectWizard }
             "Check Replication" { Check-DCReplication -dcName $cleanName }
             "Refresh" { Refresh-TreeData }
         }
     }
 })
-    
+
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $contextDialog.AddButton($btnCancel)
-    
+
     [Terminal.Gui.Application]::Run($contextDialog)
 }
 
-# Debug version of Show-Properties
 function Show-Properties {
-    Debug-Log ("DEBUG: Show-Properties called") -Type "info"
-    
-    if (-not $Global:tree.SelectedObject) { 
-        Debug-Log ("DEBUG: No object selected") -Type "info"
+    Debug-Log (": Show-Properties called") -Type "Info"
+
+    if (-not $Script:tree.SelectedObject) {
+        Debug-Log (": No object selected") -Type "Info"
         Show-Modal "Debug" "No object selected in tree"
-        return 
+        return
     }
-    
-    $selName = $Global:tree.SelectedObject.Text
-    Debug-Log ("DEBUG: Selected object text: '$selName'") -Type "info"
-    
+
+    $selName = $Script:tree.SelectedObject.Text
+    Debug-Log (": Selected object text: '$selName'") -Type "Info"
+
     # Parse the tree text to get clean name and type
     $objInfo = Get-CleanObjectInfo -treeText $selName
     $cleanName = $objInfo.Name
     $selType = $objInfo.Type
-    
+
     # Route to appropriate dialog
     if ($selType -eq "user") {
-        $selUser = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-        
+        $selUser = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+
         if ($selUser) {
-            Debug-Log ("DEBUG: User found, calling Show-UserPropertiesDialog") -Type "info"
+            Debug-Log (": User found, calling Show-UserPropertiesDialog") -Type "Info"
             try {
                 Show-UserPropertiesDialog -user $selUser
             } catch {
-                Debug-Log ("ERROR: Exception in Show-UserPropertiesDialog: $_") -Type "info"
+                Debug-Log (": Exception in Show-UserPropertiesDialog: $_") -Type "Info"
                 Show-Modal "Error" "Failed to show properties`n$($_.Exception.Message)`n`nCheck console for details"
             }
         } else {
-            Debug-Log ("DEBUG: User NOT found in Global:Users") -Type "info"
+            Debug-Log (": User NOT found in Script:Users") -Type "Info"
             Show-Modal "Not Found" "User '$cleanName' not found"
         }
     } elseif ($selType -eq "group") {
-        Debug-Log ("DEBUG: Group type selected: $cleanName") -Type "info"
+        Debug-Log (": Group type selected: $cleanName") -Type "Info"
         Show-GroupPropertiesDialog -groupName $cleanName
     } elseif ($selType -eq "ou") {
-        Debug-Log ("DEBUG: OU type selected: $cleanName") -Type "info"
+        Debug-Log (": OU type selected: $cleanName") -Type "Info"
         Show-OUPropertiesDialog -ouName $cleanName
     } elseif ($selType -eq "dc") {
-            Debug-Log ("DEBUG: DC type selected: $cleanName") -Type "info"
-            Show-DCPropertiesDialog -dcName $cleanName
+        Debug-Log (": DC type selected: $cleanName") -Type "Info"
 
+        ## Find the DC object first
+        $dcObj = $Script:DCs | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+
+        if ($dcObj) {
+            Debug-Log (": DC found: $($dcObj.Name)") -Type "Info"
+            Show-DCPropertiesDialog -dc $dcObj  # Pass the object
+        } else {
+            Debug-Log (": DC NOT found in Script:DCs for name: $cleanName") -Type "Info"
+            Show-Modal "Error" "DC '$cleanName' not found"
+        }
     } elseif ($selType -eq "computer") {
-            Debug-Log ("DEBUG: Computer type selected: $cleanName") -Type "info"
-            Show-ComputerPropertiesDialog -computerName $cleanName
+        Debug-Log (": Computer type selected: $cleanName") -Type "Info"
+        Show-ComputerPropertiesDialog -computerName $cleanName
     } else {
-        Debug-Log ("DEBUG: Selected object type $selType not handled yet.") -Type "info"
+        Debug-Log (": Selected object type '$selType' not handled yet") -Type "Info"
     }
 }
 
 # Additional debug helper - call this to verify your demo data loaded correctly
 function Test-DemoData {
-    Debug-Log ("========== DEMO DATA CHECK ==========") -Type "info"
-    Debug-Log ("Global:Users count: $($Global:Users.Count)") -Type "info"
-    Debug-Log ("Global:DCs count: $($Global:DCs.Count)") -Type "info"
-    Debug-Log ("") -Type "info"
-    Debug-Log ("Users in memory:") -Type "info"
-    foreach ($u in $Global:Users) {
+    Debug-Log ("========== DEMO DATA CHECK ==========") -Type "Info"
+    Debug-Log ("Global:Users count: $($Script:Users.Count)") -Type "Info"
+    Debug-Log ("Global:DCs count: $($Script:DCs.Count)") -Type "Info"
+    Debug-Log ("") -Type "Info"
+    Debug-Log ("Users in memory:") -Type "Info"
+    foreach ($u in $Script:Users) {
         $locked = if ($u.Locked) { "🔒" } else { "" }
         $disabled = if ($u.Disabled) { "⊗" } else { "○" }
-        Debug-Log ("  $disabled$locked $($u.Name) - Groups: $($u.Groups -join ', ')") -Type "info"
+        Debug-Log ("  $disabled$locked $($u.Name) - Groups: $($u.Groups -join ', ')") -Type "Info"
     }
-    Debug-Log ("=====================================") -Type "info"
+    Debug-Log ("=====================================") -Type "Info"
 }
 
 # Call this after loading demo data to verify:
@@ -5106,36 +6497,36 @@ function Test-DemoData {
 
 function Show-ResetPasswordDialog {
     param([string]$userName)
-    
+
     $dlg = [Terminal.Gui.Dialog]::new("Reset Password - $userName", 60, 12)
-    
+
     $lbl = [Terminal.Gui.Label]::new("New Password:"); $lbl.X=2; $lbl.Y=1; $dlg.Add($lbl)
     $txtPwd = [Terminal.Gui.TextField]::new(""); $txtPwd.X=18; $txtPwd.Y=1; $txtPwd.Width=35; $txtPwd.Secret=$true; $dlg.Add($txtPwd)
-    
+
     $lblConfirm = [Terminal.Gui.Label]::new("Confirm Password:"); $lblConfirm.X=2; $lblConfirm.Y=3; $dlg.Add($lblConfirm)
     $txtConfirm = [Terminal.Gui.TextField]::new(""); $txtConfirm.X=18; $txtConfirm.Y=3; $txtConfirm.Width=35; $txtConfirm.Secret=$true; $dlg.Add($txtConfirm)
-    
+
     $chkMustChange = [Terminal.Gui.CheckBox]::new("User must change password at next logon")
     $chkMustChange.X=2; $chkMustChange.Y=5; $chkMustChange.Checked=$true; $dlg.Add($chkMustChange)
-    
+
     $btnOK = [Terminal.Gui.Button]::new("OK")
     $btnOK.add_Clicked({
         $pwd1 = $txtPwd.Text.ToString()
         $pwd2 = $txtConfirm.Text.ToString()
-        
+
         if ($pwd1 -ne $pwd2) {
             Show-Modal "Error" "Passwords do not match!"
             return
         }
-        
+
         if ($pwd1.Length -lt 8) {
             Show-Modal "Error" "Password must be at least 8 characters!"
             return
         }
-        
+
         try {
-            if ($Global:DemoMode) {
-                Debug-Log ("DEBUG: Password reset for $userName (demo mode)") -Type "info"
+            if ($Script:DemoMode) {
+                Debug-Log (": Password reset for $userName (demo mode)") -Type "Info"
                 Show-Modal "Success" "Password reset successfully (demo mode)"
             } else {
                 $secPwd = ConvertTo-SecureString -String $pwd1 -AsPlainText -Force
@@ -5152,27 +6543,27 @@ function Show-ResetPasswordDialog {
         }
     })
     $dlg.AddButton($btnOK)
-    
+
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $dlg.AddButton($btnCancel)
-    
+
     [Terminal.Gui.Application]::Run($dlg)
 }
 
 function Toggle-UserAccount {
     param([string]$userName, [bool]$disable)
-    
+
     $action = if ($disable) { "disable" } else { "enable" }
     $result = [Terminal.Gui.MessageBox]::Query(50, 8, "Confirm", "Are you sure you want to $action account:`n$userName?", "Yes", "No")
-    
+
     if ($result -eq 0) {
         try {
-            if ($Global:DemoMode) {
-                $user = $Global:Users | Where-Object { $_.Name -eq $userName } | Select-Object -First 1
+            if ($Script:DemoMode) {
+                $user = $Script:Users | Where-Object { $_.Name -eq $userName } | Select-Object -First 1
                 if ($user) {
                     $user.Disabled = $disable
-                    Debug-Log ("DEBUG: Account $userName $action`d (demo mode)") -Type "info"
+                    Debug-Log (": Account $userName $action`d (demo mode)") -Type "Info"
                 }
             } else {
                 if ($disable) {
@@ -5192,9 +6583,9 @@ function Toggle-UserAccount {
 
 function Show-DeleteObjectDialog {
     param([string]$objectName, [string]$objectType)
-    
+
     $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Delete $objectType", "WARNING: Are you sure you want to delete:`n$objectName`n`nThis action cannot be undone!", "Delete", "Cancel")
-    
+
     if ($result -eq 0) {
       Show-Modal "Delete" "Delete functionality coming soon"
     }
@@ -5204,70 +6595,69 @@ function Show-DeleteObjectDialog {
 # Select multiple objects and perform bulk actions
 
 # ------------------------- Global Selection State ------------------------
-$Global:SelectedObjects = @()
-$Global:SelectionMode = $false
+$Script:SelectedObjects = @()
+$Script:SelectionMode = $false
 
 # ------------------------- Toggle Selection Mode ------------------------
 function Toggle-SelectionMode {
-    $Global:SelectionMode = -not $Global:SelectionMode
-    
-    if ($Global:SelectionMode) {
-        Debug-Log ("DEBUG: Selection mode ENABLED") -Type "info"
-        [Terminal.Gui.MessageBox]::Query(60, 8, "Selection Mode", 
-            "Selection mode enabled!`n`nClick objects to select/deselect them.`nPress Ctrl+A to select all.`nPress Ctrl+D to deselect all.", 
+    $Script:SelectionMode = -not $Script:SelectionMode
+
+    if ($Script:SelectionMode) {
+        Debug-Log (": Selection mode ENABLED") -Type "Info"
+        [Terminal.Gui.MessageBox]::Query(60, 8, "Selection Mode",
+            "Selection mode enabled!`n`nClick objects to select/deselect them.`nPress Ctrl+A to select all.`nPress Ctrl+D to deselect all.",
             "OK") | Out-Null
     } else {
-        Debug-Log ("DEBUG: Selection mode DISABLED") -Type "info"
-        $Global:SelectedObjects = @()
-        Build-Tree -domain $Global:CurrentDomain
-        Update-FilterStatusLabel -label $Global:FilterStatusLabel
+        Debug-Log (": Selection mode DISABLED") -Type "Info"
+        $Script:SelectedObjects = @()
+        Build-Tree -domain $Script:CurrentDomain
+        Update-FilterStatusLabel -label $Script:FilterStatusLabel
     }
 }
 
 # ------------------------- Update Selection Panel ------------------------
 function Update-SelectionPanel {
     param($panel)
-    
+
     if (-not $panel -or -not $panel.Tag) { return }
-    
+
     $lblCount = $panel.Tag.CountLabel
     $lstSelected = $panel.Tag.ListView
-    
-    $count = $Global:SelectedObjects.Count
+
+    $count = $Script:SelectedObjects.Count
     $lblCount.Text = "$count object(s) selected"
-    
-    $displayNames = $Global:SelectedObjects | ForEach-Object {
+
+    $displayNames = $Script:SelectedObjects | ForEach-Object {
         $name = $_ -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
         $name
     }
-    
+
     $lstSelected.SetSource($displayNames)
     $panel.SetNeedsDisplay()
 }
 
 # ------------------------- Enhanced Tree with Selection Support ------------------------
-# Add this to your tree click handler (modify existing one or add new)
 
 function Handle-TreeClick {
     param($mouseArgs)
-    
-    if (-not $Global:tree.SelectedObject) { return }
-    
-    $selName = $Global:tree.SelectedObject.Text
-    
+
+    if (-not $Script:tree.SelectedObject) { return }
+
+    $selName = $Script:tree.SelectedObject.Text
+
     # Check if in selection mode
-    if ($Global:SelectionMode) {
+    if ($Script:SelectionMode) {
         # Toggle selection
-        if ($Global:SelectedObjects -contains $selName) {
+        if ($Script:SelectedObjects -contains $selName) {
             # Deselect
-            $Global:SelectedObjects = $Global:SelectedObjects | Where-Object { $_ -ne $selName }
-            Debug-Log ("DEBUG: Deselected $selName") -Type "info"
+            $Script:SelectedObjects = $Script:SelectedObjects | Where-Object { $_ -ne $selName }
+            Debug-Log (": Deselected $selName") -Type "Info"
         } else {
             # Select
-            $Global:SelectedObjects += $selName
-            Debug-Log ("DEBUG: Selected $selName") -Type "info"
+            $Script:SelectedObjects += $selName
+            Debug-Log (": Selected $selName") -Type "Info"
         }
-        
+
         # Update visual indicator (mark selected items)
         Update-SelectionPanel -panel $selectionPanel
         $mouseArgs.Handled = $true
@@ -5277,20 +6667,20 @@ function Handle-TreeClick {
 # Add keyboard shortcuts for selection
 function Add-SelectionKeyBindings {
     param($view)
-    
+
     $view.add_KeyPress({ param($sender, $keyArgs)
         # Ctrl+A = Select All
         if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::A -bor [Terminal.Gui.Key]::CtrlMask)) {
             Select-AllObjects
             $keyArgs.Handled = $true
         }
-        
+
         # Ctrl+D = Deselect All
         if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::D -bor [Terminal.Gui.Key]::CtrlMask)) {
             Deselect-AllObjects
             $keyArgs.Handled = $true
         }
-        
+
         # Ctrl+S = Toggle Selection Mode
         if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::S -bor [Terminal.Gui.Key]::CtrlMask)) {
             Toggle-SelectionMode
@@ -5301,60 +6691,60 @@ function Add-SelectionKeyBindings {
 
 # ------------------------- Select/Deselect All ------------------------
 function Select-AllObjects {
-    if (-not $Global:SelectionMode) {
+    if (-not $Script:SelectionMode) {
       Show-Modal "Selection Mode" "Enable selection mode first (Ctrl+S)"
         return
     }
-    
-    $Global:SelectedObjects = @()
-    
+
+    $Script:SelectedObjects = @()
+
     # Get all users from tree
-    foreach ($user in $Global:Users) {
+    foreach ($user in $Script:Users) {
         $statusIcon = if ($user.Disabled) { "⊗" } else { "○" }
         $displayName = "(U) $statusIcon $($user.Name)"
-        $Global:SelectedObjects += $displayName
+        $Script:SelectedObjects += $displayName
     }
-    
-    Debug-Log ("DEBUG: Selected all users ($($Global:SelectedObjects.Count))") -Type "info"
+
+    Debug-Log (": Selected all users ($($Script:SelectedObjects.Count))") -Type "Info"
     Update-SelectionPanel -panel $selectionPanel
-    Show-Modal "Selected All" "Selected $($Global:SelectedObjects.Count) users"
+    Show-Modal "Selected All" "Selected $($Script:SelectedObjects.Count) users"
 }
 
 function Deselect-AllObjects {
-    $Global:SelectedObjects = @()
-    Debug-Log ("DEBUG: Deselected all objects") -Type "info"
+    $Script:SelectedObjects = @()
+    Debug-Log (": Deselected all objects") -Type "Info"
     Update-SelectionPanel -panel $selectionPanel
 }
 
 # ------------------------- Bulk Disable/Enable ------------------------
 function Invoke-BulkDisableEnable {
     param([bool]$disable)
-    
-    if ($Global:SelectedObjects.Count -eq 0) {
+
+    if ($Script:SelectedObjects.Count -eq 0) {
       Show-Modal "No Selection" "No objects selected. Select objects first."
         return
     }
-    
+
     $action = if ($disable) { "disable" } else { "enable" }
-    $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Action", 
-        "Are you sure you want to $action $($Global:SelectedObjects.Count) user account(s)?", 
+    $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Action",
+        "Are you sure you want to $action $($Script:SelectedObjects.Count) user account(s)?",
         "Yes", "No")
-    
+
     if ($result -eq 0) {
         $successCount = 0
         $failCount = 0
         $errors = @()
-        
-        foreach ($objName in $Global:SelectedObjects) {
+
+        foreach ($objName in $Script:SelectedObjects) {
             $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-            
+
             try {
-                if ($Global:DemoMode) {
-                    $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+                if ($Script:DemoMode) {
+                    $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
                     if ($user) {
                         $user.Disabled = $disable
                         $successCount++
-                        Debug-Log ("DEBUG: $action`d $cleanName (demo mode)") -Type "info"
+                        Debug-Log (": $action`d $cleanName (demo mode)") -Type "Info"
                     }
                 } else {
                     if ($disable) {
@@ -5363,15 +6753,15 @@ function Invoke-BulkDisableEnable {
                         Enable-ADAccount -Identity $cleanName -ErrorAction Stop
                     }
                     $successCount++
-                    Debug-Log ("DEBUG: $action`d $cleanName in AD") -Type "info"
+                    Debug-Log (": $action`d $cleanName in AD") -Type "Info"
                 }
             } catch {
                 $failCount++
                 $errors += "$cleanName`: $($_.Exception.Message)"
-                Debug-Log ("DEBUG: Failed to $action $cleanName`: $_") -Type "info"
+                Debug-Log (": Failed to $action $cleanName`: $_") -Type "Info"
             }
         }
-        
+
         # Show results
         $msg = "Successfully $action`d $successCount account(s)"
         if ($failCount -gt 0) {
@@ -5380,91 +6770,91 @@ function Invoke-BulkDisableEnable {
                 $msg += "`n`nErrors:`n" + ($errors -join "`n")
             }
         }
-        
+
         Show-Modal "Bulk Action Complete" $msg
-        
+
         # Refresh tree
-        if (-not $Global:DemoMode) {
-            Load-DomainData -domain $Global:CurrentDomain
+        if (-not $Script:DemoMode) {
+            Load-DomainData -domain $Script:CurrentDomain
         }
-        Build-Tree -domain $Global:CurrentDomain
-        Update-FilterStatusLabel -label $Global:FilterStatusLabel
-        
+        Build-Tree -domain $Script:CurrentDomain
+        Update-FilterStatusLabel -label $Script:FilterStatusLabel
+
         # Clear selection
-        $Global:SelectedObjects = @()
-        $Global:SelectionMode = $false
+        $Script:SelectedObjects = @()
+        $Script:SelectionMode = $false
         Update-SelectionPanel -panel $selectionPanel
     }
 }
 
 # ------------------------- Bulk Move ------------------------
 function Invoke-BulkMove {
-    if ($Global:SelectedObjects.Count -eq 0) {
+    if ($Script:SelectedObjects.Count -eq 0) {
       Show-Modal "No Selection" "No objects selected. Select objects first."
         return
     }
-    
-    $dlg = [Terminal.Gui.Dialog]::new("Bulk Move - $($Global:SelectedObjects.Count) Objects", 70, 18)
-    
-    $lblInfo = [Terminal.Gui.Label]::new("Moving $($Global:SelectedObjects.Count) object(s) to:")
+
+    $dlg = [Terminal.Gui.Dialog]::new("Bulk Move - $($Script:SelectedObjects.Count) Objects", 70, 18)
+
+    $lblInfo = [Terminal.Gui.Label]::new("Moving $($Script:SelectedObjects.Count) object(s) to:")
     $lblInfo.X=2; $lblInfo.Y=1; $dlg.Add($lblInfo)
-    
+
     # Get list of OUs
-    $ouList = if ($Global:DemoMode) {
-        $Global:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
+    $ouList = if ($Script:DemoMode) {
+        $Script:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
     } else {
         try {
-            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName | 
+            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName |
                 Select-Object -ExpandProperty DistinguishedName | Sort-Object
         } catch { @("CN=Users,DC=example,DC=com") }
     }
-    
+
     $lstOU = [Terminal.Gui.ListView]::new($ouList)
     $lstOU.X=2; $lstOU.Y=3; $lstOU.Width=[Terminal.Gui.Dim]::Fill(2); $lstOU.Height=10
     $dlg.Add($lstOU)
-    
+
     $btnMove = [Terminal.Gui.Button]::new("Move All")
     $btnMove.add_Clicked({
         if ($lstOU.SelectedItem -lt 0) {
           Show-Modal "Error" "Please select a target OU"
             return
         }
-        
+
         $targetOU = $ouList[$lstOU.SelectedItem]
-        
-        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Move", 
-            "Move $($Global:SelectedObjects.Count) object(s) to:`n$targetOU?", 
+
+        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Move",
+            "Move $($Script:SelectedObjects.Count) object(s) to:`n$targetOU?",
             "Yes", "No")
-        
+
         if ($confirm -eq 0) {
             $successCount = 0
             $failCount = 0
             $errors = @()
-            
-            foreach ($objName in $Global:SelectedObjects) {
+
+            foreach ($objName in $Script:SelectedObjects) {
                 $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-                
+
                 try {
-                    if ($Global:DemoMode) {
-                        $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+                    if ($Script:DemoMode) {
+                        $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
                         if ($user) {
                             $user.OU = $targetOU
                             $successCount++
-                            Debug-Log ("DEBUG: Moved $cleanName to $targetOU (demo mode)") -Type "info"
+                            Debug-Log (": Moved $cleanName to $targetOU (demo mode)") -Type "Info"
                         }
                     } else {
                         $adObject = Get-ADObject -Filter "Name -eq '$cleanName'" -ErrorAction Stop
                         Move-ADObject -Identity $adObject.DistinguishedName -TargetPath $targetOU -ErrorAction Stop
                         $successCount++
-                        Debug-Log ("DEBUG: Moved $cleanName to $targetOU in AD") -Type "info"
+                        Debug-Log (": Moved $cleanName to $targetOU in AD") -Type "Info"
                     }
                 } catch {
                     $failCount++
                     $errors += "$cleanName`: $($_.Exception.Message)"
-                    Debug-Log ("DEBUG: Failed to move $cleanName`: $_") -Type "info"
+                    Debug-Log (": Failed to move $cleanName`: $_") -Type "Info"
                 }
             }
-            
+
             # Show results
             $msg = "Successfully moved $successCount object(s)"
             if ($failCount -gt 0) {
@@ -5473,49 +6863,49 @@ function Invoke-BulkMove {
                     $msg += "`n`nErrors:`n" + ($errors -join "`n")
                 }
             }
-            
+
             Show=-Modal "Bulk Move Complete" $msg
-            
+
             # Refresh tree
-            if (-not $Global:DemoMode) {
-                Load-DomainData -domain $Global:CurrentDomain
+            if (-not $Script:DemoMode) {
+                Load-DomainData -domain $Script:CurrentDomain
             }
-            Build-Tree -domain $Global:CurrentDomain
-            Update-FilterStatusLabel -label $Global:FilterStatusLabel
-            
+            Build-Tree -domain $Script:CurrentDomain
+            Update-FilterStatusLabel -label $Script:FilterStatusLabel
+
             # Clear selection
-            $Global:SelectedObjects = @()
-            $Global:SelectionMode = $false
+            $Script:SelectedObjects = @()
+            $Script:SelectionMode = $false
             Update-SelectionPanel -panel $selectionPanel
-            
+
             [Terminal.Gui.Application]::RequestStop()
         }
     })
     $dlg.AddButton($btnMove)
-    
+
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $dlg.AddButton($btnCancel)
-    
+
     [Terminal.Gui.Application]::Run($dlg)
 }
 
 # ------------------------- Bulk Add to Group ------------------------
 function Invoke-BulkAddToGroup {
-    if ($Global:SelectedObjects.Count -eq 0) {
+    if ($Script:SelectedObjects.Count -eq 0) {
       Show-Modal "No Selection" "No objects selected. Select objects first."
         return
     }
-    
+
     $dlg = [Terminal.Gui.Dialog]::new("Bulk Add to Group", 70, 18)
-    
-    $lblInfo = [Terminal.Gui.Label]::new("Add $($Global:SelectedObjects.Count) user(s) to group:")
+
+    $lblInfo = [Terminal.Gui.Label]::new("Add $($Script:SelectedObjects.Count) user(s) to group:")
     $lblInfo.X=2; $lblInfo.Y=1; $dlg.Add($lblInfo)
-    
+
     # Get list of groups
-    $groupList = if ($Global:DemoMode) {
+    $groupList = if ($Script:DemoMode) {
         $allGroups = @()
-        foreach ($u in $Global:Users) {
+        foreach ($u in $Script:Users) {
             $allGroups += $u.Groups
         }
         $allGroups | Select-Object -Unique | Sort-Object
@@ -5524,67 +6914,67 @@ function Invoke-BulkAddToGroup {
             Get-ADGroup -Filter * | Select-Object -ExpandProperty Name | Sort-Object
         } catch { @("Domain Users", "Domain Admins") }
     }
-    
+
     $lstGroups = [Terminal.Gui.ListView]::new($groupList)
     $lstGroups.X=2; $lstGroups.Y=3; $lstGroups.Width=[Terminal.Gui.Dim]::Fill(2); $lstGroups.Height=10
     $dlg.Add($lstGroups)
-    
+
     $btnAdd = [Terminal.Gui.Button]::new("Add All")
     $btnAdd.add_Clicked({
         if ($lstGroups.SelectedItem -lt 0) {
           Show-Modal "Error" "Please select a group"
             return
         }
-        
+
         $targetGroup = $groupList[$lstGroups.SelectedItem]
-        
-        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Add", 
-            "Add $($Global:SelectedObjects.Count) user(s) to group:`n$targetGroup?", 
+
+        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Add",
+            "Add $($Script:SelectedObjects.Count) user(s) to group:`n$targetGroup?",
             "Yes", "No")
-        
+
         if ($confirm -eq 0) {
             $successCount = 0
             $failCount = 0
-            
-            foreach ($objName in $Global:SelectedObjects) {
+
+            foreach ($objName in $Script:SelectedObjects) {
                 $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-                
+
                 try {
-                    if ($Global:DemoMode) {
-                        $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+                    if ($Script:DemoMode) {
+                        $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
                         if ($user -and $user.Groups -notcontains $targetGroup) {
                             $user.Groups += $targetGroup
                             $successCount++
-                            Debug-Log ("DEBUG: Added $cleanName to $targetGroup (demo mode)") -Type "info"
+                            Debug-Log (": Added $cleanName to $targetGroup (demo mode)") -Type "Info"
                         }
                     } else {
                         Add-ADGroupMember -Identity $targetGroup -Members $cleanName -ErrorAction Stop
                         $successCount++
-                        Debug-Log ("DEBUG: Added $cleanName to $targetGroup in AD") -Type "info"
+                        Debug-Log (": Added $cleanName to $targetGroup in AD") -Type "Info"
                     }
                 } catch {
                     $failCount++
-                    Debug-Log ("DEBUG: Failed to add $cleanName`: $_") -Type "info"
+                    Debug-Log (": Failed to add $cleanName`: $_") -Type "Info"
                 }
             }
-            
-            [Terminal.Gui.MessageBox]::Query(60, 10, "Bulk Add Complete", 
-                "Successfully added $successCount user(s)`nFailed: $failCount", 
+
+            [Terminal.Gui.MessageBox]::Query(60, 10, "Bulk Add Complete",
+                "Successfully added $successCount user(s)`nFailed: $failCount",
                 "OK") | Out-Null
-            
+
             # Refresh tree
-            Build-Tree -domain $Global:CurrentDomain
-            Update-FilterStatusLabel -label $Global:FilterStatusLabel
-            
+            Build-Tree -domain $Script:CurrentDomain
+            Update-FilterStatusLabel -label $Script:FilterStatusLabel
+
             [Terminal.Gui.Application]::RequestStop()
         }
     })
     $dlg.AddButton($btnAdd)
-    
+
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $dlg.AddButton($btnCancel)
-    
+
     [Terminal.Gui.Application]::Run($dlg)
 }
 
@@ -5592,20 +6982,20 @@ function Invoke-BulkAddToGroup {
 # Add keyboard shortcuts for selection
 function Add-SelectionKeyBindings {
     param($view)
-    
+
     $view.add_KeyPress({ param($sender, $keyArgs)
         # Ctrl+A = Select All
         if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::A -bor [Terminal.Gui.Key]::CtrlMask)) {
             Select-AllObjects
             $keyArgs.Handled = $true
         }
-        
+
         # Ctrl+D = Deselect All
         if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::D -bor [Terminal.Gui.Key]::CtrlMask)) {
             Deselect-AllObjects
             $keyArgs.Handled = $true
         }
-        
+
         # Ctrl+S = Toggle Selection Mode
         if ($keyArgs.KeyEvent.Key -eq ([Terminal.Gui.Key]::S -bor [Terminal.Gui.Key]::CtrlMask)) {
             Toggle-SelectionMode
@@ -5616,60 +7006,60 @@ function Add-SelectionKeyBindings {
 
 # ------------------------- Select/Deselect All ------------------------
 function Select-AllObjects {
-    if (-not $Global:SelectionMode) {
+    if (-not $Script:SelectionMode) {
         [Terminal.Gui.MessageBox]::Query(50, 7, "Selection Mode", "Enable selection mode first (Ctrl+S)", "OK") | Out-Null
         return
     }
-    
-    $Global:SelectedObjects = @()
-    
+
+    $Script:SelectedObjects = @()
+
     # Get all users from tree
-    foreach ($user in $Global:Users) {
+    foreach ($user in $Script:Users) {
         $statusIcon = if ($user.Disabled) { "⊗" } else { "○" }
         $displayName = "(U) $statusIcon $($user.Name)"
-        $Global:SelectedObjects += $displayName
+        $Script:SelectedObjects += $displayName
     }
-    
-    Debug-Log ("DEBUG: Selected all users ($($Global:SelectedObjects.Count))") -Type "info"
+
+    Debug-Log (": Selected all users ($($Script:SelectedObjects.Count))") -Type "Info"
     Update-SelectionPanel -panel $selectionPanel
-    Show-Modal "Selected All" "Selected $($Global:SelectedObjects.Count) users"
+    Show-Modal "Selected All" "Selected $($Script:SelectedObjects.Count) users"
 }
 
 function Deselect-AllObjects {
-    $Global:SelectedObjects = @()
-    Debug-Log ("DEBUG: Deselected all objects") -Type "info"
+    $Script:SelectedObjects = @()
+    Debug-Log (": Deselected all objects") -Type "Info"
     Update-SelectionPanel -panel $selectionPanel
 }
 
 # ------------------------- Bulk Disable/Enable ------------------------
 function Invoke-BulkDisableEnable {
     param([bool]$disable)
-    
-    if ($Global:SelectedObjects.Count -eq 0) {
-      Sho-wModal "No Selection" "No objects selected. Select objects first."
+
+    if ($Script:SelectedObjects.Count -eq 0) {
+      Show-Modal "No Selection" "No objects selected. Select objects first."
         return
     }
-    
+
     $action = if ($disable) { "disable" } else { "enable" }
-    $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Action", 
-        "Are you sure you want to $action $($Global:SelectedObjects.Count) user account(s)?", 
+    $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Action",
+        "Are you sure you want to $action $($Script:SelectedObjects.Count) user account(s)?",
         "Yes", "No")
-    
+
     if ($result -eq 0) {
         $successCount = 0
         $failCount = 0
         $errors = @()
-        
-        foreach ($objName in $Global:SelectedObjects) {
+
+        foreach ($objName in $Script:SelectedObjects) {
             $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-            
+
             try {
-                if ($Global:DemoMode) {
-                    $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+                if ($Script:DemoMode) {
+                    $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
                     if ($user) {
                         $user.Disabled = $disable
                         $successCount++
-                        Debug-Log ("DEBUG: $action`d $cleanName (demo mode)") -Type "info"
+                        Debug-Log (": $action`d $cleanName (demo mode)") -Type "Info"
                     }
                 } else {
                     if ($disable) {
@@ -5678,15 +7068,15 @@ function Invoke-BulkDisableEnable {
                         Enable-ADAccount -Identity $cleanName -ErrorAction Stop
                     }
                     $successCount++
-                    Debug-Log ("DEBUG: $action`d $cleanName in AD") -Type "info"
+                    Debug-Log (": $action`d $cleanName in AD") -Type "Info"
                 }
             } catch {
                 $failCount++
                 $errors += "$cleanName`: $($_.Exception.Message)"
-                Debug-Log ("DEBUG: Failed to $action $cleanName`: $_") -Type "info"
+                Debug-Log (": Failed to $action $cleanName`: $_") -Type "Info"
             }
         }
-        
+
         # Show results
         $msg = "Successfully $action`d $successCount account(s)"
         if ($failCount -gt 0) {
@@ -5695,91 +7085,91 @@ function Invoke-BulkDisableEnable {
                 $msg += "`n`nErrors:`n" + ($errors -join "`n")
             }
         }
-        
+
         [Terminal.Gui.MessageBox]::Query(70, 15, "Bulk Action Complete", $msg, "OK") | Out-Null
-        
+
         # Refresh tree
-        if (-not $Global:DemoMode) {
-            Load-DomainData -domain $Global:CurrentDomain
+        if (-not $Script:DemoMode) {
+            Load-DomainData -domain $Script:CurrentDomain
         }
-        Build-Tree -domain $Global:CurrentDomain
-        Update-FilterStatusLabel -label $Global:FilterStatusLabel
-        
+        Build-Tree -domain $Script:CurrentDomain
+        Update-FilterStatusLabel -label $Script:FilterStatusLabel
+
         # Clear selection
-        $Global:SelectedObjects = @()
-        $Global:SelectionMode = $false
+        $Script:SelectedObjects = @()
+        $Script:SelectionMode = $false
         Update-SelectionPanel -panel $selectionPanel
     }
 }
 
 # ------------------------- Bulk Move ------------------------
 function Invoke-BulkMove {
-    if ($Global:SelectedObjects.Count -eq 0) {
+    if ($Script:SelectedObjects.Count -eq 0) {
       Show-Modal "No Selection" "No objects selected. Select objects first."
         return
     }
-    
-    $dlg = [Terminal.Gui.Dialog]::new("Bulk Move - $($Global:SelectedObjects.Count) Objects", 70, 18)
-    
-    $lblInfo = [Terminal.Gui.Label]::new("Moving $($Global:SelectedObjects.Count) object(s) to:")
+
+    $dlg = [Terminal.Gui.Dialog]::new("Bulk Move - $($Script:SelectedObjects.Count) Objects", 70, 18)
+
+    $lblInfo = [Terminal.Gui.Label]::new("Moving $($Script:SelectedObjects.Count) object(s) to:")
     $lblInfo.X=2; $lblInfo.Y=1; $dlg.Add($lblInfo)
-    
+
     # Get list of OUs
-    $ouList = if ($Global:DemoMode) {
-        $Global:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
+    $ouList = if ($Script:DemoMode) {
+        $Script:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
     } else {
         try {
-            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName | 
+            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName |
                 Select-Object -ExpandProperty DistinguishedName | Sort-Object
         } catch { @("CN=Users,DC=example,DC=com") }
     }
-    
+
     $lstOU = [Terminal.Gui.ListView]::new($ouList)
     $lstOU.X=2; $lstOU.Y=3; $lstOU.Width=[Terminal.Gui.Dim]::Fill(2); $lstOU.Height=10
     $dlg.Add($lstOU)
-    
+
     $btnMove = [Terminal.Gui.Button]::new("Move All")
     $btnMove.add_Clicked({
         if ($lstOU.SelectedItem -lt 0) {
           Show-Modal "Error" "Please select a target OU"
             return
         }
-        
+
         $targetOU = $ouList[$lstOU.SelectedItem]
-        
-        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Move", 
-            "Move $($Global:SelectedObjects.Count) object(s) to:`n$targetOU?", 
+
+        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Move",
+            "Move $($Script:SelectedObjects.Count) object(s) to:`n$targetOU?",
             "Yes", "No")
-        
+
         if ($confirm -eq 0) {
             $successCount = 0
             $failCount = 0
             $errors = @()
-            
-            foreach ($objName in $Global:SelectedObjects) {
+
+            foreach ($objName in $Script:SelectedObjects) {
                 $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-                
+
                 try {
-                    if ($Global:DemoMode) {
-                        $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+                    if ($Script:DemoMode) {
+                        $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
                         if ($user) {
                             $user.OU = $targetOU
                             $successCount++
-                            Debug-Log ("DEBUG: Moved $cleanName to $targetOU (demo mode)") -Type "info"
+                            Debug-Log (": Moved $cleanName to $targetOU (demo mode)") -Type "Info"
                         }
                     } else {
                         $adObject = Get-ADObject -Filter "Name -eq '$cleanName'" -ErrorAction Stop
                         Move-ADObject -Identity $adObject.DistinguishedName -TargetPath $targetOU -ErrorAction Stop
                         $successCount++
-                        Debug-Log ("DEBUG: Moved $cleanName to $targetOU in AD") -Type "info"
+                        Debug-Log (": Moved $cleanName to $targetOU in AD") -Type "Info"
                     }
                 } catch {
                     $failCount++
                     $errors += "$cleanName`: $($_.Exception.Message)"
-                    Debug-Log ("DEBUG: Failed to move $cleanName`: $_") -Type "info"
+                    Debug-Log (": Failed to move $cleanName`: $_") -Type "Info"
                 }
             }
-            
+
             # Show results
             $msg = "Successfully moved $successCount object(s)"
             if ($failCount -gt 0) {
@@ -5788,49 +7178,49 @@ function Invoke-BulkMove {
                     $msg += "`n`nErrors:`n" + ($errors -join "`n")
                 }
             }
-            
+
             Show-Modal "Bulk Move Complete" $msg
-            
+
             # Refresh tree
-            if (-not $Global:DemoMode) {
-                Load-DomainData -domain $Global:CurrentDomain
+            if (-not $Script:DemoMode) {
+                Load-DomainData -domain $Script:CurrentDomain
             }
-            Build-Tree -domain $Global:CurrentDomain
-            Update-FilterStatusLabel -label $Global:FilterStatusLabel
-            
+            Build-Tree -domain $Script:CurrentDomain
+            Update-FilterStatusLabel -label $Script:FilterStatusLabel
+
             # Clear selection
-            $Global:SelectedObjects = @()
-            $Global:SelectionMode = $false
+            $Script:SelectedObjects = @()
+            $Script:SelectionMode = $false
             Update-SelectionPanel -panel $selectionPanel
-            
+
             [Terminal.Gui.Application]::RequestStop()
         }
     })
     $dlg.AddButton($btnMove)
-    
+
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $dlg.AddButton($btnCancel)
-    
+
     [Terminal.Gui.Application]::Run($dlg)
 }
 
 # ------------------------- Bulk Add to Group ------------------------
 function Invoke-BulkAddToGroup {
-    if ($Global:SelectedObjects.Count -eq 0) {
+    if ($Script:SelectedObjects.Count -eq 0) {
       Show-Modal "No Selection" "No objects selected. Select objects first."
         return
     }
-    
+
     $dlg = [Terminal.Gui.Dialog]::new("Bulk Add to Group", 70, 18)
-    
-    $lblInfo = [Terminal.Gui.Label]::new("Add $($Global:SelectedObjects.Count) user(s) to group:")
+
+    $lblInfo = [Terminal.Gui.Label]::new("Add $($Script:SelectedObjects.Count) user(s) to group:")
     $lblInfo.X=2; $lblInfo.Y=1; $dlg.Add($lblInfo)
-    
+
     # Get list of groups
-    $groupList = if ($Global:DemoMode) {
+    $groupList = if ($Script:DemoMode) {
         $allGroups = @()
-        foreach ($u in $Global:Users) {
+        foreach ($u in $Script:Users) {
             $allGroups += $u.Groups
         }
         $allGroups | Select-Object -Unique | Sort-Object
@@ -5839,398 +7229,418 @@ function Invoke-BulkAddToGroup {
             Get-ADGroup -Filter * | Select-Object -ExpandProperty Name | Sort-Object
         } catch { @("Domain Users", "Domain Admins") }
     }
-    
+
     $lstGroups = [Terminal.Gui.ListView]::new($groupList)
     $lstGroups.X=2; $lstGroups.Y=3; $lstGroups.Width=[Terminal.Gui.Dim]::Fill(2); $lstGroups.Height=10
     $dlg.Add($lstGroups)
-    
+
     $btnAdd = [Terminal.Gui.Button]::new("Add All")
     $btnAdd.add_Clicked({
         if ($lstGroups.SelectedItem -lt 0) {
             Show-Modal "Error" "Please select a group"
             return
         }
-        
+
         $targetGroup = $groupList[$lstGroups.SelectedItem]
-        
-        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Add", 
-            "Add $($Global:SelectedObjects.Count) user(s) to group:`n$targetGroup?", 
+
+        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Add",
+            "Add $($Script:SelectedObjects.Count) user(s) to group:`n$targetGroup?",
             "Yes", "No")
-        
+
         if ($confirm -eq 0) {
             $successCount = 0
             $failCount = 0
-            
-            foreach ($objName in $Global:SelectedObjects) {
+
+            foreach ($objName in $Script:SelectedObjects) {
                 $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-                
+
                 try {
-                    if ($Global:DemoMode) {
-                        $user = $Global:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+                    if ($Script:DemoMode) {
+                        $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
                         if ($user -and $user.Groups -notcontains $targetGroup) {
                             $user.Groups += $targetGroup
                             $successCount++
-                            Debug-Log ("DEBUG: Added $cleanName to $targetGroup (demo mode)") -Type "info"
+                            Debug-Log (": Added $cleanName to $targetGroup (demo mode)") -Type "Info"
                         }
                     } else {
                         Add-ADGroupMember -Identity $targetGroup -Members $cleanName -ErrorAction Stop
                         $successCount++
-                        Debug-Log ("DEBUG: Added $cleanName to $targetGroup in AD") -Type "info"
+                        Debug-Log (": Added $cleanName to $targetGroup in AD") -Type "Info"
                     }
                 } catch {
                     $failCount++
-                    Debug-Log ("DEBUG: Failed to add $cleanName`: $_") -Type "info"
+                    Debug-Log (": Failed to add $cleanName`: $_") -Type "Info"
                 }
             }
-            
-            [Terminal.Gui.MessageBox]::Query(60, 10, "Bulk Add Complete", 
-                "Successfully added $successCount user(s)`nFailed: $failCount", 
+
+            [Terminal.Gui.MessageBox]::Query(60, 10, "Bulk Add Complete",
+                "Successfully added $successCount user(s)`nFailed: $failCount",
                 "OK") | Out-Null
-            
+
             # Refresh tree
-            Build-Tree -domain $Global:CurrentDomain
-            Update-FilterStatusLabel -label $Global:FilterStatusLabel
-            
+            Build-Tree -domain $Script:CurrentDomain
+            Update-FilterStatusLabel -label $Script:FilterStatusLabel
+
             [Terminal.Gui.Application]::RequestStop()
         }
     })
     $dlg.AddButton($btnAdd)
-    
+
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
     $dlg.AddButton($btnCancel)
-    
+
     [Terminal.Gui.Application]::Run($dlg)
 }
 
 # ------------------------- Selection Panel ------------------------
 function Create-SelectionPanel {
+    param(
+        [int]$panelWidth = 30,
+        [int]$panelHeight = 15
+    )
+
+    # Create frame view
     $selPanel = [Terminal.Gui.FrameView]::new("Selected Objects")
-    $selPanel.X = 32
-    $selPanel.Y = 15
-    $selPanel.Width = 40
-    $selPanel.Height = 10
-    
+    $selPanel.Width  = $panelWidth
+    $selPanel.Height = $panelHeight
+    $selPanel.X = [Terminal.Gui.Pos]::AnchorEnd($panelWidth)  # Right-align
+    $selPanel.Y = 1  # Just below top margin
+
+    # Count label
     $lblCount = [Terminal.Gui.Label]::new("0 objects selected")
-    $lblCount.X = 1; $lblCount.Y = 0
+    $lblCount.X = 1
+    $lblCount.Y = 0
     $selPanel.Add($lblCount)
-    
+
+    # ListView
     $lstSelected = [Terminal.Gui.ListView]::new(@())
-    $lstSelected.X = 1; $lstSelected.Y = 1
-    $lstSelected.Width = [Terminal.Gui.Dim]::Fill(1)
-    $lstSelected.Height = [Terminal.Gui.Dim]::Fill(3)
+    $lstSelected.X = 1
+    $lstSelected.Y = 1
+    $lstSelected.Width  = [Terminal.Gui.Dim]::Fill(2)  # margin on both sides
+    $lstSelected.Height = [Terminal.Gui.Dim]::Fill(6)  # leaves space for buttons
     $selPanel.Add($lstSelected)
-    
-    # Add Tag property to store references
+
+    # Store references in Tag
     $selPanel | Add-Member -MemberType NoteProperty -Name Tag -Value @{
         CountLabel = $lblCount
-        ListView = $lstSelected
+        ListView   = $lstSelected
     } -Force
-    
-    # Batch action buttons
+
+    # ----------------- Batch action buttons -----------------
+    $yPos = [Terminal.Gui.Pos]::Bottom($lstSelected) + 1
+
     $btnBulkDisable = [Terminal.Gui.Button]::new("Disable All")
     $btnBulkDisable.X = 1
-    $btnBulkDisable.Y = [Terminal.Gui.Pos]::Bottom($lstSelected) + 1
+    $btnBulkDisable.Y = $yPos
     $btnBulkDisable.add_Clicked({ Invoke-BulkDisableEnable -disable $true })
     $selPanel.Add($btnBulkDisable)
-    
+
+    $yPos = [Terminal.Gui.Pos]::Bottom($btnBulkDisable) + 1
     $btnBulkEnable = [Terminal.Gui.Button]::new("Enable All")
-    $btnBulkEnable.X = 14
-    $btnBulkEnable.Y = [Terminal.Gui.Pos]::Bottom($lstSelected) + 1
+    $btnBulkEnable.X = 1
+    $btnBulkEnable.Y = $yPos
     $btnBulkEnable.add_Clicked({ Invoke-BulkDisableEnable -disable $false })
     $selPanel.Add($btnBulkEnable)
-    
+
+    $yPos = [Terminal.Gui.Pos]::Bottom($btnBulkEnable) + 1
     $btnBulkMove = [Terminal.Gui.Button]::new("Move All...")
-    $btnBulkMove.X = 27
-    $btnBulkMove.Y = [Terminal.Gui.Pos]::Bottom($lstSelected) + 1
+    $btnBulkMove.X = 1
+    $btnBulkMove.Y = $yPos
     $btnBulkMove.add_Clicked({ Invoke-BulkMove })
     $selPanel.Add($btnBulkMove)
-    
+
     return $selPanel
 }
+
 
 # ------------------------- Update Selection Panel ------------------------
 function Update-SelectionPanel {
     param($panel)
-    
+
     if (-not $panel -or -not $panel.Tag) { return }
-    
+
     $lblCount = $panel.Tag.CountLabel
     $lstSelected = $panel.Tag.ListView
-    
-    $count = $Global:SelectedObjects.Count
+
+    $count = $Script:SelectedObjects.Count
     $lblCount.Text = "$count object(s) selected"
-    
-    $displayNames = $Global:SelectedObjects | ForEach-Object {
+
+    $displayNames = $Script:SelectedObjects | ForEach-Object {
         $name = $_ -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
         $name
     }
-    
+
     $lstSelected.SetSource($displayNames)
     $panel.SetNeedsDisplay()
 }
 
 # Add/Remove Group Member Implementation
-# Replace the placeholder functions in your script
+# =====================================================
+# ADD / REMOVE OUP MEMBERS AKA EDIT
+# =====================================================
+# Usage Examples
+# =====================================================
+function Show-EditGroupMembershipDialog {
+    <#
+    .SYNOPSIS
+    Shows a dialog to edit group memberships with checkboxes
 
-# =====================================================
-# ADD GROUP MEMBER
-# =====================================================
-function Show-AddGroupMemberDialog {
-    param([string]$groupName)
-    
-    Debug-Log ("DEBUG: Add member to group: $groupName") -Type "info"
-    
-    $dlg = [Terminal.Gui.Dialog]::new("Add Member to Group - $groupName", 70, 25)
-    
-    $lblInfo = [Terminal.Gui.Label]::new("Select users to add to '$groupName':")
-    $lblInfo.X = 2; $lblInfo.Y = 1
-    $dlg.Add($lblInfo)
-    
-    # Get list of all users NOT already in this group
-    if ($Global:DemoMode) {
-        # Demo mode: find users not in this group
-        $availableUsers = $Global:Users | Where-Object { 
-            $_.Groups -notcontains $groupName 
-        } | Sort-Object -Property Name
+    .PARAMETER User
+    User object to edit group memberships for
+
+    .PARAMETER OnUpdate
+    Optional scriptblock to call after successful changes
+    #>
+    param(
+        [Parameter(Mandatory=$true)]
+        [PSCustomObject]$User,
+
+        [scriptblock]$OnUpdate
+    )
+
+    Debug-Log ": Edit group membership for user $($User.Name)" -Type "Info"
+
+    # Get current user groups
+    $currentGroups = @()
+    if ($User.Groups) {
+        $currentGroups = $User.Groups
+    } elseif ($User.MemberOf) {
+        $currentGroups = $User.MemberOf | ForEach-Object {
+            if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
+        }
+    }
+
+    # Get all available groups
+    if ($Script:DemoMode) {
+        $allGroups = $Script:Groups | Sort-Object -Property Name
     } else {
-        # Production mode: get all users not in group
         try {
-            $groupMembers = Get-ADGroupMember -Identity $groupName -ErrorAction Stop | 
-                Select-Object -ExpandProperty SamAccountName
-            
-            $allUsers = Get-ADUser -Filter * -Properties SamAccountName, DisplayName -ErrorAction Stop
-            
-            $availableUsers = $allUsers | Where-Object { 
-                $groupMembers -notcontains $_.SamAccountName 
-            } | Sort-Object -Property DisplayName
+            $allGroups = Get-ADGroup -Filter * -Properties Description -ErrorAction Stop | Sort-Object -Property Name
         } catch {
-            [Terminal.Gui.MessageBox]::Query(60, 10, "Error", 
-                "Failed to retrieve users:`n$($_.Exception.Message)", "OK") | Out-Null
+            Show-Modal "Error" "Failed to retrieve groups:`n$($_.Exception.Message)"
             return
         }
     }
-    
-    if ($availableUsers.Count -eq 0) {
-        [Terminal.Gui.MessageBox]::Query(50, 7, "No Users", 
-            "All users are already members of this group!", "OK") | Out-Null
+
+    if ($allGroups.Count -eq 0) {
+        Show-Modal "No Groups" "No groups available in the directory"
         return
     }
-    
-    # Create list of available users
-    if ($Global:DemoMode) {
-        $userList = $availableUsers | ForEach-Object { 
-            "$($_.Name) - $($_.Title) [$($_.OU[-1])]" 
-        }
-    } else {
-        $userList = $availableUsers | ForEach-Object { 
-            "$($_.DisplayName) ($($_.SamAccountName))" 
-        }
+
+    # Create dialog
+    $dlg = [Terminal.Gui.Dialog]::new("Edit Group Membership - $($User.Name)", 90, 35)
+
+    $lblInfo = [Terminal.Gui.Label]::new("Check/uncheck groups and click Apply to save changes:")
+    $lblInfo.X = 2
+    $lblInfo.Y = 1
+    $dlg.Add($lblInfo)
+
+    # Create scrollable view for checkboxes
+    $scrollView = [Terminal.Gui.ScrollView]::new()
+    $scrollView.X = 2
+    $scrollView.Y = 3
+    $scrollView.Width = [Terminal.Gui.Dim]::Fill(2)
+    $scrollView.Height = [Terminal.Gui.Dim]::Fill(5)
+    $scrollView.ShowVerticalScrollIndicator = $true
+
+    # Track checkboxes and their corresponding groups
+    $checkboxes = @{}
+    $y = 0
+
+    foreach ($group in $allGroups) {
+        $groupName = $group.Name
+        $isChecked = $currentGroups -contains $groupName
+
+        $description = if ($group.Description) { " - $($group.Description)" } else { "" }
+        $chk = [Terminal.Gui.CheckBox]::new("$groupName$description")
+        $chk.X = 0
+        $chk.Y = $y
+        $chk.Checked = $isChecked
+
+        # Store reference
+        $checkboxes[$groupName] = $chk
+
+        $scrollView.Add($chk)
+        $y++
     }
-    
-    $lstUsers = [Terminal.Gui.ListView]::new()
-    $lstUsers.SetSource($userList)
-    $lstUsers.X = 2
-    $lstUsers.Y = 3
-    $lstUsers.Width = [Terminal.Gui.Dim]::Fill(2)
-    $lstUsers.Height = [Terminal.Gui.Dim]::Fill(4)
-    $lstUsers.AllowsMarking = $true  # Allow multi-select
-    $dlg.Add($lstUsers)
-    
-    # Info label
-    $lblHelp = [Terminal.Gui.Label]::new("Tip: Use SPACE to select multiple users")
-    $lblHelp.X = 2
-    $lblHelp.Y = [Terminal.Gui.Pos]::Bottom($lstUsers) + 1
-    $dlg.Add($lblHelp)
-    
-    # Add button
-$btnAdd = [Terminal.Gui.Button]::new("Add Selected")
-$btnAdd.add_Clicked({
-    # Get marked (selected) items
-    $markedIndices = @()
-    for ($i = 0; $i -lt $userList.Count; $i++) {
-        if ($lstUsers.Source.IsMarked($i)) {
-            $markedIndices += $i
+
+    # Set content size for scrolling
+    $scrollView.ContentSize = [Terminal.Gui.Size]::new(80, $y)
+    $dlg.Add($scrollView)
+
+    # Buttons
+    $btnApply = [Terminal.Gui.Button]::new("Apply Changes")
+    $btnApply.X = 2
+    $btnApply.Y = [Terminal.Gui.Pos]::Bottom($scrollView) + 1
+    $btnApply.add_Clicked({
+        # Determine what changed
+        $toAdd = @()
+        $toRemove = @()
+
+        foreach ($groupName in $checkboxes.Keys) {
+            $isCurrentlyMember = $currentGroups -contains $groupName
+            $isChecked = $checkboxes[$groupName].Checked
+
+            if ($isChecked -and -not $isCurrentlyMember) {
+                # Need to add
+                $toAdd += $groupName
+            } elseif (-not $isChecked -and $isCurrentlyMember) {
+                # Need to remove
+                $toRemove += $groupName
+            }
         }
-    }
-    
-    # If nothing marked, check if there's a selected item
-    if ($markedIndices.Count -eq 0) {
-        if ($lstUsers.SelectedItem -ne -1) {
-            # User just highlighted but didn't mark - use the selected item
-            $markedIndices = @($lstUsers.SelectedItem)
+
+        if ($toAdd.Count -eq 0 -and $toRemove.Count -eq 0) {
+            Show-Modal "No Changes" "No group membership changes were made"
+            return
+        }
+
+        # Show confirmation
+        $changeMsg = ""
+        if ($toAdd.Count -gt 0) {
+            $changeMsg += "Add to $($toAdd.Count) group(s):`n  " + ($toAdd -join "`n  ") + "`n`n"
+        }
+        if ($toRemove.Count -gt 0) {
+            $changeMsg += "Remove from $($toRemove.Count) group(s):`n  " + ($toRemove -join "`n  ")
+        }
+
+        $confirm = [Terminal.Gui.MessageBox]::ErrorQuery(
+            "Confirm Changes",
+            "Apply these changes for $($User.Name)?`n`n$changeMsg",
+            "Yes", "No"
+        )
+
+        if ($confirm -ne 0) {  # Not "Yes"
+            return
+        }
+
+        # Apply changes
+        $addedCount = 0
+        $removedCount = 0
+        $errors = @()
+
+        # Add to groups
+        foreach ($groupName in $toAdd) {
+            try {
+                if ($Script:DemoMode) {
+                    if (-not $User.Groups) { $User.Groups = @() }
+                    $User.Groups += $groupName
+                    Debug-Log ": Added $($User.Name) to group $groupName (demo)" -Type "Success"
+                    $addedCount++
+                } else {
+                    Add-ADGroupMember -Identity $groupName -Members $User.SamAccountName -ErrorAction Stop
+                    Debug-Log ": Added $($User.SamAccountName) to group $groupName" -Type "Success"
+                    $addedCount++
+                }
+            } catch {
+                $errors += "Failed to add to ${$groupName}: $($_.Exception.Message)"
+                Debug-Log ": Failed to add: $($_.Exception.Message)" -Type "Error"
+            }
+        }
+
+        # Remove from groups
+        foreach ($groupName in $toRemove) {
+            try {
+                if ($Script:DemoMode) {
+                    $User.Groups = $User.Groups | Where-Object { $_ -ne $groupName }
+                    Debug-Log ": Removed $($User.Name) from group $groupName (demo)" -Type "Success"
+                    $removedCount++
+                } else {
+                    Remove-ADGroupMember -Identity $groupName -Members $User.SamAccountName -Confirm:$false -ErrorAction Stop
+                    Debug-Log ": Removed $($User.SamAccountName) from group $groupName" -Type "Success"
+                    $removedCount++
+                }
+            } catch {
+                $errors += "Failed to remove from ${$groupName}: $($_.Exception.Message)"
+                Debug-Log ": Failed to remove: $($_.Exception.Message)" -Type "Error"
+            }
+        }
+
+        # Show results
+        $resultMsg = "Changes applied:"
+        if ($addedCount -gt 0) { $resultMsg += "`nAdded to $addedCount group(s)" }
+        if ($removedCount -gt 0) { $resultMsg += "`nRemoved from $removedCount group(s)" }
+
+        if ($errors.Count -gt 0) {
+            $resultMsg += "`n`nErrors:`n" + ($errors -join "`n")
+            Show-Modal "Partial Success" $resultMsg
         } else {
-            Show-Modal "No Selection" "Please select at least one user (use SPACE to mark multiple, or just highlight one)"
-            return
+            Show-Modal "Success" $resultMsg
         }
-    }
-})
-}
 
-# =====================================================
-# REMOVE GROUP MEMBER
-# =====================================================
-function Show-RemoveGroupMemberDialog {
-    param([string]$groupName)
-    
-    Debug-Log ("DEBUG: Remove member from group: $groupName") -Type "info"
-    
-    $dlg = [Terminal.Gui.Dialog]::new("Remove Member from Group - $groupName", 70, 25)
-    
-    $lblInfo = [Terminal.Gui.Label]::new("Select users to remove from '$groupName':")
-    $lblInfo.X = 2; $lblInfo.Y = 1
-    $dlg.Add($lblInfo)
-    
-    # Get list of current group members
-    if ($Global:DemoMode) {
-        # Demo mode: find users in this group
-        $groupMembers = $Global:Users | Where-Object { 
-            $_.Groups -contains $groupName 
-        } | Sort-Object -Property Name
-    } else {
-        # Production mode: get group members from AD
-        try {
-            $members = Get-ADGroupMember -Identity $groupName -ErrorAction Stop
-            $groupMembers = $members | ForEach-Object {
-                Get-ADUser -Identity $_.SamAccountName -Properties DisplayName, SamAccountName -ErrorAction Stop
-            } | Sort-Object -Property DisplayName
-        } catch {
-            [Terminal.Gui.MessageBox]::Query(60, 10, "Error", 
-                "Failed to retrieve group members:`n$($_.Exception.Message)", "OK") | Out-Null
-            return
+        # Call OnUpdate callback if provided
+        if ($OnUpdate) {
+            & $OnUpdate
         }
-    }
-    
-    if ($groupMembers.Count -eq 0) {
-        [Terminal.Gui.MessageBox]::Query(50, 7, "Empty Group", 
-            "This group has no members!", "OK") | Out-Null
-        return
-    }
-    
-    # Create list of group members
-    if ($Global:DemoMode) {
-        $memberList = $groupMembers | ForEach-Object { 
-            "$($_.Name) - $($_.Title) [$($_.OU[-1])]" 
-        }
-    } else {
-        $memberList = $groupMembers | ForEach-Object { 
-            "$($_.DisplayName) ($($_.SamAccountName))" 
-        }
-    }
-    
-    $lstMembers = [Terminal.Gui.ListView]::new()
-    $lstMembers.SetSource($memberList)
-    $lstMembers.X = 2
-    $lstMembers.Y = 3
-    $lstMembers.Width = [Terminal.Gui.Dim]::Fill(2)
-    $lstMembers.Height = [Terminal.Gui.Dim]::Fill(4)
-    $lstMembers.AllowsMarking = $true  # Allow multi-select
-    $dlg.Add($lstMembers)
-    
-    # Info label
-    $lblHelp = [Terminal.Gui.Label]::new("Tip: Use SPACE to select multiple users")
-    $lblHelp.X = 2
-    $lblHelp.Y = [Terminal.Gui.Pos]::Bottom($lstMembers) + 1
-    $dlg.Add($lblHelp)
-    
-    # Remove button
-    $btnRemove = [Terminal.Gui.Button]::new("Remove Selected")
-    $btnRemove.add_Clicked({
-        # Get marked (selected) items
-        $markedIndices = @()
-        for ($i = 0; $i -lt $memberList.Count; $i++) {
-            if ($lstMembers.Source.IsMarked($i)) {
-                $markedIndices += $i
-            }
-        }
-        
-        if ($markedIndices.Count -eq 0) {
-            [Terminal.Gui.MessageBox]::Query(50, 7, "No Selection", "Please select at least one user (use SPACE key)", "OK") | Out-Null
-            return
-        }
-        
-        $usersToRemove = $markedIndices | ForEach-Object { $groupMembers[$_] }
-        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Remove", "Remove $($usersToRemove.Count) user(s) from group '$groupName'?", "Yes", "No")
-        
-        if ($confirm -eq 0) {
-            $successCount = 0
-            $failCount = 0
-            $errors = @()
-            
-            foreach ($user in $usersToRemove) {
-                try {
-                    if ($Global:DemoMode) {
-                        # Demo mode: remove group from user's Groups array
-                        $user.Groups = $user.Groups | Where-Object { $_ -ne $groupName }
-                        $successCount++
-                        Debug-Log ("DEBUG: Removed $($user.Name) from $groupName (demo mode)") -Type "info"
-                    } else {
-                        # Production mode: remove from AD
-                        Remove-ADGroupMember -Identity $groupName -Members $user.SamAccountName -Confirm:$false -ErrorAction Stop
-                        $successCount++
-                        Debug-Log ("DEBUG: Removed $($user.SamAccountName) from $groupName in AD") -Type "info"
-                    }
-                } catch {
-                    $failCount++
-                    $userName = if ($Global:DemoMode) { $user.Name } else { $user.SamAccountName }
-                    $errors += "$userName`: $($_.Exception.Message)"
-                    Debug-Log ("ERROR: Failed to remove $userName from group: $_") -Type "info"
-                }
-            }
-            
-            # Show results
-            $msg = "Successfully removed $successCount user(s) from '$groupName'"
-            if ($failCount -gt 0) {
-                $msg += "`n`nFailed: $failCount"
-                if ($errors.Count -gt 0 -and $errors.Count -le 5) {
-                    $msg += "`n`nErrors:`n" + ($errors -join "`n")
-                }
-            }
-            
-            Show-Modal "Remove Members Complete" $msg
-            
-            # Rebuild tree
-            [Terminal.Gui.Application]::MainLoop.Invoke({
-                Build-Tree -domain $Global:CurrentDomain
-                Update-FilterStatusLabel -label $Global:FilterStatusLabel
-            })
-            
-            [Terminal.Gui.Application]::RequestStop()
-        }
+
+        # Close the dialog
+        [Terminal.Gui.Application]::RequestStop()
     })
-    $dlg.AddButton($btnRemove)
-    
+    $dlg.Add($btnApply)
+
+    # Cancel button
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnCancel.X = [Terminal.Gui.Pos]::Right($btnApply) + 2
+    $btnCancel.Y = [Terminal.Gui.Pos]::Bottom($scrollView) + 1
     $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-    $dlg.AddButton($btnCancel)
-    
+    $dlg.Add($btnCancel)
+
+    # Run the dialog
     [Terminal.Gui.Application]::Run($dlg)
 }
 
+# =====================================================
+# Usage Example
+# =====================================================
+
+<#
+# Call from User Properties Member Of tab - ONE button instead of two!
+$btnEdit = [Terminal.Gui.Button]::new("Edit Groups...")
+$btnEdit.add_Clicked({
+    Show-EditGroupMembershipDialog -User $user -OnUpdate {
+        # Refresh group list
+        $refreshedGroups = @()
+        if ($user.Groups) {
+            $refreshedGroups = $user.Groups
+        } elseif ($user.MemberOf) {
+            $refreshedGroups = $user.MemberOf | ForEach-Object {
+                if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
+            }
+        }
+
+        if ($refreshedGroups.Count -gt 0) {
+            $lstGroups.SetSource($refreshedGroups)
+        } else {
+            $lstGroups.SetSource(@("(No group memberships)"))
+        }
+    }
+})
+#>
 
 function Check-DCReplication {
     param([string]$dcName)
     Show-Modal "Replication Check" "Checking replication for $dcName`n(Coming soon)"
 }
 
-function Show-Modal { 
-    param($title, $msg) 
-    [Terminal.Gui.MessageBox]::Query($title, $msg, @("OK")) | Out-Null 
+function Show-Modal {
+    param($title, $msg)
+    [Terminal.Gui.MessageBox]::Query($title, $msg, @("OK")) | Out-Null
 }
 
 function Show-OUPropertiesDialog {
     param([string]$ouName)
-    
-    Debug-Log ("DEBUG: Showing OU properties dialog for: $ouName") -Type "info"
-    
+
+    Debug-Log (": Showing OU properties dialog for: $ouName") -Type "Info"
+
     if (-not $ouName) {
-        Debug-Log ("ERROR: OU name is null") -Type "error"
+        Debug-Log (": OU name is null") -Type "Warn"
         return
     }
-    
+
     # Find the OU in raw data
-    $ou = $Global:rawOUs | Where-Object { $_.Name -eq $ouName } | Select-Object -First 1
-    
+    $ou = $Script:rawOUs | Where-Object { $_.Name -eq $ouName } | Select-Object -First 1
+
     # If not found, create a basic one (for existing OUs from user data)
     if (-not $ou) {
         $ou = @{
@@ -6239,171 +7649,171 @@ function Show-OUPropertiesDialog {
             Description = ""
         }
     }
-    
+
     # Create buttons FIRST
     $btnOK = [Terminal.Gui.Button]::new("OK")
     $btnCancel = [Terminal.Gui.Button]::new("Cancel")
     $btnApply = [Terminal.Gui.Button]::new("Apply")
-    
+
     # Create dialog WITH buttons
     $dlg = [Terminal.Gui.Dialog]::new("OU Properties - $ouName", 80, 20, $btnOK, $btnCancel, $btnApply)
-    
+
     # Create a simple view (no tabs needed for OUs)
     $view = [Terminal.Gui.View]::new()
     $view.X = 0
     $view.Y = 0
     $view.Width = [Terminal.Gui.Dim]::Fill()
     $view.Height = [Terminal.Gui.Dim]::Fill(3)
-    
+
     $y = 1
-    
+
     # OU Name (editable for rename)
     $lbl = [Terminal.Gui.Label]::new("Name:"); $lbl.X=2; $lbl.Y=$y; $view.Add($lbl)
     $txtName = [Terminal.Gui.TextField]::new($ou.Name ?? ""); $txtName.X=20; $txtName.Y=$y; $txtName.Width=50
-    $txtName.add_TextChanged({ $script:ouChangesMade = $true })
+    $txtName.add_TextChanged({ $Script:ouChangesMade = $true })
     $view.Add($txtName)
     $y+=2
-    
+
     # Description
     $lbl = [Terminal.Gui.Label]::new("Description:"); $lbl.X=2; $lbl.Y=$y; $view.Add($lbl)
     $txtDesc = [Terminal.Gui.TextField]::new($ou.Description ?? ""); $txtDesc.X=20; $txtDesc.Y=$y; $txtDesc.Width=50
-    $txtDesc.add_TextChanged({ $script:ouChangesMade = $true })
+    $txtDesc.add_TextChanged({ $Script:ouChangesMade = $true })
     $view.Add($txtDesc)
     $y+=2
-    
+
     # Path (read-only)
     $lbl = [Terminal.Gui.Label]::new("Path:"); $lbl.X=2; $lbl.Y=$y; $view.Add($lbl)
     $txtPath = [Terminal.Gui.TextField]::new($ou.Path ?? ""); $txtPath.X=20; $txtPath.Y=$y; $txtPath.Width=50; $txtPath.ReadOnly=$true
     $view.Add($txtPath)
     $y+=2
-    
+
     # Show object count in this OU
-    $objectCount = ($Global:Users | Where-Object { $_.OU -contains $ouName }).Count
+    $objectCount = ($Script:Users | Where-Object { $_.OU -contains $ouName }).Count
     $lbl = [Terminal.Gui.Label]::new("Contains:"); $lbl.X=2; $lbl.Y=$y; $view.Add($lbl)
     $lblCount = [Terminal.Gui.Label]::new("$objectCount objects"); $lblCount.X=20; $lblCount.Y=$y
     $view.Add($lblCount)
-    
+
     $dlg.Add($view)
-    
+
     # Store field references for Apply function
     $fields = @{
         txtName = $txtName
         txtDesc = $txtDesc
         originalName = $ou.Name
     }
-    
+
     # Wire up button actions (NO .GetNewClosure() to avoid scope issues)
     $btnOK.add_Clicked({
         if (Apply-OUChanges -ou $ou -fields $fields) {
             [Terminal.Gui.Application]::RequestStop()
         }
     })
-    
+
     $btnCancel.add_Clicked({
-        if ($script:ouChangesMade) {
-            $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Unsaved Changes", 
-                "You have unsaved changes. Discard them?", 
+        if ($Script:ouChangesMade) {
+            $result = [Terminal.Gui.MessageBox]::Query(60, 8, "Unsaved Changes",
+                "You have unsaved changes. Discard them?",
                 @("Yes", "No"))
             if ($result -eq 0) {
-                $script:ouChangesMade = $false
+                $Script:ouChangesMade = $false
                 [Terminal.Gui.Application]::RequestStop()
             }
         } else {
             [Terminal.Gui.Application]::RequestStop()
         }
     })
-    
+
     $btnApply.add_Clicked({
         Apply-OUChanges -ou $ou -fields $fields
     })
-    
-    Debug-Log ("DEBUG: Show-OUPropertiesDialog running") -Type "info"
+
+    Debug-Log (": Show-OUPropertiesDialog running") -Type "Info"
     [Terminal.Gui.Application]::Run($dlg)
-    Debug-Log ("DEBUG: Show-OUPropertiesDialog completed") -Type "info"
+    Debug-Log (": Show-OUPropertiesDialog completed") -Type "Info"
 }
 
 function Apply-OUChanges {
     param($ou, $fields)
-    
+
     $originalName = $fields.originalName
     $newName = $fields.txtName.Text.ToString()
     $newDesc = $fields.txtDesc.Text.ToString()
-    
-    Debug-Log ("DEBUG: Applying changes for OU: $originalName -> $newName") -Type "info"
-    
+
+    Debug-Log (": Applying changes for OU: $originalName -> $newName") -Type "Info"
+
     try {
-        if ($Global:DemoMode) {
+        if ($Script:DemoMode) {
             # Check if renaming
             $isRename = $originalName -ne $newName
-            
+
             if ($isRename) {
-                Debug-Log ("DEBUG: Renaming OU from '$originalName' to '$newName'") -Type "info"
-                
+                Debug-Log (": Renaming OU from '$originalName' to '$newName'") -Type "Info"
+
                 # Update the OU itself
                 $ou.Name = $newName
                 $ou.Description = $newDesc
-                
+
                 # Update all users that reference this OU
-                foreach ($user in $Global:Users) {
+                foreach ($user in $Script:Users) {
                     if ($user.OU -contains $originalName) {
-                        Debug-Log ("DEBUG: Updating user $($user.Name) OU reference") -Type "info"
+                        Debug-Log (": Updating user $($user.Name) OU reference") -Type "Info"
                         $user.OU = $user.OU | ForEach-Object { if ($_ -eq $originalName) { $newName } else { $_ } }
                     }
                 }
-                
+
                 # Update raw users too
-                foreach ($rawUser in $Global:rawUsers) {
+                foreach ($rawUser in $Script:rawUsers) {
                     if ($rawUser.OU -contains $originalName) {
                         $rawUser.OU = $rawUser.OU | ForEach-Object { if ($_ -eq $originalName) { $newName } else { $_ } }
                     }
                 }
-                
+
                 # Update in rawOUs
-                $rawOU = $Global:rawOUs | Where-Object { $_.Name -eq $originalName } | Select-Object -First 1
+                $rawOU = $Script:rawOUs | Where-Object { $_.Name -eq $originalName } | Select-Object -First 1
                 if ($rawOU) {
                     $rawOU.Name = $newName
                     $rawOU.Description = $newDesc
                 }
-                
+
                 # Update the fields for next apply
                 $fields.originalName = $newName
-                
+
                 Show-Modal "Success" "OU renamed from '$originalName' to '$newName' (demo mode)"
             } else {
                 # Just updating description
                 $ou.Description = $newDesc
-                
-                $rawOU = $Global:rawOUs | Where-Object { $_.Name -eq $originalName } | Select-Object -First 1
+
+                $rawOU = $Script:rawOUs | Where-Object { $_.Name -eq $originalName } | Select-Object -First 1
                 if ($rawOU) {
                     $rawOU.Description = $newDesc
                 }
-                
+
                 Show-Modal "Success" "OU changes applied (demo mode)"
             }
-            
-            Debug-Log ("SUCCESS: OU changes applied (demo mode)") -Type "info"
-            
+
+            Debug-Log ("SUCCESS: OU changes applied (demo mode)") -Type "Info"
+
             # Refresh the tree to show changes
-            Refresh-Data -domain $Global:CurrentDomain
-            
+            Refresh-Data -domain $Script:CurrentDomain
+
         } else {
             # Production mode - use Rename-ADObject or Set-ADOrganizationalUnit
             $isRename = $originalName -ne $newName
-            
+
             if ($isRename) {
                 # Get the actual AD OU object
                 $adOU = Get-ADOrganizationalUnit -Filter "Name -eq '$originalName'" -ErrorAction Stop | Select-Object -First 1
-                
+
                 if ($adOU) {
                     # Rename the OU
                     Rename-ADObject -Identity $adOU.DistinguishedName -NewName $newName -ErrorAction Stop
-                    
+
                     # Update description if provided
                     if ($newDesc) {
                         Set-ADOrganizationalUnit -Identity "OU=$newName,$($adOU.DistinguishedName -replace '^OU=[^,]+,')" -Description $newDesc -ErrorAction Stop
                     }
-                    
-                    Debug-Log ("SUCCESS: OU renamed in AD from $originalName to $newName") -Type "info"
+
+                    Debug-Log ("SUCCESS: OU renamed in AD from $originalName to $newName") -Type "Info"
                     Show-Modal "Success" "OU renamed successfully"
                 } else {
                     throw "OU not found in AD"
@@ -6413,335 +7823,367 @@ function Apply-OUChanges {
                 $adOU = Get-ADOrganizationalUnit -Filter "Name -eq '$originalName'" -ErrorAction Stop | Select-Object -First 1
                 if ($adOU) {
                     Set-ADOrganizationalUnit -Identity $adOU.DistinguishedName -Description $newDesc -ErrorAction Stop
-                    Debug-Log ("SUCCESS: OU description updated in AD") -Type "info"
+                    Debug-Log ("SUCCESS: OU description updated in AD") -Type "Info"
                     Show-Modal "Success" "OU changes applied"
                 }
             }
-            
+
             # Refresh from AD
-            Refresh-Data -domain $Global:CurrentDomain
+            Refresh-Data -domain $Script:CurrentDomain
         }
-        
-        $script:ouChangesMade = $false
+
+        $Script:ouChangesMade = $false
         return $true
-        
+
     } catch {
-        Debug-Log ("ERROR: Failed to apply OU changes: $($_.Exception.Message)") -Type "error"
+        Debug-Log (": Failed to apply OU changes: $($_.Exception.Message)") -Type "Warn"
         Show-Modal "Error" "Failed to apply changes:`n$($_.Exception.Message)"
         return $false
     }
 }
 
-## -------{ Applicaiton execution starts formaly here }-------
-## -------------------------------{ TreeView }------------------------------
-#$tree = [Terminal.Gui.TreeView]::new()
-$Global:tree.X=0; $Global:tree.Y=1; $Global:tree.Width=80; $Global:tree.Height=[Terminal.Gui.Dim]::Fill()
+## ===== STEP 1: Environment & Logging =====
 
-## ------------------------- Load Domain or Demo Data FIRST ------------------------
-Load-DomainData -domain $Global:CurrentDomain
+## Don't let users do stupid stuff, either unintentionally or willingly
+if ($DemoMode -and $PSBoundParameters.ContainsKey('Domain')) {
+    Debug-Log "Invalid startup: -Domain cannot be used with -DemoMode" -Type "Error"
+    return
+}
 
-# (Optional) Debug after loading
-Debug-Log ("POST-LOAD DEBUG: Domains: $($Global:Domains.Count)") -Type "info"
-Debug-Log  ("POST-LOAD DEBUG: Users: $($Global:Users.Count)") -Type "info"
-Debug-Log ("POST-LOAD DEBUG: Computers: $($Global:Computers.Count)") -Type "info"
-Debug-Log ("POST-LOAD DEBUG: DCs: $($Global:DCs.Count)") -Type "info"
-Debug-Log ("POST-LOAD DEBUG: Objects: $($Global:ADObjects.Count)") -Type "info"
+## Echo basic info for debugging
+Debug-Log "DemoMode: $DemoMode" "info"
+Debug-Log "Logging: $Logging" -Type "Info"
+Debug-Log "LogFile: $LogFile" -Type "Info"
 
-## ------------------------- Build initial tree ------------------------
-Build-Tree -domain $Global:CurrentDomain
+## Initialize logging if requested
+if ($Logging -or $LogFile) {
+    Debug-Log "Logging condition TRUE" "Debug"
 
-## ------------------------- Update status label ------------------------
-Update-FilterStatusLabel -label $Global:FilterStatusLabel
-
-# ------------------------- Tree Mouse Handler ------------------------
-# Add this to tree setup after creating ${tree}:
-
-# Add mouse event handler for right-click
-$Global:tree.add_MouseClick({
-    param($mouseEvent)
-    
-    Debug-Log ("DEBUG: Mouse event type: $($mouseEvent.GetType().Name)") -Type "info"
-    Debug-Log ("DEBUG: Mouse event properties: $($mouseEvent | Get-Member -MemberType Property | Select-Object -ExpandProperty Name)") -Type "info"
-    
-    # Try different ways to access the mouse button
-    $isRightClick = $false
-    
-    # Method 1: Direct Flags property
-    if ($mouseEvent.PSObject.Properties['Flags']) {
-        Debug-Log ("DEBUG: Flags = $($mouseEvent.Flags)") -Type "info"
-        $isRightClick = $mouseEvent.Flags -band [Terminal.Gui.MouseFlags]::Button3Clicked
+    if (-not $LogFile) {
+        $LogFile = Join-Path $PSScriptRoot "dsa_tui_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+        Debug-Log "Auto-generated LogFile: $LogFile" -Type "Debug"
     }
-    
-    # Method 2: MouseEvent property
-    if ($mouseEvent.PSObject.Properties['MouseEvent']) {
-        Debug-Log ("DEBUG: MouseEvent.Flags = $($mouseEvent.MouseEvent.Flags)") -Type "info"
-        $isRightClick = $mouseEvent.MouseEvent.Flags -band [Terminal.Gui.MouseFlags]::Button3Clicked
+
+    # Convert to absolute path if needed
+    if (-not [System.IO.Path]::IsPathRooted($LogFile)) {
+        $LogFile = Join-Path (Get-Location).Path $LogFile
     }
-    
-    # Method 3: Check if it's Button3
-    if ($mouseEvent.PSObject.Properties['Button']) {
-        Debug-Log ("DEBUG: Button = $($mouseEvent.Button)") -Type "info"
-        $isRightClick = $mouseEvent.Button -eq 3
+
+    $Script:Logging = $true
+    $Script:LogFile = $LogFile
+
+    # Spinner setup for status updates
+    $Script:statusSpinner = @('|', '/', '-', '\')
+    $Script:statusSpinnerIndex = 0
+
+    # Dummy status object for UI
+    $Script:StatusItem = [PSCustomObject]@{ Title = "Initializing..." }
+
+    Debug-Log "Attempting to create log at: $LogFile" -Type "Debug"
+    try {
+        $Script:LogStream = [System.IO.StreamWriter]::new($LogFile, $false)
+        $Script:LogStream.AutoFlush = $true
+        Debug-Log "SUCCESS: Log file created at $LogFile" -Type "Debug"
+
+        $Script:LogStream.WriteLine("=== DSA-TUI Log Started $(Get-Date) ===")
+        $Script:LogStream.WriteLine("DemoMode: $DemoMode")
+        $Script:LogStream.WriteLine("Theme: $Theme")
+        $Script:LogStream.Flush()
+    } catch {
+        Debug-Log "FAILED to create log: $_" -Type "Error"
+        $Script:Logging = $false
     }
-    
-    Debug-Log ("DEBUG: Is right-click: $isRightClick") -Type "info"
-    
-    if ($isRightClick) {
-        Debug-Log ("DEBUG: Right-click detected") -Type "info"
-        
-        if ($Global:tree.SelectedObject) {
-            $selectedNode = $Global:tree.SelectedObject
-            $nodeName = $selectedNode.Text
-            
-            Debug-Log ("DEBUG: Right-clicked on node: $nodeName") -Type "info"
-            
-            # Determine object type
-            $objectType = "unknown"
-            if ($nodeName -like "(U)*") { 
-                $objectType = "user" 
-            } elseif ($nodeName -like "(DC)*") { 
-                $objectType = "dc" 
-            } elseif ($nodeName -like "(G)*" -or ($selectedNode.Parent -and $selectedNode.Parent.Text -eq "Groups")) { 
-                $objectType = "group" 
-            } elseif ($nodeName -like "OU:*") { 
-                $objectType = "ou" 
-            }
-            
-            # Show context menu
-            Show-ContextMenu -objectName $nodeName -objectType $objectType
-            
-            # Prevent default handling if Handled property exists
-            if ($mouseEvent.PSObject.Properties['Handled']) {
-                $mouseEvent.Handled = $true
-            }
+} else {
+    Debug-Log "Logging condition FALSE - no logging enabled" -Type "Warn"
+}
+
+# Set globals for demo mode and theme
+$Script:DemoMode = $DemoMode
+$Script:ThemeMode = $Theme
+
+## ===== STEP 2: Module Checks & Terminal.Gui =====
+
+Debug-Log "Performing pre-flight module checks..." -Type "Info"
+
+# Required module: Terminal.Gui via ConsoleGuiTools
+$requiredOK = Test-RequiredModule -Name "Microsoft.PowerShell.ConsoleGuiTools"
+if (-not $requiredOK) {
+    Debug-Log "Missing required module Microsoft.PowerShell.ConsoleGuiTools. Exiting." -Type "Error"
+    exit
+}
+
+# Optional module: ActiveDirectory
+$adAvailable = Test-RequiredModule -Name "ActiveDirectory" -Optional
+if (-not $adAvailable) {
+    Debug-Log "ActiveDirectory module missing. Falling back to DEMO mode..." -Type "Warn"
+    $Script:DemoMode = $true
+}
+
+# Optional modules
+$Script:HasPSWriteColor = Test-RequiredModule -Name "PSWriteColor" -Optional
+$null = Test-RequiredModule -Name "Terminal-Icons" -Optional
+
+# Ensure Terminal.Gui.dll is loaded
+Debug-Log "Checking Terminal.Gui assembly..." -Type "Debug"
+if (-not ([AppDomain]::CurrentDomain.GetAssemblies() | Where-Object { $_.GetName().Name -eq 'Terminal.Gui' })) {
+    $mod = Get-Module -ListAvailable Microsoft.PowerShell.ConsoleGuiTools | Select-Object -First 1
+    if ($mod) {
+        $dll = Join-Path $mod.ModuleBase 'Terminal.Gui.dll'
+        if (Test-Path $dll) {
+            Add-Type -Path $dll -ErrorAction Stop
+            Debug-Log "Loaded Terminal.Gui from $dll" -Type "Debug"
+        } else {
+            Write-Error "Terminal.Gui.dll not found in $($mod.ModuleBase). Install Microsoft.PowerShell.ConsoleGuiTools."
+            return
         }
+    } else {
+        Write-Error "Microsoft.PowerShell.ConsoleGuiTools module not found."
+        return
     }
-})
+} else {
+    Debug-Log "Terminal.Gui assembly already loaded." -Type "Info"
+}
 
+## ===== STEP 3: Forest/Domain Initialization & Globals =====
 
-## -------{ Application execution starts formally here }-------
-## -------------------------------{ TreeView Setup }------------------------------
-$Global:tree.X=0; $Global:tree.Y=1; $Global:tree.Width=80; $Global:tree.Height=[Terminal.Gui.Dim]::Fill()
+Debug-Log "Initializing forest/domain globals..." -Type "Info"
 
-## ------------------------- Load Domain or Demo Data FIRST ------------------------
-Load-DomainData -domain $Global:CurrentDomain
+# Colours and demo mode
+$Script:DemoMode = $DemoMode
+$Script:ThemeMode = $Theme
 
-# (Optional) Debug after loading
-Debug-Log ("POST-LOAD DEBUG: Domains: $($Global:Domains.Count)") -Type "info"
-Debug-Log ("POST-LOAD DEBUG: Users: $($Global:Users.Count)") -Type "info"
-Debug-Log ("POST-LOAD DEBUG: Computers: $($Global:Computers.Count)") -Type "info"
-Debug-Log ("POST-LOAD DEBUG: DCs: $($Global:DCs.Count)") -Type "info"
-Debug-Log ("POST-LOAD DEBUG: Objects: $($Global:ADObjects.Count)") -Type "info"
+# Spinner setup
+$Script:SpinnerTimer  = $null
+$Script:SpinnerActive = $false
 
-## ------------------------- Build initial tree ------------------------
-Build-Tree -domain $Global:CurrentDomain
+# Tab & layout placeholders
+$Script:LayoutInProgress = $false
+$Script:TabRows          = @()
+$Script:AllTabs          = @()
+$Script:ActiveTab        = $null
+$Script:TabRowHeight     = 1
 
-## ------------------------- Update status label ------------------------
-Update-FilterStatusLabel -label $Global:FilterStatusLabel
+## ===== STEP 4: Load Domain/Demo Data & Build Tree =====
 
-##############################################################################
-## ----------------------------{ Start program }----------------------------
-## ------------------------{ Initialize Terminal.Gui }----------------------
+########################### HERE IS WHERE IT DOESNT SHOW A UI FOR AGES ##############################################
+
+## ==================== STEP 5: Initialize Terminal.Gui UI ====================
+
 [Terminal.Gui.Application]::Init()
 $top = [Terminal.Gui.Application]::Top
 
-# Get the selected theme
-Debug-Log ("Applying theme: $Theme") -Type "info"
+## Check if date is special and use emoji accordingly
+Initialize-DirectoryEmoji
+
+## ------------------------- Main Window (ONLY ONCE) -------------------------
+$win = [Terminal.Gui.Window]::new("$($Script:ProjectName) $($Script:DirectoryEmoji) Active Directory $BuildVersion $($Global:FruitName)")
+$win.X = 0
+$win.Y = 0
+$win.Width  = [Terminal.Gui.Dim]::Fill()
+$win.Height = [Terminal.Gui.Dim]::Fill(1)
+
+## Apply theme to window early (safe)
+## Select theme before proceeding. Save the mode string
+$Script:ThemeMode = $Theme
+
+## Get the selected colour scheme
+$themeData = Get-Theme -mode $Theme  # Store in $themeData, not $cs
+Debug-Log "Applying theme: $Theme" -Type "Info"
 $themeData = Get-Theme -mode $Theme
+#Apply-Theme -ThemeData $themeData -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $Script:StatusBar
+Apply-Theme -ThemeData $themeData -TopLevel [Terminal.Gui.Application]::Top -MainWindow $win -Menu $menu -Status $Script:StatusBar
+Debug-Log "Theme applied successfully" -Type "Info"
 
-if ($null -eq $themeData) {
-    Debug-Log ("WARNING: themeData is null, using default colors") -Type "warn"
-}
-
-# Apply theme to top level first
-if ($themeData -and $themeData.Global) {
-  $top.ColorScheme = $themeData.Global
-  Debug-Log ("Applied Global color scheme to top") -Type "info"
-} else {
-  Debug-Log ("WARNING: No Global color scheme available") -Type "warn"
-}
-
-## ------------------------------{ Main Window }----------------------------
-$win = [Terminal.Gui.Window]::new("$($Global:ProjectName) — Active Directory ${BuildVersion} ${Global:FruitName}")
-$win.X=0; $win.Y=0; $win.Width=[Terminal.Gui.Dim]::Fill(); $win.Height=[Terminal.Gui.Dim]::Fill(1)
 $top.Add($win)
 
+# ------------------------- Filter Panel (right, top) -------------------------
 $filterPanel = Create-FilterPanel
-if ($null -eq $filterPanel) {
-    Debug-Log ("ERROR: filterPanel is null!") -Type "error"
-} else {
-    $win.Add($filterPanel)
+if (-not ($filterPanel -is [Terminal.Gui.View])) {
+    $filterPanel = [Terminal.Gui.FrameView]::new("Filters")
 }
 
-$Global:FilterStatusLabel = Create-FilterStatusLabel
-if ($null -eq $Global:FilterStatusLabel) {
-    Debug-Log ("ERROR: FilterStatusLabel is null!") -Type "error"
-} else {
-    $win.Add($Global:FilterStatusLabel)
-    Debug-Log ("FilterStatusLabel created and added successfully") -Type "info"
+$filterPanel.Width  = 40 ## <-- if you need a wider panel, change this
+$filterPanel.Height = 17 ## <- chnage this if you make add new filters on the panel
+$filterPanel.X = [Terminal.Gui.Pos]::AnchorEnd(40)
+$filterPanel.Y = 0
+$win.Add($filterPanel)
+
+# -------------------------{} Selected Objects Panel (right, below filters) }-------------------------
+$selectedObjectsPanel = Create-SelectionPanel
+if (-not ($selectedObjectsPanel -is [Terminal.Gui.View])) {
+    $selectedObjectsPanel = [Terminal.Gui.FrameView]::new("Selected Objects")
 }
 
-$selectionPanel = Create-SelectionPanel
-if ($null -eq $selectionPanel) {
-    Debug-Log ("ERROR: selectionPanel is null!") -Type "error"
+$selectedObjectsPanel.Width  = 40
+$selectedObjectsPanel.Height = 10
+$selectedObjectsPanel.X = [Terminal.Gui.Pos]::AnchorEnd(40)
+$selectedObjectsPanel.Y = 17
+$win.Add($selectedObjectsPanel)
+
+############################# This needs to move to after the TUI loads ######################################
+
+# Forest/domain structure
+if ($Script:DemoMode) {
+    Debug-Log "DemoMode enabled: creating demo forest structure..." -Type "Info"
+    $Script:ForestName = "jukebox.example"
+    $Script:RootDomain = "example.com"
+    $Script:Domains    = @('example.com', 'example.net', 'example.org')
+    $Script:Sites      = @('GLA', 'EDI', 'LND', 'CPH', 'KGE', 'ODE', 'BON', 'BRL', 'MUC', 'NEW', 'LIV')
+    $Script:CurrentDomain = $Script:RootDomain
 } else {
-    $win.Add($selectionPanel)
-}
-
-## Update AFTER UI exists
-[Terminal.Gui.Application]::Top.SetNeedsDisplay()
-Update-FilterStatusLabel -label $Global:FilterStatusLabel
-
-## ------------------------- Status Bar ------------------------
-# Global status system - Use integer codes to avoid CLS compliance issues
-# Key codes: 0=Null, 0x1000000A=F1, 0x10000012=F9, 0x10000013=F10, 0x10000015=F12
-
-$initialStatus = "Forest: $($Global:ForestName) | Objects: $($Global:ADObjects.Count) | Ready"
-
-$Global:StatusItem = [Terminal.Gui.StatusItem]::new(0, $initialStatus, $null)
-
-$Global:statusSpinner = @('|', '/', '-', '\')
-$Global:statusSpinnerIndex = 0
-$Global:statusBaseMessage = ""
-
-## Create status bar with all items using integer key codes
-$Global:StatusBar = [Terminal.Gui.StatusBar]::new(@(
-  [Terminal.Gui.StatusItem]::new(0x1000000A,"~F1~ Help",{ Show-Modal "Shortcuts" "F1 - Help`n`nF2 - Password GeneratorF3 - New`nF5 - Refresh`n`nF6 - Themes`nF7 - Search`nF7 - TODO`nF9 - Menus`nF10 - Quit`nF11 Full-Screen`nF12 Redraw" }),
-  [Terminal.Gui.StatusItem]::new(0x1000000B,"~F3~ Password Generator",{  Generate-RandomPasswor }),
-  [Terminal.Gui.StatusItem]::new(0x1000000C,"~F3~ New",{ Show-NewObjectWizard }),
-  [Terminal.Gui.StatusItem]::new(0x1000000D,"~F5~ Refresh",{ Refresh-Data }),
-  [Terminal.Gui.StatusItem]::new(0x1000000E,"~F6~ Themes",{ Show-ThemeSelector }),
-  [Terminal.Gui.StatusItem]::new(0x1000000F,"~F7~ Search",{ Show-ADSearchDialog }),
-  [Terminal.Gui.StatusItem]::new(0x10000012,"~F9~ Menus",{ }), ## Can't use F9 it shows dropdown menys
-  [Terminal.Gui.StatusItem]::new(0x10000013,"~F10~ Quit",{ [Terminal.Gui.Application]::RequestStop() }),
-  [Terminal.Gui.StatusItem]::new(0x10000014,"~F11~ Full-Screen",{ }),
-  [Terminal.Gui.StatusItem]::new(0x10000015,"~F12~ Redraw",{ [Terminal.Gui.Application]::Refresh() }),
-  $Global:StatusItem  # Dynamic status on the right
-))
-$top.Add($StatusBar)
-
-## ------------------------- Menu ------------------------
-$mFile = [Terminal.Gui.MenuItem]::new("_Exit","Exit application (F10)",[Action]{ [Terminal.Gui.Application]::RequestStop() })
-$mNew = [Terminal.Gui.MenuItem]::new("New Object","Create a new object (F3)",[Action]{ Show-NewObjectWizard })
-$mProps = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-Properties }) ## No paramters!
-    
-$mUndo = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Debug-Log ("DEBUG: Undo placeholder") -Type "info" }) 
-$mChangeDomain = [Terminal.Gui.MenuItem]::new("Change _Domain","Select domain",[Action]{ Show-ChangeDomainDialog })
-$mChangeDC = [Terminal.Gui.MenuItem]::new("Change _Domain Controller","Select DC",[Action]{ Show-ChangeDCDialog })
-$mSearchAD = [Terminal.Gui.MenuItem]::new("_Search AD","Search Active Directory (F7)",[Action]{ Show-ADSearchDialog })
-$mRefresh = [Terminal.Gui.MenuItem]::new("_Refresh","Refresh AD data (F5)",[Action]{
-  Debug-Log ("DEBUG: Refresh menu clicked - scheduling refresh...") -Type "info"
-    
-  ## Schedule the actual refresh to happen AFTER this menu event completes
-  [Terminal.Gui.Application]::MainLoop.AddTimeout([TimeSpan]::FromMilliseconds(100), {
-    Debug-Log ("DEBUG: Timeout callback - starting refresh...") -Type "info"
+    Debug-Log "Production mode: querying AD forest..." -Type "Info"
     try {
-      Update-Status "Refreshing..." -spinner
-      $result = Refresh-Data -domain $Global:CurrentDomain -RebuildTree
-            
-      if ($result) {
-        Update-Status "Refresh complete" -final
-      } else {
-        Update-Status "Refresh failed" -final
-      }
-            
-      Debug-Log ("DEBUG: Refresh completed with result: $result") -Type "info"
-            
+        if ($Domain) {
+            Debug-Log "Querying specified domain: $Domain" -Type "Info"
+            $targetDomain = Get-ADDomain -Server $Domain -ErrorAction Stop
+            $forest = Get-ADForest -Server $targetDomain.Forest -ErrorAction Stop
+        } else {
+            $targetDomain = Get-ADDomain -ErrorAction Stop
+            $forest = Get-ADForest -ErrorAction Stop
+        }
+
+        $Script:ForestName = $forest.Name.Split('.')[0].ToUpper()
+        $Script:RootDomain  = $forest.RootDomain
+        $Script:Domains     = $forest.Domains
+        $Script:Sites       = $forest.Sites | ForEach-Object { $_.Name }
+        $Script:CurrentDomain = if ($Domain) { $Domain } else { $Script:RootDomain }
     } catch {
-      Debug-Log ("ERROR: Refresh crashed: $($_.Exception.Message)") -Type "info"
-      Update-Status "Refresh error" -final
+        Debug-Log ("Failed to query AD domain/forest: $_") -Type "Error"
+        Debug-Log ("Falling back to minimal domain info.") -Type "Warn"
+        $Script:ForestName = "DOMAIN"
+        $Script:RootDomain  = if ($Domain) { $Domain } else { $env:USERDNSDOMAIN }
+        $Script:Domains     = @($Script:RootDomain)
+        $Script:Sites       = @()
+        $Script:CurrentDomain = $Script:RootDomain
     }
-        
-    return $false  # Don't repeat the timeout
-  })
-    
-  Debug-Log ("DEBUG: Refresh scheduled") -Type "info"
-})
+}
 
-$mQuickFilter = [Terminal.Gui.MenuItem]::new("_Quick Filter","Apply quick filters",[Action]{ Show-QuickFilterDialog })
-$mSelectionMode = [Terminal.Gui.MenuItem]::new("_Selection Mode (Ctrl+S)","Toggle selection mode",[Action]{ Toggle-SelectionMode })
-$mSelectAll = [Terminal.Gui.MenuItem]::new("Select _All (Ctrl+A)","Select all objects",[Action]{ Select-AllObjects })
-$mDeselectAll = [Terminal.Gui.MenuItem]::new("_Deselect All (Ctrl+D)","Deselect all objects",[Action]{ Deselect-AllObjects })
-$mBulkAddGroup = [Terminal.Gui.MenuItem]::new("Add to _Group...","Add selected users to group",[Action]{ Invoke-BulkAddToGroup })
-$mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator (F2)",[Action]{ Generate-RandomPassword })
-$mADHealth = [Terminal.Gui.MenuItem]::new("_AD Health Status","AD Health And Replicaiton Status",[Action]{ Get-ADHealth })
-$mShortcuts = [Terminal.Gui.MenuItem]::new("_Shortcuts","Keyboard shortcuts (F1)",[Action]{ Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`n`nF6 - Themes`nF7 - Search`nF7 - TODO`nF9 - Menus`nF10 - Quit`nF11 Full-Screen`nF12 Redraw" })
-$mAboutDSATUI = [Terminal.Gui.MenuItem]::new("_About","About $($Global:ProjectName)",[Action]{ Show-Modal "About" "$($Global:ProjectName)`n`nCodename: $($Global:FruitName)`nv$($Global:BuildVersion) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600)" })
-$mWhyBlaabaer = [Terminal.Gui.MenuItem]::new("Why _Blaabaer?","Why the $($Global:FruitName) codename?",[Action]{ Show-BlaabaerInfo })
-$mTheme = [Terminal.Gui.MenuItem]::new("_Theme","Change color theme (F6)",[Action]{ Show-ThemeSelector })
+$Script:Domain = $Script:CurrentDomain  ## Compatibility
 
-## ------------------------- Menu Bar -------------------------
-$menu = [Terminal.Gui.MenuBar]::new(@(
-  [Terminal.Gui.MenuBarItem]::new("_File", @($mRefresh, $mTheme, $mFile)),
-  [Terminal.Gui.MenuBarItem]::new("_Action", @($mNew, $mProps, $mQuickFilter, $mUndo, $mChangeDomain, $mPasswordGenerator, $mChangeDC, $mSearchAD, $mADHealth)),
-  [Terminal.Gui.MenuBarItem]::new("_Selection", @($mSelectionMode, $mSelectAll, $mDeselectAll, $mBulkAddGroup)),
-  [Terminal.Gui.MenuBarItem]::new("_About", @($mShortcuts, $mAboutDSATUI, $mWhyBlaabaer))
+# Initialize object arrays
+$Script:CurrentDC      = $null
+$Script:Users          = @()
+$Script:Groups         = @()
+$Script:DCs            = @()
+$Script:ADObjects      = @()
+$Script:SelectedObjects = @()
+$Script:SelectionMode   = $false
+
+# Global Search filters
+$Script:FilterOptions = @{
+  ShowDisabledUsers = $true
+  ShowEnabledUsers  = $true
+  ShowLockedUsers   = $true
+  ShowGroups        = $true
+  ShowDCs           = $true
+  ShowComputers     = $true
+  ShowOUs           = $true
+  NameFilter        = ""
+  SortBy            = "Name"
+  SortDescending    = $false
+}
+
+# -------------------------{ Try to load data and refresh status bar after TUI }-------------------------
+## Do this AFTER blanking out the arrays just above
+Debug-Log "Loading domain data for $($Script:CurrentDomain)..." -Type "Info"
+##Update-Status "Loading domain data for $($Script:CurrentDomain)..." -spinner
+Load-DomainData -domain $Script:CurrentDomain
+##Update-Status "Refresh complete" -final
+Debug-Log ("POST-LOAD: Users=$($Script:Users.Count), Objects=$($Script:ADObjects.Count), DCs=$($Script:DCs.Count)") -Type "Info"
+
+Debug-Log "Forest/Domain initialization complete: CurrentDomain=$($Script:CurrentDomain)" -Type "Info"
+
+#####################################################################################################################
+
+# ------------------------- TreeView -------------------------
+Debug-Log ": Initializing TreeView..." -Type "Info"
+
+# Create a FrameView to hold the tree
+$treeFrame = [Terminal.Gui.FrameView]::new("Active Directory Objects")
+$treeFrame.X = 0
+$treeFrame.Y = 0  # Y=1 to leave room for menu
+$treeFrame.Width = [Terminal.Gui.Dim]::Fill(42)  # Leave room for right panels
+$treeFrame.Height = [Terminal.Gui.Dim]::Fill()
+
+# Create and configure the tree
+$Script:tree = [Terminal.Gui.TreeView]::new()
+$Script:tree.X = 0
+$Script:tree.Y = 0
+$Script:tree.Width = [Terminal.Gui.Dim]::Fill()
+$Script:tree.Height = [Terminal.Gui.Dim]::Fill()
+
+# Build and populate tree
+$rootNode = Build-Tree -domain $Script:CurrentDomain
+if ($null -ne $rootNode) {
+    $Script:tree.ClearObjects()
+    $Script:tree.AddObject($rootNode)
+    Debug-Log ": Root node added to TreeView" -Type "Success"
+} else {
+    Debug-Log ": FATAL - Build-Tree returned null root node" -Type "Error"
+}
+
+# Add tree to frame, then frame to window
+$treeFrame.Add($Script:tree)
+$win.Add($treeFrame)
+
+Debug-Log ": TreeView created and added to window successfully" -Type "Success"
+Update-Status "Initializing TreeView..." -spinner
+
+# ------------------------- Status Bar -------------------------
+$Script:StatusItem = [Terminal.Gui.StatusItem]::new(0, "Ready", $null)
+
+$Script:StatusBar = [Terminal.Gui.StatusBar]::new(@(
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F1, "~F1~ Help", { Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF9 Menus`nF10 - Quit`nF11 Full Screen" }),
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F2, "~F2~ Password Generator", { Generate-RandomPassword }),
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F3, "~F3~ New", { Show-NewObjectWizard }),
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F5, "~F5~ Refresh", { Refresh-Data -domain $Script:CurrentDomain -RebuildTree }),
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F6, "~F6~ Themes", { Show-ThemeSelector }),
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F7, "~F7~ Search", { Show-ADSearchDialog }),
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F9, "~F9~ Menus", { }),
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F10, "~F10~ Quit", { [Terminal.Gui.Application]::RequestStop() }),
+  [Terminal.Gui.StatusItem]::new([Terminal.Gui.Key]::F11, "~F11~ Full Screen", { }),
+  $Script:StatusItem
 ))
 
-## Apply full theme to all components
-try {
-    Apply-Theme -ThemeData $themeData -TopLevel $top -MainWindow $win -Menu $menu -Status $StatusBar
-    Debug-Log ("Theme applied successfully: $Theme") -Type "info"
-} catch {
-    Debug-Log ("WARNING: Theme application failed: $($_.Exception.Message)") -Type "warn"
-}
+$top.Add($Script:StatusBar)
 
-if ($null -eq $menu) {
-    Debug-Log ("ERROR: Menu is null before adding to top!") -Type "error"
-} else {
-    $top.Add($menu)
-    Debug-Log ("Menu added to top successfully") -Type "info"
-}
+## Final State of status bar after startup
+Update-Status "Refresh complete" -final
 
-## Add treeview to main window
-if ($null -eq $Global:tree) {
-    Debug-Log ("ERROR: tree is null!") -Type "error"
-} else {
-    $win.Add($Global:tree)
-    Debug-Log ("Tree added to window successfully") -Type "info"
-}
+## ------------------------- Menu -------------------------
+$menu = Build-MainMenu
+$top.Add($menu)
 
-## ------------------------- Window Key Handler (for F-keys) ------------------------
-$win.add_KeyPress({
-    param($keyEvent)
-    
-    $key = $keyEvent.KeyEvent.Key
-    
-    switch ($key) {
-        ([Terminal.Gui.Key]::F1) { Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`n`nF6 - Themes`nF7 - Search`nF7 - TODO`nF9 - Menus`nF10 - Quit`nF11 Full-Screen`nF12 Redraw" ; $keyEvent.Handled = $true }
-        ([Terminal.Gui.Key]::F2) { Generate-RandomPassword ; $keyEvent.Handled = $true }
-        ([Terminal.Gui.Key]::F3) { Show-NewObjectWizard ; $keyEvent.Handled = $true }
-        ([Terminal.Gui.Key]::F5) { Refresh-Data -domain $Global:CurrentDomain ; $keyEvent.Handled = $true }
-        ([Terminal.Gui.Key]::F6) { Show-ThemeSelector ; $keyEvent.Handled = $true }
-        ([Terminal.Gui.Key]::F7) { Show-ADSearchDialog ; $keyEvent.Handled = $true }
-        ([Terminal.Gui.Key]::F8) { Show-Modal "Coming soon!" ; $keyEvent.Handled = $true }
-        ## Can't use F9 that shows drop down menus
-        ([Terminal.Gui.Key]::F10) { [Terminal.Gui.Application]::RequestStop() ; $keyEvent.Handled = $true }
-        ([Terminal.Gui.Key]::F11) { $keyEvent.Handled = $true }
-        ([Terminal.Gui.Key]::F12) { [Terminal.Gui.Application]::Refresh() ; $keyEvent.Handled = $true }
-    }
+## ------------------------- Global Key Handlers -------------------------
+$top.add_KeyPress({
+  param($e)
+  $handled = $false
+
+  switch ($e.KeyEvent.Key) {
+    ([Terminal.Gui.Key]::F1)  { Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF9 Menus`nF10 - Quit`nF11 Full Screen" ; $handled = $true }
+    ([Terminal.Gui.Key]::F2)  { Generate-RandomPassword ; $handled = $true }
+    ([Terminal.Gui.Key]::F3)  { Show-NewObjectWizard ; $handled = $true }
+    ([Terminal.Gui.Key]::F5)  { Refresh-Data -domain $Script:CurrentDomain -RebuildTree ; $handled = $true }
+    ([Terminal.Gui.Key]::F6)  { Show-ThemeSelector ; $handled = $true }
+    ([Terminal.Gui.Key]::F7)  { Show-ADSearchDialog ; $handled = $true }
+    ([Terminal.Gui.Key]::F10) { [Terminal.Gui.Application]::RequestStop() ; $handled = $true }
+  }
+
+  $e.Handled = $handled
 })
 
-## ------------------------- Run application ------------------------
-Debug-Log ("DEBUG: Top is null? $($null -eq $top)") -Type "info"
-Debug-Log ("DEBUG: Win is null? $($null -eq $win)") -Type "info"
-Debug-Log ("DEBUG: Menu is null? $($null -eq $menu)") -Type "info"
-Debug-Log ("DEBUG: StatusBar is null? $($null -eq $StatusBar)") -Type "info"
-Debug-Log ("DEBUG: Tree is null? $($null -eq $Global:tree)") -Type "info"
-Debug-Log ("DEBUG: CurrentDomain = $Global:CurrentDomain") -Type "info"
-Debug-Log ("DEBUG: Users count = $($Global:Users.Count)") -Type "info"
-Debug-Log ("DEBUG: ADObjects count = $($Global:ADObjects.Count)") -Type "info"
+## ------------------------- Debug View Tree -------------------------
+Debug-Log "=== FULL VIEW TREE DUMP ===" -Type "Info"
+Debug-DumpViewTree -View $top
+Debug-Log "=== END VIEW TREE DUMP ===" -Type "Info"
 
+## ------------------------- Run -------------------------
 [Terminal.Gui.Application]::Run($top)
-[Terminal.Gui.Application]::Shutdown()
 
-## Cleanup
-if ($Global:LogStream) {
-  try {
-    $Global:LogStream.Flush()
-    $Global:LogStream.Close()
-    $Global:LogStream.Dispose()
-  } catch {
-    # Ignore cleanup errors
-  }
-}
+## ------------------------- Cleanup -------------------------
+Stop-Spinner
+[Terminal.Gui.Application]::Shutdown()
+Debug-Log "Application shut down cleanly" -Type "Info"
+
+## He fights for the users...
+Debug-Log "End of line..." -Type "Info"
