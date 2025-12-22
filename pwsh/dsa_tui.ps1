@@ -62,6 +62,8 @@ A note on phone numbers:
     - Edinburgh: 0131 496 0xxx + Mobile: 07700 900xxx
     - London: 020 7946 0xxx / 01632 96xxxx + Mobile: 07700 900xxx
 
+  Per: https://en.wikipedia.org/wiki/Telephone_numbers_in_the_United_Kingdom?useskin=vector#Fictitious_numbers
+
   - Denmark Testing Numbers:
     - Copenhagen landline: +45 0000-xxxx
     - Denmark mobile: +45 2xxx xxxx
@@ -398,14 +400,20 @@ Then replace }, in the output with , and use column mode to your advantage
   - Add UPNs and SamAccountName to align with real world AD
   - Bring back thw search/lookup tab for users... Spis lige brød til!
 
+2.3.8.0
+  - If terminal icons and a suitable nerd font is avilable, it will be used for prefixes, rather than (U), (G), etc.
+  - REMOVED Get-CleanObjectInfo function which is no longer needed by switching to .Tag to detect type
+  - Simplify calls to Objects and add icons for them too
+
 TODO:
-  - misisng AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
+  - Misisng AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
   - show locked users actually shows computers under maintenence, which is... nice but not what you're asking for - add both
   - Did the right click popup go away or is it broken...?
 
  BUGS:
   - Users don't get shown in real AD, one suspects it's too hardcoded on the heiraracy so needs ot actually detect it [X] Think this is fixed but confirm
   - also it gives appearance of "hanging" because it doesn't exist before trying to switch. Needs to acknowledge it, repaint status bar and hten show loading enumraintg stuff [x] possibly fixed too
+  - One of the theme properties is misisng. That being hte one that paints the main window background. Most viisible in the Class91 and Procomm themes
 
 ===========================================================================================
 #>
@@ -415,14 +423,30 @@ param(
   [switch]$Logging,
   [string]$LogFile,
   [string]$Domain,  ## User can specify domain
-  [ValidateSet("light","dark","matrix","british", "panam", "dsb", "gemstones", "class91", "scotrail","twa" )]
+  [ValidateSet("class91","british","dark","dsb","gemstones","light","matrix","panam","procomm","scotrail", "twa")]
   [string]$Theme
 )
 
 ## Define the build version, project and code names once only - up here to ease patching. The rest at main
 $Script:ProjectName = "DSA-TUI pwsh dsa.msc TUI"
 $Script:FruitName = "Blåbær"
-$Script:BuildVersion = "2.3.7.2"
+$Script:BuildVersion = "2.3.8.0"
+
+## Global emojis
+$Script:Icons = @{
+    # Core AD object types
+    User      = "👤"
+    Group     = "👥"
+    Computer  = "💻"
+    OU        = "📁"
+    DC        = "🖥"
+
+    # Status indicators
+    Locked    = "🔒"
+    Disabled  = "⊗"
+    Enabled   = "●"
+}
+
 
 class OUNode {
   [string]$Name
@@ -553,11 +577,6 @@ function Debug-Log {
   }
 }
 
-## ---------------------------{ Set Up Tree }--------------------------
-function Initialize-Tree {
-  if (-not $Script:tree) { $Script:tree = [Terminal.Gui.TreeView]::new() }
-}
-
 function Build-MainMenu {
   [CmdletBinding()]
   param()
@@ -649,11 +668,19 @@ function Get-Theme {
   Also leave me alone for I am also documentaiton #>
 
   switch ($mode) {
-    "light" {
-      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
-      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
-      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::Blue)
+
+    "british" {
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
+    }
+
+    "class91" {
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::White)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
     }
 
     "dark" {
@@ -663,25 +690,12 @@ function Get-Theme {
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Red)
     }
 
-    "matrix" {
-      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::Black)
-      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
-      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Black)
-      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Gray)
-    }
-
-    "british" {
-      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
-      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
-    }
-
-    "panam" {
-      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
-      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
-      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
-      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+    "default" {
+      # fallback to dark
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::DarkGray)
     }
 
     "dsb" {
@@ -698,6 +712,34 @@ function Get-Theme {
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
     }
 
+    "light" {
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::Blue)
+    }
+
+    "matrix" {
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::Black)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Black)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Gray)
+    }
+
+    "panam" {
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+    }
+
+    "procomm" {
+      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Red)
+      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::BrightBlue)
+      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
+      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+    }
+
     "scotrail" {
       $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
       $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::White)
@@ -705,26 +747,11 @@ function Get-Theme {
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
     }
 
-    "class91" {
-      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
-      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
-      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::White)
-      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
-    }
-
     "twa" {
       $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
       $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::DarkGray)
       $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
       $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::DarkGray)
-    }
-
-    "default" {
-      # fallback to dark
-      $ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
-      $ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
-      $mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
-      $mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::DarkGray)
     }
   }
 
@@ -856,11 +883,14 @@ function Show-LoadingDialog {
   }
 }
 
+## Called once during initialization - If we have Terminal-Icons pwsh module
+## and a suitable nerd font, use icons instead of text
+
 ## ------------------------{ Close Progressbar }-----------------------
 function Show-ThemeSelector {
 
   ## --- Theme list ---
-  $themes = @("british","dark","dsb","light","matrix","panam","gemstones","class91","scotrail", "twa")
+  $themes = @("class91","british","dark","dsb","gemstones","light","matrix","panam","procomm","scotrail", "twa")
 
   ## Split into two columns
   $half = [math]::Ceiling($themes.Count / 2)
@@ -972,196 +1002,6 @@ function Show-ThemeSelector {
   [Terminal.Gui.Application]::Run($dlg)
 }
 
-function Layout-Tabs {
-
-  Debug-Log "Reflowing tabs across rows" -Type "Debug"
-
-  if (-not $Script:AllTabs -or $Script:AllTabs.Count -eq 0) { return }
-
-  ## Clear all rows
-  foreach ($row in $Script:TabRows) {
-    while ($row.Tabs.Count -gt 0) { $row.RemoveTab($row.Tabs[0]) }
-  }
-
-  for ($i = 0; $i -lt $Script:AllTabs.Count; $i++) {
-
-    $rowIndex = [Math]::Floor($i / 6)
-    if ($rowIndex -ge $Script:TabRows.Count) { break }
-
-    $row = $Script:TabRows[$rowIndex]
-    $originalTab = $Script:AllTabs[$i]
-
-    ## Create a fresh tab
-    $tab = [Terminal.Gui.TabView+Tab]::new()
-
-    ## Convert ASCII numbers to readable text (works for log case)
-    $asciiString = "$($originalTab.Text)"
-    $tab.Text = ($asciiString -split '\s+' | ForEach-Object { [char][int]$_ }) -join ''
-
-    ## ✅ Attach a fresh View to avoid Visible exception
-    $tab.View = [Terminal.Gui.View]::new()
-    Debug-Log ("Layout-Tabs: rowIndex=$rowIndex i=$i tabType=$($tab.GetType().FullName) tabText='$($tab.Text)' hasView=$([bool]$tab.View)") -Type "Debug"
-
-    ## Add tab using 2-argument overload (required in 1.16)
-    $row.AddTab($tab, $false)
-  }
-
-  ## Select first tab
-  if ($Script:AllTabs.Count -gt 0) { Select-TabGlobal $Script:AllTabs[0] }
-}
-
-## ------------------------{ Faux Tab Builder }-----------------------
-function New-FauxTabContainer {
-  <#
-  .SYNOPSIS
-    Creates a multi-row tab container for Terminal.Gui dialogs.
-
-  .DESCRIPTION
-    This function sets up a faux multi-row tab container with keyboard navigation (Ctrl+Arrow) and a content host where individual tab Views can be displayed.
-    It returns a custom object containing the container view, the content host, and a helper function to select tabs programmatically.
-
-  .PARAMETER Tabs
-    An array of [Terminal.Gui.TabView+Tab] objects to be placed in the tab rows.
-
-  .PARAMETER Rows
-    Number of visible tab rows. Defaults to 2.
-
-  .PARAMETER Top
-    Y-offset for the container within the parent dialog. Defaults to 0.
-
-  .PARAMETER Height
-    Height of the container. Defaults to Fill minus row count.
-
-  .OUTPUTS
-    PSCustomObject with:
-      - Container -> outer view to add to dialog
-      - ContentHost -> view for tab contents
-      - SelectTab(tab) -> scriptblock to switch tabs
-  #>
-
-  param(
-    [Parameter(Mandatory)]
-    [array]$Tabs,
-
-    [int]$Rows = 2,
-    [int]$Top = 0,
-    [int]$Height = 0
-  )
-
-  ## Outer container
-  $container = [Terminal.Gui.View]::new()
-  $container.X = 0
-  $container.Y = $Top
-  $container.Width  = [Terminal.Gui.Dim]::Fill()
-  $container.Height = if ($Height -gt 0) { $Height } else { [Terminal.Gui.Dim]::Fill($Rows + 1) }
-
-  ## Create tab rows
-  $tabRows = @()
-  for ($i=0; $i -lt $Rows; $i++) {
-    $row = [Terminal.Gui.TabView]::new()
-    $row.X = 0
-    $row.Y = $i
-    $row.Width  = [Terminal.Gui.Dim]::Fill()
-    $row.Height = 1
-    $tabRows += $row
-
-    ## Wire up tab selection to global handler
-    $row.add_SelectedTabChanged({
-      param($sender, $args)
-      if ($Script:AllTabs -and $args.NewTab) {
-        $Script:ActiveTab = $args.NewTab
-        if ($container.ContentHost) {
-          $container.ContentHost.RemoveAll()
-          $container.ContentHost.Add($args.NewTab.View)
-        }
-      }
-    })
-  }
-
-  $Script:TabRows = $tabRows
-  $Script:AllTabs = $Tabs
-  $Script:ActiveTab = $Tabs[0]
-
-  ## Keyboard navigation: Ctrl+Arrows
-  $container.Add_KeyPress({
-    param($s, $e)
-    if (-not $Script:ActiveTab) { return }
-      $idx = $Script:AllTabs.IndexOf($Script:ActiveTab)
-
-      switch ($e.KeyEvent.Key) {
-        ([Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::CursorRight) {
-          if ($idx -lt ($Script:AllTabs.Count - 1)) {
-            $container.SelectTab.Invoke($Script:AllTabs[$idx + 1])
-            $e.Handled = $true
-          }
-        }
-        ([Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::CursorLeft) {
-          if ($idx -gt 0) {
-            $container.SelectTab.Invoke($Script:AllTabs[$idx - 1])
-            $e.Handled = $true
-          }
-        }
-        ([Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::CursorDown) {
-          if ($idx + $Rows -lt $Script:AllTabs.Count) {
-            $container.SelectTab.Invoke($Script:AllTabs[$idx + $Rows])
-            $e.Handled = $true
-          }
-        }
-        ([Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::CursorUp) {
-          if ($idx - $Rows -ge 0) {
-            $container.SelectTab.Invoke($Script:AllTabs[$idx - $Rows])
-            $e.Handled = $true
-          }
-        }
-      }
-  })
-
-  ## Visual separator below tabs
-  $separator = [Terminal.Gui.LineView]::new()
-  $separator.X = 0
-  $separator.Y = $Rows
-  $separator.Width = [Terminal.Gui.Dim]::Fill()
-  $separator.Height = 1
-
-  ## Content host
-  $contentHost = [Terminal.Gui.View]::new()
-  $contentHost.X = 0
-  $contentHost.Y = $Rows + 1
-  $contentHost.Width  = [Terminal.Gui.Dim]::Fill()
-  $contentHost.Height = [Terminal.Gui.Dim]::Fill()
-  $container.ContentHost = $contentHost
-
-  ## Add everything to container
-  foreach ($row in $tabRows) { $container.Add($row) }
-    $container.Add($separator)
-    $container.Add($contentHost)
-
-    ## Initial tab display
-    if ($Tabs.Count -gt 0) {
-      $container.ContentHost.Add($Tabs[0].View)
-    }
-
-    ## Function to select a tab programmatically
-    $selectTab = {
-      param($tab)
-      $Script:ActiveTab = $tab
-      $container.ContentHost.RemoveAll()
-      $container.ContentHost.Add($tab.View)
-      foreach ($row in $tabRows) {
-        if ($row.Tabs.Contains($tab)) { $row.SelectedTab = $tab }
-      }
-    }
-    $container.SelectTab = $selectTab
-
-    ## Return container object
-    return [PSCustomObject]@{
-      Container   = $container
-      ContentHost = $contentHost
-      SelectTab   = $selectTab
-      TabRows     = $tabRows
-    }
-}
-
 ############################### AD FUNCTIONS BELOW HERE ##################################
 function Invoke-AD {
   param(
@@ -1178,69 +1018,6 @@ function Invoke-AD {
     ## Fallback to demo mode
     $Script:DemoMode = $true
     return $null
-  }
-}
-
-## ------------------------{ Load Domain Data }------------------------
-function Get-ADObjectsByType {
-  param([string]$domain)
-
-  ## Debug info
-  Debug-Log (": Get-ADObjectsByType DemoMode=${Script:DemoMode} Domain=${domain}") -Type "Debug"
-
-  $objTypes = @("user","computer","group","organizationalUnit","contact")
-  $allObjects = @()
-  foreach ($type in $objTypes) {
-    try {
-      $objs = if ($Script:DemoMode) {
-      ## Demo objects already structured
-      @()
-      } else {
-        Get-ADObject -Filter "ObjectClass -eq '$type'" -Server $domain -Properties Name,ObjectClass,DistinguishedName |
-        ForEach-Object { @{ Name=$_.Name; Type=$_.ObjectClass; DN=$_.DistinguishedName } }
-      }
-      $allObjects += $objs
-      } catch {
-      ## minimal fix: string interpolation of exception object done via ToString()
-      Debug-Log (": Failed to enumerate ${type}: $($_.ToString())") -Type "Debug"
-    }
-  }
-  return $allObjects
-}
-
-function Get-CleanObjectInfo {
-  param([string]$treeText)  # ← Remove $Script:
-
-  Debug-Log (": Get-CleanObjectInfo called with: '$treeText'") -Type "Info"  # ← Use $treeText
-
-  ## Determine type FIRST (before cleaning)
-  $objectType = if ($treeText -match '^\(U\)') { "user" }
-                elseif ($treeText -match '^\(DC\)') { "dc" }
-                elseif ($treeText -match '^\(G\)') { "group" }
-                elseif ($treeText -match '^\(PC\)') { "computer" }
-                else { "unknown" }
-
-  Debug-Log (": Detected type: $objectType") -Type "Info"
-
-  ## Remove prefixes like "(U) " or "(DC) " or "(G) "
-  $cleanName = $treeText -replace '^\([^)]+\)\s*', ''  # ← Use $treeText
-  Debug-Log (": After removing prefix: $cleanName") -Type "Info"
-
-  ## Remove any non-letter, non-space characters from the start (status icons)
-  $cleanName = $cleanName -replace '^[^a-zA-Z]+\s*', ''
-  Debug-Log (": After removing icons: $cleanName") -Type "Info"
-
-  ## Extract just the name if it has [SITE] suffix (for DCs)
-  if ($cleanName -match '^(.+?)\s+\[.+\]$') {
-    $cleanName = $matches[1].Trim()
-    Debug-Log (": Extracted name from [SITE] format: $cleanName") -Type "Info"
-  }
-
-  Debug-Log (": Final cleaned name: $cleanName") -Type "Info"
-
-  return @{
-    Type = $objectType
-    Name = $cleanName
   }
 }
 
@@ -1443,28 +1220,28 @@ function Load-DomainData {
     ## ------------------ Define Demo Users ------------------
     $Script:rawUsers = @(
       ## ========== Simple Minds (UK/Scotland/Glasgow) ==========
-      @{ Name = 'Jim Kerr'; SamAccountName = 'jkerr'; UserPrincipalName = 'jkerr@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Vocalists'); Title = 'Lead Vocalist'; Email = 'jim.kerr@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1111'; MobilePhone = '+44 7700 111111'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Lead vocalist for Simple Minds' },
-      @{ Name = 'Charlie Burchill'; SamAccountName = 'charlie.b'; UserPrincipalName = 'charlie.b@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Guitarists'); Title = 'Lead Guitarist'; Email = 'charlie.b@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1112'; MobilePhone = '+44 7700 111112'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = 'Jim Kerr'; Description = 'Guitarist and founding member of Simple Minds' },
-      @{ Name = 'Mel Gaynor'; SamAccountName = 'mel.gaynor'; UserPrincipalName = 'mel.gaynor@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Percussion'); Title = 'Drummer'; Email = 'mel.gaynor@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1113'; MobilePhone = '+44 7700 111113'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = 'Jim Kerr'; Description = 'Drummer for Simple Minds' },
-      @{ Name = 'Mick MacNeil'; SamAccountName = 'mick.macneil'; UserPrincipalName = 'mick.macneil@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Musicians','Former Staff'); Title = 'Keyboardist (Former)'; Email = 'mick.macneil@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1120'; MobilePhone = '+44 7700 111120'; Street = '20 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former keyboardist for Simple Minds (1977-1990)' },
-      @{ Name = 'Derek Forbes'; SamAccountName = 'derek.forbes'; UserPrincipalName = 'derek.forbes@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Musicians','Former Staff'); Title = 'Bassist (Former)'; Email = 'derek.forbes@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 111 1121'; MobilePhone = '+44 7700 111121'; Street = '21 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former bassist for Simple Minds (1977-1985)' },
+      @{ Name = 'Jim Kerr'; SamAccountName = 'jkerr'; UserPrincipalName = 'jkerr@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Vocalists'); Title = 'Lead Vocalist'; Email = 'jim.kerr@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 496 0111'; MobilePhone = '+44 7700 111111'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Lead vocalist for Simple Minds' },
+      @{ Name = 'Charlie Burchill'; SamAccountName = 'charlie.b'; UserPrincipalName = 'charlie.b@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Guitarists'); Title = 'Lead Guitarist'; Email = 'charlie.b@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 496 0112'; MobilePhone = '+44 7700 111112'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = 'Jim Kerr'; Description = 'Guitarist and founding member of Simple Minds' },
+      @{ Name = 'Mel Gaynor'; SamAccountName = 'mel.gaynor'; UserPrincipalName = 'mel.gaynor@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Percussion'); Title = 'Drummer'; Email = 'mel.gaynor@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 496 0113'; MobilePhone = '+44 7700 111113'; Street = '1 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = 'Jim Kerr'; Description = 'Drummer for Simple Minds' },
+      @{ Name = 'Mick MacNeil'; SamAccountName = 'mick.macneil'; UserPrincipalName = 'mick.macneil@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Musicians','Former Staff'); Title = 'Keyboardist (Former)'; Email = 'mick.macneil@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 496 0120'; MobilePhone = '+44 7700 111120'; Street = '20 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former keyboardist for Simple Minds (1977-1990)' },
+      @{ Name = 'Derek Forbes'; SamAccountName = 'derek.forbes'; UserPrincipalName = 'derek.forbes@example.com' ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds'); Groups = @('Simple Minds','Musicians','Former Staff'); Title = 'Bassist (Former)'; Email = 'derek.forbes@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'Glasgow Office'; Phone = '+44 141 496 0121'; MobilePhone = '+44 7700 111121'; Street = '21 High Street'; City = 'Glasgow'; PostalCode = 'G1 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former bassist for Simple Minds (1977-1985)' },
 
       ## ========== Marillion (UK/Scotland/Edinburgh) ==========
-      @{ Name = 'Derek Dick'; SamAccountName = 'fish'; UserPrincipalName = 'fish@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Vocalists'); Title = 'Lead Vocalist'; Email = 'fish@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $true; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2221'; MobilePhone = '+44 7700 222221'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former lead vocalist (Fish) for Marillion (1981-1988)' },
-      @{ Name = 'Steve Rothery'; SamAccountName = 'steve.rothery'; UserPrincipalName = 'steve.rothery@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Guitarists'); Title = 'Lead Guitarist'; Email = 'steve.rothery@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2222'; MobilePhone = '+44 7700 222222'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Lead guitarist and founding member of Marillion' },
-      @{ Name = 'Pete Trewavas'; SamAccountName = 'pete.trewavas'; UserPrincipalName = 'pete.trewavas@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Guitarists'); Title = 'Bassist'; Email = 'pete.trewavas@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2223'; MobilePhone = '+44 7700 222223'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Bassist and founding member of Marillion' },
-      @{ Name = 'Mark Kelly'; SamAccountName = 'mark.kelly'; UserPrincipalName = 'mark.kelly@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Keyboards'); Title = 'Keyboardist'; Email = 'mark.kelly@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2224'; MobilePhone = '+44 7700 222224'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Keyboardist and founding member of Marillion' },
-      @{ Name = 'Ian Mosley'; SamAccountName = 'ian.mosley'; UserPrincipalName = 'ian.mosley@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Percussion'); Title = 'Drummer'; Email = 'ian.mosley@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 222 2225'; MobilePhone = '+44 7700 222225'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Drummer for Marillion (joined 1984)' },
+      @{ Name = 'Derek Dick'; SamAccountName = 'fish'; UserPrincipalName = 'fish@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Vocalists'); Title = 'Lead Vocalist'; Email = 'fish@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $true; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 496 0221'; MobilePhone = '+44 7700 222221'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Former lead vocalist (Fish) for Marillion (1981-1988)' },
+      @{ Name = 'Steve Rothery'; SamAccountName = 'steve.rothery'; UserPrincipalName = 'steve.rothery@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Guitarists'); Title = 'Lead Guitarist'; Email = 'steve.rothery@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 496 0222'; MobilePhone = '+44 7700 222222'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Lead guitarist and founding member of Marillion' },
+      @{ Name = 'Pete Trewavas'; SamAccountName = 'pete.trewavas'; UserPrincipalName = 'pete.trewavas@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Guitarists'); Title = 'Bassist'; Email = 'pete.trewavas@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 496 0223'; MobilePhone = '+44 7700 222223'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Bassist and founding member of Marillion' },
+      @{ Name = 'Mark Kelly'; SamAccountName = 'mark.kelly'; UserPrincipalName = 'mark.kelly@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Keyboards'); Title = 'Keyboardist'; Email = 'mark.kelly@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 496 0224'; MobilePhone = '+44 7700 222224'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Keyboardist and founding member of Marillion' },
+      @{ Name = 'Ian Mosley'; SamAccountName = 'ian.mosley'; UserPrincipalName = 'ian.mosley@example.com' ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion'); Groups = @('Marillion','Percussion'); Title = 'Drummer'; Email = 'ian.mosley@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Edinburgh Office'; Phone = '+44 131 496 0225'; MobilePhone = '+44 7700 222225'; Street = '22 Queens Road'; City = 'Edinburgh'; PostalCode = 'EH1 2BB'; Company = 'Example Music Ltd'; Manager = 'Derek Dick'; Description = 'Drummer for Marillion (joined 1984)' },
 
       ## ========== Erasure (UK/England/London) ==========
-      @{ Name = 'Andy Bell'; SamAccountName = 'andy.bell'; UserPrincipalName = 'andy.bell@example.com' ; OU = @('Locations','UK','England','London','Erasure'); Groups = @('Erasure','Vocalists'); Title = 'Lead Vocalist'; Email = 'andy.bell@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 1111'; MobilePhone = '+44 7700 333333'; Street = '15 River Street'; City = 'London'; PostalCode = 'E1 7AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Lead vocalist for Erasure' },
-      @{ Name = 'Vince Clarke'; SamAccountName = 'vince.clarke'; UserPrincipalName = 'vince.clarke@example.com' ; OU = @('Locations','UK','England','London','Erasure'); Groups = @('Erasure','Synth','Keyboards'); Title = 'Synth / Keyboardist'; Email = 'vince.clarke@example.com'; Country = 'UK'; Disabled = $false; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 1112'; MobilePhone = '+44 7700 333334'; Street = '15 River Street'; City = 'London'; PostalCode = 'E1 7AA'; Company = 'Example Music Ltd'; Manager = 'Andy Bell'; Description = 'Synthesizer pioneer - founding member of Depeche Mode and Erasure' },
+      @{ Name = 'Andy Bell'; SamAccountName = 'andy.bell'; UserPrincipalName = 'andy.bell@example.com' ; OU = @('Locations','UK','England','London','Erasure'); Groups = @('Erasure','Vocalists'); Title = 'Lead Vocalist'; Email = 'andy.bell@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 9460 0111'; MobilePhone = '+44 7700 333333'; Street = '15 River Street'; City = 'London'; PostalCode = 'E1 7AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Lead vocalist for Erasure' },
+      @{ Name = 'Vince Clarke'; SamAccountName = 'vince.clarke'; UserPrincipalName = 'vince.clarke@example.com' ; OU = @('Locations','UK','England','London','Erasure'); Groups = @('Erasure','Synth','Keyboards'); Title = 'Synth / Keyboardist'; Email = 'vince.clarke@example.com'; Country = 'UK'; Disabled = $false; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 9460 0112'; MobilePhone = '+44 7700 333334'; Street = '15 River Street'; City = 'London'; PostalCode = 'E1 7AA'; Company = 'Example Music Ltd'; Manager = 'Andy Bell'; Description = 'Synthesizer pioneer - founding member of Depeche Mode and Erasure' },
 
       ## ========== Depeche Mode (UK/England/London) ==========
-      @{ Name = 'Dave Gahan'; SamAccountName = 'dave.gahan'; UserPrincipalName = 'dave.gahan@example.com' ; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Vocalists'); Title = 'Lead Vocalist'; Email = 'dave.gahan@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $true; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 2222'; MobilePhone = '+44 7700 444442'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Lead vocalist for Depeche Mode' },
-      @{ Name = 'Martin Gore'; SamAccountName = 'martin.gore'; UserPrincipalName = 'martin.gore@example.com' ; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Guitarists','Keyboards'); Title = 'Guitarist/Keyboardist'; Email = 'martin.gore@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 2221'; MobilePhone = '+44 7700 444441'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Guitarist, keyboardist and primary songwriter for Depeche Mode' },
-      @{ Name = 'Alan Wilder'; SamAccountName = 'alan.wilder'; UserPrincipalName = 'alan.wilder@example.com' ; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Keyboards','Percussion'); Title = 'Keyboardist/Drummer'; Email = 'alan.wilder@example.com'; Country = 'UK'; Disabled = $false; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 2224'; MobilePhone = '+44 7700 444444'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Multi-instrumentalist for Depeche Mode (1982-1995, departed)' },
-      @{ Name = 'Andrew Fletcher'; SamAccountName = 'andrew.fletcher'; UserPrincipalName = 'andrew.fletcher@example.com' ; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Keyboards'); Title = 'Keyboards/Bass Synth'; Email = 'andrew.fletcher@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 7000 2223'; MobilePhone = '+44 7700 444443'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Keyboard and bass synthesizer for Depeche Mode (deceased)' },
+      @{ Name = 'Dave Gahan'; SamAccountName = 'dave.gahan'; UserPrincipalName = 'dave.gahan@example.com' ; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Vocalists'); Title = 'Lead Vocalist'; Email = 'dave.gahan@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $true; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 9460 0222'; MobilePhone = '+44 7700 444442'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Lead vocalist for Depeche Mode' },
+      @{ Name = 'Martin Gore'; SamAccountName = 'martin.gore'; UserPrincipalName = 'martin.gore@example.com' ; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Guitarists','Keyboards'); Title = 'Guitarist/Keyboardist'; Email = 'martin.gore@example.com'; Country = 'UK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 9460 0221'; MobilePhone = '+44 7700 444441'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = ''; Description = 'Guitarist, keyboardist and primary songwriter for Depeche Mode' },
+      @{ Name = 'Alan Wilder'; SamAccountName = 'alan.wilder'; UserPrincipalName = 'alan.wilder@example.com' ; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Keyboards','Percussion'); Title = 'Keyboardist/Drummer'; Email = 'alan.wilder@example.com'; Country = 'UK'; Disabled = $false; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 9460 0224'; MobilePhone = '+44 7700 444444'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Multi-instrumentalist for Depeche Mode (1982-1995, departed)' },
+      @{ Name = 'Andrew Fletcher'; SamAccountName = 'andrew.fletcher'; UserPrincipalName = 'andrew.fletcher@example.com' ; OU = @('Locations','UK','England','London','Depeche Mode'); Groups = @('Depeche Mode','Keyboards'); Title = 'Keyboards/Bass Synth'; Email = 'andrew.fletcher@example.com'; Country = 'UK'; Disabled = $true; Locked = $true; MustChangePassword = $false; Department = 'Music'; Office = 'London Office'; Phone = '+44 20 9460 0223'; MobilePhone = '+44 7700 444443'; Street = '32 Abbey Lane'; City = 'London'; PostalCode = 'EC2 1AA'; Company = 'Example Music Ltd'; Manager = 'Martin Gore'; Description = 'Keyboard and bass synthesizer for Depeche Mode (deceased)' },
 
       ## ========== TV-2 (Denmark/Copenhagen) ==========
       @{ Name = 'Steffen Brandt'; SamAccountName = 'steffen.brandt'; UserPrincipalName = 'steffen.brandt@example.com' ; OU = @('Locations','Denmark','Copenhagen','TV-2'); Groups = @('TV-2','Vocalists','Guitarists'); Title = 'Lead Vocalist / Guitarist'; Email = 'steffen.brandt@example.com'; Country = 'DK'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Copenhagen Office'; Phone = '+45 0000 2222'; MobilePhone = '+45 5012 3457'; Street = '1 Raadhuspladsen'; City = 'Copenhagen'; PostalCode = '1550'; Company = 'Example Music ApS'; Manager = ''; Description = 'Frontman of TV-2' },
@@ -1502,25 +1279,25 @@ function Load-DomainData {
       @{ Name = 'Manfred Segieth'; SamAccountName = 'fancy'; UserPrincipalName = 'fancy@example.net' ; OU = @('Locations','Germany','Bayern','Munich','Fancy'); Groups = @('Fancy Solo','Vocalists'); Title = 'Solo Artist'; Email = 'fancy@example.net'; Country = 'Germany'; Disabled = $false; Locked = $false; MustChangePassword = $false; Department = 'Music'; Office = 'Munich Office'; Phone = '+49 89 3333 111'; MobilePhone = '+49 172 3331111'; Street = 'Leopoldstrasse 100'; City = 'Munich'; PostalCode = '80802'; Company = 'Example Music GmbH'; Manager = ''; Description = 'Solo artist Fancy from Munich, known for Lady of Ice and Italo disco hits' }
 
       ## ========== Echo And The Bunnymen - UK/England/Liverpool ==========
-      @{ Name = 'Ian McCulloch'; SamAccountName = 'ian.mcculloch'; UserPrincipalName = 'ian.mcculloch@example.org' ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen') ; Groups = @('Echo and The Bunnymen','Vocalists') ; Title = 'Lead Vocalist' ; Email = 'ian.mcculloch@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $true ; Department = 'Music' ; Office = 'Liverpool Office' ; Phone = '+44 151 555 1001' ; MobilePhone = '+44 7700 900001' ; Street = 'Mathew Street 12' ; City = 'Liverpool' ; PostalCode = 'L1 4ED' ; Company = 'Example Music UK' ; Manager = '' ; Description = 'Lead vocalist of Echo and The Bunnymen' },
-      @{ Name = 'Will Sergeant'; SamAccountName = 'will.sergeant'; UserPrincipalName = 'will.sergeant@example.org' ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen') ; Groups = @('Echo and The Bunnymen','Guitarists') ; Title = 'Guitarist' ; Email = 'will.sergeant@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office' ; Phone = '+44 151 555 1002' ; MobilePhone = '+44 7700 900002' ; Street = 'Bold Street 22' ; City = 'Liverpool' ; PostalCode = 'L1 4HR' ; Company = 'Example Music UK' ; Manager = 'Ian McCulloch' ; Description = 'Guitarist for Echo and The Bunnymen' },
-      @{ Name = 'Les Pattinson'; SamAccountName = 'les.pattinson'; UserPrincipalName = 'les.pattinson@example.org' ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen') ; Groups = @('Echo and The Bunnymen','Bassists') ; Title = 'Bass Guitarist' ; Email = 'les.pattinson@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office' ; Phone = '+44 151 555 1003' ; MobilePhone = '+44 7700 900003' ; Street = 'Seel Street 8' ; City = 'Liverpool' ; PostalCode = 'L1 4BE' ; Company = 'Example Music UK' ; Manager = 'Ian McCulloch' ; Description = 'Bass guitarist for Echo and The Bunnymen' },
-      @{ Name = 'Pete de Freitas'; SamAccountName = 'pete.defreitas'; UserPrincipalName = 'pete.defreitas@example.org' ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen') ; Groups = @('Echo and The Bunnymen','Drummers') ; Title = 'Drummer' ; Email = 'pete.defreitas@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office' ; Phone = '+44 151 555 1004' ; MobilePhone = '+44 7700 900004' ; Street = 'Dale Street 5' ; City = 'Liverpool' ; PostalCode = 'L2 2EH' ; Company = 'Example Music UK' ; Manager = 'Ian McCulloch' ; Description = 'Drummer for Echo and The Bunnymen' },
+      @{ Name = 'Ian McCulloch'; SamAccountName = 'ian.mcculloch'; UserPrincipalName = 'ian.mcculloch@example.org' ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen') ; Groups = @('Echo and The Bunnymen','Vocalists') ; Title = 'Lead Vocalist' ; Email = 'ian.mcculloch@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $true ; Department = 'Music' ; Office = 'Liverpool Office' ; Phone = '+44 151 496 0001' ; MobilePhone = '+44 7700 900001' ; Street = '12 Mathew Street' ; City = 'Liverpool' ; PostalCode = 'L1 4ED' ; Company = 'Example Music UK' ; Manager = '' ; Description = 'Lead vocalist of Echo and The Bunnymen' },
+      @{ Name = 'Will Sergeant'; SamAccountName = 'will.sergeant'; UserPrincipalName = 'will.sergeant@example.org' ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen') ; Groups = @('Echo and The Bunnymen','Guitarists') ; Title = 'Guitarist' ; Email = 'will.sergeant@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office' ; Phone = '+44 151 496 0002' ; MobilePhone = '+44 7700 900002' ; Street = '22 Bold Street' ; City = 'Liverpool' ; PostalCode = 'L1 4HR' ; Company = 'Example Music UK' ; Manager = 'Ian McCulloch' ; Description = 'Guitarist for Echo and The Bunnymen' },
+      @{ Name = 'Les Pattinson'; SamAccountName = 'les.pattinson'; UserPrincipalName = 'les.pattinson@example.org' ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen') ; Groups = @('Echo and The Bunnymen','Bassists') ; Title = 'Bass Guitarist' ; Email = 'les.pattinson@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office' ; Phone = '+44 151 496 6003' ; MobilePhone = '+44 7700 900003' ; Street = '8 Seel Street' ; City = 'Liverpool' ; PostalCode = 'L1 4BE' ; Company = 'Example Music UK' ; Manager = 'Ian McCulloch' ; Description = 'Bass guitarist for Echo and The Bunnymen' },
+      @{ Name = 'Pete de Freitas'; SamAccountName = 'pete.defreitas'; UserPrincipalName = 'pete.defreitas@example.org' ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen') ; Groups = @('Echo and The Bunnymen','Drummers') ; Title = 'Drummer' ; Email = 'pete.defreitas@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office' ; Phone = '+44 151 496 0004' ; MobilePhone = '+44 7700 900004' ; Street = '5 Dale Street' ; City = 'Liverpool' ; PostalCode = 'L2 2EH' ; Company = 'Example Music UK' ; Manager = 'Ian McCulloch' ; Description = 'Drummer for Echo and The Bunnymen' },
 
       ## ========== Echo And The Bunnymen - UK/England/Newcastle ==========
-      @{ Name = 'Gordon Summer'; SamAccountName = 'sting'; UserPrincipalName = 'sting@example.org' ; OU = @('Locations','UK','England','Newcastle','The Police') ; Groups = @('The Police','Vocalists','Bassists') ; Title = 'Lead Vocalist & Bassist' ; Email = 'sting@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office' ; Phone = '+44 191 555 2001' ; MobilePhone = '+44 7700 910001' ; Street = 'Grey Street 14' ; City = 'Newcastle' ; PostalCode = 'NE1 6BH' ; Company = 'Example Music UK' ; Manager = '' ; Description = 'Lead vocalist and bassist of The Police' },
-      @{ Name = 'Andy Summers'; SamAccountName = 'andy.summers'; UserPrincipalName = 'andy.summers@example.org' ; OU = @('Locations','UK','England','Newcastle','The Police') ; Groups = @('The Police','Guitarists') ; Title = 'Guitarist' ; Email = 'andy.summers@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office' ; Phone = '+44 191 555 2002' ; MobilePhone = '+44 7700 910002' ; Street = 'Dean Street 11' ; City = 'Newcastle' ; PostalCode = 'NE1 1PG' ; Company = 'Example Music UK' ; Manager = 'Sting' ; Description = 'Guitarist for The Police' },
-      @{ Name = 'Stewart Copeland'; SamAccountName = 'stewart.copeland'; UserPrincipalName = 'stewart.copeland@example.org' ; OU = @('Locations','UK','England','Newcastle','The Police') ; Groups = @('The Police','Drummers') ; Title = 'Drummer' ; Email = 'stewart.copeland@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office' ; Phone = '+44 191 555 2003' ; MobilePhone = '+44 7700 910003' ; Street = 'Collingwood Street 5' ; City = 'Newcastle' ; PostalCode = 'NE1 1JF' ; Company = 'Example Music UK' ; Manager = 'Sting' ; Description = 'Drummer for The Police' },
+      @{ Name = 'Gordon Summer'; SamAccountName = 'sting'; UserPrincipalName = 'sting@example.org' ; OU = @('Locations','UK','England','Newcastle','The Police') ; Groups = @('The Police','Vocalists','Bassists') ; Title = 'Lead Vocalist & Bassist' ; Email = 'sting@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office' ; Phone = '+44 191 496 0001' ; MobilePhone = '+44 7700 910001' ; Street = '14 Grey Street' ; City = 'Newcastle' ; PostalCode = 'NE1 6BH' ; Company = 'Example Music UK' ; Manager = '' ; Description = 'Lead vocalist and bassist of The Police' },
+      @{ Name = 'Andy Summers'; SamAccountName = 'andy.summers'; UserPrincipalName = 'andy.summers@example.org' ; OU = @('Locations','UK','England','Newcastle','The Police') ; Groups = @('The Police','Guitarists') ; Title = 'Guitarist' ; Email = 'andy.summers@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office' ; Phone = '+44 191 496 0002' ; MobilePhone = '+44 7700 910002' ; Street = '11 Dean Street' ; City = 'Newcastle' ; PostalCode = 'NE1 1PG' ; Company = 'Example Music UK' ; Manager = 'Sting' ; Description = 'Guitarist for The Police' },
+      @{ Name = 'Stewart Copeland'; SamAccountName = 'stewart.copeland'; UserPrincipalName = 'stewart.copeland@example.org' ; OU = @('Locations','UK','England','Newcastle','The Police') ; Groups = @('The Police','Drummers') ; Title = 'Drummer' ; Email = 'stewart.copeland@example.org' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office' ; Phone = '+44 191 496 0003' ; MobilePhone = '+44 7700 910003' ; Street = '5 Collingwood Street' ; City = 'Newcastle' ; PostalCode = 'NE1 1JF' ; Company = 'Example Music UK' ; Manager = 'Sting' ; Description = 'Drummer for The Police' },
 
       ## ========== Altered Images – UK/Scotland/Glasgow ==========
-      @{ Name = 'Clare Grogan'; SamAccountName = 'clare.grogan'; UserPrincipalName = 'clare.grogan@example.co.uk' ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images') ; Groups = @('Altered Images','Vocalists') ; Title = 'Lead Vocalist' ; Email = 'clare.grogan@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office' ; Phone = '+44 141 555 3101' ; MobilePhone = '+44 7700 931001' ; Street = 'Sauchiehall Street 150' ; City = 'Glasgow' ; PostalCode = 'G2 3EL' ; Company = 'Example Music Ltd' ; Manager = '' ; Description = 'Lead vocalist of Altered Images' },
-      @{ Name = 'Johnny McElhone'; SamAccountName = 'johnny.mcelhone'; UserPrincipalName = 'johnny.mcelhone@example.co.uk' ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images') ; Groups = @('Altered Images','Bassists') ; Title = 'Bassist' ; Email = 'johnny.mcelhone@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office' ; Phone = '+44 141 555 3102' ; MobilePhone = '+44 7700 931002' ; Street = 'Hope Street 42' ; City = 'Glasgow' ; PostalCode = 'G2 6AE' ; Company = 'Example Music Ltd' ; Manager = 'Clare Grogan' ; Description = 'Bassist and songwriter for Altered Images' },
-      @{ Name = 'Jim McKinven'; SamAccountName = 'jim.mckinven'; UserPrincipalName = 'jim.mckinven@example.co.uk' ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images') ; Groups = @('Altered Images','Guitarists') ; Title = 'Guitarist' ; Email = 'jim.mckinven@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office' ; Phone = '+44 141 555 3103' ; MobilePhone = '+44 7700 931003' ; Street = 'Bath Street 77' ; City = 'Glasgow' ; PostalCode = 'G2 2EN' ; Company = 'Example Music Ltd' ; Manager = 'Clare Grogan' ; Description = 'Guitarist for Altered Images' },
-      @{ Name = 'Michael Anderson'; SamAccountName = 'michael.anderson'; UserPrincipalName = 'michael.anderson@example.co.uk' ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images') ; Groups = @('Altered Images','Drummers') ; Title = 'Drummer' ; Email = 'michael.anderson@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office' ; Phone = '+44 141 555 3104' ; MobilePhone = '+44 7700 931004' ; Street = 'Argyle Street 305' ; City = 'Glasgow' ; PostalCode = 'G2 8DL' ; Company = 'Example Music Ltd' ; Manager = 'Clare Grogan' ; Description = 'Drummer for Altered Images (aka Tich Anderson)' },
+      @{ Name = 'Clare Grogan'; SamAccountName = 'clare.grogan'; UserPrincipalName = 'clare.grogan@example.co.uk' ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images') ; Groups = @('Altered Images','Vocalists') ; Title = 'Lead Vocalist' ; Email = 'clare.grogan@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office' ; Phone = '+44 141 555 3101' ; MobilePhone = '+44 7700 931001' ; Street = '150 Sauchiehall Street' ; City = 'Glasgow' ; PostalCode = 'G2 3EL' ; Company = 'Example Music Ltd' ; Manager = '' ; Description = 'Lead vocalist of Altered Images' },
+      @{ Name = 'Johnny McElhone'; SamAccountName = 'johnny.mcelhone'; UserPrincipalName = 'johnny.mcelhone@example.co.uk' ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images') ; Groups = @('Altered Images','Bassists') ; Title = 'Bassist' ; Email = 'johnny.mcelhone@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office' ; Phone = '+44 141 555 3102' ; MobilePhone = '+44 7700 931002' ; Street = '42 Hope Street' ; City = 'Glasgow' ; PostalCode = 'G2 6AE' ; Company = 'Example Music Ltd' ; Manager = 'Clare Grogan' ; Description = 'Bassist and songwriter for Altered Images' },
+      @{ Name = 'Jim McKinven'; SamAccountName = 'jim.mckinven'; UserPrincipalName = 'jim.mckinven@example.co.uk' ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images') ; Groups = @('Altered Images','Guitarists') ; Title = 'Guitarist' ; Email = 'jim.mckinven@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office' ; Phone = '+44 141 555 3103' ; MobilePhone = '+44 7700 931003' ; Street = '77 Bath Street' ; City = 'Glasgow' ; PostalCode = 'G2 2EN' ; Company = 'Example Music Ltd' ; Manager = 'Clare Grogan' ; Description = 'Guitarist for Altered Images' },
+      @{ Name = 'Michael Anderson'; SamAccountName = 'michael.anderson'; UserPrincipalName = 'michael.anderson@example.co.uk' ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images') ; Groups = @('Altered Images','Drummers') ; Title = 'Drummer' ; Email = 'michael.anderson@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office' ; Phone = '+44 141 555 3104' ; MobilePhone = '+44 7700 931004' ; Street = '305 Argyle Street' ; City = 'Glasgow' ; PostalCode = 'G2 8DL' ; Company = 'Example Music Ltd' ; Manager = 'Clare Grogan' ; Description = 'Drummer for Altered Images (aka Tich Anderson)' },
 
       ## ========== Eurythmics – UK/Scotland/Aberdeen (Satellite Office) ==========
-      @{ Name = 'Annie Lennox'; SamAccountName = 'annie.lennox'; UserPrincipalName = 'annie.lennox@example.co.uk' ; OU = @('Locations','UK','Scotland','Aberdeen','Eurythmics') ; Groups = @('Eurythmics','Vocalists','Keyboardists') ; Title = 'Lead Vocalist & Keyboardist' ; Email = 'annie.lennox@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aberdeen Satellite Office' ; Phone = '+44 1224 555 4101' ; MobilePhone = '+44 7700 941001' ; Street = 'Union Street 210' ; City = 'Aberdeen' ; PostalCode = 'AB10 1TL' ; Company = 'Example Music UK' ; Manager = '' ; Description = 'Lead vocalist and co-founder of Eurythmics' },
-      @{ Name = 'Dave Stewart'; SamAccountName = 'dave.stewart'; UserPrincipalName = 'dave.stewart@example.co.uk' ; OU = @('Locations','UK','Scotland','Aberdeen','Eurythmics') ; Groups = @('Eurythmics','Guitarists','Producers') ; Title = 'Guitarist & Producer' ; Email = 'dave.stewart@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aberdeen Satellite Office' ; Phone = '+44 1224 555 4102' ; MobilePhone = '+44 7700 941002' ; Street = 'Rosemount Place 18' ; City = 'Aberdeen' ; PostalCode = 'AB25 2XP' ; Company = 'Example Music UK' ; Manager = 'Annie Lennox' ; Description = 'Guitarist, songwriter and producer for Eurythmics' }
+      @{ Name = 'Annie Lennox'; SamAccountName = 'annie.lennox'; UserPrincipalName = 'annie.lennox@example.co.uk' ; OU = @('Locations','UK','Scotland','Aberdeen','Eurythmics') ; Groups = @('Eurythmics','Vocalists','Keyboardists') ; Title = 'Lead Vocalist & Keyboardist' ; Email = 'annie.lennox@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aberdeen Satellite Office' ; Phone = '+44 1224 496 0101' ; MobilePhone = '+44 7700 941001' ; Street = '210 Union Street' ; City = 'Aberdeen' ; PostalCode = 'AB10 1TL' ; Company = 'Example Music UK' ; Manager = '' ; Description = 'Lead vocalist and co-founder of Eurythmics' },
+      @{ Name = 'Dave Stewart'; SamAccountName = 'dave.stewart'; UserPrincipalName = 'dave.stewart@example.co.uk' ; OU = @('Locations','UK','Scotland','Aberdeen','Eurythmics') ; Groups = @('Eurythmics','Guitarists','Producers') ; Title = 'Guitarist & Producer' ; Email = 'dave.stewart@example.co.uk' ; Country = 'United Kingdom' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aberdeen Satellite Office' ; Phone = '+44 1224 496 0102' ; MobilePhone = '+44 7700 941002' ; Street = '18 Rosemount Place' ; City = 'Aberdeen' ; PostalCode = 'AB25 2XP' ; Company = 'Example Music UK' ; Manager = 'Annie Lennox' ; Description = 'Guitarist, songwriter and producer for Eurythmics' }
 
     ## Demo Users ending stanza
     )
@@ -1907,15 +1684,43 @@ function Convert-DataToADObjects {
 
 ##-------------------{ Convwert Object to Tree Items }-------------------
 function Convert-ToTreeNode {
-  param([OUNode]$node)
+    param($node)
 
-  $tn = [Terminal.Gui.Trees.TreeNode]::new($node, $node.Name)
+    ## Determine node type from the backing object
+    if ($node -is [OUNode]) {
+        $type = 'ou'
+        $text = "$($Script:Icons.OU) $($node.Name)"
+        $tag  = @{ Type='ou'; Object=$node }
+    }
+    elseif ($node.Type -eq 'group') {
+        $type = 'group'
+        $text = "$($Script:Icons.Group) $($node.Name)"
+        $tag  = @{ Type='group'; Object=$node }
+    }
+    elseif ($node.Type -eq 'user') {
+        $type = 'user'
+        $text = "$($Script:Icons.User) $($node.Name)"
+        $tag  = @{ Type='user'; Object=$node }
+    }
+    elseif ($node.Type -eq 'computer') {
+        $type = 'computer'
+        $text = "$($Script:Icons.Computer) $($node.Name)"
+        $tag  = @{ Type='computer'; Object=$node }
+    }
+    else {
+        $type = 'unknown'
+        $text = $node.Name
+        $tag  = @{ Type='unknown'; Object=$node }
+    }
 
-  foreach ($child in $node.Children) {
-    $tn.Children.Add((Convert-ToTreeNode $child))
-  }
+    $tn = [Terminal.Gui.Trees.TreeNode]::new($text)
+    $tn.Tag = $tag
 
-  return $tn
+    foreach ($child in $node.Children) {
+        $tn.Children.Add((Convert-ToTreeNode $child))
+    }
+
+    return $tn
 }
 
 ##-------------------{ Build Domain Content }-------------------
@@ -2009,235 +1814,212 @@ function Get-DomainFromDN {
 }
 
 function Build-DomainContent {
-  param(
-    [Terminal.Gui.Trees.TreeNode]$domainNode,
-    [string]$domain
-  )
-
-  Debug-Log (": Building content for domain: $domain") -Type "Info"
-
-  ## Apply filters - filter users by domain
-  $nameFilter = $Script:FilterOptions.NameFilter.Trim()
-
-  ## Filter users for this specific domain
-  $domainUsers = $Script:Users | Where-Object {  $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
-  $filteredUsers = $domainUsers | Where-Object {  ($_.Disabled -and $Script:FilterOptions.ShowDisabledUsers) -or   (-not $_.Disabled -and $Script:FilterOptions.ShowEnabledUsers) }
-
-  if ($nameFilter) {
-    $filteredUsers = $filteredUsers | Where-Object {  $_.Name -like "*$nameFilter*" -or  $_.EmailAddress -like "*$nameFilter*" -or $_.mail -like "*$nameFilter*" -or $_.Title -like "*$nameFilter*" }
-  }
-
-  Debug-Log (": Filtered to $($filteredUsers.Count) users for domain $domain") -Type "Info"
-
-  ## Cache for finding nodes by path
-  $nodeCache = @{}
-
-  ## Helper function to get or create node
-  function Get-OrCreateChildNode {
     param(
-      [Terminal.Gui.Trees.TreeNode]$Parent,
-      [string]$Name,
-      [string]$FullPath
+        [Terminal.Gui.Trees.TreeNode]$domainNode,
+        [string]$domain
     )
 
-    if ($nodeCache.ContainsKey($FullPath)) { return $nodeCache[$FullPath] }
+    Debug-Log ": Building content for domain: $domain" -Type "Info"
 
-    $newNode = [Terminal.Gui.Trees.TreeNode]::new($Name)
+    # Filter users by domain and enabled/disabled
+    $nameFilter = $Script:FilterOptions.NameFilter.Trim()
+    $domainUsers = $Script:Users | Where-Object { $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
+    $filteredUsers = $domainUsers | Where-Object {
+        ($_.Disabled -and $Script:FilterOptions.ShowDisabledUsers) -or
+        (-not $_.Disabled -and $Script:FilterOptions.ShowEnabledUsers)
+    }
 
-    try {
-      if ($null -eq $Parent.Children) { $Parent | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]') }
+    if ($nameFilter) {
+        $filteredUsers = $filteredUsers | Where-Object {
+            $_.Name -like "*$nameFilter*" -or $_.EmailAddress -like "*$nameFilter*" -or $_.Title -like "*$nameFilter*"
+        }
+    }
+
+    Debug-Log ": Filtered to $($filteredUsers.Count) users for domain $domain" -Type "Info"
+
+    # Node cache for fast lookup
+    $nodeCache = @{}
+
+    function Get-OrCreateChildNode {
+        param(
+            [Terminal.Gui.Trees.TreeNode]$Parent,
+            [string]$Name,
+            [string]$FullPath,
+            [string]$NodeType = 'container'
+        )
+        if ($nodeCache.ContainsKey($FullPath)) { return $nodeCache[$FullPath] }
+
+        # Add icon based on node type
+        $displayName = if ($NodeType -eq 'ou' -and $Script:Icons.OU) {
+            "$($Script:Icons.OU) $Name"
+        } else {
+            $Name
+        }
+
+        $newNode = [Terminal.Gui.Trees.TreeNode]::new($displayName)
+        # Tag container nodes appropriately
+        $newNode.Tag = @{
+            Type = $NodeType
+            Object = $null  # Containers don't have backing objects
+        }
+        $Parent.Children = $Parent.Children ?? (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
         $Parent.Children.Add($newNode)
-      } catch {
-        Debug-Log (": Could not add node $Name to parent: $_") -Type "Warn"
-      }
+        $nodeCache[$FullPath] = $newNode
+        return $newNode
+    }
 
-      $nodeCache[$FullPath] = $newNode
-      return $newNode
-  }
+    # --- Build OU hierarchy ---
+    foreach ($user in $filteredUsers) {
+        $ouPath = Get-OUPathFromDN $user.DistinguishedName
+        if ($ouPath.Count -eq 0) { continue }
 
-  ## Helper function to parse Distinguished Name and extract OU path
-  function Get-OUPathFromDN {
-    param([string]$DistinguishedName)
-
-    if ([string]::IsNullOrWhiteSpace($DistinguishedName)) { return @() }
-
-    ## Split DN by comma (handling escaped commas in quotes)
-    $parts = $DistinguishedName -split ',(?=(?:[^"]*"[^"]*")*[^"]*$)'
-    $ouList = @()
-    $skipFirst = $true
-
-    foreach ($part in $parts) {
-      $part = $part.Trim()
-
-      ## Match OU= or CN= (CN=Users is a container, treat it like an OU)
-      if ($part -match '^(OU|CN)=(.+)$') {
-        $type = $matches[1]
-        $value = $matches[2]
-
-        ## Skip the actual user/group CN (first one only)
-        if ($skipFirst) {
-          $skipFirst = $false
-          continue
+        $currentNode = $domainNode
+        $pathSoFar = ""
+        foreach ($ouLevel in $ouPath) {
+            $pathSoFar = if ($pathSoFar) { "$pathSoFar/$ouLevel" } else { $ouLevel }
+            $currentNode = Get-OrCreateChildNode -Parent $currentNode -Name $ouLevel -FullPath "$domain/$pathSoFar" -NodeType 'ou'
         }
 
-        ## Add to list (we'll reverse it later)
-        $ouList += $value
-      }
+        # Determine user status icon
+        $statusIcon = if ($user.LockedOut -or $user.Locked) {
+            if ($Script:Icons.Locked) { $Script:Icons.Locked } else { "🔒" }
+        }
+        elseif ($user.Disabled -or -not $user.Enabled) {
+            if ($Script:Icons.Disabled) { $Script:Icons.Disabled } else { "⊗" }
+        }
+        else {
+            if ($Script:Icons.User) { $Script:Icons.User } else { "○" }
+        }
 
-      ## Stop at DC= (domain components)
-      elseif ($part -match '^DC=') {
-        break
-      }
+        $userNode = [Terminal.Gui.Trees.TreeNode]::new("$statusIcon $($user.Name)")
+        # CHANGED: Wrap the AD user object in a hashtable with Type
+        $userNode.Tag = @{
+            Type = 'user'
+            Object = $user  # Real AD user object
+        }
+        $currentNode.Children = $currentNode.Children ?? (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+        $currentNode.Children.Add($userNode)
     }
 
-    ## Reverse to get top-down hierarchy
-    [array]::Reverse($ouList)
-    return $ouList
-  }
+    # --- Groups ---
+    if ($Script:FilterOptions.ShowGroups) {
+        $domainGroups = $Script:Groups | Where-Object { $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
+        if ($domainGroups.Count -gt 0) {
+            $groupsNode = Get-OrCreateChildNode -Parent $domainNode -Name "Groups" -FullPath "$domain/_Groups" -NodeType 'container'
 
-## Helper function to get domain from DN
-  function Get-DomainFromDN {
-    param([string]$DistinguishedName)
+            foreach ($group in $domainGroups | Sort-Object Name) {
+                $groupIcon = if ($Script:Icons.Group) { $Script:Icons.Group } else { "👥" }
+                $groupNode = [Terminal.Gui.Trees.TreeNode]::new("$groupIcon $($group.Name)")
+                # CHANGED: Wrap the AD group object in a hashtable with Type
+                $groupNode.Tag = @{
+                    Type = 'group'
+                    Object = $group  # Real AD group object
+                }
+                $groupNode.Children = $groupNode.Children ?? (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
 
-    if ([string]::IsNullOrWhiteSpace($DistinguishedName)) { return $null }
+                # Add group members
+                $members = $filteredUsers | Where-Object { $_.Groups -contains $group.Name -or $_.MemberOf -contains $group.DistinguishedName } | Sort-Object Name
+                foreach ($member in $members) {
+                    $memberStatusIcon = if ($member.LockedOut -or $member.Locked) {
+                        if ($Script:Icons.Locked) { $Script:Icons.Locked } else { "🔒" }
+                    }
+                    elseif ($member.Disabled -or -not $member.Enabled) {
+                        if ($Script:Icons.Disabled) { $Script:Icons.Disabled } else { "⊗" }
+                    }
+                    else {
+                        if ($Script:Icons.User) { $Script:Icons.User } else { "○" }
+                    }
+                    $memberNode = [Terminal.Gui.Trees.TreeNode]::new("$memberStatusIcon $($member.Name)")
+                    # CHANGED: Wrap member (user) in hashtable
+                    $memberNode.Tag = @{
+                        Type = 'user'
+                        Object = $member  # Real AD user object
+                    }
+                    $groupNode.Children.Add($memberNode)
+                }
 
-    ## Extract all DC= parts
-    $dcParts = [regex]::Matches($DistinguishedName, 'DC=([^,]+)') | ForEach-Object { $_.Groups[1].Value }
-    if ($dcParts.Count -gt 0) { return $dcParts -join '.' }
-    return $null
-  }
-
-  ## Build OU hierarchy for this domain
-  $userCount = 0
-  foreach ($user in $filteredUsers) {
-    $userCount++
-
-    ## Update every 25 users to avoid spam
-    if ($userCount % 25 -eq 0) { Update-Status "Building $domain - $userCount/$($filteredUsers.Count) users" -spinner }
-
-    ## Parse OU path from DistinguishedName
-    $ouPath = Get-OUPathFromDN $user.DistinguishedName
-
-    if ($ouPath.Count -eq 0) {
-      Debug-Log (": User $($user.Name) has no OU path, skipping tree placement") -Type "Warn"
-      continue
-    }
-
-    $currentNode = $domainNode
-    $pathSoFar = ""
-
-    ## Build the OU hierarchy
-    foreach ($ouLevel in $ouPath) {
-      $pathSoFar = if ($pathSoFar) { "$pathSoFar/$ouLevel" } else { $ouLevel }
-      $currentNode = Get-OrCreateChildNode -Parent $currentNode -Name $ouLevel -FullPath "$domain/$pathSoFar"
-    }
-
-    ## Determine status icon
-    $statusIcon = if ($user.LockedOut -or $user.Locked) { "🔒"
-    } elseif (-not $user.Enabled -or $user.Disabled) { "⊗"
-    } else { "○" }
-
-    ## Create user node
-    $userNode = [Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($user.Name)")
-    $userNode.Tag = $user
-
-    if ($null -eq $currentNode.Children) {
-      $currentNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
-    }
-      $currentNode.Children.Add($userNode)
-  }
-
-  ## Add Groups for this domain
-  if ($Script:FilterOptions.ShowGroups) {
-    Update-Status "Building $domain - adding groups" -spinner
-
-  ## Filter groups for this domain
-  $domainGroups = $Script:Groups | Where-Object { $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
-
-  if ($domainGroups.Count -gt 0) {
-  $groupsNode = Get-OrCreateChildNode -Parent $domainNode -Name "Groups" -FullPath "$domain/_Groups"
-
-  foreach ($group in ($domainGroups | Sort-Object -Property Name)) {
-    $groupNode = [Terminal.Gui.Trees.TreeNode]::new("(G) $($group.Name)")
-    $groupNode.Tag = $group
-
-    ## Find members of this group
-    $members = $filteredUsers | Where-Object { $_.Groups -contains $group.Name -or $_.MemberOf -contains $group.DistinguishedName } | Sort-Object -Property Name
-
-    foreach ($member in $members) {
-       $statusIcon = if ($member.LockedOut -or $member.Locked) { "🔒"
-       } elseif (-not $member.Enabled -or $member.Disabled) { "⊗"
-       } else {  "○" }
-
-      $memberNode = [Terminal.Gui.Trees.TreeNode]::new("(U) $statusIcon $($member.Name)")
-      $memberNode.Tag = $member
-
-      if ($null -eq $groupNode.Children) {
-        $groupNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
-      }
-
-      $groupNode.Children.Add($memberNode)
-    }
-
-    if ($groupNode.Children -and $groupNode.Children.Count -gt 0) { $groupsNode.Children.Add($groupNode) }
-    }
-  }
-  }
-
-  ## Add DCs for this domain
-  if ($Script:FilterOptions.ShowDCs) {
-    Update-Status "Building $domain - adding DCs" -spinner
-
-    ## Filter DCs for this domain
-    $domainDCs = $Script:DCs | Where-Object { $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
-
-    if ($domainDCs.Count -gt 0) {
-    $dcNode = Get-OrCreateChildNode -Parent $domainNode -Name "Domain Controllers" -FullPath "$domain/_DCs"
-
-    foreach ($dc in ($domainDCs | Sort-Object -Property Name)) {
-      $dcChildNode = [Terminal.Gui.Trees.TreeNode]::new("(DC) $($dc.Name) [$($dc.Site)]")
-      $dcChildNode.Tag = $dc
-      $dcNode.Children.Add($dcChildNode)
-    }
-  }
-  }
-
-    ## Add Computers
-    if ($Script:FilterOptions.ShowComputers) {
-      Update-Status "Building $domain - adding computers" -spinner
-
-      ## Filter computers for this domain
-      $domainComputers = $Script:Computers | Where-Object { $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
-
-      if ($domainComputers.Count -gt 0) {
-        $computerNode = Get-OrCreateChildNode -Parent $domainNode -Name "Computers" -FullPath "$domain/_Computers"
-
-        ## Group by type
-        $byType = $domainComputers | Group-Object ComputerType
-
-        foreach ($typeGroup in $byType) {
-          $typeNode = [Terminal.Gui.Trees.TreeNode]::new("$($typeGroup.Name)s")  # "Workstations", "Laptops", etc.
-
-          foreach ($comp in ($typeGroup.Group | Sort-Object -Property Name)) {
-            $icon = if (-not $comp.Enabled) { "⊗" } else { "💻" }
-            $compNode = [Terminal.Gui.Trees.TreeNode]::new("(PC) $icon $($comp.Name)")
-            $compNode.Tag = $comp
-
-            if ($null -eq $typeNode.Children) {
-              $typeNode | Add-Member -Force -MemberType NoteProperty -Name Children -Value (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+                if ($groupNode.Children.Count -gt 0) { $groupsNode.Children.Add($groupNode) }
             }
-            $typeNode.Children.Add($compNode)
-          }
-
-          if ($typeNode.Children -and $typeNode.Children.Count -gt 0) {
-           $computerNode.Children.Add($typeNode)
-          }
         }
-      }
     }
 
-  Update-Status "$domain complete" -final
-  Debug-Log (": Finished building content for domain $domain - nodes in cache: $($nodeCache.Count)") -Type "Success"
+    # --- Domain Controllers ---
+    if ($Script:FilterOptions.ShowDCs) {
+        $domainDCs = $Script:DCs | Where-Object { $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
+        if ($domainDCs.Count -gt 0) {
+            $dcNode = Get-OrCreateChildNode -Parent $domainNode -Name "Domain Controllers" -FullPath "$domain/_DCs" -NodeType 'container'
+            foreach ($dc in $domainDCs | Sort-Object Name) {
+                $dcNode.Children = $dcNode.Children ?? (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+                $dcIcon = if ($Script:Icons.DC) { $Script:Icons.DC } else { "🖥" }
+                $dcChildNode = [Terminal.Gui.Trees.TreeNode]::new("$dcIcon $($dc.Name) [$($dc.Site)]")
+                # CHANGED: Wrap DC object in hashtable
+                $dcChildNode.Tag = @{
+                    Type = 'dc'
+                    Object = $dc  # Real AD domain controller object
+                }
+                $dcNode.Children.Add($dcChildNode)
+            }
+        }
+    }
+
+    # --- Computers ---
+    if ($Script:FilterOptions.ShowComputers) {
+        $domainComputers = $Script:Computers | Where-Object { $_.Domain -eq $domain -or (Get-DomainFromDN $_.DistinguishedName) -eq $domain }
+        if ($domainComputers.Count -gt 0) {
+            $computerNode = Get-OrCreateChildNode -Parent $domainNode -Name "Computers" -FullPath "$domain/_Computers" -NodeType 'container'
+            $byType = $domainComputers | Group-Object ComputerType
+            foreach ($typeGroup in $byType) {
+                $typeNode = [Terminal.Gui.Trees.TreeNode]::new("$($typeGroup.Name)s")
+                # Tag for computer type containers
+                $typeNode.Tag = @{
+                    Type = 'container'
+                    Object = $null
+                }
+                $typeNode.Children = $typeNode.Children ?? (New-Object 'System.Collections.ObjectModel.Collection[Terminal.Gui.Trees.ITreeNode]')
+                foreach ($comp in $typeGroup.Group | Sort-Object Name) {
+                    $compIcon = if ($comp.Disabled -or -not $comp.Enabled) {
+                        if ($Script:Icons.Disabled) { $Script:Icons.Disabled } else { "⊗" }
+                    } else {
+                        if ($Script:Icons.Computer) { $Script:Icons.Computer } else { "💻" }
+                    }
+                    $compNode = [Terminal.Gui.Trees.TreeNode]::new("$compIcon $($comp.Name)")
+                    # CHANGED: Wrap computer object in hashtable
+                    $compNode.Tag = @{
+                        Type = 'computer'
+                        Object = $comp  # Real AD computer object
+                    }
+                    $typeNode.Children.Add($compNode)
+                }
+                if ($typeNode.Children.Count -gt 0) { $computerNode.Children.Add($typeNode) }
+            }
+        }
+    }
+
+    Debug-Log ": Finished building content for domain $domain" -Type "Success"
+}
+
+function New-TreeObjectNode {
+    param(
+        [string]$Type,   # user | group | computer | dc | ou
+        [object]$Object  # the actual object
+    )
+
+    $icon = switch ($Type) {
+        'user'     { $Script:Icons.User }
+        'group'    { $Script:Icons.Group }
+        'computer' { $Script:Icons.Computer }
+        'dc'       { $Script:Icons.DC }
+        'ou'       { $Script:Icons.OU }
+        default    { '' }
+    }
+
+    $node = [Terminal.Gui.Trees.TreeNode]::new("$icon $($Object.Name)")
+    $node.Tag = @{
+        Type   = $Type
+        Object = $Object
+    }
+
+    return $node
 }
 
 ##---------------------------{ Build The Tree }--------------------------
@@ -4286,93 +4068,84 @@ $tabView.AddTab($memberTab, $false)
     # ==================== Search/Lookup Tab ====================
 
 # ----- Search/Lookup Filter Tab -----
-    $searchTab = [Terminal.Gui.TabView+Tab]::new()
-    $searchTab.Text = "Search/Lookup"
-    $searchView = [Terminal.Gui.View]::new()
+$searchTab = [Terminal.Gui.TabView+Tab]::new()
+$searchTab.Text = "Search/Lookup"
+$searchView = [Terminal.Gui.View]::new()
 
-    $y = 1
-    $lblSearchDomain = [Terminal.Gui.Label]::new("Domain:"); $lblSearchDomain.X=2; $lblSearchDomain.Y=$y; $searchView.Add($lblSearchDomain)
-    $txtSearchDomain = [Terminal.Gui.TextField]::new($Global:CurrentDomain ?? ""); $txtSearchDomain.X=15; $txtSearchDomain.Y=$y; $txtSearchDomain.Width=30; $searchView.Add($txtSearchDomain)
-    $y+=2
+$y = 1
+$lblSearchDomain = [Terminal.Gui.Label]::new("Domain:"); $lblSearchDomain.X=2; $lblSearchDomain.Y=$y; $searchView.Add($lblSearchDomain)
+$txtSearchDomain = [Terminal.Gui.TextField]::new($Global:CurrentDomain ?? ""); $txtSearchDomain.X=15; $txtSearchDomain.Y=$y; $txtSearchDomain.Width=30; $searchView.Add($txtSearchDomain)
+$y+=2
 
-    $lblSearchName = [Terminal.Gui.Label]::new("Name:"); $lblSearchName.X=2; $lblSearchName.Y=$y; $searchView.Add($lblSearchName)
-    $txtSearchUser = [Terminal.Gui.TextField]::new($user.Name ?? ""); $txtSearchUser.X=15; $txtSearchUser.Y=$y; $txtSearchUser.Width=30; $searchView.Add($txtSearchUser)
-    $y+=2
+$lblSearchName = [Terminal.Gui.Label]::new("Name:"); $lblSearchName.X=2; $lblSearchName.Y=$y; $searchView.Add($lblSearchName)
+$txtSearchUser = [Terminal.Gui.TextField]::new($user.Name ?? ""); $txtSearchUser.X=15; $txtSearchUser.Y=$y; $txtSearchUser.Width=30; $searchView.Add($txtSearchUser)
+$y+=2
 
-    $lblSearchType = [Terminal.Gui.Label]::new("Type:"); $lblSearchType.X=2; $lblSearchType.Y=$y; $searchView.Add($lblSearchType)
-    $cmbSearchType = [Terminal.Gui.ComboBox]::new(); $cmbSearchType.X=15; $cmbSearchType.Y=$y; $cmbSearchType.Width=20
-    $cmbSearchType.SetSource(@("User","Group","OU")); $cmbSearchType.SelectedItem = 0
-    $searchView.Add($cmbSearchType)
-    $y+=2
+$lblSearchType = [Terminal.Gui.Label]::new("Type:"); $lblSearchType.X=2; $lblSearchType.Y=$y; $searchView.Add($lblSearchType)
+$cmbSearchType = [Terminal.Gui.ComboBox]::new(); $cmbSearchType.X=15; $cmbSearchType.Y=$y; $cmbSearchType.Width=20
+$cmbSearchType.SetSource(@("User","Group","OU")); $cmbSearchType.SelectedItem = 0
+$searchView.Add($cmbSearchType)
+$y+=2
 
-    $lblSearchFilter = [Terminal.Gui.Label]::new("Filter Results:"); $lblSearchFilter.X=48; $lblSearchFilter.Y=1; $searchView.Add($lblSearchFilter)
-    $txtSearchFilter = [Terminal.Gui.TextField]::new(""); $txtSearchFilter.X=62; $txtSearchFilter.Y=1; $txtSearchFilter.Width=20; $searchView.Add($txtSearchFilter)
+$lblSearchFilter = [Terminal.Gui.Label]::new("Filter Results:"); $lblSearchFilter.X=48; $lblSearchFilter.Y=1; $searchView.Add($lblSearchFilter)
+$txtSearchFilter = [Terminal.Gui.TextField]::new(""); $txtSearchFilter.X=62; $txtSearchFilter.Y=1; $txtSearchFilter.Width=20; $searchView.Add($txtSearchFilter)
 
-    $txtSearchFilter.add_TextChanged({
+$txtSearchFilter.add_TextChanged({
     if ($script:currentSearchOutputLines) {
-      $search = $txtSearchFilter.Text.ToString().Trim()
-      if ($search) {
-        $txtSearchOutput.Text = ($script:currentSearchOutputLines | Where-Object { $_ -match "(?i)$search" }) -join "`n"
-     } else {
-              $txtSearchOutput.Text = $script:currentSearchOutputLines -join "`n"
-          }
-      }
-  })
-
-
-    $lblSearchResult = [Terminal.Gui.Label]::new("Results:"); $lblSearchResult.X=2; $lblSearchResult.Y=$y; $searchView.Add($lblSearchResult)
-    $y+=1
-    $txtSearchOutput = [Terminal.Gui.TextView]::new(); $txtSearchOutput.X=2; $txtSearchOutput.Y=$y
-    $txtSearchOutput.Width=[Terminal.Gui.Dim]::Fill(2); $txtSearchOutput.Height=[Terminal.Gui.Dim]::Fill(4)
-    $txtSearchOutput.ReadOnly=$true; $txtSearchOutput.WordWrap=$false
-    $searchView.Add($txtSearchOutput)
-
-    $chkSearchLocked = [Terminal.Gui.CheckBox]::new("Account Locked"); $chkSearchLocked.X=2; $chkSearchLocked.Y=[Terminal.Gui.Pos]::Bottom($txtSearchOutput)+1
-    $chkSearchLocked.CanFocus=$true; $chkSearchLocked.Data=""; $searchView.Add($chkSearchLocked)
-
-    $chkSearchDisabled = [Terminal.Gui.CheckBox]::new("Account Disabled"); $chkSearchDisabled.X=2; $chkSearchDisabled.Y=[Terminal.Gui.Pos]::Bottom($chkSearchLocked)+1
-    $chkSearchDisabled.CanFocus=$true; $chkSearchDisabled.Data=""; $searchView.Add($chkSearchDisabled)
-
-    $btnDoSearch = [Terminal.Gui.Button]::new("Search"); $btnDoSearch.X=48; $btnDoSearch.Y=3; $searchView.Add($btnDoSearch)
-
-    # Helper function and remaining code unchanged... TODO: This isn't the best, just query all properties
-    function Get-UserOutputLines($userObj) {
-        return @(
-            "Name                     : $($userObj.Name ?? '')",
-            "Email                    : $($userObj.Email ?? '')",
-            "Title                    : $($userObj.Title ?? '')",
-            "Department               : $($userObj.Department ?? '')",
-            "Office                   : $($userObj.Office ?? '')",
-            "Phone                    : $($userObj.Phone ?? '')",
-            "MobilePhone              : $($userObj.MobilePhone ?? '')",
-            "OU                       : $($userObj.OU ?? '')",
-            "Groups                   : $($userObj.Groups -join ', ')",
-            "Manager                  : $($userObj.Manager ?? '')",
-            "Company                  : $($userObj.Company ?? '')",
-            "Street                   : $($userObj.Street ?? '')",
-            "City                     : $($userObj.City ?? '')",
-            "PostalCode               : $($userObj.PostalCode ?? '')",
-            "Country                  : $($userObj.Country ?? '')",
-            "Disabled                 : $($userObj.Disabled)",
-            "Locked                   : $($userObj.Locked)",
-            "Description              : $($userObj.Description ?? '')"
-        )
-    }
-
-    $searchTab.View = $searchView
-    $tabView.AddTab($searchTab, $false)
-
-    # Auto-populate search results
-    [Terminal.Gui.Application]::MainLoop.Invoke({
-        if ($user) {
-            $txtSearchOutput.Text = (Get-UserOutputLines -userObj $user) -join "`n"
-            $script:currentSearchOutputLines = Get-UserOutputLines -userObj $user
-            $chkSearchLocked.Checked = [bool]($user.Locked)
-            $chkSearchLocked.Data = $user.Name
-            $chkSearchDisabled.Checked = [bool]($user.Disabled)
-            $chkSearchDisabled.Data    = $user.Name
+        $search = $txtSearchFilter.Text.ToString().Trim()
+        if ($search) {
+            $txtSearchOutput.Text = ($script:currentSearchOutputLines | Where-Object { $_ -match "(?i)$search" }) -join "`n"
+        } else {
+            $txtSearchOutput.Text = $script:currentSearchOutputLines -join "`n"
         }
-    })
+    }
+})
+
+$lblSearchResult = [Terminal.Gui.Label]::new("Results:"); $lblSearchResult.X=2; $lblSearchResult.Y=$y; $searchView.Add($lblSearchResult)
+$y+=1
+$txtSearchOutput = [Terminal.Gui.TextView]::new(); $txtSearchOutput.X=2; $txtSearchOutput.Y=$y
+$txtSearchOutput.Width=[Terminal.Gui.Dim]::Fill(2); $txtSearchOutput.Height=[Terminal.Gui.Dim]::Fill(4)
+$txtSearchOutput.ReadOnly=$true; $txtSearchOutput.WordWrap=$false
+$searchView.Add($txtSearchOutput)
+
+$chkSearchLocked = [Terminal.Gui.CheckBox]::new("Account Locked"); $chkSearchLocked.X=2; $chkSearchLocked.Y=[Terminal.Gui.Pos]::Bottom($txtSearchOutput)+1
+$chkSearchLocked.CanFocus=$true; $chkSearchLocked.Data=""; $searchView.Add($chkSearchLocked)
+
+$chkSearchDisabled = [Terminal.Gui.CheckBox]::new("Account Disabled"); $chkSearchDisabled.X=2; $chkSearchDisabled.Y=[Terminal.Gui.Pos]::Bottom($chkSearchLocked)+1
+$chkSearchDisabled.CanFocus=$true; $chkSearchDisabled.Data=""; $searchView.Add($chkSearchDisabled)
+
+$btnDoSearch = [Terminal.Gui.Button]::new("Search"); $btnDoSearch.X=48; $btnDoSearch.Y=3; $searchView.Add($btnDoSearch)
+
+## Helper function - dump all properties from the object
+function Get-UserOutputLines($userObj) {
+    $lines = @()
+    $userObj.PSObject.Properties | ForEach-Object {
+        $value = if ($_.Value -is [array]) {
+            $_.Value -join ', '
+        } elseif ($null -eq $_.Value) {
+            ''
+        } else {
+            $_.Value.ToString()
+        }
+        $lines += "$($_.Name.PadRight(25)): $value"
+    }
+    return $lines
+}
+
+$searchTab.View = $searchView
+$tabView.AddTab($searchTab, $false)
+
+# Auto-populate search results
+[Terminal.Gui.Application]::MainLoop.Invoke({
+    if ($user) {
+        $txtSearchOutput.Text = (Get-UserOutputLines -userObj $user) -join "`n"
+        $script:currentSearchOutputLines = Get-UserOutputLines -userObj $user
+        $chkSearchLocked.Checked = [bool]($user.Locked)
+        $chkSearchLocked.Data = $user.Name
+        $chkSearchDisabled.Checked = [bool]($user.Disabled)
+        $chkSearchDisabled.Data    = $user.Name
+    }
+})
 
 ## Add TabView to dialog
 $dlg.Add($tabView)
@@ -4677,173 +4450,177 @@ function Show-NewObjectWizard {
 
 # ------------------------- Delete Object ------------------------
 function Show-DeleteObjectDialog {
-  param([string]$objectName, [string]$objectType)
+    param(
+        [Terminal.Gui.Trees.TreeNode]$Node
+    )
 
-  ## Remove prefixes and ALL leading non-alphanumeric characters like "(U) " or "(DC) "
-  ## Parse the tree text to get clean name and type
-  $objInfo = Get-CleanObjectInfo -treeText $objectName
-  $cleanName = $objInfo.Name
-  Debug-Log (": After removing prefix: '$cleanName'") -Type "Info"
-
-  ## Extra confirmation for destructive action
-  $result = [Terminal.Gui.MessageBox]::Query(70, 11, "DELETE CONFIRMATION", "⚠️ WARNING: You are about to DELETE:`n`n  Type: $objectType`n  Name: $cleanName`n`nThis action CANNOT be undone!`n`nAre you absolutely sure?", "Yes, DELETE", "No, Cancel")
-
-  if ($result -eq 0) {
-    try {
-      if ($Script:DemoMode) {
-        ## Demo mode - remove from in-memory structures
-        switch ($objectType.ToLower()) {
-          "user" {
-            $Script:Users = $Script:Users | Where-Object { $_.Name -ne $cleanName }
-            Debug-Log (": Deleted user $cleanName (demo mode)") -Type "Info"
-          }
-          "group" {
-            ## Remove group from all users
-            foreach ($u in $Script:Users) {
-              $u.Groups = $u.Groups | Where-Object { $_ -ne $cleanName }
-            }
-            Debug-Log (": Deleted group $cleanName (demo mode)") -Type "Info"
-          }
-          default {
-            Debug-Log (": Deleted $objectType $cleanName (demo mode)") -Type "Info"
-          }
-        }
-
-        Show-Modal "Deleted" "$objectType '$cleanName' deleted (demo mode)"
-        Build-Tree -domain $Script:CurrentDomain
-        Update-FilterStatusLabel -label $Script:FilterStatusLabel
-
-      } else {
-        ## Production mode - delete from AD
-        switch ($objectType.ToLower()) {
-          "user" {
-            Remove-ADUser -Identity $cleanName -Confirm:$false -ErrorAction Stop
-            Debug-Log (": Deleted user $cleanName from AD") -Type "Info"
-          }
-          "group" {
-            Remove-ADGroup -Identity $cleanName -Confirm:$false -ErrorAction Stop
-            Debug-Log (": Deleted group $cleanName from AD") -Type "Info"
-          }
-          "ou" {
-            Remove-ADOrganizationalUnit -Identity $cleanName -Confirm:$false -ErrorAction Stop
-            Debug-Log (": Deleted OU $cleanName from AD") -Type "Info"
-          }
-          "computer" {
-            Remove-ADComputer -Identity $cleanName -Confirm:$false -ErrorAction Stop
-            Debug-Log (": Deleted computer $cleanName from AD") -Type "Info"
-          }
-          default {
-            Remove-ADObject -Identity $cleanName -Confirm:$false -ErrorAction Stop
-            Debug-Log (": Deleted $objectType $cleanName from AD") -Type "Info"
-          }
-        }
-
-        Show-Modal "Deleted" "$objectType '$cleanName' deleted successfully"
-        ## Refresh data
-        Refresh-Data -domain $Script:CurrentDomain
-        Update-FilterStatusLabel -label $Script:FilterStatusLabel
-      }
-
-    } catch {
-      $errMsg = $_.Exception.Message
-      Ahow-Modal "Delete Failed" "Failed to delete $objectType`:`n$errMsg"
+    if (-not $Node -or -not $Node.Tag) {
+        Debug-Log ": Delete requested but node has no Tag" -Type "Warn"
+        return
     }
-  }
+
+    $obj = $Node.Tag
+
+    ## Determine type from the OBJECT, not text
+    $objectType =
+        if ($obj.PSObject.Properties.Match('SamAccountName')) { 'User' }
+        elseif ($obj.PSObject.Properties.Match('Members'))     { 'Group' }
+        elseif ($obj.PSObject.Properties.Match('Site'))        { 'Domain Controller' }
+        elseif ($obj.PSObject.Properties.Match('ComputerType')){ 'Computer' }
+        else { 'Object' }
+
+    $name = $obj.Name
+
+    Debug-Log ": Delete dialog for $objectType '$name'" -Type "Info"
+
+    ## Confirmation dialog
+    $result = [Terminal.Gui.MessageBox]::Query(
+        70, 11,
+        "DELETE CONFIRMATION",
+        "⚠️ WARNING: You are about to DELETE:`n`n" +
+        "  Type: $objectType`n" +
+        "  Name: $name`n`n" +
+        "This action CANNOT be undone!`n`n" +
+        "Are you absolutely sure?",
+        "Yes, DELETE",
+        "No, Cancel"
+    )
+
+    if ($result -ne 0) { return }
+
+    ## Continue with delete logic using $obj
 }
+
 
 ## ------------------------- Move Object ------------------------
 function Show-MoveObjectDialog {
-  param([string]$objectName, [string]$objectType)
+    param(
+        [Terminal.Gui.Trees.TreeNode]$Node
+    )
 
-    ## Parse the tree text to get clean name and type
-    $objInfo = Get-CleanObjectInfo -treeText $objectName
-    $cleanName = $objInfo.Name
-    $dlg = [Terminal.Gui.Dialog]::new("Move Object - $cleanName", 70, 18)
-    $lblCurrent = [Terminal.Gui.Label]::new("Current location:"); $lblCurrent.X=2; $lblCurrent.Y=1; $dlg.Add($lblCurrent)
-
-    ## Get current OU
-    $currentOU = "N/A"
-    if ($objectType.ToLower() -eq "user") {
-      $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-      if ($user) { $currentOU = $user.OU }
+    if (-not $Node -or -not $Node.Tag) {
+        Debug-Log ": Move requested but node has no Tag" -Type "Warn"
+        return
     }
 
-    $lblCurrentOU = [Terminal.Gui.Label]::new($currentOU); $lblCurrentOU.X=20; $lblCurrentOU.Y=1; $dlg.Add($lblCurrentOU)
-    $lblTarget = [Terminal.Gui.Label]::new("Move to OU:"); $lblTarget.X=2; $lblTarget.Y=3; $dlg.Add($lblTarget)
+    $obj = $Node.Tag
+    $name = $obj.Name
 
-    ## Get list of OUs
-    $ouList = if ($Script:DemoMode) {
-        $Script:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
+    ## Determine supported object type from OBJECT
+    $isUser = $obj.PSObject.Properties.Match('SamAccountName').Count -gt 0
+    $isGroup = $obj.PSObject.Properties.Match('Members').Count -gt 0
+
+    if (-not ($isUser -or $isGroup)) {
+        Show-Modal "Not Supported" "This object type cannot be moved."
+        return
+    }
+
+    $dlg = [Terminal.Gui.Dialog]::new("Move Object - $name", 70, 18)
+
+    ## Current OU
+    $currentOU = if ($obj.DistinguishedName) {
+        ($obj.DistinguishedName -replace '^CN=[^,]+,', '')
     } else {
-      try {
-        Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName |
-        Select-Object -ExpandProperty DistinguishedName | Sort-Object
-      } catch { @("CN=Users,DC=example,DC=com") }
+        "N/A"
+    }
+
+    $lblCurrent = [Terminal.Gui.Label]::new("Current location:")
+    $lblCurrent.X = 2; $lblCurrent.Y = 1
+    $dlg.Add($lblCurrent)
+
+    $lblCurrentOU = [Terminal.Gui.Label]::new($currentOU)
+    $lblCurrentOU.X = 20; $lblCurrentOU.Y = 1
+    $dlg.Add($lblCurrentOU)
+
+    $lblTarget = [Terminal.Gui.Label]::new("Move to OU:")
+    $lblTarget.X = 2; $lblTarget.Y = 3
+    $dlg.Add($lblTarget)
+
+    ## OU list
+    $ouList = if ($Script:DemoMode) {
+        $Script:Users |
+            Where-Object OU |
+            Select-Object -ExpandProperty OU -Unique |
+            Sort-Object
+    } else {
+        try {
+            Get-ADOrganizationalUnit -Filter * |
+                Select-Object -ExpandProperty DistinguishedName |
+                Sort-Object
+        } catch {
+            @("CN=Users,DC=example,DC=com")
+        }
     }
 
     $lstOU = [Terminal.Gui.ListView]::new($ouList)
-    $lstOU.X=2; $lstOU.Y=4; $lstOU.Width=[Terminal.Gui.Dim]::Fill(2); $lstOU.Height=8
+    $lstOU.X = 2
+    $lstOU.Y = 4
+    $lstOU.Width = [Terminal.Gui.Dim]::Fill(2)
+    $lstOU.Height = 8
     $dlg.Add($lstOU)
 
+    ## Move button
     $btnMove = [Terminal.Gui.Button]::new("Move")
     $btnMove.add_Clicked({
-      if ($lstOU.SelectedItem -lt 0) {
-        Show-Modal "Error" "Please select a target OU"
-        return
-      }
+        if ($lstOU.SelectedItem -lt 0) {
+            Show-Modal "Error" "Please select a target OU"
+            return
+        }
 
-      $targetOU = $ouList[$lstOU.SelectedItem]
+        $targetOU = $ouList[$lstOU.SelectedItem]
 
-      if ($targetOU -eq $currentOU) {
-        Show-Modal "Error" "Object is already in that OU"
-        return
-      }
+        if ($targetOU -eq $currentOU) {
+            Show-Modal "Error" "Object is already in that OU"
+            return
+        }
 
-      $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Move",
-        "Move '$cleanName' to:`n$targetOU?",
-        "Yes", "No")
+        $confirm = [Terminal.Gui.MessageBox]::Query(
+            60, 9,
+            "Confirm Move",
+            "Move '$name' to:`n$targetOU?",
+            "Yes", "No"
+        )
 
-        if ($confirm -eq 0) {
-          try {
+        if ($confirm -ne 0) { return }
+
+        try {
             if ($Script:DemoMode) {
-              ## Demo mode - update in-memory
-              if ($objectType.ToLower() -eq "user") {
-                $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-                if ($user) {
-                  $user.OU = $targetOU
-                  Debug-Log (": Moved user $cleanName to $targetOU (demo mode)") -Type "Info"
+                ## Demo: mutate in-memory object
+                if ($obj.PSObject.Properties.Match('OU')) {
+                    $obj.OU = $targetOU
                 }
-              }
 
-              Show-Modal "Success" "Object moved successfully (demo mode)"
-              Build-Tree -domain $Script:CurrentDomain
-              Update-FilterStatusLabel -label $Script:FilterStatusLabel
-              [Terminal.Gui.Application]::RequestStop()
-
+                Debug-Log ": Moved $name to $targetOU (demo mode)" -Type "Info"
+                Show-Modal "Success" "Object moved successfully (demo mode)"
             } else {
-              ## Production mode - move in AD
-              $adObject = Get-ADObject -Filter "Name -eq '$cleanName'" -ErrorAction Stop
-              Move-ADObject -Identity $adObject.DistinguishedName -TargetPath $targetOU -ErrorAction Stop
-              Debug-Log (": Moved $cleanName to $targetOU in AD") -Type "Info"
-              Show-Modal "Success" "Object moved successfully"
+                ## Production
+                Move-ADObject `
+                    -Identity $obj.DistinguishedName `
+                    -TargetPath $targetOU `
+                    -ErrorAction Stop
 
-              ## Refresh data
-              Refresh-Data -domain $Script:CurrentDomain
-              Update-FilterStatusLabel -label $Script:FilterStatusLabel
-              [Terminal.Gui.Application]::RequestStop()
+                Debug-Log ": Moved $name to $targetOU in AD" -Type "Info"
+                Show-Modal "Success" "Object moved successfully"
             }
 
-          } catch {
-            $errMsg = $_.Exception.Message
-            Show-Modal "Move Failed" "Failed to move object:`n$errMsg"
-          }
+            ## Refresh UI
+            Refresh-Data -domain $Script:CurrentDomain
+            Build-Tree -domain $Script:CurrentDomain
+            Update-FilterStatusLabel -label $Script:FilterStatusLabel
+            [Terminal.Gui.Application]::RequestStop()
+
+        } catch {
+            Show-Modal "Move Failed" $_.Exception.Message
         }
-      })
-  $dlg.AddButton($btnMove)
-  $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-  $dlg.AddButton($btnCancel)
-  [Terminal.Gui.Application]::Run($dlg)
+    })
+
+    $dlg.AddButton($btnMove)
+
+    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+    $dlg.AddButton($btnCancel)
+
+    [Terminal.Gui.Application]::Run($dlg)
 }
 
 # ------------------------- Change Domain Dialog ------------------------
@@ -6072,39 +5849,10 @@ function Show-ComputerPropertiesDialog {
     $accountView.Height = [Terminal.Gui.Dim]::Fill()
     $y = 1
 
-    ## Logon Information (top section - like real dsa.msc)
-    $lbl = [Terminal.Gui.Label]::new("Logon Information"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
-
-    # User logon name (pre-Windows 2000)
-    $lbl = [Terminal.Gui.Label]::new("User logon name:"); $lbl.X=4; $lbl.Y=$y; $accountView.Add($lbl)
-    $txtSamAccountName = [Terminal.Gui.TextField]::new($user.SamAccountName ?? "")
-    $txtSamAccountName.X=30; $txtSamAccountName.Y=$y; $txtSamAccountName.Width=30
-    $accountView.Add($txtSamAccountName); $y+=1
-
-    # User logon name (UPN)
-    $lbl = [Terminal.Gui.Label]::new("User logon name (UPN):"); $lbl.X=4; $lbl.Y=$y; $accountView.Add($lbl)
-    $upn = if ($user.UserPrincipalName) { $user.UserPrincipalName } else { "" }
-    $txtUserPrincipalName = [Terminal.Gui.TextField]::new($upn)
-    $txtUserPrincipalName.X=30; $txtUserPrincipalName.Y=$y; $txtUserPrincipalName.Width=50
-    $accountView.Add($txtUserPrincipalName); $y+=2
-
-    ## Account Status
-    $lbl = [Terminal.Gui.Label]::new("Account Status"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
-
-    $isEnabled = if ($user.PSObject.Properties['Enabled']) { $user.Enabled } else { -not $user.Disabled }
-    $chkEnabled = [Terminal.Gui.CheckBox]::new("Account Enabled"); $chkEnabled.X=4; $chkEnabled.Y=$y; $chkEnabled.Checked=$isEnabled
-    $accountView.Add($chkEnabled); $y+=1
-
-    $isLocked = if ($user.PSObject.Properties['LockedOut']) { $user.LockedOut } else { $user.Locked ?? $false }
-    $chkLocked = [Terminal.Gui.CheckBox]::new("Account Locked"); $chkLocked.X=4; $chkLocked.Y=$y; $chkLocked.Checked=$isLocked; $chkLocked.Enabled=$false
-    $accountView.Add($chkLocked); $y+=2
-
+    ## Account Status (START HERE - no user fields above)
     $lbl = [Terminal.Gui.Label]::new("Account Status"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
     $chkEnabled = [Terminal.Gui.CheckBox]::new("Computer Account Enabled"); $chkEnabled.X=4; $chkEnabled.Y=$y; $chkEnabled.Checked=($computer.Enabled??$true)
     $accountView.Add($chkEnabled); $y+=1
-
-    $chkLocked = [Terminal.Gui.CheckBox]::new("Account Locked"); $chkLocked.X=4; $chkLocked.Y=$y; $chkLocked.Checked=($computer.LockedOut??$false); $chkLocked.Enabled=$false
-    $accountView.Add($chkLocked); $y+=2
 
     ## Password Settings
     $lbl = [Terminal.Gui.Label]::new("Password Settings"); $lbl.X=2; $lbl.Y=$y; $accountView.Add($lbl); $y+=2
@@ -6240,615 +5988,586 @@ function Show-ComputerPropertiesDialog {
 
     $memberView.Add($lstGroups)
 
-############################## Cleaned to here ##############################
+    ## ===================================================== Add/Remove Buttons for Member Of Tab =====================================================
+    $memberView.Add($lstGroups)
 
-        # =====================================================
-# SNIPPET: Add/Remove Buttons for Member Of Tab
-# =====================================================
-# Add this code after you create the ListView ($lstGroups)
-# and before you set the tab view ($memberTab.View = $memberView)
+    ## Add/Remove buttons - FIXED POSITIONS
+    $btnAdd = [Terminal.Gui.Button]::new("Add to Group...")
+    $btnAdd.X = 2
+    $btnAdd.Y = 23  ## Hardcoded position (after ListView height of 20 + label + spacing)
+    $btnAdd.add_Clicked({
+      Show-EditGroupMembershipDialog -User $user -OnUpdate
+    })
+    $memberView.Add($btnAdd)
 
-$memberView.Add($lstGroups)
+    $btnRemove = [Terminal.Gui.Button]::new("Remove from Group")
+    $btnRemove.X = 22
+    $btnRemove.Y = 23  ## Same Y position as Add button
+    $btnRemove.add_Clicked({
+      Show-EditGroupMembershipDialog -User $user -OnUpdate
+    })
+    $memberView.Add($btnRemove)
+    $memberTab.View = $memberView
 
-# Add/Remove buttons - FIXED POSITIONS
-$btnAdd = [Terminal.Gui.Button]::new("Add to Group...")
-$btnAdd.X = 2
-$btnAdd.Y = 23  # Hardcoded position (after ListView height of 20 + label + spacing)
-$btnAdd.add_Clicked({
-    Show-EditGroupMembershipDialog -User $user -OnUpdate {
-        # Refresh code here
+    ## ==================== Service Principal Names Tab ====================
+    Debug-Log ": Creating SPN tab" -Type "Info"
+    $spnTab = [Terminal.Gui.TabView+Tab]::new()
+    $spnTab.Text = "SPNs"
+    $spnView = [Terminal.Gui.View]::new()
+    $spnView.X = 0; $spnView.Y = 0
+    $spnView.Width = [Terminal.Gui.Dim]::Fill()
+    $spnView.Height = [Terminal.Gui.Dim]::Fill()
+    $y = 1
+
+    $lbl = [Terminal.Gui.Label]::new("Service Principal Names:"); $lbl.X=2; $lbl.Y=$y; $spnView.Add($lbl); $y+=2
+    $lstSPNs = [Terminal.Gui.ListView]::new()
+    $lstSPNs.X = 2
+    $lstSPNs.Y = $y
+    $lstSPNs.Width = [Terminal.Gui.Dim]::Fill(2)
+    $lstSPNs.Height = [Terminal.Gui.Dim]::Fill(2)
+
+    $spnList = @()
+    if ($computer.ServicePrincipalNames) {
+      $spnList = $computer.ServicePrincipalNames
+    } elseif ($computer.servicePrincipalName) {
+      $spnList = $computer.servicePrincipalName
     }
-})
-$memberView.Add($btnAdd)
 
-$btnRemove = [Terminal.Gui.Button]::new("Remove from Group")
-$btnRemove.X = 22
-$btnRemove.Y = 23  # Same Y position as Add button
-$btnRemove.add_Clicked({
-    # Remove code here
-})
-$memberView.Add($btnRemove)
-$memberTab.View = $memberView
+    if ($spnList.Count -gt 0) {
+      $lstSPNs.SetSource($spnList)
+    } else {
+      $lstSPNs.SetSource(@("(No SPNs configured)"))
+    }
 
-        # ==================== Service Principal Names Tab ====================
-        Debug-Log ": Creating SPN tab" -Type "Info"
-        $spnTab = [Terminal.Gui.TabView+Tab]::new()
-        $spnTab.Text = "SPNs"
-        $spnView = [Terminal.Gui.View]::new()
-        $spnView.X = 0; $spnView.Y = 0
-        $spnView.Width = [Terminal.Gui.Dim]::Fill()
-        $spnView.Height = [Terminal.Gui.Dim]::Fill()
+    $spnView.Add($lstSPNs)
+    $spnTab.View = $spnView
+    $tabView.AddTab($spnTab, $false)
 
-        $y = 1
-        $lbl = [Terminal.Gui.Label]::new("Service Principal Names:"); $lbl.X=2; $lbl.Y=$y; $spnView.Add($lbl); $y+=2
+    ## ==================== LAPS Tab ====================
+    Debug-Log ": Creating LAPS tab" -Type "Info"
+    $lapsTab = [Terminal.Gui.TabView+Tab]::new()
+    $lapsTab.Text = "LAPS"
+    $lapsView = [Terminal.Gui.View]::new()
+    $lapsView.X = 0; $lapsView.Y = 0
+    $lapsView.Width = [Terminal.Gui.Dim]::Fill()
+    $lapsView.Height = [Terminal.Gui.Dim]::Fill()
+    $y = 1
+    $lbl = [Terminal.Gui.Label]::new("Local Administrator Password Solution"); $lbl.X=2; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
 
-        $lstSPNs = [Terminal.Gui.ListView]::new()
-        $lstSPNs.X = 2
-        $lstSPNs.Y = $y
-        $lstSPNs.Width = [Terminal.Gui.Dim]::Fill(2)
-        $lstSPNs.Height = [Terminal.Gui.Dim]::Fill(2)
+    ## Check for LAPS in production mode
+    $lapsEnabled = $false
+    $lapsPassword = ""
+    $lapsExpiry = ""
 
-        $spnList = @()
-        if ($computer.ServicePrincipalNames) {
-            $spnList = $computer.ServicePrincipalNames
-        } elseif ($computer.servicePrincipalName) {
-            $spnList = $computer.servicePrincipalName
+    if (-not $Script:DemoMode) {
+      try {
+        $lapsData = Get-ADComputer -Identity $computer.Name -Properties 'ms-Mcs-AdmPwd','ms-Mcs-AdmPwdExpirationTime' -ErrorAction SilentlyContinue
+        if ($lapsData.'ms-Mcs-AdmPwd') {
+          $lapsEnabled = $true
+          $lapsPassword = $lapsData.'ms-Mcs-AdmPwd'
+          $lapsExpiry = if ($lapsData.'ms-Mcs-AdmPwdExpirationTime') {
+            [DateTime]::FromFileTime($lapsData.'ms-Mcs-AdmPwdExpirationTime').ToString('yyyy-MM-dd HH:mm:ss')
+          } else {
+            "Unknown"
+          }
         }
-
-        if ($spnList.Count -gt 0) {
-            $lstSPNs.SetSource($spnList)
+      } catch {
+        Debug-Log (": Failed to retrieve LAPS info: $_") -Type "Warn"
+      }
+    } elseif ($computer.'ms-Mcs-AdmPwd') {
+        ## Demo mode with LAPS data
+        $lapsEnabled = $true
+        $lapsPassword = $computer.'ms-Mcs-AdmPwd'
+        $lapsExpiry = if ($computer.'ms-Mcs-AdmPwdExpirationTime') {
+          [DateTime]::FromFileTime($computer.'ms-Mcs-AdmPwdExpirationTime').ToString('yyyy-MM-dd HH:mm:ss')
         } else {
-            $lstSPNs.SetSource(@("(No SPNs configured)"))
+          "Unknown"
         }
+      }
 
-        $spnView.Add($lstSPNs)
+      if ($lapsEnabled) {
+        $lbl = [Terminal.Gui.Label]::new("LAPS Status: ✓ Enabled"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
+        $lbl = [Terminal.Gui.Label]::new("Administrator Password:"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
+        $txtPassword = [Terminal.Gui.TextField]::new($lapsPassword); $txtPassword.X=4; $txtPassword.Y=$y; $txtPassword.Width=70; $txtPassword.ReadOnly=$true
+        $lapsView.Add($txtPassword); $y+=2
 
-        $spnTab.View = $spnView
-        $tabView.AddTab($spnTab, $false)
+        $lbl = [Terminal.Gui.Label]::new("Password Expires:"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
+        $txtExpiry = [Terminal.Gui.Label]::new($lapsExpiry); $txtExpiry.X=25; $txtExpiry.Y=$y
+        $lapsView.Add($txtExpiry); $y+=2
 
-        # ==================== LAPS Tab ====================
-        Debug-Log ": Creating LAPS tab" -Type "Info"
-        $lapsTab = [Terminal.Gui.TabView+Tab]::new()
-        $lapsTab.Text = "LAPS"
-        $lapsView = [Terminal.Gui.View]::new()
-        $lapsView.X = 0; $lapsView.Y = 0
-        $lapsView.Width = [Terminal.Gui.Dim]::Fill()
-        $lapsView.Height = [Terminal.Gui.Dim]::Fill()
+        $lbl = [Terminal.Gui.Label]::new("⚠ This password provides full local administrator access"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
+        $lbl = [Terminal.Gui.Label]::new("  Handle with appropriate security controls"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
+      } else {
+        $lbl = [Terminal.Gui.Label]::new("LAPS Status: ✗ Not Enabled"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
+        $lbl = [Terminal.Gui.Label]::new("This computer does not have LAPS configured or you"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
+        $lbl = [Terminal.Gui.Label]::new("do not have permissions to view the password."); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
+      }
 
-        $y = 1
-        $lbl = [Terminal.Gui.Label]::new("Local Administrator Password Solution"); $lbl.X=2; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
+      $lapsTab.View = $lapsView
+      $tabView.AddTab($lapsTab, $false)
 
-        # Check for LAPS in production mode
-        $lapsEnabled = $false
-        $lapsPassword = ""
-        $lapsExpiry = ""
+      ## ==================== Advanced Tab ====================
+      Debug-Log ": Creating Advanced tab" -Type "Info"
+      $advancedTab = [Terminal.Gui.TabView+Tab]::new()
+      $advancedTab.Text = "Advanced"
+      $advancedView = [Terminal.Gui.View]::new()
+      $advancedView.X = 0; $advancedView.Y = 0
+      $advancedView.Width = [Terminal.Gui.Dim]::Fill()
+      $advancedView.Height = [Terminal.Gui.Dim]::Fill()
+      $y = 1
 
-        if (-not $Script:DemoMode) {
-            try {
-                $lapsData = Get-ADComputer -Identity $computer.Name -Properties 'ms-Mcs-AdmPwd','ms-Mcs-AdmPwdExpirationTime' -ErrorAction SilentlyContinue
-                if ($lapsData.'ms-Mcs-AdmPwd') {
-                    $lapsEnabled = $true
-                    $lapsPassword = $lapsData.'ms-Mcs-AdmPwd'
-                    $lapsExpiry = if ($lapsData.'ms-Mcs-AdmPwdExpirationTime') {
-                        [DateTime]::FromFileTime($lapsData.'ms-Mcs-AdmPwdExpirationTime').ToString('yyyy-MM-dd HH:mm:ss')
-                    } else {
-                        "Unknown"
-                    }
-                }
-            } catch {
-                Debug-Log (": Failed to retrieve LAPS info: $_") -Type "Warn"
-            }
-        } elseif ($computer.'ms-Mcs-AdmPwd') {
-            # Demo mode with LAPS data
-            $lapsEnabled = $true
-            $lapsPassword = $computer.'ms-Mcs-AdmPwd'
-            $lapsExpiry = if ($computer.'ms-Mcs-AdmPwdExpirationTime') {
-                [DateTime]::FromFileTime($computer.'ms-Mcs-AdmPwdExpirationTime').ToString('yyyy-MM-dd HH:mm:ss')
-            } else {
-                "Unknown"
-            }
-        }
+      $lbl = [Terminal.Gui.Label]::new("Distinguished Name:"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
+      $txtDN = [Terminal.Gui.TextField]::new($computer.DistinguishedName ?? ""); $txtDN.X=2; $txtDN.Y=$y; $txtDN.Width=90; $txtDN.ReadOnly=$true
+      $advancedView.Add($txtDN); $y+=2
 
-        if ($lapsEnabled) {
-            $lbl = [Terminal.Gui.Label]::new("LAPS Status: ✓ Enabled"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
+      $lbl = [Terminal.Gui.Label]::new("Canonical Name:"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
+      $txtCN = [Terminal.Gui.TextField]::new($computer.CanonicalName ?? ""); $txtCN.X=2; $txtCN.Y=$y; $txtCN.Width=90; $txtCN.ReadOnly=$true
+      $advancedView.Add($txtCN); $y+=2
 
-            $lbl = [Terminal.Gui.Label]::new("Administrator Password:"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
-            $txtPassword = [Terminal.Gui.TextField]::new($lapsPassword); $txtPassword.X=4; $txtPassword.Y=$y; $txtPassword.Width=70; $txtPassword.ReadOnly=$true
-            $lapsView.Add($txtPassword); $y+=2
-
-            $lbl = [Terminal.Gui.Label]::new("Password Expires:"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
-            $txtExpiry = [Terminal.Gui.Label]::new($lapsExpiry); $txtExpiry.X=25; $txtExpiry.Y=$y
-            $lapsView.Add($txtExpiry); $y+=2
-
-            $lbl = [Terminal.Gui.Label]::new("⚠ This password provides full local administrator access"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
-            $lbl = [Terminal.Gui.Label]::new("  Handle with appropriate security controls"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
-        } else {
-            $lbl = [Terminal.Gui.Label]::new("LAPS Status: ✗ Not Enabled"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=2
-            $lbl = [Terminal.Gui.Label]::new("This computer does not have LAPS configured or you"); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl); $y+=1
-            $lbl = [Terminal.Gui.Label]::new("do not have permissions to view the password."); $lbl.X=4; $lbl.Y=$y; $lapsView.Add($lbl)
-        }
-
-        $lapsTab.View = $lapsView
-        $tabView.AddTab($lapsTab, $false)
-
-        # ==================== Advanced Tab ====================
-        Debug-Log ": Creating Advanced tab" -Type "Info"
-        $advancedTab = [Terminal.Gui.TabView+Tab]::new()
-        $advancedTab.Text = "Advanced"
-        $advancedView = [Terminal.Gui.View]::new()
-        $advancedView.X = 0; $advancedView.Y = 0
-        $advancedView.Width = [Terminal.Gui.Dim]::Fill()
-        $advancedView.Height = [Terminal.Gui.Dim]::Fill()
-
-        $y = 1
-        $lbl = [Terminal.Gui.Label]::new("Distinguished Name:"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
-        $txtDN = [Terminal.Gui.TextField]::new($computer.DistinguishedName ?? ""); $txtDN.X=2; $txtDN.Y=$y; $txtDN.Width=90; $txtDN.ReadOnly=$true
-        $advancedView.Add($txtDN); $y+=2
-
-        $lbl = [Terminal.Gui.Label]::new("Canonical Name:"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
-        $txtCN = [Terminal.Gui.TextField]::new($computer.CanonicalName ?? ""); $txtCN.X=2; $txtCN.Y=$y; $txtCN.Width=90; $txtCN.ReadOnly=$true
-        $advancedView.Add($txtCN); $y+=2
-
-        # Timestamps
-        $lbl = [Terminal.Gui.Label]::new("Timestamps"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
-
-        $created = if ($computer.Created -or $computer.whenCreated) {
-            ($computer.Created ?? $computer.whenCreated).ToString('yyyy-MM-dd HH:mm:ss')
-        } else { "Unknown" }
-        $lbl = [Terminal.Gui.Label]::new("Created: " + $created); $lbl.X=4; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
-
-        $modified = if ($computer.Modified -or $computer.whenChanged) {
-            ($computer.Modified ?? $computer.whenChanged).ToString('yyyy-MM-dd HH:mm:ss')
-        } else { "Unknown" }
+      ## Timestamps
+      $lbl = [Terminal.Gui.Label]::new("Timestamps"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
+      $created = if ($computer.Created -or $computer.whenCreated) {
+        ($computer.Created ?? $computer.whenCreated).ToString('yyyy-MM-dd HH:mm:ss')
+      } else { "Unknown" }
+      $lbl = [Terminal.Gui.Label]::new("Created: " + $created); $lbl.X=4; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
+      $modified = if ($computer.Modified -or $computer.whenChanged) {
+        ($computer.Modified ?? $computer.whenChanged).ToString('yyyy-MM-dd HH:mm:ss')
+      } else { "Unknown" }
         $lbl = [Terminal.Gui.Label]::new("Modified: " + $modified); $lbl.X=4; $lbl.Y=$y; $advancedView.Add($lbl); $y+=1
 
-        if ($computer.LastBootUpTime) {
-            $lbl = [Terminal.Gui.Label]::new("Last Boot: " + $computer.LastBootUpTime.ToString('yyyy-MM-dd HH:mm:ss')); $lbl.X=4; $lbl.Y=$y
-            $advancedView.Add($lbl); $y+=1
-        }
+      if ($computer.LastBootUpTime) {
+        $lbl = [Terminal.Gui.Label]::new("Last Boot: " + $computer.LastBootUpTime.ToString('yyyy-MM-dd HH:mm:ss')); $lbl.X=4; $lbl.Y=$y
+        $advancedView.Add($lbl); $y+=1
+      }
 
-        # USN
-        $y+=1
-        $lbl = [Terminal.Gui.Label]::new("Update Sequence Numbers"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
+      ## USN
+      $y+=1
+      $lbl = [Terminal.Gui.Label]::new("Update Sequence Numbers"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
 
-        if ($computer.uSNCreated) {
-            $lbl = [Terminal.Gui.Label]::new("USN Created: " + $computer.uSNCreated); $lbl.X=4; $lbl.Y=$y
-            $advancedView.Add($lbl); $y+=1
-        }
+      if ($computer.uSNCreated) {
+        $lbl = [Terminal.Gui.Label]::new("USN Created: " + $computer.uSNCreated); $lbl.X=4; $lbl.Y=$y
+        $advancedView.Add($lbl); $y+=1
+      }
 
-        if ($computer.uSNChanged) {
-            $lbl = [Terminal.Gui.Label]::new("USN Changed: " + $computer.uSNChanged); $lbl.X=4; $lbl.Y=$y
-            $advancedView.Add($lbl); $y+=1
-        }
+      if ($computer.uSNChanged) {
+        $lbl = [Terminal.Gui.Label]::new("USN Changed: " + $computer.uSNChanged); $lbl.X=4; $lbl.Y=$y
+        $advancedView.Add($lbl); $y+=1
+      }
 
-        # Additional properties
-        $y+=1
-        $lbl = [Terminal.Gui.Label]::new("Additional Properties"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
+      ## Additional properties
+      $y+=1
+      $lbl = [Terminal.Gui.Label]::new("Additional Properties"); $lbl.X=2; $lbl.Y=$y; $advancedView.Add($lbl); $y+=2
 
-        if ($computer.isCriticalSystemObject) {
-            $lbl = [Terminal.Gui.Label]::new("✓ Critical System Object"); $lbl.X=4; $lbl.Y=$y
-            $advancedView.Add($lbl); $y+=1
-        }
+      if ($computer.isCriticalSystemObject) {
+        $lbl = [Terminal.Gui.Label]::new("✓ Critical System Object"); $lbl.X=4; $lbl.Y=$y
+        $advancedView.Add($lbl); $y+=1
+      }
 
-        if ($computer.ProtectedFromAccidentalDeletion) {
-            $lbl = [Terminal.Gui.Label]::new("✓ Protected from Accidental Deletion"); $lbl.X=4; $lbl.Y=$y
-            $advancedView.Add($lbl); $y+=1
-        }
+      if ($computer.ProtectedFromAccidentalDeletion) {
+        $lbl = [Terminal.Gui.Label]::new("✓ Protected from Accidental Deletion"); $lbl.X=4; $lbl.Y=$y
+        $advancedView.Add($lbl); $y+=1
+      }
 
-        if ($computer.PrimaryGroup) {
-            $lbl = [Terminal.Gui.Label]::new("Primary Group: " + $computer.PrimaryGroup); $lbl.X=4; $lbl.Y=$y
-            $advancedView.Add($lbl); $y+=1
-        }
+      if ($computer.PrimaryGroup) {
+        $lbl = [Terminal.Gui.Label]::new("Primary Group: " + $computer.PrimaryGroup); $lbl.X=4; $lbl.Y=$y
+        $advancedView.Add($lbl); $y+=1
+      }
 
-        $advancedTab.View = $advancedView
-        $tabView.AddTab($advancedTab, $false)
+      $advancedTab.View = $advancedView
+      $tabView.AddTab($advancedTab, $false)
 
-        # Add TabView to dialog
-        $dlg.Add($tabView)
+      ## Add TabView to dialog
+      $dlg.Add($tabView)
+      Debug-Log ": All tabs added, running dialog" -Type "Success"
 
-        Debug-Log ": All tabs added, running dialog" -Type "Success"
+      ## Run the dialog
+      [Terminal.Gui.Application]::Run($dlg)
+      Debug-Log ": Dialog closed normally" -Type "Info"
 
-        # Run the dialog
-        [Terminal.Gui.Application]::Run($dlg)
-        Debug-Log ": Dialog closed normally" -Type "Info"
-
-    } catch {
-        Debug-Log ": Exception in Show-ComputerPropertiesDialog: $($_.Exception.Message)" -Type "Error"
-        Debug-Log ": Stack trace: $($_.ScriptStackTrace)" -Type "Error"
-        throw
-    }
+  } catch {
+    Debug-Log ": Exception in Show-ComputerPropertiesDialog: $($_.Exception.Message)" -Type "Error"
+    Debug-Log ": Stack trace: $($_.ScriptStackTrace)" -Type "Error"
+    throw
+  }
 }
 
 # ------------------------- Context Menu Handler ------------------------
 function Show-ContextMenu {
-    param(
-        [string]$objectName,
-        [string]$objectType
-    )
+  param(
+    [string]$objectName,
+    [string]$objectType
+  )
 
-$selName = $Script:tree.SelectedObject.Text
-Debug-Log (": Selected object text: '$selName'") -Type "Info"
+  $selName = $Script:tree.SelectedObject.Text
+  Debug-Log (": Selected object text: '$selName'") -Type "Info"
 
-# Determine what type of object this is FIRST (before cleaning the name)
-$selType = if ($selName -like "(U)*") {"user"}
-           elseif ($selName -like "(DC)*") {"dc"}
-           else {"group"}
-Debug-Log (": Detected type: $selType") -Type "Info"
+  ## Determine what type of object this is FIRST (before cleaning the name)
+  $selType = if ($selName -like "(U)*") {"user"}
+             elseif ($selName -like "(DC)*") {"dc"}
+             else {"group"}
+  Debug-Log (": Detected type: $selType") -Type "Info"
 
-# NOW clean the name - remove prefixes like "(U) " or "(DC) " and status icons
-$cleanName = $selName -replace '^\([^)]+\)\s*', '' -replace '^[○⊗🔒]\s*', ''
-Debug-Log (": Cleaned name after removing prefix: '$cleanName'") -Type "Info"
+  ## NOW clean the name - remove prefixes like "(U) " or "(DC) " and status icons
+  $cleanName = $selName -replace '^\([^)]+\)\s*', '' -replace '^[○⊗🔒]\s*', ''
+  Debug-Log (": Cleaned name after removing prefix: '$cleanName'") -Type "Info"
 
-# Extract just the name part if it has [SITE] suffix
-if ($cleanName -match '^(.+?)\s+\[.+\]$') {
+  ## Extract just the name part if it has [SITE] suffix
+  if ($cleanName -match '^(.+?)\s+\[.+\]$') {
     $cleanName = $matches[1].Trim()
     Debug-Log (": Extracted name from [SITE] format: '$cleanName'") -Type "Info"
-}
+  }
 
-Debug-Log (": Final cleaned name: '$cleanName'") -Type "Info"
+  Debug-Log (": Final cleaned name: '$cleanName'") -Type "Info"
 
-    # Build menu items array for display
-    $menuText = @()
+  ## Build menu items array for display
+  $menuText = @()
 
-    ################################### right-click or right click or rightclick This is where to clena the code ##########################
-    ################################### so it calls the same functions as the menu for less arsing about/bugs    ##########################
+  ################################### right-click or right click or rightclick This is where to clean the code ##########################
+  ################################### so it calls the same functions as the menu for less arsing about/bugs    ##########################
 
-    if ($isUser) {
-        $menuText = @("Properties", "Reset Password", "Disable Account", "Enable Account", "---", "Move to OU...", "---", "Delete", "---", "Refresh")
-    } elseif ($isGroup) {
-        $menuText = @("Properties", "Add Member...", "Remove Member...", "---", "Delete", "---", "Refresh")
-    } elseif ($isOU) {
-        $menuText = @("Properties", "New Object...", "---", "Delete", "---", "Refresh")
-    } elseif ($isDC) {
-        $menuText = @("Properties", "Check Replication", "---", "Refresh")
-    } else {
-        $menuText = @("Properties", "---", "Refresh")
-    }
+  if ($isUser) {
+    $menuText = @("Properties", "Reset Password", "Disable Account", "Enable Account", "---", "Move to OU...", "---", "Delete", "---", "Refresh")
+  } elseif ($isGroup) {
+    $menuText = @("Properties", "Add Member...", "Remove Member...", "---", "Delete", "---", "Refresh")
+  } elseif ($isOU) {
+    $menuText = @("Properties", "New Object...", "---", "Delete", "---", "Refresh")
+  } elseif ($isDC) {
+    $menuText = @("Properties", "Check Replication", "---", "Refresh")
+  } else {
+    $menuText = @("Properties", "---", "Refresh")
+  }
 
-    # Create dialog for context menu
-    $contextDialog = [Terminal.Gui.Dialog]::new("Actions", 30, ($menuText.Count + 4))
-    $contextDialog.X = [Terminal.Gui.Pos]::Center()
-    $contextDialog.Y = [Terminal.Gui.Pos]::Center()
+  ## Create dialog for context menu
+  $contextDialog = [Terminal.Gui.Dialog]::new("Actions", 30, ($menuText.Count + 4))
+  $contextDialog.X = [Terminal.Gui.Pos]::Center()
+  $contextDialog.Y = [Terminal.Gui.Pos]::Center()
 
-    # Create list view
-    $listView = [Terminal.Gui.ListView]::new()
-    $listView.SetSource($menuText)
-    $listView.X = 0
-    $listView.Y = 0
-    $listView.Width = [Terminal.Gui.Dim]::Fill()
-    $listView.Height = [Terminal.Gui.Dim]::Fill(2)
-    $contextDialog.Add($listView)
+  ## Create list view
+  $listView = [Terminal.Gui.ListView]::new()
+  $listView.SetSource($menuText)
+  $listView.X = 0
+  $listView.Y = 0
+  $listView.Width = [Terminal.Gui.Dim]::Fill()
+  $listView.Height = [Terminal.Gui.Dim]::Fill(2)
+  $contextDialog.Add($listView)
 
-# Handle selection
-$listView.add_OpenSelectedItem({
-    $selected = $menuText[$listView.SelectedItem]
+  ## Handle selection
+  $listView.add_OpenSelectedItem({
+  $selected = $menuText[$listView.SelectedItem]
+  Debug-Log (": Menu item selected: $selected") -Type "Info"
+  [Terminal.Gui.Application]::RequestStop()
 
-    Debug-Log (": Menu item selected: $selected") -Type "Info"
+  if ($selected -ne "---") {
+    Debug-Log (": Context menu selected: $selected") -Type "Info"
 
-    [Terminal.Gui.Application]::RequestStop()
+    switch ($selected) {
+      "Properties" {
+        Debug-Log (": Properties selected for type: isUser=$isUser, isGroup=$isGroup, isDC=$isDC") -Type "Info"
+        if ($isUser) {
+          Debug-Log (": Looking for user: $cleanName") -Type "Info"
+          $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
 
-    if ($selected -ne "---") {
-        Debug-Log (": Context menu selected: $selected") -Type "Info"
+        if ($user) {
+          Debug-Log (": Found user, calling Show-UserPropertiesDialog") -Type "Info"
+          Debug-Log (": User type: $($user.GetType().Name)") -Type "Info"
+          Debug-Log (": User Name: $($user.Name)") -Type "Info"
 
-        switch ($selected) {
-            "Properties" {
-                Debug-Log (": Properties selected for type: isUser=$isUser, isGroup=$isGroup, isDC=$isDC") -Type "Info"
-
-                if ($isUser) {
-                    Debug-Log (": Looking for user: $cleanName") -Type "Info"
-                    $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-
-                    if ($user) {
-                        Debug-Log (": Found user, calling Show-UserPropertiesDialog") -Type "Info"
-                        Debug-Log (": User type: $($user.GetType().Name)") -Type "Info"
-                        Debug-Log (": User Name: $($user.Name)") -Type "Info"
-
-                        try {
-                            Show-UserPropertiesDialog -user $user  # REMOVED -Global $Script
-                            Debug-Log (": Show-UserPropertiesDialog returned") -Type "Info"
-                        } catch {
-                            Debug-Log (": Exception showing properties: $($_.Exception.Message)") -Type "Warn"
-                            Debug-Log (": Stack trace: $($_.ScriptStackTrace)") -Type "Warn"
-                            Show-Modal "Error" "Failed to show properties:`n$($_.Exception.Message)"
-                        }
-                    } else {
-                        Debug-Log (": User '$cleanName' not found in Global:Users") -Type "Warn"
-                        Show-Modal "Not Found" "User '$cleanName' not found"
-                    }
-                } elseif ($isGroup) {
-                    Debug-Log (": Showing group properties") -Type "Info"
-                    $selGroup = $Script:Groups | Where-Object { $_.Name -eq $cleanInfo.Name } | Select-Object -First 1
-                    if ($selGroup) {
-                      Show-GroupPropertiesDialog -group $selGroup  # Pass the object!
-                      }
-                } elseif ($isDC) {
-                    Debug-Log (": Showing DC properties") -Type "Info"
-                    Show-DCPropertiesDialog -dcName $cleanName
-                } else {
-                    Debug-Log (": Showing generic properties") -Type "Info"
-                    $msg = "Object: $cleanName`nType: $objectType"
-                    Show-Modal "Properties" $msg
-                }
-            }
-            "Reset Password" { Show-ResetPasswordDialog -userName $cleanName }
-            "Disable Account" { Toggle-UserAccount -userName $cleanName -disable $true }
-            "Enable Account" { Toggle-UserAccount -userName $cleanName -disable $false }
-            "Move to OU..." { Show-MoveObjectDialog -objectName $cleanName -objectType "User" }
-            "Delete" { Show-DeleteObjectDialog -objectName $cleanName -objectType $objectType }
-            "Add Member..." { Show-EditGroupMembershipDialog -groupName $cleanName }
-            "Remove Member..." { Show-EditGroupMembershipDialog -groupName $cleanName }
-            "New Object..." { Show-NewObjectWizard }
-            "Check Replication" { Check-DCReplication -dcName $cleanName }
-            "Refresh" { Refresh-TreeData }
+          try {
+            Show-UserPropertiesDialog -user $user  # REMOVED -Global $Script
+            Debug-Log (": Show-UserPropertiesDialog returned") -Type "Info"
+          } catch {
+            Debug-Log (": Exception showing properties: $($_.Exception.Message)") -Type "Warn"
+            Debug-Log (": Stack trace: $($_.ScriptStackTrace)") -Type "Warn"
+            Show-Modal "Error" "Failed to show properties:`n$($_.Exception.Message)"
+          }
+          } else {
+            Debug-Log (": User '$cleanName' not found in Global:Users") -Type "Warn"
+            Show-Modal "Not Found" "User '$cleanName' not found"
+          }
+        } elseif ($isGroup) {
+          Debug-Log (": Showing group properties") -Type "Info"
+          $selGroup = $Script:Groups | Where-Object { $_.Name -eq $cleanInfo.Name } | Select-Object -First 1
+          if ($selGroup) {
+            Show-GroupPropertiesDialog -group $selGroup  # Pass the object!
+          }
+        } elseif ($isDC) {
+          Debug-Log (": Showing DC properties") -Type "Info"
+          Show-DCPropertiesDialog -dcName $cleanName
+        } else {
+          Debug-Log (": Showing generic properties") -Type "Info"
+          $msg = "Object: $cleanName`nType: $objectType"
+          Show-Modal "Properties" $msg
         }
+      }
+      "Reset Password"    { Show-ResetPasswordDialog -userName $cleanName }
+      "Disable Account"   { Toggle-UserAccount -userName $cleanName -disable $true }
+      "Enable Account"    { Toggle-UserAccount -userName $cleanName -disable $false }
+      "Move to OU..."     { Show-MoveObjectDialog -objectName $cleanName -objectType "User" }
+      "Delete"            { Show-DeleteObjectDialog -objectName $cleanName -objectType $objectType }
+      "Add Member..."     { Show-EditGroupMembershipDialog -groupName $cleanName }
+      "Remove Member..."  { Show-EditGroupMembershipDialog -groupName $cleanName }
+      "New Object..."     { Show-NewObjectWizard }
+      "Check Replication" { Check-DCReplication -dcName $cleanName }
+      "Refresh"           { Refresh-TreeData }
+      }
     }
-})
+  })
 
-    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-    $contextDialog.AddButton($btnCancel)
-
-    [Terminal.Gui.Application]::Run($contextDialog)
+  $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+  $contextDialog.AddButton($btnCancel)
+  [Terminal.Gui.Application]::Run($contextDialog)
 }
 
 function Show-Properties {
-    Debug-Log (": Show-Properties called") -Type "Info"
-
-    if (-not $Script:tree.SelectedObject) {
-        Debug-Log (": No object selected") -Type "Info"
+    Debug-Log ": Show-Properties called" -Type "Info"
+    $node = $Script:tree.SelectedObject
+    if (-not $node) {
+        Debug-Log ": No object selected" -Type "Info"
         Show-Modal "Debug" "No object selected in tree"
         return
     }
+    Debug-Log ": Selected node text: '$($node.Text)'" -Type "Info"
+    $tag = $node.Tag
 
-    $selName = $Script:tree.SelectedObject.Text
-    Debug-Log (": Selected object text: '$selName'") -Type "Info"
-
-    # Parse the tree text to get clean name and type
-    $objInfo = Get-CleanObjectInfo -treeText $selName
-    $cleanName = $objInfo.Name
-    $selType = $objInfo.Type
-
-    # Route to appropriate dialog
-    if ($selType -eq "user") {
-        $selUser = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-
-        if ($selUser) {
-            Debug-Log (": User found, calling Show-UserPropertiesDialog") -Type "Info"
-            try {
-                Show-UserPropertiesDialog -user $selUser
-            } catch {
-                Debug-Log (": Exception in Show-UserPropertiesDialog: $_") -Type "Info"
-                Show-Modal "Error" "Failed to show properties`n$($_.Exception.Message)`n`nCheck console for details"
-            }
-        } else {
-            Debug-Log (": User NOT found in Script:Users") -Type "Info"
-            Show-Modal "Not Found" "User '$cleanName' not found"
-        }
-    } elseif ($selType -eq 'group') {
-
-    Debug-Log ": Group type selected: $cleanName" -Type "Info"
-
-    ## Find the group object
-    $selGroup = $Script:Groups | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-
-    if ($selGroup) {
-        Debug-Log ": Found group object: $($selGroup.Name)" -Type "Info"
-        Show-GroupPropertiesDialog -group $selGroup   # ✅ pass the OBJECT
-      } else {
-        Debug-Log ": Group NOT found in Script:Groups" -Type "Warn"
-        Show-Modal "Not Found" "Group '$cleanName' not found"
-      }
-    } elseif ($selType -eq 'ou') {
-        Debug-Log (": OU type selected: $cleanName") -Type "Info"
-        Show-OUPropertiesDialog -ouName $cleanName
-    } elseif ($selType -eq 'dc') {
-        Debug-Log (": DC type selected: $cleanName") -Type "Info"
-
-        ## Find the DC object first
-        $dcObj = $Script:DCs | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-
-        if ($dcObj) {
-            Debug-Log (": DC found: $($dcObj.Name)") -Type "Info"
-            Show-DCPropertiesDialog -dc $dcObj  # Pass the object
-        } else {
-            Debug-Log (": DC NOT found in Script:DCs for name: $cleanName") -Type "Info"
-            Show-Modal "Error" "DC '$cleanName' not found"
-        }
-    } elseif ($selType -eq "computer") {
-        Debug-Log (": Computer type selected: $cleanName") -Type "Info"
-        Show-ComputerPropertiesDialog -computerName $cleanName
-    } else {
-        Debug-Log (": Selected object type '$selType' not handled yet") -Type "Info"
+    # ---- Containers / OUs (no backing object) ----
+    if (-not $tag -or -not $tag.Object) {
+        Debug-Log ": Container / OU selected (Type: $($tag.Type))" -Type "Info"
+        return
     }
+
+    # Get the actual AD object from the Tag
+    $obj = $tag.Object
+
+    # ---- Use the Type property first (more reliable) ----
+    switch ($tag.Type) {
+        'user' {
+            Debug-Log ": USER object selected: $($obj.Name)" -Type "Info"
+            Show-UserPropertiesDialog -user $obj
+            return
+        }
+        'group' {
+            Debug-Log ": GROUP object selected: $($obj.Name)" -Type "Info"
+            Show-GroupPropertiesDialog -group $obj
+            return
+        }
+        'dc' {
+            Debug-Log ": DC object selected: $($obj.Name)" -Type "Info"
+            Show-DCPropertiesDialog -dc $obj
+            return
+        }
+        'computer' {
+            Debug-Log ": COMPUTER object selected: $($obj.Name)" -Type "Info"
+            Show-ComputerPropertiesDialog -computerName $obj.Name  # ← Changed to -computerName and .Name
+            return
+        }
+    }
+
+    # ---- Fallback: Try to detect type from properties (for backward compatibility) ----
+    if ($obj.PSObject.Properties.Match('SamAccountName').Count -gt 0) {
+        Debug-Log ": Detected USER object (fallback): $($obj.Name)" -Type "Info"
+        Show-UserPropertiesDialog -user $obj
+        return
+    }
+
+    if ($obj.PSObject.Properties.Match('GroupScope').Count -gt 0 -or
+        $obj.PSObject.Properties.Match('Members').Count -gt 0) {
+        Debug-Log ": Detected GROUP object (fallback): $($obj.Name)" -Type "Info"
+        Show-GroupPropertiesDialog -group $obj
+        return
+    }
+
+    if ($obj.PSObject.Properties.Match('Site').Count -gt 0) {
+        Debug-Log ": Detected DC object (fallback): $($obj.Name)" -Type "Info"
+        Show-DCPropertiesDialog -dc $obj
+        return
+    }
+
+    if ($obj.PSObject.Properties.Match('OperatingSystem').Count -gt 0) {
+        Debug-Log ": Detected COMPUTER object (fallback): $($obj.Name)" -Type "Info"
+        Show-ComputerPropertiesDialog -computer $obj
+        return
+    }
+
+    Debug-Log ": Selected object type unknown, cannot show properties" -Type "Warn"
 }
 
-# Additional debug helper - call this to verify your demo data loaded correctly
+## Additional debug helper - call this to verify your demo data loaded correctly
 function Test-DemoData {
-    Debug-Log ("========== DEMO DATA CHECK ==========") -Type "Info"
-    Debug-Log ("Global:Users count: $($Script:Users.Count)") -Type "Info"
-    Debug-Log ("Global:DCs count: $($Script:DCs.Count)") -Type "Info"
-    Debug-Log ("") -Type "Info"
-    Debug-Log ("Users in memory:") -Type "Info"
-    foreach ($u in $Script:Users) {
-        $locked = if ($u.Locked) { "🔒" } else { "" }
-        $disabled = if ($u.Disabled) { "⊗" } else { "○" }
-        Debug-Log ("  $disabled$locked $($u.Name) - Groups: $($u.Groups -join ', ')") -Type "Info"
-    }
-    Debug-Log ("=====================================") -Type "Info"
+  Debug-Log ("========== DEMO DATA CHECK ==========") -Type "Info"
+  Debug-Log ("Global:Users count: $($Script:Users.Count)") -Type "Info"
+  Debug-Log ("Global:DCs count: $($Script:DCs.Count)") -Type "Info"
+  Debug-Log ("") -Type "Info"
+  Debug-Log ("Users in memory:") -Type "Info"
+  foreach ($u in $Script:Users) {
+    $locked = if ($u.Locked) { "🔒" } else { "" }
+    $disabled = if ($u.Disabled) { "⊗" } else { "○" }
+    Debug-Log ("  $disabled$locked $($u.Name) - Groups: $($u.Groups -join ', ')") -Type "Info"
+  }
+  Debug-Log ("=====================================") -Type "Info"
+
+  ## Call this after loading demo data to verify:
+  ## Test-DemoData
 }
 
-# Call this after loading demo data to verify:
-# Test-DemoData
-# ------------------------- Helper Functions ------------------------
-
+## ------------------------- Helper Functions ------------------------
 function Show-ResetPasswordDialog {
-    param([string]$userName)
+  param([string]$userName)
 
-    $dlg = [Terminal.Gui.Dialog]::new("Reset Password - $userName", 60, 12)
+  $dlg = [Terminal.Gui.Dialog]::new("Reset Password - $userName", 60, 12)
+  $lbl = [Terminal.Gui.Label]::new("New Password:"); $lbl.X=2; $lbl.Y=1; $dlg.Add($lbl)
+  $txtPwd = [Terminal.Gui.TextField]::new(""); $txtPwd.X=18; $txtPwd.Y=1; $txtPwd.Width=35; $txtPwd.Secret=$true; $dlg.Add($txtPwd)
+  $lblConfirm = [Terminal.Gui.Label]::new("Confirm Password:"); $lblConfirm.X=2; $lblConfirm.Y=3; $dlg.Add($lblConfirm)
+  $txtConfirm = [Terminal.Gui.TextField]::new(""); $txtConfirm.X=18; $txtConfirm.Y=3; $txtConfirm.Width=35; $txtConfirm.Secret=$true; $dlg.Add($txtConfirm)
+  $chkMustChange = [Terminal.Gui.CheckBox]::new("User must change password at next logon")
+  $chkMustChange.X=2; $chkMustChange.Y=5; $chkMustChange.Checked=$true; $dlg.Add($chkMustChange)
 
-    $lbl = [Terminal.Gui.Label]::new("New Password:"); $lbl.X=2; $lbl.Y=1; $dlg.Add($lbl)
-    $txtPwd = [Terminal.Gui.TextField]::new(""); $txtPwd.X=18; $txtPwd.Y=1; $txtPwd.Width=35; $txtPwd.Secret=$true; $dlg.Add($txtPwd)
+  $btnOK = [Terminal.Gui.Button]::new("OK")
+  $btnOK.add_Clicked({
+    $pwd1 = $txtPwd.Text.ToString()
+    $pwd2 = $txtConfirm.Text.ToString()
 
-    $lblConfirm = [Terminal.Gui.Label]::new("Confirm Password:"); $lblConfirm.X=2; $lblConfirm.Y=3; $dlg.Add($lblConfirm)
-    $txtConfirm = [Terminal.Gui.TextField]::new(""); $txtConfirm.X=18; $txtConfirm.Y=3; $txtConfirm.Width=35; $txtConfirm.Secret=$true; $dlg.Add($txtConfirm)
+    if ($pwd1 -ne $pwd2) {
+      Show-Modal "Error" "Passwords do not match!"
+      return
+    }
 
-    $chkMustChange = [Terminal.Gui.CheckBox]::new("User must change password at next logon")
-    $chkMustChange.X=2; $chkMustChange.Y=5; $chkMustChange.Checked=$true; $dlg.Add($chkMustChange)
+    if ($pwd1.Length -lt 8) {
+      Show-Modal "Error" "Password must be at least 8 characters!"
+      return
+    }
 
-    $btnOK = [Terminal.Gui.Button]::new("OK")
-    $btnOK.add_Clicked({
-        $pwd1 = $txtPwd.Text.ToString()
-        $pwd2 = $txtConfirm.Text.ToString()
-
-        if ($pwd1 -ne $pwd2) {
-            Show-Modal "Error" "Passwords do not match!"
-            return
+    try {
+      if ($Script:DemoMode) {
+        Debug-Log (": Password reset for $userName (demo mode)") -Type "Info"
+        Show-Modal "Success" "Password reset successfully (demo mode)"
+      } else {
+        $secPwd = ConvertTo-SecureString -String $pwd1 -AsPlainText -Force
+        Set-ADAccountPassword -Identity $userName -NewPassword $secPwd -Reset -ErrorAction Stop
+        if ($chkMustChange.Checked) {
+          Set-ADUser -Identity $userName -ChangePasswordAtLogon $true -ErrorAction Stop
         }
+        Show-Modal "Success" "Password reset successfully"
+      }
+      [Terminal.Gui.Application]::RequestStop()
+    } catch {
+      $errMsg = $_.Exception.Message
+      Show-Modal "Error" "Failed to reset password:`n$errMsg"
+    }
+  })
+  $dlg.AddButton($btnOK)
 
-        if ($pwd1.Length -lt 8) {
-            Show-Modal "Error" "Password must be at least 8 characters!"
-            return
-        }
-
-        try {
-            if ($Script:DemoMode) {
-                Debug-Log (": Password reset for $userName (demo mode)") -Type "Info"
-                Show-Modal "Success" "Password reset successfully (demo mode)"
-            } else {
-                $secPwd = ConvertTo-SecureString -String $pwd1 -AsPlainText -Force
-                Set-ADAccountPassword -Identity $userName -NewPassword $secPwd -Reset -ErrorAction Stop
-                if ($chkMustChange.Checked) {
-                    Set-ADUser -Identity $userName -ChangePasswordAtLogon $true -ErrorAction Stop
-                }
-                Show-Modal "Success" "Password reset successfully"
-            }
-            [Terminal.Gui.Application]::RequestStop()
-        } catch {
-            $errMsg = $_.Exception.Message
-            Show-Modal "Error" "Failed to reset password:`n$errMsg"
-        }
-    })
-    $dlg.AddButton($btnOK)
-
-    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-    $dlg.AddButton($btnCancel)
-
-    [Terminal.Gui.Application]::Run($dlg)
+  $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+  $dlg.AddButton($btnCancel)
+  [Terminal.Gui.Application]::Run($dlg)
 }
 
 function Toggle-UserAccount {
-    param([string]$userName, [bool]$disable)
+  param([string]$userName, [bool]$disable)
 
-    $action = if ($disable) { "disable" } else { "enable" }
-    $result = [Terminal.Gui.MessageBox]::Query(50, 8, "Confirm", "Are you sure you want to $action account:`n$userName?", "Yes", "No")
-
-    if ($result -eq 0) {
-        try {
-            if ($Script:DemoMode) {
-                $user = $Script:Users | Where-Object { $_.Name -eq $userName } | Select-Object -First 1
-                if ($user) {
-                    $user.Disabled = $disable
-                    Debug-Log (": Account $userName $action`d (demo mode)") -Type "Info"
-                }
-            } else {
-                if ($disable) {
-                    Disable-ADAccount -Identity $userName -ErrorAction Stop
-                } else {
-                    Enable-ADAccount -Identity $userName -ErrorAction Stop
-                }
-            }
-            Show-Modal "Success" "Account $action`d successfully"
-            Refresh-TreeData
-        } catch {
-            $errMsg = $_.Exception.Message
-            Show-Modal "Error" "Failed to $action account:`n$errMsg"
+  $action = if ($disable) { "disable" } else { "enable" }
+  $result = [Terminal.Gui.MessageBox]::Query(50, 8, "Confirm", "Are you sure you want to $action account:`n$userName?", "Yes", "No")
+  if ($result -eq 0) {
+    try {
+      if ($Script:DemoMode) {
+        $user = $Script:Users | Where-Object { $_.Name -eq $userName } | Select-Object -First 1
+        if ($user) {
+          $user.Disabled = $disable
+          Debug-Log (": Account $userName $action`d (demo mode)") -Type "Info"
         }
+      } else {
+        if ($disable) {
+          Disable-ADAccount -Identity $userName -ErrorAction Stop
+        } else {
+          Enable-ADAccount -Identity $userName -ErrorAction Stop
+        }
+      }
+      Show-Modal "Success" "Account $action`d successfully"
+      Refresh-TreeData
+    } catch {
+      $errMsg = $_.Exception.Message
+      Show-Modal "Error" "Failed to $action account:`n$errMsg"
     }
+  }
 }
 
 function Show-DeleteObjectDialog {
-    param([string]$objectName, [string]$objectType)
+  param([string]$objectName, [string]$objectType)
 
-    $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Delete $objectType", "WARNING: Are you sure you want to delete:`n$objectName`n`nThis action cannot be undone!", "Delete", "Cancel")
+  $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Delete $objectType", "WARNING: Are you sure you want to delete:`n$objectName`n`nThis action cannot be undone!", "Delete", "Cancel")
 
-    if ($result -eq 0) {
-      Show-Modal "Delete" "Delete functionality coming soon"
-    }
+  if ($result -eq 0) {
+    Show-Modal "Delete" "Delete functionality coming soon"
+  }
 }
 
-# DSA-TUI Batch Operations Module v1.0
-# Select multiple objects and perform bulk actions
+## DSA-TUI Batch Operations Module v1.0
+## Select multiple objects and perform bulk actions
 
-# ------------------------- Global Selection State ------------------------
+## ------------------------- Global Selection State ------------------------
 $Script:SelectedObjects = @()
 $Script:SelectionMode = $false
 
-# ------------------------- Toggle Selection Mode ------------------------
+## ------------------------- Toggle Selection Mode ------------------------
 function Toggle-SelectionMode {
-    $Script:SelectionMode = -not $Script:SelectionMode
+  $Script:SelectionMode = -not $Script:SelectionMode
 
-    if ($Script:SelectionMode) {
-        Debug-Log (": Selection mode ENABLED") -Type "Info"
-        [Terminal.Gui.MessageBox]::Query(60, 8, "Selection Mode",
-            "Selection mode enabled!`n`nClick objects to select/deselect them.`nPress Ctrl+A to select all.`nPress Ctrl+D to deselect all.",
-            "OK") | Out-Null
-    } else {
-        Debug-Log (": Selection mode DISABLED") -Type "Info"
-        $Script:SelectedObjects = @()
-        Build-Tree -domain $Script:CurrentDomain
-        Update-FilterStatusLabel -label $Script:FilterStatusLabel
-    }
+  if ($Script:SelectionMode) {
+    Debug-Log (": Selection mode ENABLED") -Type "Info"
+    [Terminal.Gui.MessageBox]::Query(60, 8, "Selection Mode", "Selection mode enabled!`n`nClick objects to select/deselect them.`nPress Ctrl+A to select all.`nPress Ctrl+D to deselect all.", "OK") | Out-Null
+  } else {
+    Debug-Log (": Selection mode DISABLED") -Type "Info"
+    $Script:SelectedObjects = @()
+    Build-Tree -domain $Script:CurrentDomain
+    Update-FilterStatusLabel -label $Script:FilterStatusLabel
+  }
 }
 
-# ------------------------- Update Selection Panel ------------------------
+## ------------------------- Update Selection Panel ------------------------
 function Update-SelectionPanel {
-    param($panel)
+  param($panel)
 
-    if (-not $panel -or -not $panel.Tag) { return }
+  if (-not $panel -or -not $panel.Tag) { return }
 
-    $lblCount = $panel.Tag.CountLabel
-    $lstSelected = $panel.Tag.ListView
+  $lblCount = $panel.Tag.CountLabel
+  $lstSelected = $panel.Tag.ListView
+  $count = $Script:SelectedObjects.Count
+  $lblCount.Text = "$count object(s) selected"
+  $displayNames = $Script:SelectedObjects | ForEach-Object { $name = $_ -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', '' ; $name }
 
-    $count = $Script:SelectedObjects.Count
-    $lblCount.Text = "$count object(s) selected"
-
-    $displayNames = $Script:SelectedObjects | ForEach-Object {
-        $name = $_ -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-        $name
-    }
-
-    $lstSelected.SetSource($displayNames)
-    $panel.SetNeedsDisplay()
+  $lstSelected.SetSource($displayNames)
+  $panel.SetNeedsDisplay()
 }
 
-# ------------------------- Enhanced Tree with Selection Support ------------------------
-
+## ------------------------- Enhanced Tree with Selection Support ------------------------
 function Handle-TreeClick {
-    param($mouseArgs)
+  param($mouseArgs)
 
-    if (-not $Script:tree.SelectedObject) { return }
+  if (-not $Script:tree.SelectedObject) { return }
 
-    $selName = $Script:tree.SelectedObject.Text
+  $selName = $Script:tree.SelectedObject.Text
 
-    # Check if in selection mode
-    if ($Script:SelectionMode) {
-        # Toggle selection
-        if ($Script:SelectedObjects -contains $selName) {
-            # Deselect
-            $Script:SelectedObjects = $Script:SelectedObjects | Where-Object { $_ -ne $selName }
-            Debug-Log (": Deselected $selName") -Type "Info"
-        } else {
-            # Select
-            $Script:SelectedObjects += $selName
-            Debug-Log (": Selected $selName") -Type "Info"
-        }
-
-        # Update visual indicator (mark selected items)
-        Update-SelectionPanel -panel $selectionPanel
-        $mouseArgs.Handled = $true
+  ## Check if in selection mode
+  if ($Script:SelectionMode) {
+    ## Toggle selection
+    if ($Script:SelectedObjects -contains $selName) {
+      ## Deselect
+      $Script:SelectedObjects = $Script:SelectedObjects | Where-Object { $_ -ne $selName }
+      Debug-Log (": Deselected $selName") -Type "Info"
+    } else {
+      ## Select
+      $Script:SelectedObjects += $selName
+      Debug-Log (": Selected $selName") -Type "Info"
     }
+
+    ## Update visual indicator (mark selected items)
+    Update-SelectionPanel -panel $selectionPanel
+    $mouseArgs.Handled = $true
+  }
 }
+
+######################################### Cleaned To here #########################################
 
 # Add keyboard shortcuts for selection
 function Add-SelectionKeyBindings {
@@ -6875,208 +6594,194 @@ function Add-SelectionKeyBindings {
     })
 }
 
-# ------------------------- Select/Deselect All ------------------------
+## ------------------------- Select/Deselect All ------------------------
 function Select-AllObjects {
-    if (-not $Script:SelectionMode) {
-      Show-Modal "Selection Mode" "Enable selection mode first (Ctrl+S)"
-        return
-    }
+  if (-not $Script:SelectionMode) {
+    Show-Modal "Selection Mode" "Enable selection mode first (Ctrl+S)"
+    return
+  }
 
-    $Script:SelectedObjects = @()
+  $Script:SelectedObjects = @()
 
-    # Get all users from tree
-    foreach ($user in $Script:Users) {
-        $statusIcon = if ($user.Disabled) { "⊗" } else { "○" }
-        $displayName = "(U) $statusIcon $($user.Name)"
-        $Script:SelectedObjects += $displayName
-    }
+  ## Get all users from tree
+  foreach ($user in $Script:Users) {
+    $statusIcon = if ($user.Disabled) { "⊗" } else { "○" }
+    $displayName = "(U) $statusIcon $($user.Name)"
+    $Script:SelectedObjects += $displayName
+  }
 
-    Debug-Log (": Selected all users ($($Script:SelectedObjects.Count))") -Type "Info"
-    Update-SelectionPanel -panel $selectionPanel
-    Show-Modal "Selected All" "Selected $($Script:SelectedObjects.Count) users"
+  Debug-Log (": Selected all users ($($Script:SelectedObjects.Count))") -Type "Info"
+  Update-SelectionPanel -panel $selectionPanel
+  Show-Modal "Selected All" "Selected $($Script:SelectedObjects.Count) users"
 }
 
 function Deselect-AllObjects {
-    $Script:SelectedObjects = @()
-    Debug-Log (": Deselected all objects") -Type "Info"
-    Update-SelectionPanel -panel $selectionPanel
+  $Script:SelectedObjects = @()
+  Debug-Log (": Deselected all objects") -Type "Info"
+  Update-SelectionPanel -panel $selectionPanel
 }
 
-# ------------------------- Bulk Disable/Enable ------------------------
+## ------------------------- Bulk Disable/Enable ------------------------
 function Invoke-BulkDisableEnable {
-    param([bool]$disable)
+  param([bool]$disable)
 
-    if ($Script:SelectedObjects.Count -eq 0) {
-      Show-Modal "No Selection" "No objects selected. Select objects first."
-        return
+  if ($Script:SelectedObjects.Count -eq 0) {
+    Show-Modal "No Selection" "No objects selected. Select objects first."
+    return
+  }
+
+  $action = if ($disable) { "disable" } else { "enable" }
+  $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Action", "Are you sure you want to $action $($Script:SelectedObjects.Count) user account(s)?", "Yes", "No")
+
+  if ($result -eq 0) {
+    $successCount = 0
+    $failCount = 0
+    $errors = @()
+
+    foreach ($objName in $Script:SelectedObjects) {
+      $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
+
+      try {
+        if ($Script:DemoMode) {
+          $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+          if ($user) {
+            $user.Disabled = $disable
+            $successCount++
+            Debug-Log (": $action`d $cleanName (demo mode)") -Type "Info"
+          }
+        } else {
+          if ($disable) {
+            Disable-ADAccount -Identity $cleanName -ErrorAction Stop
+          } else {
+            Enable-ADAccount -Identity $cleanName -ErrorAction Stop
+          }
+          $successCount++
+          Debug-Log (": $action`d $cleanName in AD") -Type "Info"
+        }
+      } catch {
+      $failCount++
+      $errors += "$cleanName`: $($_.Exception.Message)"
+      Debug-Log (": Failed to $action $cleanName`: $_") -Type "Info"
     }
+  }
 
-    $action = if ($disable) { "disable" } else { "enable" }
-    $result = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Action",
-        "Are you sure you want to $action $($Script:SelectedObjects.Count) user account(s)?",
-        "Yes", "No")
+  ## Show results
+  $msg = "Successfully $action`d $successCount account(s)"
+  if ($failCount -gt 0) {
+    $msg += "`n`nFailed: $failCount"
+    if ($errors.Count -gt 0 -and $errors.Count -le 5) { $msg += "`n`nErrors:`n" + ($errors -join "`n") }
+  }
 
-    if ($result -eq 0) {
-        $successCount = 0
-        $failCount = 0
-        $errors = @()
+  Show-Modal "Bulk Action Complete" $msg
 
-        foreach ($objName in $Script:SelectedObjects) {
-            $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
+  ## Refresh tree
+  if (-not $Script:DemoMode) { Load-DomainData -domain $Script:CurrentDomain }
+  Build-Tree -domain $Script:CurrentDomain
+  Update-FilterStatusLabel -label $Script:FilterStatusLabel
 
-            try {
-                if ($Script:DemoMode) {
-                    $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-                    if ($user) {
-                        $user.Disabled = $disable
-                        $successCount++
-                        Debug-Log (": $action`d $cleanName (demo mode)") -Type "Info"
-                    }
-                } else {
-                    if ($disable) {
-                        Disable-ADAccount -Identity $cleanName -ErrorAction Stop
-                    } else {
-                        Enable-ADAccount -Identity $cleanName -ErrorAction Stop
-                    }
-                    $successCount++
-                    Debug-Log (": $action`d $cleanName in AD") -Type "Info"
-                }
-            } catch {
-                $failCount++
-                $errors += "$cleanName`: $($_.Exception.Message)"
-                Debug-Log (": Failed to $action $cleanName`: $_") -Type "Info"
-            }
-        }
-
-        # Show results
-        $msg = "Successfully $action`d $successCount account(s)"
-        if ($failCount -gt 0) {
-            $msg += "`n`nFailed: $failCount"
-            if ($errors.Count -gt 0 -and $errors.Count -le 5) {
-                $msg += "`n`nErrors:`n" + ($errors -join "`n")
-            }
-        }
-
-        Show-Modal "Bulk Action Complete" $msg
-
-        # Refresh tree
-        if (-not $Script:DemoMode) {
-            Load-DomainData -domain $Script:CurrentDomain
-        }
-        Build-Tree -domain $Script:CurrentDomain
-        Update-FilterStatusLabel -label $Script:FilterStatusLabel
-
-        # Clear selection
-        $Script:SelectedObjects = @()
-        $Script:SelectionMode = $false
-        Update-SelectionPanel -panel $selectionPanel
-    }
+  ## Clear selection
+  $Script:SelectedObjects = @()
+  $Script:SelectionMode = $false
+  Update-SelectionPanel -panel $selectionPanel
+  }
 }
 
-# ------------------------- Bulk Move ------------------------
+## ------------------------- Bulk Move ------------------------
 function Invoke-BulkMove {
-    if ($Script:SelectedObjects.Count -eq 0) {
-      Show-Modal "No Selection" "No objects selected. Select objects first."
-        return
+  if ($Script:SelectedObjects.Count -eq 0) {
+   Show-Modal "No Selection" "No objects selected. Select objects first."
+   return
+  }
+
+  $dlg = [Terminal.Gui.Dialog]::new("Bulk Move - $($Script:SelectedObjects.Count) Objects", 70, 18)
+  $lblInfo = [Terminal.Gui.Label]::new("Moving $($Script:SelectedObjects.Count) object(s) to:")
+  $lblInfo.X=2; $lblInfo.Y=1; $dlg.Add($lblInfo)
+
+  ## Get list of OUs
+  $ouList = if ($Script:DemoMode) {
+    $Script:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
+  } else {
+    try {
+      Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName | Select-Object -ExpandProperty DistinguishedName | Sort-Object
+    } catch { @("CN=Users,DC=example,DC=com") }
+  }
+
+  $lstOU = [Terminal.Gui.ListView]::new($ouList)
+  $lstOU.X=2; $lstOU.Y=3; $lstOU.Width=[Terminal.Gui.Dim]::Fill(2); $lstOU.Height=10
+  $dlg.Add($lstOU)
+  $btnMove = [Terminal.Gui.Button]::new("Move All")
+  $btnMove.add_Clicked({
+  if ($lstOU.SelectedItem -lt 0) {
+    Show-Modal "Error" "Please select a target OU"
+    return
+  }
+
+  $targetOU = $ouList[$lstOU.SelectedItem]
+  $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Move", "Move $($Script:SelectedObjects.Count) object(s) to:`n$targetOU?", "Yes", "No")
+
+  if ($confirm -eq 0) {
+    $successCount = 0
+    $failCount = 0
+    $errors = @()
+
+    foreach ($objName in $Script:SelectedObjects) {
+      $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
+
+      try {
+       if ($Script:DemoMode) {
+         $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+         if ($user) {
+           $user.OU = $targetOU
+           $successCount++
+           Debug-Log (": Moved $cleanName to $targetOU (demo mode)") -Type "Info"
+         }
+       } else {
+         $adObject = Get-ADObject -Filter "Name -eq '$cleanName'" -ErrorAction Stop
+         Move-ADObject -Identity $adObject.DistinguishedName -TargetPath $targetOU -ErrorAction Stop
+         $successCount++
+         Debug-Log (": Moved $cleanName to $targetOU in AD") -Type "Info"
+       }
+      } catch {
+        $failCount++
+        $errors += "$cleanName`: $($_.Exception.Message)"
+        Debug-Log (": Failed to move $cleanName`: $_") -Type "Info"
+      }
     }
 
-    $dlg = [Terminal.Gui.Dialog]::new("Bulk Move - $($Script:SelectedObjects.Count) Objects", 70, 18)
-
-    $lblInfo = [Terminal.Gui.Label]::new("Moving $($Script:SelectedObjects.Count) object(s) to:")
-    $lblInfo.X=2; $lblInfo.Y=1; $dlg.Add($lblInfo)
-
-    # Get list of OUs
-    $ouList = if ($Script:DemoMode) {
-        $Script:Users | Select-Object -ExpandProperty OU -Unique | Sort-Object
-    } else {
-        try {
-            Get-ADOrganizationalUnit -Filter * -Properties DistinguishedName |
-                Select-Object -ExpandProperty DistinguishedName | Sort-Object
-        } catch { @("CN=Users,DC=example,DC=com") }
+    ## Show results
+    $msg = "Successfully moved $successCount object(s)"
+    if ($failCount -gt 0) {
+      $msg += "`n`nFailed: $failCount"
+      if ($errors.Count -gt 0 -and $errors.Count -le 5) {
+        $msg += "`n`nErrors:`n" + ($errors -join "`n")
+      }
     }
 
-    $lstOU = [Terminal.Gui.ListView]::new($ouList)
-    $lstOU.X=2; $lstOU.Y=3; $lstOU.Width=[Terminal.Gui.Dim]::Fill(2); $lstOU.Height=10
-    $dlg.Add($lstOU)
+    Show=-Modal "Bulk Move Complete" $msg
 
-    $btnMove = [Terminal.Gui.Button]::new("Move All")
-    $btnMove.add_Clicked({
-        if ($lstOU.SelectedItem -lt 0) {
-          Show-Modal "Error" "Please select a target OU"
-            return
-        }
+    ## Refresh tree
+    if (-not $Script:DemoMode) { Load-DomainData -domain $Script:CurrentDomain }
+      Build-Tree -domain $Script:CurrentDomain
+      Update-FilterStatusLabel -label $Script:FilterStatusLabel
 
-        $targetOU = $ouList[$lstOU.SelectedItem]
+      ## Clear selection
+      $Script:SelectedObjects = @()
+      $Script:SelectionMode = $false
+      Update-SelectionPanel -panel $selectionPanel
+      [Terminal.Gui.Application]::RequestStop()
+    }
+  })
+  $dlg.AddButton($btnMove)
 
-        $confirm = [Terminal.Gui.MessageBox]::Query(60, 9, "Confirm Bulk Move",
-            "Move $($Script:SelectedObjects.Count) object(s) to:`n$targetOU?",
-            "Yes", "No")
-
-        if ($confirm -eq 0) {
-            $successCount = 0
-            $failCount = 0
-            $errors = @()
-
-            foreach ($objName in $Script:SelectedObjects) {
-                $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-
-                try {
-                    if ($Script:DemoMode) {
-                        $user = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-                        if ($user) {
-                            $user.OU = $targetOU
-                            $successCount++
-                            Debug-Log (": Moved $cleanName to $targetOU (demo mode)") -Type "Info"
-                        }
-                    } else {
-                        $adObject = Get-ADObject -Filter "Name -eq '$cleanName'" -ErrorAction Stop
-                        Move-ADObject -Identity $adObject.DistinguishedName -TargetPath $targetOU -ErrorAction Stop
-                        $successCount++
-                        Debug-Log (": Moved $cleanName to $targetOU in AD") -Type "Info"
-                    }
-                } catch {
-                    $failCount++
-                    $errors += "$cleanName`: $($_.Exception.Message)"
-                    Debug-Log (": Failed to move $cleanName`: $_") -Type "Info"
-                }
-            }
-
-            # Show results
-            $msg = "Successfully moved $successCount object(s)"
-            if ($failCount -gt 0) {
-                $msg += "`n`nFailed: $failCount"
-                if ($errors.Count -gt 0 -and $errors.Count -le 5) {
-                    $msg += "`n`nErrors:`n" + ($errors -join "`n")
-                }
-            }
-
-            Show=-Modal "Bulk Move Complete" $msg
-
-            # Refresh tree
-            if (-not $Script:DemoMode) {
-                Load-DomainData -domain $Script:CurrentDomain
-            }
-            Build-Tree -domain $Script:CurrentDomain
-            Update-FilterStatusLabel -label $Script:FilterStatusLabel
-
-            # Clear selection
-            $Script:SelectedObjects = @()
-            $Script:SelectionMode = $false
-            Update-SelectionPanel -panel $selectionPanel
-
-            [Terminal.Gui.Application]::RequestStop()
-        }
-    })
-    $dlg.AddButton($btnMove)
-
-    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-    $dlg.AddButton($btnCancel)
-
-    [Terminal.Gui.Application]::Run($dlg)
+  $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+  $dlg.AddButton($btnCancel)
+  [Terminal.Gui.Application]::Run($dlg)
 }
 
-# ------------------------- Bulk Add to Group ------------------------
+#########################################  Cleaned to Hrtr #########################################
+
+## ------------------------- Bulk Add to Group ------------------------
 function Invoke-BulkAddToGroup {
     if ($Script:SelectedObjects.Count -eq 0) {
       Show-Modal "No Selection" "No objects selected. Select objects first."
@@ -8105,6 +7810,11 @@ if (-not $adAvailable) {
 # Optional modules
 $Script:HasPSWriteColor = Test-RequiredModule -Name "PSWriteColor" -Optional
 $null = Test-RequiredModule -Name "Terminal-Icons" -Optional
+
+$Script:UseIcons = $false
+if (Get-Module -Name Terminal-Icons -ErrorAction SilentlyContinue) {
+    try { Write-Host '' -NoNewline; $Script:UseIcons = $true } catch {}
+}
 
 # Ensure Terminal.Gui.dll is loaded
 Debug-Log "Checking Terminal.Gui assembly..." -Type "Debug"
