@@ -37,7 +37,7 @@ Notes:
                                                   gc-uk01.example.net
 
   - (Get-ADForest).$Script:Sites  Example Output: DE # Germany
-                                                  DK # Denmark
+                                                  DK # Danmark
                                                   UK # United Kingdom
 
 $forest = Get-ADForest
@@ -72,23 +72,6 @@ Users with admin in name:           (&(objectClass=user)(name=*admin*))
 Security groups:                    (&(objectClass=group)(groupType:1.2.840.113556.1.4.803:=2147483648))
 Distribution groups:                (&(objectClass=group)(!(groupType:1.2.840.113556.1.4.803:=2147483648)))
 
-A note on phone numbers:
-
-  - UK Phone Number Standards (Ofcom reserved ranges for fiction/testing):
-    - Glasgow: 0141 496 0xxx + Mobile: 07700 900xxx
-    - Edinburgh: 0131 496 0xxx + Mobile: 07700 900xxx
-    - London: 020 7946 0xxx / 01632 96xxxx + Mobile: 07700 900xxx
-    - Manchester 0161 715 xxxx - Weatherfield
-
-  Per: https://en.wikipedia.org/wiki/Telephone_numbers_in_the_United_Kingdom?useskin=vector#Fictitious_numbers
-  and: https://web.archive.org/web/20140216214400/http://stakeholders.ofcom.org.uk/telecoms/numbering/guidance-tele-no/numbers-for-drama
-
-  - Denmark Testing Numbers:
-    - Copenhagen landline: +45 0000-xxxx
-    - Denmark mobile: +45 2xxx xxxx
-
-NB: I don't believe Denmark uses 0000 but this is not confirmed!
-
 DEVICE NAMING & DEMO DATA CONVENTIONS
 =====================================
 
@@ -107,55 +90,64 @@ Example Music (US) LLC.              USA                 LLC.                 St
 Site  City / Location                Country             Subnet               Landline Range                      Mobile Range
 ----  ---------------------------    ---------           ------------------   ---------------------------------   -------------------
 ABR   Aberdeen, Scotland             UK                  192.168.224.0/24     +44 1224 496 0xxx                   +44 7700 900 2xxx
-BIR   Birmingham, England            UK                  192.168.121.0/24     +44 121 496 0xxx                    +44 7700 900 2xxx
-BON   Bonn, West Germany (FRG)       DE                  192.168.228.0/24     +49 228 555 xxx                     N/A
-BRD   West Berlin (FRG)              DE                  192.168.113.0/24     +49 311 555 xxx                     N/A
-BRK   Brockville, Ontario            CA                  192.168.136.0/24     +1  613 555 6xxx                    +1  613 555 6xxx
-CLY   Clydebank, Scotland            UK                  192.168.141.0/24     +44 141 496 00xx                    +44 770 090 5xxx
-CPH   Copenhagen (København)         DK                  192.168.231.0/24     +45 000 00xxx                       +45 2xx xxx
-DUN   Dundee, Scotland               UK                  192.168.138.0/24     +44 163 249 60xx                    +44 770 090 82xx
-EDI   Edinburgh, Scotland            UK                  192.168.131.0/24     +44 131 496 0xxx                    +44 770 090 3xxx
-FAX   Faxe, Denmark                  DK                  192.168.246.0/24     +45 000 00xxx                       +45 2xx xxx
-GLA   Glasgow, Scotland              UK                  192.168.141.0/24     +44 141 496 01xx                    +44 770 009 4xxx
-KGE   Køge, Denmark                  DK                  192.168.265.0/24     +45 000 00xxx                       +45 2xx xxx
-KOR   Korsør, Denmark                DK                  192.168.238.0/24     +45 000 00xxx                       +45 2xx xxx
-LIV   Liverpool, England             UK                  192.168.151.0/24     +44 151 496 0xxx                    +44 770 090 5xxx
-LND   London, England                UK                  192.168.20.0/24      +44 207 496 0xxx / 01632 96x xxx    +44 770 090 0xxx
-MCR   Manchester, England            UK                  192.168.161.0/24     +44 161 715 xxxx                    +44 770 090 6xxx
-MIA   Miami, Florida                 US                  192.168.135.0/24     +1  315 555 xxxx                    +1  786 555 xxxx
-MUN   Munich, West Germany           DE                  192.168.189.0/24     +49 893 555 33xx                    +49 893 555 99xx
-NEW   Newcastle, England             UK                  192.168.191.0/24     +44 191 496 0xxx                    +44 770 090 9xxx
-ODE   Odense, Denmark                DK                  192.168.126.0/24     +45 000 00xxx                       +45 2xx xxx
-VIE   Vienna, Austria                AT                  192.168.xxx.0/24     +xx yyy zzzzz                       +xx yyy zzzzz
+BIR   Birmingham, England            UK                  192.168.121.0/24     +44 121  496 0xxx                   +44 7700 900 2xxx
+BON   Bonn, West Germany (FRG)       DE                  192.168.228.0/24     +49 228  555  xxx                   +49 211  xxx xxxx
+BRD   West Berlin (FRG)              DE                  192.168.113.0/24     +49 311  555  xxx                   +49 211  xxx xxxx
+BRK   Brockville, Ontario            CA                  192.168.136.0/24     +1  613  555 6xxx                   +1  613  555 6xxx
+CLY   Clydebank, Scotland            UK                  192.168.141.0/24     +44 141  496 00xx                   +44 770  090 5xxx
+CPH   Copenhagen (København)         DK                  192.168.231.0/24     +45  00  000  xxx                   +45  2x  xxx xxx
+DUN   Dundee, Scotland               UK                  192.168.138.0/24     +44 163  249 60xx                   +44 770  090 82xx
+EDI   Edinburgh, Scotland            UK                  192.168.131.0/24     +44 131  496 0xxx                   +44 770  090 3xxx
+FAX   Faxe, Danmark                  DK                  192.168.246.0/24     +45  00  000  xxx                   +45  2x  xxx xxx
+GLA   Glasgow, Scotland              UK                  192.168.141.0/24     +44 141  496 01xx                   +44 770  009 4xxx
+KGE   Køge, Danmark                  DK                  192.168.265.0/24     +45  00  000  xxx                   +45  2x  xxx xxx
+KOR   Korsør, Danmark                DK                  192.168.238.0/24     +45  00  000  xxx                   +45  2x  xxx xxx
+LIV   Liverpool, England             UK                  192.168.151.0/24     +44 151  496 0xxx                   +44 770  090 5xxx
+LND   London, England                UK                  192.168.20.0/24      +44 207  496 0xxx / 01632 96x xxx   +44 770  090 0xxx
+MCR   Manchester, England            UK                  192.168.161.0/24     +44 161  715 xxxx                   +44 770  090 6xxx
+MIA   Miami, Florida                 US                  192.168.135.0/24     +1  305  555 xxxx                   +1  786  555 xxxx
+MUN   Munich, West Germany           DE                  192.168.189.0/24     +49 893  555 33xx                   +49 893  555 99xx
+NEW   Newcastle, England             UK                  192.168.191.0/24     +44 191  496 0xxx                   +44 770  090 9xxx
+ODE   Odense, Danmark                DK                  192.168.126.0/24     +45  00  000  xxx                   +45  2x  xxx xxx
+VIE   Vienna, Austria                AT                  192.168.xxx.0/24     +43 800  078  0xx                   +43 664  665 xxx
 
+A note on phone numbers:
+
+  - UK Phone Number Standards (Ofcom reserved ranges for fiction/testing):
+    - Glasgow:                 0141 496 0xxx
+    - Edinburgh:               0131 496 0xxx
+    - London:                  0207 946 0xxx / 01632 96x xxx
+    - Manchester:              0161 715 xxxx - Weatherfield (Yes, Coronation Street per the "Coronation Street test")
+    - UK Wide Mobiles: Mobile: 0770 090 0xxx
+
+  Per: https://en.wikipedia.org/wiki/Telephone_numbers_in_the_United_Kingdom?useskin=vector#Fictitious_numbers
+  and: https://web.archive.org/web/20140216214400/http://stakeholders.ofcom.org.uk/telecoms/numbering/guidance-tele-no/numbers-for-drama
+
+  - Denmark Testing Numbers:
+    - Copenhagen landline: +45 0000 xxxx
+    - Denmark mobile:      +45 2xxx xxxx
+
+NB: I don't believe Denmark uses 0000 but this is not confirmed!
 
 Device Role Codes:
-  WKS = Windows Workstation
-  LAP = Laptop
-  PRN = Printer
-  WAP = Wireless Access Point
-  SRV = Server (non-DC)
-  DC  = Domain Controller
-  NIX = Unix/Linux/Solaris
-  DBS = Database Server
-  RTR = Router
-  SWI = Switch
-  FWL = Firewall
-  MAC = macOS Desktop (iMac)
-  MBP = MacBook Pro
-  TAB = Tablet (iPad / Galaxy Tab)
-  PBX = Phone System (PBX)
-  PHN = Desk Phone
-  VCU = Video Conferencing Unit
-  CAM = CCTV Camera
-  TVS = Networked Television
-  LCD = LCD Wallboard / Info Screen
-  CLK = Network Clock (NTP aware)
-  RDR = Badge Reader
-  BPS = Badge Programming Station
 
-Device Numbering:
-  000–999 (three digits, zero padded)
+BPS  = Badge Programming Station                              RAC  = Remote Access Controller (DRAC / iLO / BMC class)
+CAM  = Security Camera                                        RDR  = Card Reader / Badge Reader
+CLK  = Time Clock / Punch Clock                               RTR  = Router
+COF  = Coffee Machine (Smart Appliance)                       SBC  = Session Border Controller
+DON  = Donut Vending Machine                                  SRV  = Server
+FWL  = Firewall Appliance                                     SUR  = Microsoft Surface Device
+ILO  = Integrated Lights-Out (Server Management Controller)   SVR  = Server (Legacy / Alternate Code)
+LAP  = Laptop (Windows)                                       SWI  = Network Switch
+LCD  = LCD Wallboard / Information Display                    TAB  = Tablet
+MAC  = macOS Desktop (iMac / Mac Mini)                        TEA  = Internet connected Coffee Pot / Tea machine RFC2324 compliant
+MBP  = MacBook Pro                                            TVS  = Television / Digital Signage Display
+MUS  = Music Workstation / Studio System                      VCU  = Video Conferencing Unit
+NIX  = Unix/Linux/Solaris System                              WAP  = Wireless Access Point
+PHN  = Mobile Phone                                           WKS  = Workstation (Desktop)
+PRN  = Printer
+
+Device Numbering: 000–999 (three digits, zero padded)
 
 Examples:
   EXAWKSBON001  -> Bonn workstation
@@ -219,12 +211,11 @@ ORDER OF OPERATIONS: From AD Data to Display
   Dialog reads $node.Tag.Object to get the actual data and displays it in the UI
 
 KEY CONCEPT:
-  Tag acts as the bridge - it stores both the Type and the actual Object data, so when you click
-  something, Show-Properties knows exactly what it is and where to find its data.
+  Tag acts as the bridge - it stores both the Type and the actual Object data, so when you click something,
+  Show-Properties knows exactly what it is and where to find its data.
 
 ===========================================================================================
- DSA-TUI Blåbær — Active Directory TUI Tool
- Historical Build Notes and Change Log
+DSA-TUI Blåbær — Active Directory TUI Tool - Historical Build Notes and Change Log
 ===========================================================================================
 
  1.0.0.0  (Initial Experimental)
@@ -369,7 +360,7 @@ KEY CONCEPT:
  - Rendr demo data in a better fashion
  - Add user devices and office printers
  - Add Rocazino form the Koge office
- - Have other locations in Denmark along with different user properites e.g. Alan Wilder
+ - Have other locations in Danmark along with different user properites e.g. Alan Wilder
 
  1.7.1.1  (Fixes for regressions in 1.7.0.1)
  - Clean up entropy box
@@ -393,7 +384,7 @@ KEY CONCEPT:
  - Additional Debug-Log code printed only when Verbose is true
  - Explain Show-Properties and why that is called instead of e.g. Show-UserProperties
 
-1.8.3.0.0  (More cowbell)
+1.8.3.0  (More cowbell)
   - Add misisng and former group memebrs of bands
   - Add Get-CleanObjectInfo to reduce code re-use
   - Fix buttons on user properties modal
@@ -406,7 +397,7 @@ KEY CONCEPT:
   - Swap out many dialog windows for the pre-exisintg Show-Modal code for to reduce bloat
   - Add certain check modes for Demo data which is still required, but in less areas of code
 
-1.8.6.0 (Colour my life)
+1.8.6.0  (Colour my life)
   - New themes DSB Danish State Railways and Pan Am Airlines
 
 2.0.0.0  (Multi Domain support with skittles mode)
@@ -467,10 +458,10 @@ KEY CONCEPT:
   - Allow copying, pasting and exporting of output of LDAP queries
   - Move add and remove groups into functions and rework it to be aware if called from group or user properties tab
 
-2.3.7.1
+2.3.7.1 (Bug fix)
   - Initialize-DirectoryEmoji based on date. Special days use different emojis, e.g. Dec 25th
 
-2.3.7.2
+2.3.7.2 (Bug fix and cleanup. more bands)
   - Fix some erroneous $Globals that were left in
   - Fix group membership modal
   - Load the terminal icons module, if found
@@ -480,13 +471,13 @@ KEY CONCEPT:
   - Add UPNs and SamAccountName to align with real world AD
   - Bring back thw search/lookup tab for users... Spis lige brød til!
 
-2.3.8.0
+2.3.8.0 (Code reflow)
   - If terminal icons and a suitable nerd font is avilable, it will be used for prefixes, rather than (U), (G), etc.
   - REMOVED Get-CleanObjectInfo function which is no longer needed by switching to .Tag to detect type
   - Simplify calls to Objects and add icons for them too
   - Rework startup of app to avoid "hanging" by repainting status bar as enumeration progresses
 
-2.3.8.21
+2.3.8.21  (Bug fix and code consolidaiton)
   - Fix Theme selector and bug in main window background arising from it
   - Upgrade Show-Modal to also handle Yes/No returning 0 for YES and 1 for NO (The order the buttons show)
   - Even more themes!
@@ -498,7 +489,7 @@ KEY CONCEPT:
   - https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc732101(v=ws.11)
     new tools, also allows import (or export) their own data. This code is use as is, it does not syntax check the CSV!
 
-3.0.0.29
+3.0.0.29 (Cleanup and reflow many areas of code)
   - Massive consolidation / feature expansion session. Reduced code duplication with unified functions, added bulk
     operations and auditing features.
   - Manage-FilterStatusLabel
@@ -596,8 +587,7 @@ KEY CONCEPT:
     - Copies all relevant fields (Department, Title, Company, Manager, etc.)
     - Demo + Production mode support
     - Usage: Copy-ADObject -SourceObject $templateUser -ShowDialog
-
-  - Manage-DemoData (280 lines)
+  - Manage-DemoData
     - Import/Export demo data to CSV
     - DEMO MODE ONLY - blocks production mode with warning
     - Uses Show-FileBrowserDialog for file selection
@@ -606,36 +596,43 @@ KEY CONCEPT:
     - UTF-8 encoding for international characters
     - Compatible with Microsoft csvde.exe format
     - Usage: Manage-DemoData -Action 'Export'/'Import'
-
-  - New-PropertiesDialog (Completed Previously)
+  - New-PropertiesDialog
     - Tab builder pattern for property dialogs
     - Eliminates boilerplate in User/Group/OU/Computer/DC properties
     - Centralized Apply logic with shared state hashtables
     - Fixed Debug-Log scope issues (uses plain calls, not Get-Command)
 
+3.0.0.31  (Bug fixes)
+  - Users are now enumerated proprly and shown in real AD.
+  - LAPS Password modal now shows correctly
+  - Group OU, Computer and DC properties all now have a properties tab too
+  - Add the AD tools into the AD Health modal. This also checks AD health
+  - Rework AD Health to be more feature rich
+  - Change domain worked first time to type in, didn't refresh anything, then crashed is now fixed
+  - Change domain now falls back ot previous domain on failed to load a new domain
+
 -------------------------------------------------------------------------------
 TODO / COME BACK TO
 -------------------------------------------------------------------------------
 
-- Menu entries for Set-BulkAttribute and Find-StaleAccounts
-  (Need to use existing helper functions for selection conversion)
-
 REMAINING FEATURES TO IMPLEMENT:
-1. Account Expiration Management
-2. Group Membership Report/Comparison
-3. OU Statistics/Summary
-4. Audit Log Viewer (demo mode fake logs)
 
-  TODO:
+  - Account Expiration Management
+  - Group Membership Report/Comparison
+  - OU Statistics/Summary
+  - Audit Log Viewer (demo mode fake logs)
   - Misisng AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
   - show locked users actually shows computers under maintenence, which is... nice but not what you're asking for - add both
   - Did the right click popup go away or is it broken...? Yes. Fix it later
-  - Devices need to have additonal proerties like the jukebox - WIP
-
-  -  add the tool into the "search for AD tools modal"
+  - Groups aren't enumerated properly in produciton. Likely a logic bug in detetion
+  - Reset-LapsPassword only works locally, but I know you can do remote LAPS rotation. Find out how add ot LAPS window
+  - Menu entries for Set-BulkAttribute and Find-StaleAccounts
+    (Need to use existing helper functions for selection conversion)
+  - AD Health tabs like Group Policy and domain controllers the Tab tab pane could be smaller with a search box in them to help out
+  - dns queries ought ot unr automatically
 
  BUGS:
-  - Users don't get shown in real AD, one suspects it's too hardcoded on the heiraracy so needs ot actually detect it [X] Think this is fixed but confirm
+  - Groups are not enumerated propely in the tree. Much like the user bug, it's likely properties. Computers is also likely affected
 
 ===========================================================================================
 #>
@@ -856,7 +853,7 @@ function Build-MainMenu {
   $mBulkEdit          = [Terminal.Gui.MenuItem]::new("_Edit Attribute (Bulk)", "Change one attribute across selected objects", [Action]{$objects = Get-SelectedObjectsAsObjects ; Set-BulkAttribute -Objects $objects -ShowDialog})
   $mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator (F2)",[Action]{ Generate-RandomPassword })
   $mLAPSPasswords     = [Terminal.Gui.MenuItem]::new("_LAPS Passwords","Lookup LAPS Creds (Fx)",[Action]{ Show-LAPSSearchModal })
-  $mADHealth          = [Terminal.Gui.MenuItem]::new("_AD Health Status", "AD Health And Replication Status", [Action]{ Check-ADHealth })
+  $mADHealth          = [Terminal.Gui.MenuItem]::new("_AD Health Status", "AD Health And Replication Status", [Action]{ Show-ADHealthDialog })
   $mShortcuts         = [Terminal.Gui.MenuItem]::new("_Shortcuts","Keyboard shortcuts (F1)",[Action]{ Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF10 - Quit" })
   $mAboutDSATUI       = [Terminal.Gui.MenuItem]::new("_About","About $($Script:ProjectName)",[Action]{ Show-Modal "About" "$($Script:ProjectName)`n`nCodename: $($Script:FruitName)`nv$($Script:BuildVersion) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600)" })
   $mWhyBlaabaer       = [Terminal.Gui.MenuItem]::new("Why _Blaabaer?","Why the $($Script:FruitName) codename?",[Action]{ Show-BlaabaerInfo })
@@ -1006,252 +1003,241 @@ function Show-ThemeSelector {
 
 ## ==================== STALE ACCOUNT DETECTION ====================
 function Find-StaleAccounts {
-    <#
-    .SYNOPSIS
+  <#
+  .SYNOPSIS
     Find accounts that haven't been used in a specified number of days
-
-    .PARAMETER DaysSinceLogon
+  .PARAMETER DaysSinceLogon
     Number of days since last logon to consider account stale
-
-    .PARAMETER ObjectType
+  .PARAMETER ObjectType
     'User', 'Computer', or 'Both'
 
-    .PARAMETER ShowDialog
-    If specified, shows interactive dialog with results
+  .PARAMETER ShowDialog
+  If specified, shows interactive dialog with results
 
-    .PARAMETER ExportPath
-    Optional - export results to CSV
+  .PARAMETER ExportPath
+  Optional - export results to CSV
 
-    .EXAMPLE
-    Find-StaleAccounts -DaysSinceLogon 90 -ObjectType 'User' -ShowDialog
+  .EXAMPLE
+  Find-StaleAccounts -DaysSinceLogon 90 -ObjectType 'User' -ShowDialog
 
-    .EXAMPLE
-    Find-StaleAccounts -DaysSinceLogon 180 -ObjectType 'Computer' -ExportPath "stale_computers.csv"
+  .EXAMPLE
+  Find-StaleAccounts -DaysSinceLogon 180 -ObjectType 'Computer' -ExportPath "stale_computers.csv"
 
-    .EXAMPLE
-    Find-StaleAccounts -DaysSinceLogon 90 -ObjectType 'Both' -ShowDialog
-    #>
-    param(
-        [Parameter(Mandatory=$false)]
-        [int]$DaysSinceLogon = 90,
+  .EXAMPLE
+  Find-StaleAccounts -DaysSinceLogon 90 -ObjectType 'Both' -ShowDialog
+  #>
 
-        [Parameter(Mandatory=$false)]
-        [ValidateSet('User', 'Computer', 'Both')]
-        [string]$ObjectType = 'User',
+  param(
+    [Parameter(Mandatory=$false)]
+    [int]$DaysSinceLogon = 90,
 
-        [switch]$ShowDialog,
+    [Parameter(Mandatory=$false)]
+    [ValidateSet('User', 'Computer', 'Both')]
+    [string]$ObjectType = 'User',
+    [switch]$ShowDialog,
+    [string]$ExportPath
+  )
 
-        [string]$ExportPath
-    )
+  ## ==================== PARAMETER SELECTION DIALOG ====================
+  if ($ShowDialog -and -not $PSBoundParameters.ContainsKey('DaysSinceLogon')) {
+    ## Show dialog to select parameters
+    $paramDlg = [Terminal.Gui.Dialog]::new("Stale Account Detection", 60, 16)
 
-    ## ==================== PARAMETER SELECTION DIALOG ====================
-    if ($ShowDialog -and -not $PSBoundParameters.ContainsKey('DaysSinceLogon')) {
-        ## Show dialog to select parameters
-        $paramDlg = [Terminal.Gui.Dialog]::new("Stale Account Detection", 60, 16)
+    $lblTitle = [Terminal.Gui.Label]::new("Configure stale account search:")
+    $lblTitle.X = 2
+    $lblTitle.Y = 1
+    $paramDlg.Add($lblTitle)
 
-        $lblTitle = [Terminal.Gui.Label]::new("Configure stale account search:")
-        $lblTitle.X = 2
-        $lblTitle.Y = 1
-        $paramDlg.Add($lblTitle)
+    ## Days threshold
+    $lblDays = [Terminal.Gui.Label]::new("Days since last logon:")
+    $lblDays.X = 2
+    $lblDays.Y = 3
+    $paramDlg.Add($lblDays)
 
-        ## Days threshold
-        $lblDays = [Terminal.Gui.Label]::new("Days since last logon:")
-        $lblDays.X = 2
-        $lblDays.Y = 3
-        $paramDlg.Add($lblDays)
+    $txtDays = [Terminal.Gui.TextField]::new("90")
+    $txtDays.X = 25
+    $txtDays.Y = 3
+    $txtDays.Width = 10
+    $paramDlg.Add($txtDays)
 
-        $txtDays = [Terminal.Gui.TextField]::new("90")
-        $txtDays.X = 25
-        $txtDays.Y = 3
-        $txtDays.Width = 10
-        $paramDlg.Add($txtDays)
+    ## Object type selection
+    $lblType = [Terminal.Gui.Label]::new("Search for:")
+    $lblType.X = 2
+    $lblType.Y = 5
+    $paramDlg.Add($lblType)
 
-        ## Object type selection
-        $lblType = [Terminal.Gui.Label]::new("Search for:")
-        $lblType.X = 2
-        $lblType.Y = 5
-        $paramDlg.Add($lblType)
+    $rdoType = [Terminal.Gui.RadioGroup]::new(@("Users", "Computers", "Both"))
+    $rdoType.X = 2
+    $rdoType.Y = 6
+    $rdoType.SelectedItem = 0  # Users by default
+    $paramDlg.Add($rdoType)
 
-        $rdoType = [Terminal.Gui.RadioGroup]::new(@("Users", "Computers", "Both"))
-        $rdoType.X = 2
-        $rdoType.Y = 6
-        $rdoType.SelectedItem = 0  # Users by default
-        $paramDlg.Add($rdoType)
-
-        ## Search button
-        $btnSearch = [Terminal.Gui.Button]::new("Search")
-        $btnSearch.add_Clicked({
-            ## Validate days input
-            $daysValue = 90
-            if (-not [int]::TryParse($txtDays.Text.ToString(), [ref]$daysValue) -or $daysValue -lt 1) {
-                Show-Modal "Invalid Input" "Days must be a positive number"
-                return
-            }
-
-            ## Get object type
-            $typeValue = switch ($rdoType.SelectedItem) {
-                0 { 'User' }
-                1 { 'Computer' }
-                2 { 'Both' }
-            }
-
-            [Terminal.Gui.Application]::RequestStop()
-
-            ## Run search with selected parameters
-            Find-StaleAccounts -DaysSinceLogon $daysValue -ObjectType $typeValue -ShowDialog
-
-        }.GetNewClosure())
-
-        $paramDlg.AddButton($btnSearch)
-
-        ## Cancel button
-        $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-        $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-        $paramDlg.AddButton($btnCancel)
-
-        [Terminal.Gui.Application]::Run($paramDlg)
+    ## Search button
+    $btnSearch = [Terminal.Gui.Button]::new("Search")
+    $btnSearch.add_Clicked({
+      ## Validate days input
+      $daysValue = 90
+      if (-not [int]::TryParse($txtDays.Text.ToString(), [ref]$daysValue) -or $daysValue -lt 1) {
+        Show-Modal "Invalid Input" "Days must be a positive number"
         return
-    }
+      }
 
-    Debug-Log ": Starting stale account detection - $ObjectType, $DaysSinceLogon days threshold" -Type "Info"
+      ## Get object type
+      $typeValue = switch ($rdoType.SelectedItem) {
+        0 { 'User' }
+        1 { 'Computer' }
+        2 { 'Both' }
+      }
 
-    $cutoffDate = (Get-Date).AddDays(-$DaysSinceLogon)
-    $staleAccounts = @()
+      [Terminal.Gui.Application]::RequestStop()
 
-    ## ==================== FIND STALE USERS ====================
-    if ($ObjectType -eq 'User' -or $ObjectType -eq 'Both') {
-        if ($Script:DemoMode) {
-            ## Demo mode - use simulated LastLogonDate
-            foreach ($user in $Script:Users) {
-                ## Generate pseudo-random last logon based on name hash
-                $hash = 0
-                foreach ($char in $user.Name.ToCharArray()) {
-                    $hash += [int]$char
-                }
-                $daysAgo = ($hash % 365) + 1  # 1-365 days ago
-                $lastLogon = (Get-Date).AddDays(-$daysAgo)
+      ## Run search with selected parameters
+      Find-StaleAccounts -DaysSinceLogon $daysValue -ObjectType $typeValue -ShowDialog
+    }.GetNewClosure())
 
-                if ($lastLogon -lt $cutoffDate) {
-                    $staleAccounts += [PSCustomObject]@{
-                        ObjectType = 'User'
-                        Name = $user.Name
-                        SamAccountName = $user.SamAccountName
-                        Enabled = $user.Enabled
-                        Disabled = $user.Disabled
-                        LastLogon = $lastLogon
-                        DaysSinceLogon = $daysAgo
-                        OU = ($user.OU -join ';')
-                        Department = $user.Department
-                        Title = $user.Title
-                    }
-                }
-            }
-        } else {
-            ## Production mode - query AD
-            try {
-                $lastLogonDate = $cutoffDate.ToFileTime()
-                $users = Get-ADUser -Filter "LastLogonTimeStamp -lt $lastLogonDate" -Properties LastLogonTimeStamp,Department,Title,Enabled
+    $paramDlg.AddButton($btnSearch)
 
-                foreach ($user in $users) {
-                    $lastLogon = if ($user.LastLogonTimeStamp) {
-                        [DateTime]::FromFileTime($user.LastLogonTimeStamp)
-                    } else {
-                        [DateTime]::MinValue
-                    }
+    ## Cancel button
+    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+    $paramDlg.AddButton($btnCancel)
+    [Terminal.Gui.Application]::Run($paramDlg)
+    return
+  }
 
-                    $daysAgo = ((Get-Date) - $lastLogon).Days
+  Debug-Log ": Starting stale account detection - $ObjectType, $DaysSinceLogon days threshold" -Type "Info"
 
-                    $staleAccounts += [PSCustomObject]@{
-                        ObjectType = 'User'
-                        Name = $user.Name
-                        SamAccountName = $user.SamAccountName
-                        Enabled = $user.Enabled
-                        Disabled = -not $user.Enabled
-                        LastLogon = $lastLogon
-                        DaysSinceLogon = $daysAgo
-                        OU = $user.DistinguishedName -replace '^CN=[^,]+,', ''
-                        Department = $user.Department
-                        Title = $user.Title
-                    }
-                }
-            } catch {
-                Debug-Log ": Error querying stale users: $($_.Exception.Message)" -Type "Error"
-                Show-Modal "Query Error" "Failed to query stale users:`n`n$($_.Exception.Message)"
-                return
-            }
+  $cutoffDate = (Get-Date).AddDays(-$DaysSinceLogon)
+  $staleAccounts = @()
+
+  ## ==================== FIND STALE USERS ====================
+  if ($ObjectType -eq 'User' -or $ObjectType -eq 'Both') {
+    if ($Script:DemoMode) {
+      ## Demo mode - use simulated LastLogonDate
+      foreach ($user in $Script:Users) {
+        ## Generate pseudo-random last logon based on name hash
+        $hash = 0
+        foreach ($char in $user.Name.ToCharArray()) { $hash += [int]$char }
+        $daysAgo = ($hash % 365) + 1  # 1-365 days ago
+        $lastLogon = (Get-Date).AddDays(-$daysAgo)
+
+        if ($lastLogon -lt $cutoffDate) {
+          $staleAccounts += [PSCustomObject]@{
+          ObjectType = 'User'
+          Name = $user.Name
+          SamAccountName = $user.SamAccountName
+          Enabled = $user.Enabled
+          Disabled = $user.Disabled
+          LastLogon = $lastLogon
+          DaysSinceLogon = $daysAgo
+          OU = ($user.OU -join ';')
+          Department = $user.Department
+          Title = $user.Title
         }
+      }
     }
+  } else {
+    ## Production mode - query AD
+    try {
+      $lastLogonDate = $cutoffDate.ToFileTime()
+      $users = Get-ADUser -Filter "LastLogonTimeStamp -lt $lastLogonDate" -Properties LastLogonTimeStamp,Department,Title,Enabled
+      foreach ($user in $users) {
+      $lastLogon = if ($user.LastLogonTimeStamp) {
+        [DateTime]::FromFileTime($user.LastLogonTimeStamp)
+      } else {
+        [DateTime]::MinValue
+      }
 
-    ## ==================== FIND STALE COMPUTERS ====================
-    if ($ObjectType -eq 'Computer' -or $ObjectType -eq 'Both') {
-        if ($Script:DemoMode) {
-            ## Demo mode - use simulated LastLogonDate
-            foreach ($computer in $Script:Computers) {
-                ## Generate pseudo-random last logon based on name hash
-                $hash = 0
-                foreach ($char in $computer.Name.ToCharArray()) {
-                    $hash += [int]$char
-                }
-                $daysAgo = ($hash % 365) + 1  # 1-365 days ago
-                $lastLogon = (Get-Date).AddDays(-$daysAgo)
-
-                if ($lastLogon -lt $cutoffDate) {
-                    $staleAccounts += [PSCustomObject]@{
-                        ObjectType = 'Computer'
-                        Name = $computer.Name
-                        SamAccountName = $computer.SamAccountName
-                        Enabled = $computer.Enabled
-                        Disabled = $computer.Disabled
-                        LastLogon = $lastLogon
-                        DaysSinceLogon = $daysAgo
-                        OU = 'Computers'
-                        OperatingSystem = $computer.OperatingSystem
-                        Location = $computer.Location
-                    }
-                }
-            }
-        } else {
-            ## Production mode - query AD
-            try {
-                $lastLogonDate = $cutoffDate.ToFileTime()
-                $computers = Get-ADComputer -Filter "LastLogonTimeStamp -lt $lastLogonDate" -Properties LastLogonTimeStamp,OperatingSystem,Location,Enabled
-
-                foreach ($computer in $computers) {
-                    $lastLogon = if ($computer.LastLogonTimeStamp) {
-                        [DateTime]::FromFileTime($computer.LastLogonTimeStamp)
-                    } else {
-                        [DateTime]::MinValue
-                    }
-
-                    $daysAgo = ((Get-Date) - $lastLogon).Days
-
-                    $staleAccounts += [PSCustomObject]@{
-                        ObjectType = 'Computer'
-                        Name = $computer.Name
-                        SamAccountName = $computer.SamAccountName
-                        Enabled = $computer.Enabled
-                        Disabled = -not $computer.Enabled
-                        LastLogon = $lastLogon
-                        DaysSinceLogon = $daysAgo
-                        OU = $computer.DistinguishedName -replace '^CN=[^,]+,', ''
-                        OperatingSystem = $computer.OperatingSystem
-                        Location = $computer.Location
-                    }
-                }
-            } catch {
-                Debug-Log ": Error querying stale computers: $($_.Exception.Message)" -Type "Error"
-                Show-Modal "Query Error" "Failed to query stale computers:`n`n$($_.Exception.Message)"
-                return
-            }
+      $daysAgo = ((Get-Date) - $lastLogon).Days
+      $staleAccounts += [PSCustomObject]@{
+        ObjectType = 'User'
+        Name = $user.Name
+        SamAccountName = $user.SamAccountName
+        Enabled = $user.Enabled
+        Disabled = -not $user.Enabled
+        LastLogon = $lastLogon
+        DaysSinceLogon = $daysAgo
+        OU = $user.DistinguishedName -replace '^CN=[^,]+,', ''
+        Department = $user.Department
+        Title = $user.Title
         }
+      }
+    } catch {
+      Debug-Log ": Error querying stale users: $($_.Exception.Message)" -Type "Error"
+      Show-Modal "Query Error" "Failed to query stale users:`n`n$($_.Exception.Message)"
+      return
     }
+  }
+  }
 
-    ## Sort by days since logon (most stale first)
-    $staleAccounts = $staleAccounts | Sort-Object -Property DaysSinceLogon -Descending
+  ## ==================== FIND STALE COMPUTERS ====================
+  if ($ObjectType -eq 'Computer' -or $ObjectType -eq 'Both') {
+    if ($Script:DemoMode) {
+      ## Demo mode - use simulated LastLogonDate
+      foreach ($computer in $Script:Computers) {
+        ## Generate pseudo-random last logon based on name hash
+        $hash = 0
+        foreach ($char in $computer.Name.ToCharArray()) { $hash += [int]$char }
+        $daysAgo = ($hash % 365) + 1  # 1-365 days ago
+        $lastLogon = (Get-Date).AddDays(-$daysAgo)
 
-    Debug-Log ": Found $($staleAccounts.Count) stale accounts" -Type "Info"
+        if ($lastLogon -lt $cutoffDate) {
+          $staleAccounts += [PSCustomObject]@{
+          ObjectType = 'Computer'
+          Name = $computer.Name
+          SamAccountName = $computer.SamAccountName
+          Enabled = $computer.Enabled
+          Disabled = $computer.Disabled
+          LastLogon = $lastLogon
+          DaysSinceLogon = $daysAgo
+          OU = 'Computers'
+          OperatingSystem = $computer.OperatingSystem
+          Location = $computer.Location
+        }
+      }
+    }
+  } else {
+    ## Production mode - query AD
+    try {
+      $lastLogonDate = $cutoffDate.ToFileTime()
+      $computers = Get-ADComputer -Filter "LastLogonTimeStamp -lt $lastLogonDate" -Properties LastLogonTimeStamp,OperatingSystem,Location,Enabled
 
-    ## ==================== EXPORT TO CSV ====================
+      foreach ($computer in $computers) {
+        $lastLogon = if ($computer.LastLogonTimeStamp) {
+        [DateTime]::FromFileTime($computer.LastLogonTimeStamp)
+      } else {
+        [DateTime]::MinValue
+      }
+
+      $daysAgo = ((Get-Date) - $lastLogon).Days
+
+      $staleAccounts += [PSCustomObject]@{
+        ObjectType = 'Computer'
+        Name = $computer.Name
+        SamAccountName = $computer.SamAccountName
+        Enabled = $computer.Enabled
+        Disabled = -not $computer.Enabled
+        LastLogon = $lastLogon
+        DaysSinceLogon = $daysAgo
+        OU = $computer.DistinguishedName -replace '^CN=[^,]+,', ''
+        OperatingSystem = $computer.OperatingSystem
+        Location = $computer.Location
+      }
+    }
+  } catch {
+      Debug-Log ": Error querying stale computers: $($_.Exception.Message)" -Type "Error"
+      Show-Modal "Query Error" "Failed to query stale computers:`n`n$($_.Exception.Message)"
+      return
+    }
+  }
+  }
+
+  ## Sort by days since logon (most stale first)
+  $staleAccounts = $staleAccounts | Sort-Object -Property DaysSinceLogon -Descending
+
+  Debug-Log ": Found $($staleAccounts.Count) stale accounts" -Type "Info"
+
+  ## ==================== EXPORT TO CSV ====================
     if ($ExportPath) {
         try {
             $staleAccounts | Export-Csv -Path $ExportPath -NoTypeInformation -Encoding UTF8
@@ -1741,7 +1727,7 @@ function Copy-ADObject {
 function Manage-DemoData {
     <#
     .SYNOPSIS
-    Import or export demo data to/from CSV files
+    Import or export demo data to/from CSV files with analysis
 
     .PARAMETER Action
     'Import' to load CSV data, 'Export' to save current demo data
@@ -1753,12 +1739,12 @@ function Manage-DemoData {
     Manage-DemoData -Action 'Export'
 
     .EXAMPLE
-    Manage-DemoData -Action 'Import' -FilePath "C:\data\users.csv"
+    Manage-DemoData -Action 'Import' -FilePath "C:\data\ad-export.csv"
 
     .NOTES
-    WARNING: This function works ONLY in demo mode. Data cannot be imported to production.
-    CSV format reference: https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc732101(v=ws.11)
-    We don't validate CSV structure - if you mess things up, that's your issue.
+    WARNING: This function works ONLY in demo mode.
+    CSV format: Active Directory CSV export (csvde.exe compatible)
+    Analyzes and counts all object types before import.
     #>
     param(
         [Parameter(Mandatory=$true)]
@@ -1782,7 +1768,6 @@ function Manage-DemoData {
         ## If no path provided, show save dialog
         if (-not $FilePath) {
             $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-            $defaultName = "dsa_demo_export_$timestamp.csv"
 
             ## Show file browser for save location
             $FilePath = Show-FileBrowserDialog -StartDir "." -Title "Export Demo Data - Select Location" -Filter @("*.csv", "*.txt")
@@ -1794,7 +1779,7 @@ function Manage-DemoData {
 
             ## Ensure .csv extension
             if ($FilePath -notmatch '\.(csv|txt)$') {
-                $FilePath = "$FilePath.csv"
+                $FilePath = "$FilePath-$timestamp.csv"
             }
         }
 
@@ -1844,25 +1829,6 @@ function Manage-DemoData {
                     MemberOf = ($group.MemberOf -join ';')
                     DistinguishedName = $group.DistinguishedName
                     Domain = $group.Domain
-                    SamAccountName = $null
-                    DisplayName = $null
-                    EmailAddress = $null
-                    Enabled = $null
-                    Disabled = $null
-                    LockedOut = $null
-                    OU = $null
-                    Groups = $null
-                    Title = $null
-                    Department = $null
-                    Company = $null
-                    Manager = $null
-                    OfficePhone = $null
-                    MobilePhone = $null
-                    StreetAddress = $null
-                    City = $null
-                    PostalCode = $null
-                    Country = $null
-                    UserPrincipalName = $null
                 }
             }
 
@@ -1880,26 +1846,6 @@ function Manage-DemoData {
                     DistinguishedName = $computer.DistinguishedName
                     Domain = $computer.Domain
                     Description = $computer.Description
-                    DisplayName = $null
-                    EmailAddress = $null
-                    Email = $null
-                    LockedOut = $null
-                    OU = $null
-                    Groups = $null
-                    MemberOf = $null
-                    ManagedBy = $null
-                    Members = $null
-                    Title = $null
-                    Department = $null
-                    Company = $null
-                    Manager = $null
-                    OfficePhone = $null
-                    MobilePhone = $null
-                    StreetAddress = $null
-                    City = $null
-                    PostalCode = $null
-                    Country = $null
-                    UserPrincipalName = $null
                 }
             }
 
@@ -1920,7 +1866,7 @@ function Manage-DemoData {
     if ($Action -eq 'Import') {
         ## If no path provided, show file browser
         if (-not $FilePath) {
-            $FilePath = Show-FileBrowserDialog -StartDir "." -Title "Import Demo Data - Select CSV File" -Filter @("*.csv", "*.txt")
+            $FilePath = Show-FileBrowserDialog -StartDir "." -Title "Import AD CSV Data - Select File" -Filter @("*.csv", "*.txt")
 
             if (-not $FilePath) {
                 Debug-Log ": Import cancelled by user" -Type "Info"
@@ -1935,20 +1881,102 @@ function Manage-DemoData {
             return
         }
 
-        ## Confirm import (will overwrite current demo data)
-        $confirm = Show-Modal "Confirm Import" "⚠️  WARNING: This will REPLACE all current demo data.`n`nFile: $FilePath`n`nContinue?" -YesNo
-
-        if ($confirm -ne 0) {
-            Debug-Log ": Import cancelled by user" -Type "Info"
-            return
-        }
-
         try {
-            ## Import CSV
+            ## Import and analyze CSV first
+            Debug-Log ": Analyzing CSV file: $FilePath" -Type "Info"
             $importData = Import-Csv -Path $FilePath -Encoding UTF8
 
             if (-not $importData -or $importData.Count -eq 0) {
                 throw "CSV file is empty or invalid"
+            }
+
+            ## Count objects by type (using objectClass from AD CSV)
+            $stats = @{
+                Users = 0
+                Groups = 0
+                Computers = 0
+                DomainControllers = 0
+                Servers = 0
+                OrganizationalUnits = 0
+                Contacts = 0
+                PrintQueues = 0
+                Other = 0
+                Total = $importData.Count
+            }
+
+            foreach ($row in $importData) {
+                $objectClass = $row.objectClass
+
+                switch -Regex ($objectClass) {
+                    '^user$' {
+                        $stats.Users++
+                    }
+                    '^group$' {
+                        $stats.Groups++
+                    }
+                    '^computer$' {
+                        ## Distinguish DCs from regular computers/servers
+                        if ($row.userAccountControl -match '532480|8192' -or
+                            $row.servicePrincipalName -match 'E3514235-4B06-11D1-AB04-00C04FC2DCD2') {
+                            $stats.DomainControllers++
+                        } elseif ($row.operatingSystem -match 'Server') {
+                            $stats.Servers++
+                        } else {
+                            $stats.Computers++
+                        }
+                    }
+                    '^organizationalUnit$' {
+                        $stats.OrganizationalUnits++
+                    }
+                    '^contact$' {
+                        $stats.Contacts++
+                    }
+                    '^printQueue$' {
+                        $stats.PrintQueues++
+                    }
+                    '^(domainDNS|container|builtinDomain)$' {
+                        ## Structural objects - skip silently
+                    }
+                    default {
+                        $stats.Other++
+                        Debug-Log ": Unknown object class: $objectClass ($($row.name))" -Type "Warn"
+                    }
+                }
+            }
+
+            Debug-Log ": CSV Analysis - Users: $($stats.Users), Groups: $($stats.Groups), Computers: $($stats.Computers), DCs: $($stats.DomainControllers), OUs: $($stats.OrganizationalUnits)" -Type "Info"
+
+            ## Build summary message with nice formatting
+            $summary = @"
+CSV File Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: $(Split-Path $FilePath -Leaf)
+Total Objects: $($stats.Total)
+
+Object Breakdown:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Users:                 $($stats.Users)
+Groups:                $($stats.Groups)
+Computers:             $($stats.Computers)
+Domain Controllers:    $($stats.DomainControllers)
+Servers:               $($stats.Servers)
+Organizational Units:  $($stats.OrganizationalUnits)
+Contacts:              $($stats.Contacts)
+Print Queues:          $($stats.PrintQueues)
+Other Objects:         $($stats.Other)
+
+⚠️  WARNING: This will REPLACE all current demo data.
+
+Continue with import?
+"@
+
+            ## Show analysis and confirm
+            $confirm = Show-Modal "CSV Import Analysis" $summary -YesNo
+
+            if ($confirm -ne 0) {
+                Debug-Log ": Import cancelled by user after analysis" -Type "Info"
+                return
             }
 
             ## Clear existing demo data
@@ -1958,93 +1986,199 @@ function Manage-DemoData {
             $Script:Groups = @()
             $Script:rawDemoGroups = @()
             $Script:Computers = @()
+            $Script:rawComputers = @()
 
             ## Import objects by type
             $userCount = 0
             $groupCount = 0
             $computerCount = 0
+            $dcCount = 0
+            $ouCount = 0
+
+            Debug-Log ": Beginning CSV import..." -Type "Info"
+
+            ## ==================== INTERNAL HELPER FUNCTIONS ====================
+
+            function ParseOUPath {
+                param([string]$DN)
+
+                if ([string]::IsNullOrWhiteSpace($DN)) { return @() }
+
+                $ouParts = @()
+                $DN -split '(?<!\\),' | Where-Object { $_ -match '^OU=' } | ForEach-Object {
+                    if ($_ -match '^OU=(.+)$') { $ouParts += $matches[1] }
+                }
+                [array]::Reverse($ouParts)
+                return $ouParts
+            }
+
+            function ExtractDomain {
+                param([string]$DN)
+
+                if ([string]::IsNullOrWhiteSpace($DN)) { return 'example.com' }
+
+                $dcParts = $DN -split '(?<!\\),' | Where-Object { $_ -match '^DC=' } | ForEach-Object {
+                    if ($_ -match '^DC=(.+)$') { $matches[1] }
+                }
+
+                if ($dcParts) {
+                    return ($dcParts -join '.')
+                } else {
+                    return 'example.com'
+                }
+            }
 
             foreach ($row in $importData) {
-                switch ($row.ObjectType) {
-                    'User' {
+                $objectClass = $row.objectClass
+
+                switch -Regex ($objectClass) {
+                    '^user$' {
+                        ## Parse user from CSV
+                        $dn = $row.distinguishedName
+                        $ouPath = ParseOUPath -DN $dn
+                        $domain = ExtractDomain -DN $dn
+
                         $user = [PSCustomObject]@{
-                            Name = $row.Name
-                            SamAccountName = $row.SamAccountName
-                            DisplayName = $row.DisplayName
-                            EmailAddress = $row.EmailAddress
-                            Enabled = [bool]::Parse($row.Enabled)
-                            Disabled = [bool]::Parse($row.Disabled)
-                            LockedOut = if ($row.LockedOut) { [bool]::Parse($row.LockedOut) } else { $false }
-                            OU = if ($row.OU) { $row.OU -split ';' } else { @() }
-                            Groups = if ($row.Groups) { $row.Groups -split ';' } else { @() }
-                            MemberOf = if ($row.MemberOf) { $row.MemberOf -split ';' } else { @() }
-                            Title = $row.Title
-                            Department = $row.Department
-                            Company = $row.Company
-                            Manager = $row.Manager
-                            OfficePhone = $row.OfficePhone
-                            MobilePhone = $row.MobilePhone
-                            StreetAddress = $row.StreetAddress
-                            City = $row.City
-                            PostalCode = $row.PostalCode
-                            Country = $row.Country
-                            UserPrincipalName = $row.UserPrincipalName
-                            DistinguishedName = $row.DistinguishedName
-                            Domain = $row.Domain
+                            Name = $row.name
+                            SamAccountName = $row.sAMAccountName
+                            DisplayName = $row.displayName
+                            EmailAddress = $row.mail
+                            UserPrincipalName = $row.userPrincipalName
+                            Enabled = -not ([int]$row.userAccountControl -band 0x0002)
+                            Disabled = ([int]$row.userAccountControl -band 0x0002) -ne 0
+                            LockedOut = ([int]$row.userAccountControl -band 0x0010) -ne 0
+                            OU = $ouPath
+                            Groups = if ($row.memberOf) { ($row.memberOf -split ';' | ForEach-Object { if ($_ -match 'CN=([^,]+)') { $matches[1] } }) } else { @() }
+                            MemberOf = if ($row.memberOf) { ($row.memberOf -split ';') } else { @() }
+                            Title = $row.title
+                            Department = $row.description
+                            Company = ''
+                            Manager = if ($row.manager -match 'CN=([^,]+)') { $matches[1] } else { '' }
+                            OfficePhone = $row.telephoneNumber
+                            MobilePhone = $row.mobile
+                            StreetAddress = ''
+                            City = ''
+                            PostalCode = ''
+                            Country = $row.countryCode
+                            DistinguishedName = $dn
+                            Domain = $domain
                         }
                         $Script:Users += $user
                         $Script:rawUsers += $user
                         $userCount++
                     }
 
-                    'Group' {
+                    '^group$' {
                         $group = [PSCustomObject]@{
-                            Name = $row.Name
-                            Description = $row.Description
-                            Email = $row.Email
-                            ManagedBy = $row.ManagedBy
-                            Members = if ($row.Members) { $row.Members -split ';' } else { @() }
-                            MemberOf = if ($row.MemberOf) { $row.MemberOf -split ';' } else { @() }
-                            DistinguishedName = $row.DistinguishedName
-                            Domain = $row.Domain
+                            Name = $row.name
+                            Description = $row.description
+                            Email = $row.mail
+                            ManagedBy = if ($row.managedBy -match 'CN=([^,]+)') { $matches[1] } else { '' }
+                            Members = if ($row.member) { ($row.member -split ';') } else { @() }
+                            MemberOf = if ($row.memberOf) { ($row.memberOf -split ';') } else { @() }
+                            DistinguishedName = $row.distinguishedName
+                            Domain = 'example.com'
                         }
                         $Script:Groups += $group
                         $Script:rawDemoGroups += $group
                         $groupCount++
                     }
 
-                    'Computer' {
-                        $computer = [PSCustomObject]@{
-                            Name = $row.Name
-                            SamAccountName = $row.SamAccountName
-                            Enabled = [bool]::Parse($row.Enabled)
-                            Disabled = [bool]::Parse($row.Disabled)
-                            OperatingSystem = $row.OperatingSystem
-                            ComputerType = $row.ComputerType
-                            Location = $row.Location
-                            Description = $row.Description
-                            DistinguishedName = $row.DistinguishedName
-                            Domain = $row.Domain
+                    '^computer$' {
+                        ## Check if DC
+                        if ($row.userAccountControl -match '532480|8192' -or
+                            $row.servicePrincipalName -match 'E3514235-4B06-11D1-AB04-00C04FC2DCD2') {
+                            ## It's a DC
+                            $dc = @{
+                                Name = $row.name
+                                SamAccountName = $row.sAMAccountName
+                                DNSHostName = $row.dNSHostName
+                                Site = 'Default-First-Site-Name'
+                                Location = ''
+                                Domain = 'example.com'
+                                Forest = 'example.com'
+                                OS = $row.operatingSystem
+                                OperatingSystemVersion = $row.operatingSystemVersion
+                                IPv4Address = ''
+                                Enabled = $true
+                                IsGlobalCatalog = $row.servicePrincipalName -match 'GC/'
+                                FSMORoles = @()
+                                LastReplication = Get-Date
+                                ReplicationHealth = 'Healthy'
+                                LastBoot = Get-Date
+                            }
+                            $Script:rawDCs += $dc
+                            $dcCount++
+                        } else {
+                            ## Regular computer
+                            $computer = [PSCustomObject]@{
+                                Name = $row.name
+                                SamAccountName = $row.sAMAccountName
+                                Enabled = -not ([int]$row.userAccountControl -band 0x0002)
+                                Disabled = ([int]$row.userAccountControl -band 0x0002) -ne 0
+                                OperatingSystem = $row.operatingSystem
+                                OperatingSystemVersion = $row.operatingSystemVersion
+                                ComputerType = if ($row.operatingSystem -match 'Server') { 'Server' } else { 'Workstation' }
+                                Location = ''
+                                Description = $row.description
+                                DistinguishedName = $row.distinguishedName
+                                Domain = 'example.com'
+                            }
+                            $Script:Computers += $computer
+                            $Script:rawComputers += $computer
+                            $computerCount++
                         }
-                        $Script:Computers += $computer
-                        $computerCount++
+                    }
+
+                    '^organizationalUnit$' {
+                        $ouCount++
+                        ## OUs are structural, don't need explicit import
+                    }
+
+                    '^(domainDNS|container|builtinDomain)$' {
+                        ## Structural/system objects - skip silently
                     }
                 }
             }
 
             ## Update totals
-            $Script:ADObjects = $Script:Users + $Script:Groups + $Script:Computers
+            $Script:ADObjects = $Script:Users + $Script:Groups + $Script:Computers + $Script:rawDCs
+            $Script:DCs = $Script:rawDCs
 
-            Debug-Log ": Imported $userCount users, $groupCount groups, $computerCount computers" -Type "Success"
-            Show-Modal "Import Complete" "Successfully imported:`n`nUsers: $userCount`nGroups: $groupCount`nComputers: $computerCount`n`nTotal: $($Script:ADObjects.Count) objects"
+            Debug-Log ": Import complete - Users: $userCount, Groups: $groupCount, Computers: $computerCount, DCs: $dcCount, OUs: $ouCount" -Type "Success"
+
+            ## Show completion summary
+            $completionMsg = @"
+Import Complete!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Imported Objects:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Users:                $userCount
+Groups:               $groupCount
+Computers:            $computerCount
+Domain Controllers:   $dcCount
+Organizational Units: $ouCount
+
+Total Objects: $($Script:ADObjects.Count)
+
+The tree will be rebuilt automatically.
+"@
+
+            Show-Modal "Import Complete" $completionMsg
 
             ## Rebuild tree with new data
+            Debug-Log ": Rebuilding tree with imported data..." -Type "Info"
             Refresh-Data -domain $Script:CurrentDomain
-            Build-Tree -domain $Script:CurrentDomain
+            $rootNode = Build-Tree -domain $Script:CurrentDomain
+            if ($rootNode) {
+                $Script:tree.ClearObjects()
+                $Script:tree.AddObject($rootNode)
+            }
 
         } catch {
             Debug-Log ": Import failed: $($_.Exception.Message)" -Type "Error"
-            Show-Modal "Import Failed" "Failed to import demo data:`n`n$($_.Exception.Message)`n`nNote: CSV structure must match export format.`nIf you mess it up, that's your issue."
+            Show-Modal "Import Failed" "Failed to import demo data:`n`n$($_.Exception.Message)`n`nNote: CSV must be from AD CSV export tool (csvde.exe).`nIf you mess it up, that's your issue."
         }
     }
 }
@@ -3039,6 +3173,384 @@ $($Script:ProjectName) is codenamed $Script:FruitName because:
 }
 
 
+################### Demo Data Functions ################
+function Manage-DemoData {
+  <#
+  .SYNOPSIS
+  Unified demo data management - import, export, backup, and restore
+
+  .DESCRIPTION
+  Single function to handle all demo data operations with helper functions properly scoped
+  #>
+
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [ValidateSet('Import', 'Export', 'Backup', 'Restore', 'Reset')]
+    [string]$Action,
+
+    [Parameter(Position=1)]
+    [string]$Path = "",
+
+    [switch]$AsDemo,
+
+    [bool]$IncludeUsers = $true,
+    [bool]$IncludeGroups = $true,
+    [bool]$IncludeComputers = $true,
+    [bool]$IncludeDCs = $true
+  )
+
+  ## ==================== INTERNAL HELPER FUNCTIONS ====================
+  ## Define these FIRST so they're available to all code below
+
+  function ExtractOUPath {
+    param([string]$DN)
+    if ([string]::IsNullOrWhiteSpace($DN)) { return @() }
+    $ouComponents = @()
+    $parts = $DN -split '(?<!\\),' | Where-Object { $_ -match '^OU=' }
+    foreach ($part in $parts) {
+      if ($part -match '^OU=(.+)$') { $ouComponents += $matches[1] }
+    }
+    [array]::Reverse($ouComponents)
+    return $ouComponents
+  }
+
+  function ExtractDomain {
+    param([string]$DN)
+    if ([string]::IsNullOrWhiteSpace($DN)) { return '' }
+    $dcParts = $DN -split '(?<!\\),' | Where-Object { $_ -match '^DC=' } | ForEach-Object {
+      if ($_ -match '^DC=(.+)$') { $matches[1] }
+    }
+    return ($dcParts -join '.')
+  }
+
+  function ParseUser {
+    param([object]$CSVObject)
+    try {
+      $dn = $CSVObject.distinguishedName
+      $ouPath = ExtractOUPath -DN $dn
+      $domain = ExtractDomain -DN $dn
+      $groups = @()
+      if ($CSVObject.memberOf) {
+        $groups = $CSVObject.memberOf -split ';' | ForEach-Object {
+          if ($_ -match 'CN=([^,]+)') { $matches[1] }
+        }
+      }
+      $uac = [int]$CSVObject.userAccountControl
+      $disabled = ($uac -band 0x0002) -ne 0
+      $locked = ($uac -band 0x0010) -ne 0
+      return @{
+        Name = $CSVObject.name; SamAccountName = $CSVObject.sAMAccountName
+        UserPrincipalName = $CSVObject.userPrincipalName; OU = $ouPath; Groups = $groups
+        Title = $CSVObject.title; Email = $CSVObject.mail; Country = $CSVObject.countryCode
+        Disabled = $disabled; Locked = $locked
+        MustChangePassword = ($CSVObject.pwdLastSet -eq '0')
+        Department = $CSVObject.description; Office = $CSVObject.physicalDeliveryOfficeName
+        Phone = $CSVObject.telephoneNumber; MobilePhone = $CSVObject.mobile
+        Description = $CSVObject.description; Manager = ''; Company = ''; Domain = $domain
+      }
+    } catch {
+      Debug-Log ": Failed to parse user: $($CSVObject.name)" -Type "Warn"
+      return $null
+    }
+  }
+
+  function ParseGroup {
+    param([object]$CSVObject)
+    try {
+      $groupType = [int]$CSVObject.groupType
+      $isSecurity = ($groupType -band 0x80000000) -ne 0
+      $type = if ($isSecurity) { 'Security' } else { 'Distribution' }
+      $scope = switch ($groupType -band 0xF) {
+        1 { 'Global' }; 2 { 'DomainLocal' }; 4 { 'Universal' }; default { 'Global' }
+      }
+      return @{
+        Name = $CSVObject.name; Description = $CSVObject.description
+        Type = $type; Scope = $scope
+        ManagedBy = if ($CSVObject.managedBy -match 'CN=([^,]+)') { $matches[1] } else { '' }
+        Email = $CSVObject.mail
+      }
+    } catch { return $null }
+  }
+
+  function ParseComputer {
+    param([object]$CSVObject)
+    try {
+      $dn = $CSVObject.distinguishedName
+      $ouPath = ExtractOUPath -DN $dn
+      $domain = ExtractDomain -DN $dn
+      $uac = [int]$CSVObject.userAccountControl
+      $enabled = ($uac -band 0x0002) -eq 0
+      return @{
+        Name = $CSVObject.name; SamAccountName = $CSVObject.sAMAccountName
+        Type = 'Computer'; Role = 'WKS'; OU = $ouPath
+        OS = $CSVObject.operatingSystem; OperatingSystemVersion = $CSVObject.operatingSystemVersion
+        DNSHostName = $CSVObject.dNSHostName; Description = $CSVObject.description
+        Enabled = $enabled; Domain = $domain
+      }
+    } catch { return $null }
+  }
+
+  function ParseDomainController {
+    param([object]$CSVObject)
+    try {
+      $domain = ExtractDomain -DN $CSVObject.distinguishedName
+      $isGC = $CSVObject.servicePrincipalName -match 'GC/'
+      return @{
+        Name = $CSVObject.name; SamAccountName = $CSVObject.sAMAccountName
+        DNSHostName = $CSVObject.dNSHostName; Site = 'Default-First-Site-Name'
+        Location = ''; Domain = $domain; Forest = $domain
+        OS = $CSVObject.operatingSystem; OperatingSystemVersion = $CSVObject.operatingSystemVersion
+        IPv4Address = ''; Enabled = $true; IsGlobalCatalog = $isGC
+        FSMORoles = @(); LastReplication = Get-Date
+        ReplicationHealth = 'Healthy'; LastBoot = Get-Date
+      }
+    } catch { return $null }
+  }
+
+  function ParseOU {
+    param([object]$CSVObject)
+    try {
+      $dn = $CSVObject.distinguishedName
+      $ouPath = ExtractOUPath -DN $dn
+      return @{
+        Name = $CSVObject.ou; DN = $dn; Path = $ouPath
+        Description = $CSVObject.description
+      }
+    } catch { return $null }
+  }
+
+  function BuildUserCSV {
+    param([hashtable]$User)
+    $ouDN = ($User.OU | ForEach-Object { "OU=$_" }) -join ','
+    $dn = "CN=$($User.Name),$ouDN,DC=example,DC=com"
+    $uac = 512
+    if ($User.Disabled) { $uac += 2 }
+    if ($User.Locked) { $uac += 16 }
+    return [PSCustomObject]@{
+      distinguishedName = $dn; objectClass = 'user'; name = $User.Name
+      sAMAccountName = $User.SamAccountName; userPrincipalName = $User.UserPrincipalName
+      mail = $User.Email; title = $User.Title; description = $User.Description
+      telephoneNumber = $User.Phone; mobile = $User.MobilePhone
+      userAccountControl = $uac
+      pwdLastSet = if ($User.MustChangePassword) { '0' } else { '132000000000000000' }
+      memberOf = ($User.Groups | ForEach-Object { "CN=$_,OU=Groups,DC=example,DC=com" }) -join ';'
+    }
+  }
+
+  function BuildGroupCSV {
+    param([hashtable]$Group)
+    $groupType = if ($Group.Type -eq 'Security') { -2147483646 } else { 2 }
+    return [PSCustomObject]@{
+      distinguishedName = "CN=$($Group.Name),OU=Groups,DC=example,DC=com"
+      objectClass = 'group'; name = $Group.Name; description = $Group.Description
+      mail = $Group.Email; groupType = $groupType
+    }
+  }
+
+  function BuildComputerCSV {
+    param([hashtable]$Computer)
+    $ouDN = ($Computer.OU | ForEach-Object { "OU=$_" }) -join ','
+    $dn = "CN=$($Computer.Name),$ouDN,DC=example,DC=com"
+    $uac = if ($Computer.Enabled) { 4096 } else { 4098 }
+    return [PSCustomObject]@{
+      distinguishedName = $dn; objectClass = 'computer'; name = $Computer.Name
+      sAMAccountName = $Computer.SamAccountName; dNSHostName = $Computer.DNSHostName
+      operatingSystem = $Computer.OS; operatingSystemVersion = $Computer.OperatingSystemVersion
+      description = $Computer.Description; userAccountControl = $uac
+    }
+  }
+
+  function BuildDCCSV {
+    param([hashtable]$DC)
+    $dn = "CN=$($DC.Name),OU=Domain Controllers,DC=example,DC=com"
+    $spn = "HOST/$($DC.DNSHostName)"
+    if ($DC.IsGlobalCatalog) { $spn += ";GC/$($DC.DNSHostName)" }
+    return [PSCustomObject]@{
+      distinguishedName = $dn; objectClass = 'computer'; name = $DC.Name
+      sAMAccountName = $DC.SamAccountName; dNSHostName = $DC.DNSHostName
+      operatingSystem = $DC.OS; operatingSystemVersion = $DC.OperatingSystemVersion
+      userAccountControl = 532480; servicePrincipalName = $spn
+    }
+  }
+
+  ## ==================== IMPORT ====================
+  if ($Action -eq 'Import') {
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+      $Path = Show-FileBrowserDialog -StartDir $PSScriptRoot -Title "Import AD CSV Data" -Filter @("*.csv", "*.txt")
+      if (-not $Path) { Debug-Log ": Import cancelled" -Type "Info"; return }
+    }
+    if (-not (Test-Path $Path)) { throw "File not found: $Path" }
+
+    Debug-Log ": Importing AD data from CSV: $Path" -Type "Info"
+    try {
+      $csvData = Import-Csv -Path $Path -ErrorAction Stop
+      Debug-Log ": Loaded $($csvData.Count) objects from CSV" -Type "Info"
+
+      $users = [System.Collections.ArrayList]@()
+      $groups = [System.Collections.ArrayList]@()
+      $computers = [System.Collections.ArrayList]@()
+      $dcs = [System.Collections.ArrayList]@()
+      $ous = [System.Collections.ArrayList]@()
+
+      ## ---- Infrastructure / non-demo AD objects ----
+      $trusts        = [System.Collections.ArrayList]@()
+      $servicePoints = [System.Collections.ArrayList]@()
+      $dfsrObjects   = [System.Collections.ArrayList]@()
+      $unknownInfra  = [System.Collections.ArrayList]@()
+
+      foreach ($obj in $csvData) {
+        $objectClass = $obj.objectClass
+        switch -Regex ($objectClass) {
+          'user' { $user = ParseUser -CSVObject $obj; if ($user) { [void]$users.Add($user) } }
+          'group' { $group = ParseGroup -CSVObject $obj; if ($group) { [void]$groups.Add($group) } }
+          'computer' {
+            if ($obj.userAccountControl -match '532480|8192' -or $obj.servicePrincipalName -match 'E3514235') {
+              $dc = ParseDomainController -CSVObject $obj; if ($dc) { [void]$dcs.Add($dc) }
+            } else {
+              $computer = ParseComputer -CSVObject $obj; if ($computer) { [void]$computers.Add($computer) }
+            }
+          }
+          'organizationalUnit'     { $ou    = ParseOU -CSVObject $obj            ; if ($ou) { [void]$ous.Add($ou) } }
+          'trustedDomain'          { $trust = ParseTrustedDomain -CSVObject $obj ; if ($trust) { [void]$trusts.Add($trust) }}
+          'serviceConnectionPoint' { $scp   = ParseServiceConnectionPoint -CSVObject $obj ; if ($scp) { [void]$servicePoints.Add($scp) }}
+          '^msDFSR-'               { $dfsr = ParseDFSRObject -CSVObject $obj     ;   if ($dfsr) { [void]$dfsrObjects.Add($dfsr) }}
+          '^(domainDNS|container|builtinDomain)$' {}  # Structural AD containers – ignored but expected
+          default {
+            [void]$unknownInfra.Add(@{
+            Class = $objectClass
+            Name  = $obj.name
+            DN    = $obj.distinguishedName
+            })
+          }
+      }
+
+      Debug-Log ": Parsed $($users.Count) users, $($groups.Count) groups, $($computers.Count) computers, $($dcs.Count) DCs" -Type "Success"
+
+      if ($AsDemo) {
+        $Script:rawUsers = $users; $Script:rawDCs = $dcs; $Script:rawComputers = $computers
+        $Script:rawDemoGroups    = $groups; $Script:rawOUs = $ous
+        $Script:rawTrusts        = $trusts
+        $Script:rawServicePoints = $servicePoints
+        $Script:rawDFSR          = $dfsrObjects
+        $Script:rawUnknownInfra  = $unknownInfra
+
+        Debug-Log ": Demo data replaced with imported CSV data" -Type "Success"
+      }
+
+      return @{ Users = $users; Groups = $groups; Computers = $computers; DCs = $dcs; OUs = $ous; Trusts = $trusts; ServicePoints = $servicePoints; DFSR = $dfsrObjects; UnknownInfra = $unknownInfra }
+    }
+  } catch {
+    Debug-Log ": Failed to import CSV: $($_.Exception.Message)" -Type "Error"
+    throw
+  }
+
+  ## ==================== EXPORT ====================
+  elseif ($Action -eq 'Export') {
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+      $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+      $Path = Show-FileBrowserDialog -StartDir $PSScriptRoot -Title "Export Demo Data" -Filter @("*.csv", "*.txt")
+      if (-not $Path) { Debug-Log ": Export cancelled" -Type "Info"; return }
+      if ($Path -notmatch '\.(csv|txt)$') { $Path = "$Path-$timestamp.csv" }
+    }
+
+    Debug-Log ": Exporting demo data to CSV: $Path" -Type "Info"
+    try {
+      $exportData = [System.Collections.ArrayList]@()
+      if ($IncludeUsers -and $Script:rawUsers) {
+        foreach ($user in $Script:rawUsers) { [void]$exportData.Add((BuildUserCSV -User $user)) }
+        Debug-Log ": Added $($Script:rawUsers.Count) users to export" -Type "Info"
+      }
+      if ($IncludeGroups -and $Script:rawDemoGroups) {
+        foreach ($group in $Script:rawDemoGroups) { [void]$exportData.Add((BuildGroupCSV -Group $group)) }
+        Debug-Log ": Added $($Script:rawDemoGroups.Count) groups to export" -Type "Info"
+      }
+      if ($IncludeComputers -and $Script:rawComputers) {
+        foreach ($computer in $Script:rawComputers) { [void]$exportData.Add((BuildComputerCSV -Computer $computer)) }
+        Debug-Log ": Added $($Script:rawComputers.Count) computers to export" -Type "Info"
+      }
+      if ($IncludeDCs -and $Script:rawDCs) {
+        foreach ($dc in $Script:rawDCs) { [void]$exportData.Add((BuildDCCSV -DC $dc)) }
+        Debug-Log ": Added $($Script:rawDCs.Count) DCs to export" -Type "Info"
+      }
+      $exportData | Export-Csv -Path $Path -NoTypeInformation -Encoding UTF8
+      Debug-Log ": Exported $($exportData.Count) objects to $Path" -Type "Success"
+      return $Path
+    } catch {
+      Debug-Log ": Failed to export CSV: $($_.Exception.Message)" -Type "Error"
+      throw
+    }
+  }
+
+  ## ==================== BACKUP ====================
+  elseif ($Action -eq 'Backup') {
+    $backupDir = Join-Path $PSScriptRoot "demo-backups"
+    if (-not (Test-Path $backupDir)) { New-Item -Path $backupDir -ItemType Directory -Force | Out-Null }
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $backupPath = Join-Path $backupDir "demo-backup-$timestamp.csv"
+    Debug-Log ": Creating backup at $backupPath" -Type "Info"
+    Manage-DemoData -Action Export -Path $backupPath
+    return $backupPath
+  }
+
+  ## ==================== RESTORE ====================
+  elseif ($Action -eq 'Restore') {
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+      $backupDir = Join-Path $PSScriptRoot "demo-backups"
+      if (Test-Path $backupDir) {
+        $latestBackup = Get-ChildItem -Path $backupDir -Filter "demo-backup-*.csv" |
+                        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($latestBackup) {
+          $Path = $latestBackup.FullName
+          Debug-Log ": Using most recent backup: $Path" -Type "Info"
+        } else { throw "No backup files found in $backupDir" }
+      } else { throw "Backup directory not found: $backupDir" }
+    }
+    Debug-Log ": Restoring demo data from backup: $Path" -Type "Info"
+    Manage-DemoData -Action Import -Path $Path -AsDemo
+  }
+
+  ## ==================== RESET ====================
+  elseif ($Action -eq 'Reset') {
+    Debug-Log ": Resetting demo data to hardcoded defaults" -Type "Info"
+    $Script:rawUsers = $null; $Script:rawDCs = $null; $Script:rawComputers = $null
+    $Script:rawDemoGroups = $null; $Script:rawOUs = $null
+    Debug-Log ": Demo data cleared - will reload defaults on next refresh" -Type "Success"
+  }
+
+  function ParseTrustedDomain {
+    param([object]$CSVObject)
+    return @{
+      Name      = $CSVObject.name
+      Partner  = $CSVObject.trustPartner
+      Type     = $CSVObject.trustType
+      Direction= $CSVObject.trustDirection
+      DN       = $CSVObject.distinguishedName
+    }
+  }
+
+  function ParseServiceConnectionPoint {
+    param([object]$CSVObject)
+    return @{
+      Name     = $CSVObject.name
+      Service  = $CSVObject.serviceClassName
+      Keywords = if ($CSVObject.keywords) { $CSVObject.keywords -split ';' } else { @() }
+      DN       = $CSVObject.distinguishedName
+    }
+  }
+
+  function ParseDFSRObject {
+    param([object]$CSVObject)
+    return @{
+      Class = $CSVObject.objectClass
+      Name  = $CSVObject.name
+      DN    = $CSVObject.distinguishedName
+    }
+  }
+  }
+
+  Debug-Log ": Infra: $($trusts.Count) trusts, $($servicePoints.Count) services, $($dfsrObjects.Count) DFSR objects" -Type "Debug"
+}
 
 ############################# AD Funcitons #######################
 
@@ -4709,133 +5221,139 @@ function Load-DomainData {
     ## ------------------ Define Demo Users ------------------
     $Script:rawUsers = @(
       ## ========== Eurythmics – UK/Scotland/Aberdeen (Satellite Office) ==========
-      @{ Name = 'Annie Lennox'             ; SamAccountName = 'annie.lennox'      ; UserPrincipalName = 'annie.lennox@example.org'       ; OU = @('Locations','UK','Scotland','Aberdeen','Eurythmics')                  ; Groups = @('Eurythmics','Vocalists','Keyboardists')   ; Title = 'Lead Vocalist/Keyboardist'  ; Email = 'annie.lennox@example.org'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aberdeen Office'   ; Phone = '+44 1224 496 010' ; MobilePhone = '+44 7700 941001' ; Street = '210 Union Street'         ; City = 'Aberdeen'    ; PostalCode = 'AB10 1TL'    ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist and co-founder of Eurythmics'                   },
-      @{ Name = 'Dave Stewart'             ; SamAccountName = 'dave.stewart'      ; UserPrincipalName = 'dave.stewart@example.org'       ; OU = @('Locations','UK','Scotland','Aberdeen','Eurythmics')                  ; Groups = @('Eurythmics','Guitarists','Producers')     ; Title = 'Guitarist and Producer'     ; Email = 'dave.stewart@example.org'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aberdeen Office'   ; Phone = '+44 1224 496 011' ; MobilePhone = '+44 7700 941002' ; Street = '18 Rosemount Place'       ; City = 'Aberdeen'    ; PostalCode = 'AB25 2XP'    ; Company = 'Example Music Ltd'   ; Manager = 'Annie Lennox'     ; Description = 'Guitarist, songwriter and producer for Eurythmics'            },
+      @{ Name = 'Annie Lennox'             ; SamAccountName = 'annie.lennox'      ; UserPrincipalName = 'annie.lennox@example.org'       ; OU = @('Locations','UK','Scotland','Aberdeen','Eurythmics')                           ; Groups = @('Eurythmics','Vocalists','Keyboardists')   ; Title = 'Lead Vocalist/Keyboardist'  ; Email = 'annie.lennox@example.org'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aberdeen Office'   ; Phone = '+44 1224 496 010' ; MobilePhone = '+44 7700 941001' ; Street = '210 Union Street'         ; City = 'Aberdeen'    ; PostalCode = 'AB10 1TL'    ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist and co-founder of Eurythmics'                   },
+      @{ Name = 'Dave Stewart'             ; SamAccountName = 'dave.stewart'      ; UserPrincipalName = 'dave.stewart@example.org'       ; OU = @('Locations','UK','Scotland','Aberdeen','Eurythmics')                           ; Groups = @('Eurythmics','Guitarists','Producers')     ; Title = 'Guitarist and Producer'     ; Email = 'dave.stewart@example.org'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aberdeen Office'   ; Phone = '+44 1224 496 011' ; MobilePhone = '+44 7700 941002' ; Street = '18 Rosemount Place'       ; City = 'Aberdeen'    ; PostalCode = 'AB25 2XP'    ; Company = 'Example Music Ltd'   ; Manager = 'Annie Lennox'     ; Description = 'Guitarist, songwriter and producer for Eurythmics'            },
 
       ## ========== Deacon Blue – UK/Scotland/Dundee ==========
-      @{ Name = 'Ricky Ross'               ; SamAccountName = 'ricky.ross'        ; UserPrincipalName = 'ricky.ross@example.net'         ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                   ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Lead Vocalist'               ; Email = 'ricky.ross@example.net'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 001' ; MobilePhone = '+44 7700 392001' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist for Deacon Blue'                                },
-      @{ Name = 'Lorraine McIntosh'        ; SamAccountName = 'lorraine.mcintosh' ; UserPrincipalName = 'lorraine.mcintosh@example.net'  ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                   ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Vocalist'                    ; Email = 'lorraine.mcintosh@example.net'  ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 002' ; MobilePhone = '+44 7700 392002' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Vocalist for Deacon Blue'                                     },
-      @{ Name = 'Dougie Vipond'            ; SamAccountName = 'dougie.vipond'     ; UserPrincipalName = 'dougie.vipond@example.net'      ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                   ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Drummer'                     ; Email = 'dougie.vipond@example.net'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 003' ; MobilePhone = '+44 7700 392003' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Drummer for Deacon Blue'                                      },
-      @{ Name = 'James Prime'              ; SamAccountName = 'james.prime'       ; UserPrincipalName = 'james.prime@example.net'        ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                   ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Keyboardist'                 ; Email = 'james.prime@example.net'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 004' ; MobilePhone = '+44 7700 392004' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Keyboardist for Deacon Blue'                                  },
-      @{ Name = 'Ewen Vernal'              ; SamAccountName = 'ewen.vernal'       ; UserPrincipalName = 'ewen.vernal@example.net'        ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                   ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Bassist'                     ; Email = 'ewen.vernal@example.net'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 005' ; MobilePhone = '+44 7700 392005' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Bassist for Deacon Blue'                                      },
-      @{ Name = 'Graeme Kelling'           ; SamAccountName = 'graeme.kelling'    ; UserPrincipalName = 'graeme.kelling@example.net'     ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                   ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Guitarist'                   ; Email = 'graeme.kelling@example.net'     ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 006' ; MobilePhone = '+44 7700 392006' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Guitarist for Deacon Blue'                                    },
+      @{ Name = 'Ricky Ross'               ; SamAccountName = 'ricky.ross'        ; UserPrincipalName = 'ricky.ross@example.net'         ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                            ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Lead Vocalist'               ; Email = 'ricky.ross@example.net'           ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 001' ; MobilePhone = '+44 7700 392001' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist for Deacon Blue'                                },
+      @{ Name = 'Lorraine McIntosh'        ; SamAccountName = 'lorraine.mcintosh' ; UserPrincipalName = 'lorraine.mcintosh@example.net'  ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                            ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Vocalist'                    ; Email = 'lorraine.mcintosh@example.net'    ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 002' ; MobilePhone = '+44 7700 392002' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Vocalist for Deacon Blue'                                     },
+      @{ Name = 'Dougie Vipond'            ; SamAccountName = 'dougie.vipond'     ; UserPrincipalName = 'dougie.vipond@example.net'      ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                            ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Drummer'                     ; Email = 'dougie.vipond@example.net'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 003' ; MobilePhone = '+44 7700 392003' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Drummer for Deacon Blue'                                      },
+      @{ Name = 'James Prime'              ; SamAccountName = 'james.prime'       ; UserPrincipalName = 'james.prime@example.net'        ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                            ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Keyboardist'                 ; Email = 'james.prime@example.net'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 004' ; MobilePhone = '+44 7700 392004' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Keyboardist for Deacon Blue'                                  },
+      @{ Name = 'Ewen Vernal'              ; SamAccountName = 'ewen.vernal'       ; UserPrincipalName = 'ewen.vernal@example.net'        ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                            ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Bassist'                     ; Email = 'ewen.vernal@example.net'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 005' ; MobilePhone = '+44 7700 392005' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Bassist for Deacon Blue'                                      },
+      @{ Name = 'Graeme Kelling'           ; SamAccountName = 'graeme.kelling'    ; UserPrincipalName = 'graeme.kelling@example.net'     ; OU = @('Locations','UK','Scotland','Dundee','Deacon Blue')                            ; Groups = @('Deacon Blue','Sales')                     ; Title = 'Guitarist'                   ; Email = 'graeme.kelling@example.net'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Dundee Office'     ; Phone = '+44 1632 496 006' ; MobilePhone = '+44 7700 392006' ; Street = '1 Tannadice Street'       ; City = 'Dundee'      ; PostalCode = 'DD3 7JW'     ; Company = 'Example Music Ltd'   ; Manager = 'Ricky Ross'       ; Description = 'Guitarist for Deacon Blue'                                    },
 
       ## ========== Marillion (UK/Scotland/Edinburgh) ==========
-      @{ Name = 'Derek Dick'               ; SamAccountName = 'fish'              ; UserPrincipalName = 'fish@example.com'               ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                  ; Groups = @('Marillion','Vocalists')                   ; Title = 'Lead Vocalist'               ; Email = 'fish@example.com'               ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $true  ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0221' ; MobilePhone = '+44 7700 222221' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Former lead vocalist (Fish) for Marillion (1981-1988)'        },
-      @{ Name = 'Steve Rothery'            ; SamAccountName = 'steve.rothery'     ; UserPrincipalName = 'steve.rothery@example.com'      ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                  ; Groups = @('Marillion','Guitarists')                  ; Title = 'Lead Guitarist'              ; Email = 'steve.rothery@example.com'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0222' ; MobilePhone = '+44 7700 222222' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = 'Derek Dick'       ; Description = 'Lead guitarist and founding member of Marillion'              },
-      @{ Name = 'Pete Trewavas'            ; SamAccountName = 'pete.trewavas'     ; UserPrincipalName = 'pete.trewavas@example.com'      ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                  ; Groups = @('Marillion','Guitarists')                  ; Title = 'Bassist'                     ; Email = 'pete.trewavas@example.com'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0223' ; MobilePhone = '+44 7700 222223' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = 'Derek Dick'       ; Description = 'Bassist and founding member of Marillion'                     },
-      @{ Name = 'Mark Kelly'               ; SamAccountName = 'mark.kelly'        ; UserPrincipalName = 'mark.kelly@example.com'         ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                  ; Groups = @('Marillion','Keyboards')                   ; Title = 'Keyboardist'                 ; Email = 'mark.kelly@example.com'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0224' ; MobilePhone = '+44 7700 222224' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = 'Derek Dick'       ; Description = 'Keyboardist and founding member of Marillion'                 },
-      @{ Name = 'Ian Mosley'               ; SamAccountName = 'ian.mosley'        ; UserPrincipalName = 'ian.mosley@example.com'         ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                  ; Groups = @('Marillion','Percussion')                  ; Title = 'Drummer'                     ; Email = 'ian.mosley@example.com'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0225' ; MobilePhone = '+44 7700 222225' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = 'Derek Dick'       ; Description = 'Drummer for Marillion (joined 1984)'                          },
+      @{ Name = 'Derek Dick'               ; SamAccountName = 'fish'              ; UserPrincipalName = 'fish@example.com'               ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                           ; Groups = @('Marillion','Vocalists')                   ; Title = 'Lead Vocalist'               ; Email = 'fish@example.com'                 ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $true  ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0221' ; MobilePhone = '+44 7700 222221' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Former lead vocalist (Fish) for Marillion (1981-1988)'        },
+      @{ Name = 'Steve Rothery'            ; SamAccountName = 'steve.rothery'     ; UserPrincipalName = 'steve.rothery@example.com'      ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                           ; Groups = @('Marillion','Guitarists')                  ; Title = 'Lead Guitarist'              ; Email = 'steve.rothery@example.com'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0222' ; MobilePhone = '+44 7700 222222' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = 'Derek Dick'       ; Description = 'Lead guitarist and founding member of Marillion'              },
+      @{ Name = 'Pete Trewavas'            ; SamAccountName = 'pete.trewavas'     ; UserPrincipalName = 'pete.trewavas@example.com'      ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                           ; Groups = @('Marillion','Guitarists')                  ; Title = 'Bassist'                     ; Email = 'pete.trewavas@example.com'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0223' ; MobilePhone = '+44 7700 222223' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = 'Derek Dick'       ; Description = 'Bassist and founding member of Marillion'                     },
+      @{ Name = 'Mark Kelly'               ; SamAccountName = 'mark.kelly'        ; UserPrincipalName = 'mark.kelly@example.com'         ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                           ; Groups = @('Marillion','Keyboards')                   ; Title = 'Keyboardist'                 ; Email = 'mark.kelly@example.com'           ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0224' ; MobilePhone = '+44 7700 222224' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = 'Derek Dick'       ; Description = 'Keyboardist and founding member of Marillion'                 },
+      @{ Name = 'Ian Mosley'               ; SamAccountName = 'ian.mosley'        ; UserPrincipalName = 'ian.mosley@example.com'         ; OU = @('Locations','UK','Scotland','Edinburgh','Marillion')                           ; Groups = @('Marillion','Percussion')                  ; Title = 'Drummer'                     ; Email = 'ian.mosley@example.com'           ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0225' ; MobilePhone = '+44 7700 222225' ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music Ltd'   ; Manager = 'Derek Dick'       ; Description = 'Drummer for Marillion (joined 1984)'                          },
 
       ## ========== Proclaimers (UK/Scotland/Edinburgh) ==========
-      @{ Name = 'Craig Reid'               ; SamAccountName = 'craig.reid'        ; UserPrincipalName = 'craig.reid@example.net'         ; OU = @('Locations','UK','Scotland','Edinburgh','The Proclaimers')            ; Groups = @('The Proclaimers','VPN-Users')             ; Title = 'Vocalist / Guitarist'        ; Email = 'craig.reid@example.net'         ; Country='UK'   ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0101' ; MobilePhone = '+44 7700 496011' ; Street = '12 Albion Place'          ; City = 'Edinburgh'   ; PostalCode = 'EH7 5DG'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description='Founding member of The Proclaimers'                             },
-      @{ Name = 'Charlie Reid'             ; SamAccountName = 'charlie.reid'      ; UserPrincipalName = 'charlie.reid@example.net'       ; OU = @('Locations','UK','Scotland','Edinburgh','The Proclaimers')            ; Groups = @('The Proclaimers','VPN-Users')             ; Title = 'Vocalist / Guitarist'        ; Email = 'charlie.reid@example.net'       ; Country='UK'   ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0102' ; MobilePhone = '+44 7700 496012' ; Street = '12 Albion Place'          ; City = 'Edinburgh'   ; PostalCode = 'EH7 5DG'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description='Founding member of The Proclaimers'                             },
+      @{ Name = 'Craig Reid'               ; SamAccountName = 'craig.reid'        ; UserPrincipalName = 'craig.reid@example.net'         ; OU = @('Locations','CA','Ontario','Brockville','The Proclaimers')                     ; Groups = @('The Proclaimers','VPN-Users')             ; Title = 'Vocalist / Guitarist'        ; Email = 'craig.reid@example.net'           ; Country='UK'   ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0101' ; MobilePhone = '+44 7700 496011' ; Street = '12 Albion Place'          ; City = 'Edinburgh'   ; PostalCode = 'EH7 5DG'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description='Founding member of The Proclaimers'                             },
+      @{ Name = 'Charlie Reid'             ; SamAccountName = 'charlie.reid'      ; UserPrincipalName = 'charlie.reid@example.net'       ; OU = @('Locations','US','Florida','Miami','The Proclaimers')                          ; Groups = @('The Proclaimers','VPN-Users')             ; Title = 'Vocalist / Guitarist'        ; Email = 'charlie.reid@example.net'         ; Country='UK'   ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0102' ; MobilePhone = '+44 7700 496012' ; Street = '12 Albion Place'          ; City = 'Edinburgh'   ; PostalCode = 'EH7 5DG'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description='Founding member of The Proclaimers'                             },
 
       ## ========== Ultravox – UK/Scotland/Edinburgh (And Vienna) ==========
-      @{ Name = 'Midge Ure'                ; SamAccountName = 'midge.ure'         ; UserPrincipalName = 'midge.ure@example.org'          ; OU = @('Locations','UK','Scotland','Edinburgh','Ultravox')                   ; Groups=@('Ultravox','Sales')                          ; Title = 'Vocalist / Guitarist'        ; Email = 'midge.ure@example.org'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0226' ; MobilePhone = ''                ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music UK'    ; Manager = ''                 ; Description = 'Vocalist and guitarist for Ultravox'                          },
-      @{ Name = 'Billy Currie'             ; SamAccountName = 'billy.currie'      ; UserPrincipalName = 'billy.currie@example.org'       ; OU = @('Locations','UK','Scotland','Edinburgh','Ultravox')                   ; Groups=@('Ultravox','Sales')                          ; Title = 'Keyboardist / Violinist'     ; Email = 'billy.currie@example.org'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0227' ; MobilePhone = ''                ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music UK'    ; Manager = 'Midge Ure'        ; Description = 'Keyboardist and violinist for Ultravox'                       },
-      @{ Name = 'Chris Cross'              ; SamAccountName = 'chris.cross'       ; UserPrincipalName = 'chris.cross@example.org'        ; OU = @('Locations','Austria','Vienna','Ultravox')                            ; Groups=@('Ultravox','Sales')                          ; Title = 'Bassist'                     ; Email = 'chris.cross@example.org'        ; Country = 'AT' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Vienna Office'     ; Phone = '+44 131 496 0228' ; MobilePhone = ''                ; Street = 'Am Hauptbahnhof'          ; City = 'Vienna'      ; PostalCode = '1100 Wien'   ; Company = 'Example Music AT'    ; Manager = 'Midge Ure'        ; Description = 'Bassist for Ultravox'                                         },
-      @{ Name = 'Warren Cann'              ; SamAccountName = 'warren.cann'       ; UserPrincipalName = 'warren.cann@example.org'        ; OU = @('Locations','Austria','Vienna','Ultravox')                            ; Groups=@('Ultravox','Sales')                          ; Title = 'Drummer'                     ; Email = 'warren.cann@example.org'        ; Country = 'AT' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Vienna Office'     ; Phone = '+44 131 496 0229' ; MobilePhone = ''                ; Street = 'Am Hauptbahnhof'          ; City = 'Vienna'      ; PostalCode = '1100 Wien'   ; Company = 'Example Music AT'    ; Manager = 'Midge Ure'        ; Description = 'Drummer for Ultravox'                                         },
+      @{ Name = 'Midge Ure'                ; SamAccountName = 'midge.ure'         ; UserPrincipalName = 'midge.ure@example.org'          ; OU = @('Locations','UK','Scotland','Edinburgh','Ultravox')                            ; Groups=@('Ultravox','Sales')                          ; Title = 'Vocalist / Guitarist'        ; Email = 'midge.ure@example.org'            ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0226' ; MobilePhone = ''                ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music UK'    ; Manager = ''                 ; Description = 'Vocalist and guitarist for Ultravox'                          },
+      @{ Name = 'Billy Currie'             ; SamAccountName = 'billy.currie'      ; UserPrincipalName = 'billy.currie@example.org'       ; OU = @('Locations','UK','Scotland','Edinburgh','Ultravox')                            ; Groups=@('Ultravox','Sales')                          ; Title = 'Keyboardist / Violinist'     ; Email = 'billy.currie@example.org'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Edinburgh Office'  ; Phone = '+44 131 496 0227' ; MobilePhone = ''                ; Street = '22 Tynecastle Street'     ; City = 'Edinburgh'   ; PostalCode = 'EH1 2BB'     ; Company = 'Example Music UK'    ; Manager = 'Midge Ure'        ; Description = 'Keyboardist and violinist for Ultravox'                       },
+      @{ Name = 'Chris Cross'              ; SamAccountName = 'chris.cross'       ; UserPrincipalName = 'chris.cross@example.org'        ; OU = @('Locations','Austria','Vienna','Ultravox')                                     ; Groups=@('Ultravox','Sales')                          ; Title = 'Bassist'                     ; Email = 'chris.cross@example.org'          ; Country = 'AT' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Vienna Office'     ; Phone = '+44 131 496 0228' ; MobilePhone = ''                ; Street = 'Am Hauptbahnhof'          ; City = 'Vienna'      ; PostalCode = '1100 Wien'   ; Company = 'Example Music AT'    ; Manager = 'Midge Ure'        ; Description = 'Bassist for Ultravox'                                         },
+      @{ Name = 'Warren Cann'              ; SamAccountName = 'warren.cann'       ; UserPrincipalName = 'warren.cann@example.org'        ; OU = @('Locations','Austria','Vienna','Ultravox')                                     ; Groups=@('Ultravox','Sales')                          ; Title = 'Drummer'                     ; Email = 'warren.cann@example.org'          ; Country = 'AT' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Vienna Office'     ; Phone = '+44 131 496 0229' ; MobilePhone = ''                ; Street = 'Am Hauptbahnhof'          ; City = 'Vienna'      ; PostalCode = '1100 Wien'   ; Company = 'Example Music AT'    ; Manager = 'Midge Ure'        ; Description = 'Drummer for Ultravox'                                         },
 
       ## ========== Altered Images – UK/Scotland/Glasgow ==========
-      @{ Name = 'Clare Grogan'             ; SamAccountName = 'clare.grogan'      ; UserPrincipalName = 'clare.grogan@example.org'       ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images')               ; Groups = @('Altered Images','Vocalists')              ; Title = 'Lead Vocalist'               ; Email = 'clare.grogan@example.org'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0101' ; MobilePhone = '+44 7700 931001' ; Street = '150 Sauchiehall Street'   ; City = 'Glasgow'     ; PostalCode = 'G2 3EL'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist of Altered Images'                              },
-      @{ Name = 'Johnny McElhone'          ; SamAccountName = 'johnny.mcelhone'   ; UserPrincipalName = 'johnny.mcelhone@example.org'    ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images')               ; Groups = @('Altered Images','Bassists')               ; Title = 'Bassist'                     ; Email = 'johnny.mcelhone@example.org'    ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0102' ; MobilePhone = '+44 7700 931002' ; Street = '42 Hope Street'           ; City = 'Glasgow'     ; PostalCode = 'G2 6AE'      ; Company = 'Example Music Ltd'   ; Manager = 'Clare Grogan'     ; Description = 'Bassist and songwriter for Altered Images'                    },
-      @{ Name = 'Jim McKinven'             ; SamAccountName = 'jim.mckinven'      ; UserPrincipalName = 'jim.mckinven@example.org'       ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images')               ; Groups = @('Altered Images','Guitarists')             ; Title = 'Guitarist'                   ; Email = 'jim.mckinven@example.org'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0103' ; MobilePhone = '+44 7700 931003' ; Street = '77 Bath Street'           ; City = 'Glasgow'     ; PostalCode = 'G2 2EN'      ; Company = 'Example Music Ltd'   ; Manager = 'Clare Grogan'     ; Description = 'Guitarist for Altered Images'                                 },
-      @{ Name = 'Michael Anderson'         ; SamAccountName = 'michael.anderson'  ; UserPrincipalName = 'michael.anderson@example.org'   ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images')               ; Groups = @('Altered Images','Drummers')               ; Title = 'Drummer'                     ; Email = 'michael.anderson@example.org'   ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0104' ; MobilePhone = '+44 7700 931004' ; Street = '305 Argyle Street'        ; City = 'Glasgow'     ; PostalCode = 'G2 8DL'      ; Company = 'Example Music Ltd'   ; Manager = 'Clare Grogan'     ; Description = 'Drummer for Altered Images (aka Tich Anderson)'               },
+      @{ Name = 'Clare Grogan'             ; SamAccountName = 'clare.grogan'      ; UserPrincipalName = 'clare.grogan@example.org'       ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images')                        ; Groups = @('Altered Images','Vocalists')              ; Title = 'Lead Vocalist'               ; Email = 'clare.grogan@example.org'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0101' ; MobilePhone = '+44 7700 931001' ; Street = '150 Sauchiehall Street'   ; City = 'Glasgow'     ; PostalCode = 'G2 3EL'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist of Altered Images'                              },
+      @{ Name = 'Johnny McElhone'          ; SamAccountName = 'johnny.mcelhone'   ; UserPrincipalName = 'johnny.mcelhone@example.org'    ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images')                        ; Groups = @('Altered Images','Bassists')               ; Title = 'Bassist'                     ; Email = 'johnny.mcelhone@example.org'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0102' ; MobilePhone = '+44 7700 931002' ; Street = '42 Hope Street'           ; City = 'Glasgow'     ; PostalCode = 'G2 6AE'      ; Company = 'Example Music Ltd'   ; Manager = 'Clare Grogan'     ; Description = 'Bassist and songwriter for Altered Images'                    },
+      @{ Name = 'Jim McKinven'             ; SamAccountName = 'jim.mckinven'      ; UserPrincipalName = 'jim.mckinven@example.org'       ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images')                        ; Groups = @('Altered Images','Guitarists')             ; Title = 'Guitarist'                   ; Email = 'jim.mckinven@example.org'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0103' ; MobilePhone = '+44 7700 931003' ; Street = '77 Bath Street'           ; City = 'Glasgow'     ; PostalCode = 'G2 2EN'      ; Company = 'Example Music Ltd'   ; Manager = 'Clare Grogan'     ; Description = 'Guitarist for Altered Images'                                 },
+      @{ Name = 'Michael Anderson'         ; SamAccountName = 'michael.anderson'  ; UserPrincipalName = 'michael.anderson@example.org'   ; OU = @('Locations','UK','Scotland','Glasgow','Altered Images')                        ; Groups = @('Altered Images','Drummers')               ; Title = 'Drummer'                     ; Email = 'michael.anderson@example.org'     ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0104' ; MobilePhone = '+44 7700 931004' ; Street = '305 Argyle Street'        ; City = 'Glasgow'     ; PostalCode = 'G2 8DL'      ; Company = 'Example Music Ltd'   ; Manager = 'Clare Grogan'     ; Description = 'Drummer for Altered Images (aka Tich Anderson)'               },
 
       ## ========== Simple Minds (UK/Scotland/Glasgow) ==========
-      @{ Name = 'Jim Kerr'                 ; SamAccountName = 'jkerr'             ; UserPrincipalName = 'jkerr@example.com'              ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                 ; Groups = @('Simple Minds','Vocalists')                ; Title = 'Lead Vocalist'               ; Email = 'jim.kerr@example.com'           ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0111' ; MobilePhone = '+44 7700 111111' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist for Simple Minds'                               },
-      @{ Name = 'Charlie Burchill'         ; SamAccountName = 'charlie.b'         ; UserPrincipalName = 'charlie.b@example.com'          ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                 ; Groups = @('Simple Minds','Guitarists')               ; Title = 'Lead Guitarist'              ; Email = 'charlie.b@example.com'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0112' ; MobilePhone = '+44 7700 111112' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = 'Jim Kerr'         ; Description = 'Guitarist and founding member of Simple Minds'                },
-      @{ Name = 'Mel Gaynor'               ; SamAccountName = 'mel.gaynor'        ; UserPrincipalName = 'mel.gaynor@example.com'         ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                 ; Groups = @('Simple Minds','Percussion')               ; Title = 'Drummer'                     ; Email = 'mel.gaynor@example.com'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0113' ; MobilePhone = '+44 7700 111113' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = 'Jim Kerr'         ; Description = 'Drummer for Simple Minds'                                     },
-      @{ Name = 'Mick MacNeil'             ; SamAccountName = 'mick.macneil'      ; UserPrincipalName = 'mick.macneil@example.com'       ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                 ; Groups = @('Simple Minds','Musicians','Former Staff') ; Title = 'Keyboardist (Former)'        ; Email = 'mick.macneil@example.com'       ; Country = 'UK' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0120' ; MobilePhone = '+44 7700 111120' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Former keyboardist for Simple Minds (1977-1990)'              },
-      @{ Name = 'Derek Forbes'             ; SamAccountName = 'derek.forbes'      ; UserPrincipalName = 'derek.forbes@example.com'       ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                 ; Groups = @('Simple Minds','Musicians','Former Staff') ; Title = 'Bassist (Former)'            ; Email = 'derek.forbes@example.com'       ; Country = 'UK' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0121' ; MobilePhone = '+44 7700 111121' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Former bassist for Simple Minds (1977-1985)'                  },
+      @{ Name = 'Jim Kerr'                 ; SamAccountName = 'jkerr'             ; UserPrincipalName = 'jkerr@example.com'              ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                          ; Groups = @('Simple Minds','Vocalists')                ; Title = 'Lead Vocalist'               ; Email = 'jim.kerr@example.com'             ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0111' ; MobilePhone = '+44 7700 111111' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist for Simple Minds'                               },
+      @{ Name = 'Charlie Burchill'         ; SamAccountName = 'charlie.b'         ; UserPrincipalName = 'charlie.b@example.com'          ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                          ; Groups = @('Simple Minds','Guitarists')               ; Title = 'Lead Guitarist'              ; Email = 'charlie.b@example.com'            ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0112' ; MobilePhone = '+44 7700 111112' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = 'Jim Kerr'         ; Description = 'Guitarist and founding member of Simple Minds'                },
+      @{ Name = 'Mel Gaynor'               ; SamAccountName = 'mel.gaynor'        ; UserPrincipalName = 'mel.gaynor@example.com'         ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                          ; Groups = @('Simple Minds','Percussion')               ; Title = 'Drummer'                     ; Email = 'mel.gaynor@example.com'           ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0113' ; MobilePhone = '+44 7700 111113' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = 'Jim Kerr'         ; Description = 'Drummer for Simple Minds'                                     },
+      @{ Name = 'Mick MacNeil'             ; SamAccountName = 'mick.macneil'      ; UserPrincipalName = 'mick.macneil@example.com'       ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                          ; Groups = @('Simple Minds','Musicians','Former Staff') ; Title = 'Keyboardist (Former)'        ; Email = 'mick.macneil@example.com'         ; Country = 'UK' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0120' ; MobilePhone = '+44 7700 111120' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Former keyboardist for Simple Minds (1977-1990)'              },
+      @{ Name = 'Derek Forbes'             ; SamAccountName = 'derek.forbes'      ; UserPrincipalName = 'derek.forbes@example.com'       ; OU = @('Locations','UK','Scotland','Glasgow','Simple Minds')                          ; Groups = @('Simple Minds','Musicians','Former Staff') ; Title = 'Bassist (Former)'            ; Email = 'derek.forbes@example.com'         ; Country = 'UK' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Glasgow Office'    ; Phone = '+44 141 496 0121' ; MobilePhone = '+44 7700 111121' ; Street = '1 Sauchiehall Street'     ; City = 'Glasgow'     ; PostalCode = 'G1 1AA'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Former bassist for Simple Minds (1977-1985)'                  },
 
       ## ========== Wet Wet Wet — UK / Scotland / Clydebank ==========
-      @{ Name = 'Marti Pellow'             ; SamAccountName = 'marti.pellow'      ; UserPrincipalName = 'marti.pellow@example.net'       ; OU=@('Locations','UK','Scotland','Clydebank','Wet Wet Wet')                  ; Groups = @('Wet Wet Wet','Sales','VPN Users')         ; Title = 'Lead Vocalist'               ; Email = 'marti.pellow@example.net'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Clydebank Office'  ; Phone = '+44 141 496 0201' ; MobilePhone = '+44 7700 496201' ; Street = 'Dumbarton Road 200'       ; City = 'Clydebank'   ; PostalCode = 'G81 1UE'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist of Wet Wet Wet'                                 },
-      @{ Name = 'Graeme Clark'             ; SamAccountName = 'graeme.clark'      ; UserPrincipalName = 'graeme.clark@example.net'       ; OU=@('Locations','UK','Scotland','Clydebank','Wet Wet Wet')                  ; Groups = @('Wet Wet Wet','Sales','VPN Users')         ; Title = 'Bassist'                     ; Email = 'graeme.clark@example.net'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Clydebank Office'  ; Phone = '+44 141 496 0202' ; MobilePhone = '+44 7700 496202' ; Street = 'Dumbarton Road 201'       ; City = 'Clydebank'   ; PostalCode = 'G81 1UE'     ; Company = 'Example Music Ltd'   ; Manager = 'Marti Pellow'     ; Description = 'Bassist for Wet Wet Wet'                                      },
-      @{ Name = 'Tommy Cunningham'         ; SamAccountName = 'tommy.cunningham'  ; UserPrincipalName = 'tommy.cunningham@example.net'   ; OU=@('Locations','UK','Scotland','Clydebank','Wet Wet Wet')                  ; Groups = @('Wet Wet Wet','Sales','VPN Users')         ; Title = 'Drummer'                     ; Email = 'tommy.cunningham@example.net'   ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Clydebank Office'  ; Phone = '+44 141 496 0203' ; MobilePhone = '+44 7700 496203' ; Street = 'Dumbarton Road 202'       ; City = 'Clydebank'   ; PostalCode = 'G81 1UE'     ; Company = 'Example Music Ltd'   ; Manager = 'Marti Pellow'     ; Description = 'Drummer for Wet Wet Wet'                                      },
-      @{ Name = 'Neil Mitchell'            ; SamAccountName = 'neil.mitchell'     ; UserPrincipalName = 'neil.mitchell@example.net'      ; OU=@('Locations','UK','Scotland','Clydebank','Wet Wet Wet')                  ; Groups = @('Wet Wet Wet','Sales','VPN Users')         ; Title = 'Keyboardist'                 ; Email = 'neil.mitchell@example.net'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Clydebank Office'  ; Phone = '+44 141 496 0204' ; MobilePhone = '+44 7700 496204' ; Street = 'Dumbarton Road 203'       ; City = 'Clydebank'   ; PostalCode = 'G81 1UE'     ; Company = 'Example Music Ltd'   ; Manager = 'Marti Pellow'     ; Description = 'Keyboardist for Wet Wet Wet'                                  },
+      @{ Name = 'Marti Pellow'             ; SamAccountName = 'marti.pellow'      ; UserPrincipalName = 'marti.pellow@example.net'       ; OU=@('Locations','UK','Scotland','Clydebank','Wet Wet Wet')                           ; Groups = @('Wet Wet Wet','Sales','VPN Users')         ; Title = 'Lead Vocalist'               ; Email = 'marti.pellow@example.net'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Clydebank Office'  ; Phone = '+44 141 496 0201' ; MobilePhone = '+44 7700 496201' ; Street = 'Dumbarton Road 200'       ; City = 'Clydebank'   ; PostalCode = 'G81 1UE'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist of Wet Wet Wet'                                 },
+      @{ Name = 'Graeme Clark'             ; SamAccountName = 'graeme.clark'      ; UserPrincipalName = 'graeme.clark@example.net'       ; OU=@('Locations','UK','Scotland','Clydebank','Wet Wet Wet')                           ; Groups = @('Wet Wet Wet','Sales','VPN Users')         ; Title = 'Bassist'                     ; Email = 'graeme.clark@example.net'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Clydebank Office'  ; Phone = '+44 141 496 0202' ; MobilePhone = '+44 7700 496202' ; Street = 'Dumbarton Road 201'       ; City = 'Clydebank'   ; PostalCode = 'G81 1UE'     ; Company = 'Example Music Ltd'   ; Manager = 'Marti Pellow'     ; Description = 'Bassist for Wet Wet Wet'                                      },
+      @{ Name = 'Tommy Cunningham'         ; SamAccountName = 'tommy.cunningham'  ; UserPrincipalName = 'tommy.cunningham@example.net'   ; OU=@('Locations','UK','Scotland','Clydebank','Wet Wet Wet')                           ; Groups = @('Wet Wet Wet','Sales','VPN Users')         ; Title = 'Drummer'                     ; Email = 'tommy.cunningham@example.net'     ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Clydebank Office'  ; Phone = '+44 141 496 0203' ; MobilePhone = '+44 7700 496203' ; Street = 'Dumbarton Road 202'       ; City = 'Clydebank'   ; PostalCode = 'G81 1UE'     ; Company = 'Example Music Ltd'   ; Manager = 'Marti Pellow'     ; Description = 'Drummer for Wet Wet Wet'                                      },
+      @{ Name = 'Neil Mitchell'            ; SamAccountName = 'neil.mitchell'     ; UserPrincipalName = 'neil.mitchell@example.net'      ; OU=@('Locations','UK','Scotland','Clydebank','Wet Wet Wet')                           ; Groups = @('Wet Wet Wet','Sales','VPN Users')         ; Title = 'Keyboardist'                 ; Email = 'neil.mitchell@example.net'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Clydebank Office'  ; Phone = '+44 141 496 0204' ; MobilePhone = '+44 7700 496204' ; Street = 'Dumbarton Road 203'       ; City = 'Clydebank'   ; PostalCode = 'G81 1UE'     ; Company = 'Example Music Ltd'   ; Manager = 'Marti Pellow'     ; Description = 'Keyboardist for Wet Wet Wet'                                  },
 
       ## ==========The Police - UK/England/Newcastle ==========
-      @{ Name = 'Gordon Summer'            ; SamAccountName = 'sting'             ; UserPrincipalName = 'sting@example.org'              ; OU = @('Locations','UK','England','Newcastle','The Police')                 ; Groups = @('The Police','Vocalists','Bassists')        ; Title = 'Lead Vocalist & Bassist'     ; Email = 'sting@example.org'              ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office'  ; Phone = '+44 191 496 0001' ; MobilePhone = '+44 7700 910001' ; Street = '14 Grey Street'           ; City = 'Newcastle'   ; PostalCode = 'NE1 6BH'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist and bassist of The Police'                      },
-      @{ Name = 'Andy Summers'             ; SamAccountName = 'andy.summers'      ; UserPrincipalName = 'andy.summers@example.org'       ; OU = @('Locations','UK','England','Newcastle','The Police')                 ; Groups = @('The Police','Guitarists')                  ; Title = 'Guitarist'                   ; Email = 'andy.summers@example.org'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office'  ; Phone = '+44 191 496 0002' ; MobilePhone = '+44 7700 910002' ; Street = '11 Dean Street'           ; City = 'Newcastle'   ; PostalCode = 'NE1 1PG'     ; Company = 'Example Music Ltd'   ; Manager = 'Sting'            ; Description = 'Guitarist for The Police'                                     },
-      @{ Name = 'Stewart Copeland'         ; SamAccountName = 'stewart.copeland'  ; UserPrincipalName = 'stewart.copeland@example.org'   ; OU = @('Locations','UK','England','Newcastle','The Police')                 ; Groups = @('The Police','Drummers')                    ; Title = 'Drummer'                     ; Email = 'stewart.copeland@example.org'   ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office'  ; Phone = '+44 191 496 0003' ; MobilePhone = '+44 7700 910003' ; Street = '5 Collingwood Street'     ; City = 'Newcastle'   ; PostalCode = 'NE1 1JF'     ; Company = 'Example Music Ltd'   ; Manager = 'Sting'            ; Description = 'Drummer for The Police'                                       },
+      @{ Name = 'Gordon Summer'            ; SamAccountName = 'sting'             ; UserPrincipalName = 'sting@example.org'              ; OU = @('Locations','UK','England','Newcastle','The Police')                           ; Groups = @('The Police','Vocalists','Bassists')        ; Title = 'Lead Vocalist & Bassist'     ; Email = 'sting@example.org'                ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office'  ; Phone = '+44 191 496 0001' ; MobilePhone = '+44 7700 910001' ; Street = '14 Grey Street'           ; City = 'Newcastle'   ; PostalCode = 'NE1 6BH'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist and bassist of The Police'                      },
+      @{ Name = 'Andy Summers'             ; SamAccountName = 'andy.summers'      ; UserPrincipalName = 'andy.summers@example.org'       ; OU = @('Locations','UK','England','Newcastle','The Police')                           ; Groups = @('The Police','Guitarists')                  ; Title = 'Guitarist'                   ; Email = 'andy.summers@example.org'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office'  ; Phone = '+44 191 496 0002' ; MobilePhone = '+44 7700 910002' ; Street = '11 Dean Street'           ; City = 'Newcastle'   ; PostalCode = 'NE1 1PG'     ; Company = 'Example Music Ltd'   ; Manager = 'Sting'            ; Description = 'Guitarist for The Police'                                     },
+      @{ Name = 'Stewart Copeland'         ; SamAccountName = 'stewart.copeland'  ; UserPrincipalName = 'stewart.copeland@example.org'   ; OU = @('Locations','UK','England','Newcastle','The Police')                           ; Groups = @('The Police','Drummers')                    ; Title = 'Drummer'                     ; Email = 'stewart.copeland@example.org'     ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Newcastle Office'  ; Phone = '+44 191 496 0003' ; MobilePhone = '+44 7700 910003' ; Street = '5 Collingwood Street'     ; City = 'Newcastle'   ; PostalCode = 'NE1 1JF'     ; Company = 'Example Music Ltd'   ; Manager = 'Sting'            ; Description = 'Drummer for The Police'                                       },
 
       ## ========== New Order – UK/England/Manchester ==========
-      @{ Name = 'Bernard Sumner'           ; SamAccountName = 'bernard.sumner'    ; UserPrincipalName = 'bernard.sumner@example.org'     ; OU = @('Locations','UK','England','Manchester','New Order')                 ; Groups = @('New Order','Vocalists','Guitarists')       ; Title = 'Lead Vocalist & Guitarist'   ; Email = 'bernard.sumner@example.org'     ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Manchester Office' ; Phone = '+44 191 496 0161' ; MobilePhone = '+44 7700 951161' ; Street = 'Annalade Road 10'         ; City = 'Manchester'  ; PostalCode = 'M16 9AB'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist and guitarist for New Order'                    },
-      @{ Name = 'Stephen Morris'           ; SamAccountName = 'stephen.morris'    ; UserPrincipalName = 'stephen.morris@example.org'     ; OU = @('Locations','UK','England','Manchester','New Order')                 ; Groups = @('New Order','Drummers')                     ; Title = 'Drummer'                     ; Email = 'stephen.morris@example.org'     ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Manchester Office' ; Phone = '+44 191 496 0162' ; MobilePhone = '+44 7700 951162' ; Street = 'Cromwell Road 22'         ; City = 'Manchester'  ; PostalCode = 'M16 9AB'     ; Company = 'Example Music Ltd'   ; Manager = 'Bernard Sumner'   ; Description = 'Drummer for New Order'                                        },
-      @{ Name = 'Peter Hook'               ; SamAccountName = 'peter.hook'        ; UserPrincipalName = 'peter.hook@example.org'         ; OU = @('Locations','UK','England','Manchester','New Order')                 ; Groups = @('New Order','Bassists')                     ; Title = 'Bassist'                     ; Email = 'peter.hook@example.org'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Manchester Office' ; Phone = '+44 191 496 0163' ; MobilePhone = '+44 7700 951163' ; Street = 'Blake Road 5'             ; City = 'Manchester'  ; PostalCode = 'M16 9AB'     ; Company = 'Example Music Ltd'   ; Manager = 'Bernard Sumner'   ; Description = 'Bassist and co-founder of New Order'                          },
-      @{ Name = 'Gillian Gilbert'          ; SamAccountName = 'gillian.gilbert'   ; UserPrincipalName = 'gillian.gilbert@example.org'    ; OU = @('Locations','UK','England','Manchester','New Order')                 ; Groups = @('New Order','Keyboardists','Guitarists')    ; Title = 'Keyboardist & Guitarist'     ; Email = 'gillian.gilbert@example.org'    ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Manchester Office' ; Phone = '+44 191 496 0164' ; MobilePhone = '+44 7700 951164' ; Street = 'Chorlton Road 18'         ; City = 'Manchester'  ; PostalCode = 'M16 9AB'     ; Company = 'Example Music Ltd'   ; Manager = 'Bernard Sumner'   ; Description = 'Keyboardist and guitarist for New Order'                      },
+      @{ Name = 'Bernard Sumner'           ; SamAccountName = 'bernard.sumner'    ; UserPrincipalName = 'bernard.sumner@example.org'     ; OU = @('Locations','UK','England','Manchester','New Order')                           ; Groups = @('New Order','Vocalists','Guitarists')       ; Title = 'Lead Vocalist & Guitarist'   ; Email = 'bernard.sumner@example.org'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Manchester Office' ; Phone = '+44 191 496 0161' ; MobilePhone = '+44 7700 951161' ; Street = 'Annalade Road 10'         ; City = 'Manchester'  ; PostalCode = 'M16 9AB'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist and guitarist for New Order'                    },
+      @{ Name = 'Stephen Morris'           ; SamAccountName = 'stephen.morris'    ; UserPrincipalName = 'stephen.morris@example.org'     ; OU = @('Locations','UK','England','Manchester','New Order')                           ; Groups = @('New Order','Drummers')                     ; Title = 'Drummer'                     ; Email = 'stephen.morris@example.org'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Manchester Office' ; Phone = '+44 191 496 0162' ; MobilePhone = '+44 7700 951162' ; Street = 'Cromwell Road 22'         ; City = 'Manchester'  ; PostalCode = 'M16 9AB'     ; Company = 'Example Music Ltd'   ; Manager = 'Bernard Sumner'   ; Description = 'Drummer for New Order'                                        },
+      @{ Name = 'Peter Hook'               ; SamAccountName = 'peter.hook'        ; UserPrincipalName = 'peter.hook@example.org'         ; OU = @('Locations','UK','England','Manchester','New Order')                           ; Groups = @('New Order','Bassists')                     ; Title = 'Bassist'                     ; Email = 'peter.hook@example.org'           ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Manchester Office' ; Phone = '+44 191 496 0163' ; MobilePhone = '+44 7700 951163' ; Street = 'Blake Road 5'             ; City = 'Manchester'  ; PostalCode = 'M16 9AB'     ; Company = 'Example Music Ltd'   ; Manager = 'Bernard Sumner'   ; Description = 'Bassist and co-founder of New Order'                          },
+      @{ Name = 'Gillian Gilbert'          ; SamAccountName = 'gillian.gilbert'   ; UserPrincipalName = 'gillian.gilbert@example.org'    ; OU = @('Locations','UK','England','Manchester','New Order')                           ; Groups = @('New Order','Keyboardists','Guitarists')    ; Title = 'Keyboardist & Guitarist'     ; Email = 'gillian.gilbert@example.org'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Manchester Office' ; Phone = '+44 191 496 0164' ; MobilePhone = '+44 7700 951164' ; Street = 'Chorlton Road 18'         ; City = 'Manchester'  ; PostalCode = 'M16 9AB'     ; Company = 'Example Music Ltd'   ; Manager = 'Bernard Sumner'   ; Description = 'Keyboardist and guitarist for New Order'                      },
 
       ## ========== Echo And The Bunnymen - UK/England/Liverpool ==========
-      @{ Name = 'Ian McCulloch'            ; SamAccountName = 'ian.mcculloch'     ; UserPrincipalName = 'ian.mcculloch@example.org'      ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen')      ; Groups = @('Echo and The Bunnymen','Vocalists')        ; Title = 'Lead Vocalist'               ; Email = 'ian.mcculloch@example.org'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $true  ; Department = 'Music' ; Office = 'Liverpool Office'  ; Phone = '+44 151 496 0001' ; MobilePhone = '+44 7700 900001' ; Street = '12 Mathew Street'         ; City = 'Liverpool'   ; PostalCode = 'L1 4ED'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist of Echo and The Bunnymen'                       },
-      @{ Name = 'Will Sergeant'            ; SamAccountName = 'will.sergeant'     ; UserPrincipalName = 'will.sergeant@example.org'      ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen')      ; Groups = @('Echo and The Bunnymen','Guitarists')       ; Title = 'Guitarist'                   ; Email = 'will.sergeant@example.org'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office'  ; Phone = '+44 151 496 0002' ; MobilePhone = '+44 7700 900002' ; Street = '22 Bold Street'           ; City = 'Liverpool'   ; PostalCode = 'L1 4HR'      ; Company = 'Example Music Ltd'   ; Manager = 'Ian McCulloch'    ; Description = 'Guitarist for Echo and The Bunnymen'                          },
-      @{ Name = 'Les Pattinson'            ; SamAccountName = 'les.pattinson'     ; UserPrincipalName = 'les.pattinson@example.org'      ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen')      ; Groups = @('Echo and The Bunnymen','Bassists')         ; Title = 'Bass Guitarist'              ; Email = 'les.pattinson@example.org'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office'  ; Phone = '+44 151 496 6003' ; MobilePhone = '+44 7700 900003' ; Street = '8 Seel Street'            ; City = 'Liverpool'   ; PostalCode = 'L1 4BE'      ; Company = 'Example Music Ltd'   ; Manager = 'Ian McCulloch'    ; Description = 'Bass guitarist for Echo and The Bunnymen'                     },
-      @{ Name = 'Pete de Freitas'          ; SamAccountName = 'pete.defreitas'    ; UserPrincipalName = 'pete.defreitas@example.org'     ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen')      ; Groups = @('Echo and The Bunnymen','Drummers')         ; Title = 'Drummer'                     ; Email = 'pete.defreitas@example.org'     ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office'  ; Phone = '+44 151 496 0004' ; MobilePhone = '+44 7700 900004' ; Street = '5 Dale Street'            ; City = 'Liverpool'   ; PostalCode = 'L2 2EH'      ; Company = 'Example Music Ltd'   ; Manager = 'Ian McCulloch'    ; Description = 'Drummer for Echo and The Bunnymen'                            },
+      @{ Name = 'Ian McCulloch'            ; SamAccountName = 'ian.mcculloch'     ; UserPrincipalName = 'ian.mcculloch@example.org'      ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen')                ; Groups = @('Echo and The Bunnymen','Vocalists')        ; Title = 'Lead Vocalist'               ; Email = 'ian.mcculloch@example.org'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $true  ; Department = 'Music' ; Office = 'Liverpool Office'  ; Phone = '+44 151 496 0001' ; MobilePhone = '+44 7700 900001' ; Street = '12 Mathew Street'         ; City = 'Liverpool'   ; PostalCode = 'L1 4ED'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist of Echo and The Bunnymen'                       },
+      @{ Name = 'Will Sergeant'            ; SamAccountName = 'will.sergeant'     ; UserPrincipalName = 'will.sergeant@example.org'      ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen')                ; Groups = @('Echo and The Bunnymen','Guitarists')       ; Title = 'Guitarist'                   ; Email = 'will.sergeant@example.org'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office'  ; Phone = '+44 151 496 0002' ; MobilePhone = '+44 7700 900002' ; Street = '22 Bold Street'           ; City = 'Liverpool'   ; PostalCode = 'L1 4HR'      ; Company = 'Example Music Ltd'   ; Manager = 'Ian McCulloch'    ; Description = 'Guitarist for Echo and The Bunnymen'                          },
+      @{ Name = 'Les Pattinson'            ; SamAccountName = 'les.pattinson'     ; UserPrincipalName = 'les.pattinson@example.org'      ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen')                ; Groups = @('Echo and The Bunnymen','Bassists')         ; Title = 'Bass Guitarist'              ; Email = 'les.pattinson@example.org'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office'  ; Phone = '+44 151 496 6003' ; MobilePhone = '+44 7700 900003' ; Street = '8 Seel Street'            ; City = 'Liverpool'   ; PostalCode = 'L1 4BE'      ; Company = 'Example Music Ltd'   ; Manager = 'Ian McCulloch'    ; Description = 'Bass guitarist for Echo and The Bunnymen'                     },
+      @{ Name = 'Pete de Freitas'          ; SamAccountName = 'pete.defreitas'    ; UserPrincipalName = 'pete.defreitas@example.org'     ; OU = @('Locations','UK','England','Liverpool','Echo and The Bunnymen')                ; Groups = @('Echo and The Bunnymen','Drummers')         ; Title = 'Drummer'                     ; Email = 'pete.defreitas@example.org'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Liverpool Office'  ; Phone = '+44 151 496 0004' ; MobilePhone = '+44 7700 900004' ; Street = '5 Dale Street'            ; City = 'Liverpool'   ; PostalCode = 'L2 2EH'      ; Company = 'Example Music Ltd'   ; Manager = 'Ian McCulloch'    ; Description = 'Drummer for Echo and The Bunnymen'                            },
 
       ## ========== UB40 — UK / England / Birmingham ==========
-      @{ Name = 'Ali Campbell'             ; SamAccountName = 'ali.campbell'      ; UserPrincipalName = 'ali.campbell@example.net'       ; OU = @('Locations','UK','England','Birmingham','UB40')                      ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Lead Vocalist'               ; Email = 'ali.campbell@example.net'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone = '+44 121 496 0101' ; MobilePhone = '+44 7700 921601' ; Street = '40 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead voca l ist of UB40'                                      },
-      @{ Name = 'Robin Campbell'           ; SamAccountName = 'robin.campbell'    ; UserPrincipalName = 'robin.campbell@example.net'     ; OU = @('Locations','UK','England','Birmingham','UB40')                      ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Guitarist'                   ; Email = 'robin.campbell@example.net'     ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0102' ; MobilePhone = '+44 7700 921602' ; Street = '41 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Guitarist for UB40'                                           },
-      @{ Name = 'Brian Travers'            ; SamAccountName = 'brian.travers'     ; UserPrincipalName = 'brian.travers@example.net'      ; OU = @('Locations','UK','England','Birmingham','UB40')                      ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Saxophonist'                 ; Email = 'brian.travers@example.net'      ; Country = 'UK' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0103' ; MobilePhone = '+44 7700 921603' ; Street = '42 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Saxophonist for UB40 (account disabled)'                      },
-      @{ Name = 'Earl Falconer'            ; SamAccountName = 'earl.falconer'     ; UserPrincipalName = 'earl.falconer@example.net'      ; OU = @('Locations','UK','England','Birmingham','UB40')                      ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Bassist'                     ; Email = 'earl.falconer@example.net'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0104' ; MobilePhone = '+44 7700 921604' ; Street = '43 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Bassist for UB40'                                             },
-      @{ Name = 'Norman Hassan'            ; SamAccountName = 'norman.hassan'     ; UserPrincipalName = 'norman.hassan@example.net'      ; OU = @('Locations','UK','England','Birmingham','UB40')                      ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Percussionist'               ; Email = 'norman.hassan@example.net'      ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0105' ; MobilePhone = '+44 7700 921605' ; Street = '44 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Percussionist for UB40'                                       },
-      @{ Name = 'Terence Wilson'           ; SamAccountName = 'astro.wilson'      ; UserPrincipalName = 'astro@example.net'              ; OU = @('Locations','UK','England','Birmingham','UB40')                      ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Toaster / Trumpet'           ; Email = 'astro.wilson@example.net'       ; Country = 'UK' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0106' ; MobilePhone = '+44 7700 921606' ; Street = '45 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Toaster and trumpeter for UB40 (account disabled)'            },
-      @{ Name = 'James Brown'              ; SamAccountName = 'james.brown'       ; UserPrincipalName = 'james.brown@example.net'        ; OU = @('Locations','UK','England','Birmingham','UB40')                      ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Drummer'                     ; Email = 'james.brown@example.net'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0107' ; MobilePhone = '+44 7700 921607' ; Street = '46 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Drummer for UB40'                                             },
+      @{ Name = 'Ali Campbell'             ; SamAccountName = 'ali.campbell'      ; UserPrincipalName = 'ali.campbell@example.net'       ; OU = @('Locations','UK','England','Birmingham','UB40')                                ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Lead Vocalist'               ; Email = 'ali.campbell@example.net'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone = '+44 121 496 0101' ; MobilePhone = '+44 7700 921601' ; Street = '40 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead voca l ist of UB40'                                      },
+      @{ Name = 'Robin Campbell'           ; SamAccountName = 'robin.campbell'    ; UserPrincipalName = 'robin.campbell@example.net'     ; OU = @('Locations','UK','England','Birmingham','UB40')                                ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Guitarist'                   ; Email = 'robin.campbell@example.net'       ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0102' ; MobilePhone = '+44 7700 921602' ; Street = '41 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Guitarist for UB40'                                           },
+      @{ Name = 'Brian Travers'            ; SamAccountName = 'brian.travers'     ; UserPrincipalName = 'brian.travers@example.net'      ; OU = @('Locations','UK','England','Birmingham','UB40')                                ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Saxophonist'                 ; Email = 'brian.travers@example.net'        ; Country = 'UK' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0103' ; MobilePhone = '+44 7700 921603' ; Street = '42 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Saxophonist for UB40 (account disabled)'                      },
+      @{ Name = 'Earl Falconer'            ; SamAccountName = 'earl.falconer'     ; UserPrincipalName = 'earl.falconer@example.net'      ; OU = @('Locations','UK','England','Birmingham','UB40')                                ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Bassist'                     ; Email = 'earl.falconer@example.net'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0104' ; MobilePhone = '+44 7700 921604' ; Street = '43 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Bassist for UB40'                                             },
+      @{ Name = 'Norman Hassan'            ; SamAccountName = 'norman.hassan'     ; UserPrincipalName = 'norman.hassan@example.net'      ; OU = @('Locations','UK','England','Birmingham','UB40')                                ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Percussionist'               ; Email = 'norman.hassan@example.net'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0105' ; MobilePhone = '+44 7700 921605' ; Street = '44 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Percussionist for UB40'                                       },
+      @{ Name = 'Terence Wilson'           ; SamAccountName = 'astro.wilson'      ; UserPrincipalName = 'astro@example.net'              ; OU = @('Locations','UK','England','Birmingham','UB40')                                ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Toaster / Trumpet'           ; Email = 'astro.wilson@example.net'         ; Country = 'UK' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0106' ; MobilePhone = '+44 7700 921606' ; Street = '45 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Toaster and trumpeter for UB40 (account disabled)'            },
+      @{ Name = 'James Brown'              ; SamAccountName = 'james.brown'       ; UserPrincipalName = 'james.brown@example.net'        ; OU = @('Locations','UK','England','Birmingham','UB40')                                ; Groups = @('UB40','Sales','VPN Users')                 ; Title = 'Drummer'                     ; Email = 'james.brown@example.net'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office='Birmingham Office'   ; Phone =' +44 121 496 0107' ; MobilePhone = '+44 7700 921607' ; Street = '46 Broad Street'          ; City = 'Birmingham'  ; PostalCode = 'B1 2EU'      ; Company = 'Example Music Ltd'   ; Manager = 'Ali Campbell'     ; Description = 'Drummer for UB40'                                             },
 
       ## ========== Erasure (UK/England/London) ==========
-      @{ Name = 'Andy Bell'                ; SamAccountName = 'andy.bell'         ; UserPrincipalName = 'andy.bell@example.com'          ; OU = @('Locations','UK','England','London','Erasure')                      ; Groups = @('Erasure','Vocalists')                       ; Title = 'Lead Vocalist'               ; Email = 'andy.bell@example.com'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0011' ; MobilePhone = '+44 7700 333333' ; Street = '15 Carnaby Street'        ; City = 'London'      ; PostalCode = 'E1 7AA'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist for Erasure'                                    },
-      @{ Name = 'Vince Clarke'             ; SamAccountName = 'vince.clarke'      ; UserPrincipalName = 'vince.clarke@example.com'       ; OU = @('Locations','UK','England','London','Erasure')                      ; Groups = @('Erasure','Synth','Keyboards')               ; Title = 'Synth / Keyboardist'         ; Email = 'vince.clarke@example.com'       ; Country = 'UK' ; Disabled = $false ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0012' ; MobilePhone = '+44 7700 333334' ; Street = '15 Carnaby Street'        ; City = 'London'      ; PostalCode = 'E1 7AA'      ; Company = 'Example Music Ltd'   ; Manager = 'Andy Bell'        ; Description = 'Synthesizer pioneer - member of Depeche Mode & Erasure'       },
+      @{ Name = 'Andy Bell'                ; SamAccountName = 'andy.bell'         ; UserPrincipalName = 'andy.bell@example.com'          ; OU = @('Locations','UK','England','London','Erasure')                                 ; Groups = @('Erasure','Vocalists')                       ; Title = 'Lead Vocalist'               ; Email = 'andy.bell@example.com'            ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0011' ; MobilePhone = '+44 7700 333333' ; Street = '15 Carnaby Street'        ; City = 'London'      ; PostalCode = 'E1 7AA'      ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Lead vocalist for Erasure'                                    },
+      @{ Name = 'Vince Clarke'             ; SamAccountName = 'vince.clarke'      ; UserPrincipalName = 'vince.clarke@example.com'       ; OU = @('Locations','UK','England','London','Erasure')                                 ; Groups = @('Erasure','Synth','Keyboards')               ; Title = 'Synth / Keyboardist'         ; Email = 'vince.clarke@example.com'         ; Country = 'UK' ; Disabled = $false ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0012' ; MobilePhone = '+44 7700 333334' ; Street = '15 Carnaby Street'        ; City = 'London'      ; PostalCode = 'E1 7AA'      ; Company = 'Example Music Ltd'   ; Manager = 'Andy Bell'        ; Description = 'Synthesizer pioneer - member of Depeche Mode & Erasure'       },
 
       ## ========== Mel And Kim – UK/England/London ==========
-      @{ Name='Melanie Appleby'            ; SamAccountName='melanie.appleby'     ; UserPrincipalName='mel.appleby@example.com'          ; OU=@('Locations','UK','England','London','Sales')                          ; Groups = @('Mel And Kim','Sales')                       ; Title = 'Singer and Dancer'           ; Email='mel.appleby@example.com'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Sales' ; Office = 'London Office'     ; Phone = '+44 207 496 0013' ; MobilePhone = '+44 7700 333335' ; Street = '15 Carnaby Street'        ; City ='London'       ; PostalCode = 'E1 7AA'      ; Company = 'Example Music Ltd'   ; Manager=''                   ; Description='Member of Mel and Kim, London sales team'                       },
-      @{ Name='Kimberly Appleby'           ; SamAccountName='kim.appleby'         ; UserPrincipalName='kim.appleby@example.com'          ; OU=@('Locations','UK','England','London','Sales')                          ; Groups = @('Mel And Kim','Sales')                       ; Title = 'Singer and Dancer'           ; Email='kim.appleby@example.com'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Sales' ; Office = 'London Office'     ; Phone = '+44 207 496 0014' ; MobilePhone = '+44 7700 333336' ; Street = '15 Carnaby Street'        ; City ='London'       ; PostalCode = 'E1 7AA'      ; Company = 'Example Music Ltd'   ; Manager=''                   ; Description='Member of Mel and Kim, London sales team'                       },
+      @{ Name='Melanie Appleby'            ; SamAccountName='melanie.appleby'     ; UserPrincipalName='mel.appleby@example.com'          ; OU=@('Locations','UK','England','London','Sales')                                     ; Groups = @('Mel And Kim','Sales')                       ; Title = 'Singer and Dancer'           ; Email='mel.appleby@example.com'            ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Sales' ; Office = 'London Office'     ; Phone = '+44 207 496 0013' ; MobilePhone = '+44 7700 333335' ; Street = '15 Carnaby Street'        ; City ='London'       ; PostalCode = 'E1 7AA'      ; Company = 'Example Music Ltd'   ; Manager=''                   ; Description='Member of Mel and Kim, London sales team'                       },
+      @{ Name='Kimberly Appleby'           ; SamAccountName='kim.appleby'         ; UserPrincipalName='kim.appleby@example.com'          ; OU=@('Locations','UK','England','London','Sales')                                     ; Groups = @('Mel And Kim','Sales')                       ; Title = 'Singer and Dancer'           ; Email='kim.appleby@example.com'            ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Sales' ; Office = 'London Office'     ; Phone = '+44 207 496 0014' ; MobilePhone = '+44 7700 333336' ; Street = '15 Carnaby Street'        ; City ='London'       ; PostalCode = 'E1 7AA'      ; Company = 'Example Music Ltd'   ; Manager=''                   ; Description='Member of Mel and Kim, London sales team'                       },
 
       ## ========== Depeche Mode (UK/England/London) ==========
-      @{ Name = 'Dave Gahan'               ; SamAccountName = 'dave.gahan'        ; UserPrincipalName = 'dave.gahan@example.com'         ; OU = @('Locations','UK','England','London','Depeche Mode')                 ; Groups = @('Depeche Mode','Vocalists')                  ; Title = 'Lead Vocalist'               ; Email = 'dave.gahan@example.com'         ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $true  ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0021' ; MobilePhone = '+44 7700 444442' ; Street = '32 Abbey Lane'            ; City = 'London'      ; PostalCode = 'EC2 1AA'     ; Company = 'Example Music Ltd'   ; Manager = 'Martin Gore'      ; Description = 'Lead vocalist for Depeche Mode'                               },
-      @{ Name = 'Martin Gore'              ; SamAccountName = 'martin.gore'       ; UserPrincipalName = 'martin.gore@example.com'        ; OU = @('Locations','UK','England','London','Depeche Mode')                 ; Groups = @('Depeche Mode','Guitarists','Keyboards')     ; Title = 'Guitarist/Keyboardist'       ; Email = 'martin.gore@example.com'        ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0022' ; MobilePhone = '+44 7700 444441' ; Street = '32 Abbey Lane'            ; City = 'London'      ; PostalCode = 'EC2 1AA'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Guitarist, keyboardist & primary songwriter for Depeche Mode' },
-      @{ Name = 'Alan Wilder'              ; SamAccountName = 'alan.wilder'       ; UserPrincipalName = 'alan.wilder@example.com'        ; OU = @('Locations','UK','England','London','Depeche Mode')                 ; Groups = @('Depeche Mode','Keyboards','Percussion')     ; Title = 'Keyboardist/Drummer'         ; Email = 'alan.wilder@example.com'        ; Country = 'UK' ; Disabled = $false ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0023' ; MobilePhone = '+44 7700 444444' ; Street = '32 Abbey Lane'            ; City = 'London'      ; PostalCode = 'EC2 1AA'     ; Company = 'Example Music Ltd'   ; Manager = 'Martin Gore'      ; Description = 'Multi-instrumentalist for Depeche Mode (1982-1995, departed)' },
-      @{ Name = 'Andrew Fletcher'          ; SamAccountName = 'andrew.fletcher'   ; UserPrincipalName = 'andrew.fletcher@example.com'    ; OU = @('Locations','UK','England','London','Depeche Mode')                 ; Groups = @('Depeche Mode','Keyboards')                  ; Title = 'Keyboards/Bass Synth'        ; Email = 'andrew.fletcher@example.com'    ; Country = 'UK' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0024' ; MobilePhone = '+44 7700 444443' ; Street = '32 Abbey Lane'            ; City = 'London'      ; PostalCode = 'EC2 1AA'     ; Company = 'Example Music Ltd'   ; Manager = 'Martin Gore'      ; Description = 'Keyboard and bass synthesizer for Depeche Mode (deceased)'    },
+      @{ Name = 'Dave Gahan'               ; SamAccountName = 'dave.gahan'        ; UserPrincipalName = 'dave.gahan@example.com'         ; OU = @('Locations','UK','England','London','Depeche Mode')                            ; Groups = @('Depeche Mode','Vocalists')                  ; Title = 'Lead Vocalist'               ; Email = 'dave.gahan@example.com'           ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $true  ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0021' ; MobilePhone = '+44 7700 444442' ; Street = '32 Abbey Lane'            ; City = 'London'      ; PostalCode = 'EC2 1AA'     ; Company = 'Example Music Ltd'   ; Manager = 'Martin Gore'      ; Description = 'Lead vocalist for Depeche Mode'                               },
+      @{ Name = 'Martin Gore'              ; SamAccountName = 'martin.gore'       ; UserPrincipalName = 'martin.gore@example.com'        ; OU = @('Locations','UK','England','London','Depeche Mode')                            ; Groups = @('Depeche Mode','Guitarists','Keyboards')     ; Title = 'Guitarist/Keyboardist'       ; Email = 'martin.gore@example.com'          ; Country = 'UK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0022' ; MobilePhone = '+44 7700 444441' ; Street = '32 Abbey Lane'            ; City = 'London'      ; PostalCode = 'EC2 1AA'     ; Company = 'Example Music Ltd'   ; Manager = ''                 ; Description = 'Guitarist, keyboardist & primary songwriter for Depeche Mode' },
+      @{ Name = 'Alan Wilder'              ; SamAccountName = 'alan.wilder'       ; UserPrincipalName = 'alan.wilder@example.com'        ; OU = @('Locations','UK','England','London','Depeche Mode')                            ; Groups = @('Depeche Mode','Keyboards','Percussion')     ; Title = 'Keyboardist/Drummer'         ; Email = 'alan.wilder@example.com'          ; Country = 'UK' ; Disabled = $false ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0023' ; MobilePhone = '+44 7700 444444' ; Street = '32 Abbey Lane'            ; City = 'London'      ; PostalCode = 'EC2 1AA'     ; Company = 'Example Music Ltd'   ; Manager = 'Martin Gore'      ; Description = 'Multi-instrumentalist for Depeche Mode (1982-1995, departed)' },
+      @{ Name = 'Andrew Fletcher'          ; SamAccountName = 'andrew.fletcher'   ; UserPrincipalName = 'andrew.fletcher@example.com'    ; OU = @('Locations','UK','England','London','Depeche Mode')                            ; Groups = @('Depeche Mode','Keyboards')                  ; Title = 'Keyboards/Bass Synth'        ; Email = 'andrew.fletcher@example.com'      ; Country = 'UK' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'London Office'     ; Phone = '+44 207 496 0024' ; MobilePhone = '+44 7700 444443' ; Street = '32 Abbey Lane'            ; City = 'London'      ; PostalCode = 'EC2 1AA'     ; Company = 'Example Music Ltd'   ; Manager = 'Martin Gore'      ; Description = 'Keyboard and bass synthesizer for Depeche Mode (deceased)'    },
 
-      ## ========== TV-2 (Denmark/Copenhagen) ==========
-      @{ Name = 'Steffen Brandt'           ; SamAccountName = 'steffen.brandt'    ; UserPrincipalName = 'steffen.brandt@example.com'     ; OU = @('Locations','Denmark','Copenhagen','TV-2')                          ; Groups = @('TV-2','Vocalists','Guitarists')             ; Title = 'Lead Vocalist / Guitarist'   ; Email = 'steffen.brandt@example.com'     ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Copenhagen Office' ; Phone = '+45 0000 2222'    ; MobilePhone = '+45 50 12 3457'  ; Street = '1 Raadhuspladsen'         ; City = 'Copenhagen'  ; PostalCode = '1550'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Frontman of TV-2'                                             },
-      @{ Name = 'Hans Erik Lerchenfeldt'   ; SamAccountName = 'hans.lerchenfeldt' ; UserPrincipalName = 'hans.lerchenfeldt@example.com'  ; OU = @('Locations','Denmark','Copenhagen','TV-2')                          ; Groups = @('TV-2','Musicians')                          ; Title = 'Bassist'                     ; Email = 'hans.lerchenfeldt@example.com'  ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Copenhagen Office' ; Phone = '+45 3312 3457'    ; MobilePhone = '+45 20 11 1157'  ; Street = 'Nørrebrogade 2'           ; City = 'Copenhagen'  ; PostalCode = '2200'        ; Company = 'Example Music ApS'   ; Manager = 'Steffen Brandt'   ; Description = 'Bassist for TV-2'                                             },
-      @{ Name = 'Sven Gaul'                ; SamAccountName = 'sven.gaul'         ; UserPrincipalName = 'sven.gaul@example.com'          ; OU = @('Locations','Denmark','Copenhagen','TV-2')                          ; Groups = @('TV-2','Musicians')                          ; Title = 'Drummer'                     ; Email = 'sven.gaul@example.com'          ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Copenhagen Office' ; Phone = '+45 3312 3458'    ; MobilePhone = '+45 20 11 1158'  ; Street = 'Nørrebrogade 3'           ; City = 'Copenhagen'  ; PostalCode = '2200'        ; Company = 'Example Music ApS'   ; Manager = 'Steffen Brandt'   ; Description = 'Drummer for TV-2'                                             },
-      @{ Name = 'Georg Olesen'             ; SamAccountName = 'georg.olesen'      ; UserPrincipalName = 'georg.olesen@example.com'       ; OU = @('Locations','Denmark','Aarhus','TV-2')                              ; Groups = @('TV-2','Musicians','Former Staff')           ; Title = 'Guitarist (Former)'          ; Email = 'georg.olesen@example.com'       ; Country = 'DK' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aarhus Office'     ; Phone = '+45 8612 3470'    ; MobilePhone = '+45 20 11 1170'  ; Street = 'Åboulevarden 20'          ; City = 'Aarhus'      ; PostalCode = '8000'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Former guitarist and co-founder of TV-2 (1981-2003)'          },
+      ## ========== TV-2 (Danmark/Copenhagen) ==========
+      @{ Name = 'Steffen Brandt'           ; SamAccountName = 'steffen.brandt'    ; UserPrincipalName = 'steffen.brandt@example.com'     ; OU = @('Locations','Danmark','Sjælland', 'Copenhagen','TV-2')                         ; Groups = @('TV-2','Vocalists','Guitarists')             ; Title = 'Lead Vocalist / Guitarist'   ; Email = 'steffen.brandt@example.com'       ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Copenhagen Office' ; Phone = '+45 0000 2222'    ; MobilePhone = '+45 50 12 3457'  ; Street = '1 Raadhuspladsen'         ; City = 'Copenhagen'  ; PostalCode = '1550'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Frontman of TV-2'                                             },
+      @{ Name = 'Hans Erik Lerchenfeldt'   ; SamAccountName = 'hans.lerchenfeldt' ; UserPrincipalName = 'hans.lerchenfeldt@example.com'  ; OU = @('Locations','Danmark','Sjælland', 'Copenhagen','TV-2')                         ; Groups = @('TV-2','Musicians')                          ; Title = 'Bassist'                     ; Email = 'hans.lerchenfeldt@example.com'    ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Copenhagen Office' ; Phone = '+45 3312 3457'    ; MobilePhone = '+45 20 11 1157'  ; Street = 'Nørrebrogade 2'           ; City = 'Copenhagen'  ; PostalCode = '2200'        ; Company = 'Example Music ApS'   ; Manager = 'Steffen Brandt'   ; Description = 'Bassist for TV-2'                                             },
+      @{ Name = 'Sven Gaul'                ; SamAccountName = 'sven.gaul'         ; UserPrincipalName = 'sven.gaul@example.com'          ; OU = @('Locations','Danmark','Sjælland', 'Copenhagen','TV-2')                         ; Groups = @('TV-2','Musicians')                          ; Title = 'Drummer'                     ; Email = 'sven.gaul@example.com'            ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Copenhagen Office' ; Phone = '+45 3312 3458'    ; MobilePhone = '+45 20 11 1158'  ; Street = 'Nørrebrogade 3'           ; City = 'Copenhagen'  ; PostalCode = '2200'        ; Company = 'Example Music ApS'   ; Manager = 'Steffen Brandt'   ; Description = 'Drummer for TV-2'                                             },
+      @{ Name = 'Georg Olesen'             ; SamAccountName = 'georg.olesen'      ; UserPrincipalName = 'georg.olesen@example.com'       ; OU = @('Locations','Danmark','Nord Jyland', 'Aarhus','TV-2')                          ; Groups = @('TV-2','Musicians','Former Staff')           ; Title = 'Guitarist (Former)'          ; Email = 'georg.olesen@example.com'         ; Country = 'DK' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Aarhus Office'     ; Phone = '+45 8612 3470'    ; MobilePhone = '+45 20 11 1170'  ; Street = 'Åboulevarden 20'          ; City = 'Aarhus'      ; PostalCode = '8000'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Former guitarist and co-founder of TV-2 (1981-2003)'          },
 
-      ## ========== Rocazino (Denmark/Koge) ========  ==
-      @{ Name = 'Ulla Kjaer'               ; SamAccountName = 'ulla.kjaer'        ; UserPrincipalName = 'ulla.kjaer@example.com'         ; OU = @('Locations','Denmark','Koge','Rocazino')                            ; Groups = @('Rocazino','Vocalists')                      ; Title = 'Lead Vocalist'               ; Email = 'ulla.kjaer@example.com'         ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Koge Office'       ; Phone = '+45 0000 2234'    ; MobilePhone = '+45 3012 3456'   ; Street = '7 Torvet'                 ; City = 'Koge'        ; PostalCode = '4600'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Lead vocalist for Rocazino'                                   },
-      @{ Name = 'Michael Bruun'            ; SamAccountName = 'michael.bruun'     ; UserPrincipalName = 'michael.bruun@example.com'      ; OU = @('Locations','Denmark','Koge','Rocazino')                            ; Groups = @('Rocazino','Guitarists')                     ; Title = 'Guitarist'                   ; Email = 'michael.bruun@example.com'      ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Koge Office'       ; Phone = '+45 0000 2235'    ; MobilePhone = '+45 3012 3457'   ; Street = '7 Torvet'                 ; City = 'Koge'        ; PostalCode = '4600'        ; Company = 'Example Music ApS'   ; Manager = 'Ulla Kjaer'       ; Description = 'Guitarist and songwriter for Rocazino'                        },
-      @{ Name = 'Jan Sivertsen'            ; SamAccountName = 'jan.sivertsen'     ; UserPrincipalName = 'jan.sivertsen@example.com'      ; OU = @('Locations','Denmark','Koge','Rocazino')                            ; Groups = @('Rocazino','Percussion')                     ; Title = 'Drummer'                     ; Email = 'jan.sivertsen@example.com'      ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Koge Office'       ; Phone = '+45 0000 2236'    ; MobilePhone = '+45 3012 3458'   ; Street = '7 Torvet'                 ; City = 'Koge'        ; PostalCode = '4600'        ; Company = 'Example Music ApS'   ; Manager = 'Ulla Kjaer'       ; Description = 'Drummer for Rocazino'                                         },
+      ## ========== Rocazino (Danmark/Koge) ========  ==
+      @{ Name = 'Ulla Kjaer'               ; SamAccountName = 'ulla.kjaer'        ; UserPrincipalName = 'ulla.kjaer@example.com'         ; OU = @('Locations','Danmark','Koge','Rocazino')                                       ; Groups = @('Rocazino','Vocalists')                      ; Title = 'Lead Vocalist'               ; Email = 'ulla.kjaer@example.com'           ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Koge Office'       ; Phone = '+45 0000 2234'    ; MobilePhone = '+45 3012 3456'   ; Street = '7 Torvet'                 ; City = 'Koge'        ; PostalCode = '4600'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Lead vocalist for Rocazino'                                   },
+      @{ Name = 'Michael Bruun'            ; SamAccountName = 'michael.bruun'     ; UserPrincipalName = 'michael.bruun@example.com'      ; OU = @('Locations','Danmark','Koge','Rocazino')                                       ; Groups = @('Rocazino','Guitarists')                     ; Title = 'Guitarist'                   ; Email = 'michael.bruun@example.com'        ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Koge Office'       ; Phone = '+45 0000 2235'    ; MobilePhone = '+45 3012 3457'   ; Street = '7 Torvet'                 ; City = 'Koge'        ; PostalCode = '4600'        ; Company = 'Example Music ApS'   ; Manager = 'Ulla Kjaer'       ; Description = 'Guitarist and songwriter for Rocazino'                        },
+      @{ Name = 'Jan Sivertsen'            ; SamAccountName = 'jan.sivertsen'     ; UserPrincipalName = 'jan.sivertsen@example.com'      ; OU = @('Locations','Danmark','Koge','Rocazino')                                       ; Groups = @('Rocazino','Percussion')                     ; Title = 'Drummer'                     ; Email = 'jan.sivertsen@example.com'        ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Koge Office'       ; Phone = '+45 0000 2236'    ; MobilePhone = '+45 3012 3458'   ; Street = '7 Torvet'                 ; City = 'Koge'        ; PostalCode = '4600'        ; Company = 'Example Music ApS'   ; Manager = 'Ulla Kjaer'       ; Description = 'Drummer for Rocazino'                                         },
 
-      ## ========== Whigfield (Denmark/Kørsor og Faxe) ==========
-      @{ Name = 'Sannie Charlotte Carlson' ; SamAccountName = 'whigfield'         ; UserPrincipalName = 'whigfield@example.com'          ; OU = @('Locations','Denmark','Zealand','Køge','Kørsor','Whigfield','Users'); Groups = @('Whigfield','Warehouse Access')              ; Title  = 'Performer'                  ; Email  = 'whigfield@example.com'         ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Kørsor Office'     ; Phone = '+45 0000 3235'    ; MobilePhone = '+45 4012 3457'   ; Street = 'Torvegade 35.'            ; City = 'Faxe'        ; PostalCode = '4640'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Danish singer-songwriter'                                     },
+      ## ========== Whigfield (Danmark/Kørsor og Faxe) ==========
+      @{ Name = 'Sannie Charlotte Carlson' ; SamAccountName = 'whigfield'         ; UserPrincipalName = 'whigfield@example.com'          ; OU = @('Locations','Danmark','Sjælland','Køge','Kørsor','Whigfield','Users')          ; Groups = @('Whigfield','Warehouse Access')              ; Title  = 'Performer'                  ; Email  = 'whigfield@example.com'           ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Kørsor Office'     ; Phone = '+45 0000 3235'    ; MobilePhone = '+45 4012 3457'   ; Street = 'Torvegade 35.'            ; City = 'Faxe'        ; PostalCode = '4640'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Danish singer-songwriter'                                     },
 
-      ## ========== MØ (Denmark/Odense) ==========
-      @{ Name = 'Karen Marie Orsted'       ; SamAccountName = 'karen.orsted'      ; UserPrincipalName = 'mo@example.com'                 ; OU = @('Locations','Denmark','Odense','Mo')                                ; Groups = @('Mo','Vocalists')                            ; Title = 'Singer / Songwriter'         ; Email = 'mo@example.com'                 ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Odense Office'     ; Phone = '+45 0000 3234'    ; MobilePhone = '+45 4012 3456'   ; Street = '22 Vestergade'            ; City = 'Odense'      ; PostalCode = '5000'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Danish singer-songwriter known internationally as MØ'         },
+      ## ========== MØ (Danmark/Odense) ==========
+      @{ Name = 'Karen Marie Orsted'       ; SamAccountName = 'karen.orsted'      ; UserPrincipalName = 'mo@example.com'                 ; OU = @('Locations','Danmark','Fyn', 'Odense','Mo')                                    ; Groups = @('Mo','Vocalists')                            ; Title = 'Singer / Songwriter'         ; Email = 'mo@example.com'                   ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Odense Office'     ; Phone = '+45 0000 3234'    ; MobilePhone = '+45 4012 3456'   ; Street = '22 Vestergade'            ; City = 'Odense'      ; PostalCode = '5000'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Danish singer-songwriter known internationally as MØ'         },
+
+      ## ========== Lis Sørensen (Danmark/Bramming) ==========
+      @{ Name = 'Lis Sørensen'             ; SamAccountName = 'lissorensen'       ; UserPrincipalName = 'lis.sorensen@example.com'       ; OU = @('Locations','Danmark','Syd Jyland','Bramming','Music','Lis Sørensen','Users')  ; Groups  = @('Lis Sørensen','Studio Access')             ; Title   = 'Singer'                    ; Email   = 'lis.sorensen@example.com'       ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bramming Studio'   ; Phone = '+45 0000 4411'    ; MobilePhon  = '+45 4099 8822'   ; Street = 'Nørregade 12'             ; City = 'Bramming'    ; PostalCode = '1165'        ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Danish singer; known for the song Brændt'                     },
+
+      ## ========== Helena Christensen (Danmark/Esjberg) ==========
+      @{ Name = 'Helena Christensen'       ; SamAccountName = 'helenachristensen' ; UserPrincipalName = 'helena.christensen@example.com' ; OU = @('Locations','Danmark','Syd Jyland','Esbjerg','Creative','Photography','Users') ; Groups = @('Creative Team', 'Esbjerg Office Access')    ;  Title = 'Company Photographer'       ;  Email  = 'helena.christensen@example.com' ; Country = 'DK' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ;  Department = 'Art'  ; Office = 'Esjberg Studio'    ; Phone = '+45 00 007 788'   ; MobilePhone = '+45 4011 2233'   ; Street = 'Skolegade 18'             ; City = 'Esjberg'     ; PostalCode = '6700'        ; Company = 'Example Creative ApS'; Manager = ''                 ; Description = 'Model/Photographer working on Chris Issak Wicked Game video'  },
 
       ## ========== Kraftwerk (West Germany/Bonn) ==========
-      @{ Name = 'Ralf Hutter'              ; SamAccountName = 'ralf.hutter'       ; UserPrincipalName = 'ralf.hutter@example.net'        ; OU = @('Locations','Germany','Bonn','Kraftwerk')                           ; Groups = @('Kraftwerk','Vocalists','Musicians')         ; Title = 'Vocals/Synthesizer'          ; Email = 'ralf.hutter@example.net'        ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bonn Office'       ; Phone = '+49 22 8111 111'  ; MobilePhone = '+49 1701 1111'   ; Street = 'Adenauerallee 1'          ; City = 'Bonn'        ; PostalCode = '53113'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Co-founder and frontman of Kraftwerk'                         },
-      @{ Name = 'Florian Schneider'        ; SamAccountName = 'florian.schneider' ; UserPrincipalName = 'florian.schneider@example.net'  ; OU = @('Locations','Germany','Bonn','Kraftwerk')                           ; Groups = @('Kraftwerk','Musicians')                     ; Title = 'Synthesizer/Flute'           ; Email = 'florian.schneider@example.net'  ; Country = 'DE' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bonn Office'       ; Phone = '+49 22 8111 112'  ; MobilePhone = '+49 1701 1112'   ; Street = 'Adenauerallee 2'          ; City = 'Bonn'        ; PostalCode = '53113'       ; Company = 'Example Music GmbH'  ; Manager = 'Ralf Hutter'      ; Description = 'Co-founder of Kraftwerk (1947-2020) - Account disabled'       },
-      @{ Name = 'Wolfgang Flur'            ; SamAccountName = 'wolfgang.flur'     ; UserPrincipalName = 'wolfgang.flur@example.net'      ; OU = @('Locations','Germany','Bonn','Kraftwerk')                           ; Groups = @('Kraftwerk','Musicians','Percussionists')    ; Title = 'Electronic Drums'            ; Email = 'wolfgang.flur@example.net'      ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bonn Office'       ; Phone = '+49 22 8111 113'  ; MobilePhone = '+49 1701 1113'   ; Street = 'Adenauerallee 3'          ; City = 'Bonn'        ; PostalCode = '53113'       ; Company = 'Example Music GmbH'  ; Manager = 'Ralf Hutter'      ; Description = 'Electronic percussionist for Kraftwerk'                       },
-      @{ Name = 'Karl Bartos'              ; SamAccountName = 'karl.bartos'       ; UserPrincipalName = 'karl.bartos@example.net'        ; OU = @('Locations','Germany','Bonn','Kraftwerk')                           ; Groups = @('Kraftwerk','Musicians','Percussionists')    ; Title = 'Electronic Percussion'       ; Email = 'karl.bartos@example.net'        ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bonn Office'       ; Phone = '+49 22 8111 114'  ; MobilePhone = '+49 1701 1114'   ; Street = 'Adenauerallee 4'          ; City = 'Bonn'        ; PostalCode = '53113'       ; Company = 'Example Music GmbH'  ; Manager = 'Ralf Hutter'      ; Description = 'Electronic percussionist and composer for Kraftwerk'          },
+      @{ Name = 'Ralf Hutter'              ; SamAccountName = 'ralf.hutter'       ; UserPrincipalName = 'ralf.hutter@example.net'        ; OU = @('Locations','Germany','Bonn','Kraftwerk')                                      ; Groups = @('Kraftwerk','Vocalists','Musicians')         ; Title = 'Vocals/Synthesizer'          ; Email = 'ralf.hutter@example.net'          ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bonn Office'       ; Phone = '+49 22 8111 111'  ; MobilePhone = '+49 1701 1111'   ; Street = 'Adenauerallee 1'          ; City = 'Bonn'        ; PostalCode = '53113'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Co-founder and frontman of Kraftwerk'                         },
+      @{ Name = 'Florian Schneider'        ; SamAccountName = 'florian.schneider' ; UserPrincipalName = 'florian.schneider@example.net'  ; OU = @('Locations','Germany','Bonn','Kraftwerk')                                      ; Groups = @('Kraftwerk','Musicians')                     ; Title = 'Synthesizer/Flute'           ; Email = 'florian.schneider@example.net'    ; Country = 'DE' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bonn Office'       ; Phone = '+49 22 8111 112'  ; MobilePhone = '+49 1701 1112'   ; Street = 'Adenauerallee 2'          ; City = 'Bonn'        ; PostalCode = '53113'       ; Company = 'Example Music GmbH'  ; Manager = 'Ralf Hutter'      ; Description = 'Co-founder of Kraftwerk (1947-2020) - Account disabled'       },
+      @{ Name = 'Wolfgang Flur'            ; SamAccountName = 'wolfgang.flur'     ; UserPrincipalName = 'wolfgang.flur@example.net'      ; OU = @('Locations','Germany','Bonn','Kraftwerk')                                      ; Groups = @('Kraftwerk','Musicians','Percussionists')    ; Title = 'Electronic Drums'            ; Email = 'wolfgang.flur@example.net'        ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bonn Office'       ; Phone = '+49 22 8111 113'  ; MobilePhone = '+49 1701 1113'   ; Street = 'Adenauerallee 3'          ; City = 'Bonn'        ; PostalCode = '53113'       ; Company = 'Example Music GmbH'  ; Manager = 'Ralf Hutter'      ; Description = 'Electronic percussionist for Kraftwerk'                       },
+      @{ Name = 'Karl Bartos'              ; SamAccountName = 'karl.bartos'       ; UserPrincipalName = 'karl.bartos@example.net'        ; OU = @('Locations','Germany','Bonn','Kraftwerk')                                      ; Groups = @('Kraftwerk','Musicians','Percussionists')    ; Title = 'Electronic Percussion'       ; Email = 'karl.bartos@example.net'          ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Bonn Office'       ; Phone = '+49 22 8111 114'  ; MobilePhone = '+49 1701 1114'   ; Street = 'Adenauerallee 4'          ; City = 'Bonn'        ; PostalCode = '53113'       ; Company = 'Example Music GmbH'  ; Manager = 'Ralf Hutter'      ; Description = 'Electronic percussionist and composer for Kraftwerk'          },
 
       ## ========== Fancy - Germany/Munich ==========
-      @{ Name = 'Manfred Segieth'         ; SamAccountName = 'fancy'              ; UserPrincipalName = 'fancy@example.net'              ; OU = @('Locations','Germany','Bayern','Munich','Fancy')                    ; Groups = @('Fancy Solo','Vocalists')                    ; Title = 'Solo Artist'                 ; Email = 'fancy@example.net'              ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Munich Office'     ; Phone = '+49 89 3333 111'  ; MobilePhone = '+49 1723 3111'   ; Street = 'Leopoldstrasse 100'       ; City = 'Munich'      ; PostalCode = '80802'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Solo artist aus Munich, known for Lady of Ice & Italo disco'  },
+      @{ Name = 'Manfred Segieth'         ; SamAccountName = 'fancy'              ; UserPrincipalName = 'fancy@example.net'              ; OU = @('Locations','Germany','Bayern','Munich','Fancy')                               ; Groups = @('Fancy Solo','Vocalists')                    ; Title = 'Solo Artist'                 ; Email = 'fancy@example.net'                ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Munich Office'     ; Phone = '+49 89 3333 111'  ; MobilePhone = '+49 1723 3111'   ; Street = 'Leopoldstrasse 100'       ; City = 'Munich'      ; PostalCode = '80802'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Solo artist aus Munich, known for Lady of Ice & Italo disco'  },
 
       ## ==========  Nena - Germany/West Berlin ==========
-      @{ Name = 'Gabriele Kerner'          ; SamAccountName = 'nena'              ; UserPrincipalName = 'nena@example.net'               ; OU = @('Locations','Germany','West Berlin','Nena')                         ; Groups = @('Nena','Vocalists')                          ; Title = 'Lead Vocalist'               ; Email = 'nena@example.net'               ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 111'  ; MobilePhone = '+49 1712 2111'   ; Street = 'Kurfurstendamm 100'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Lead vocalist of Nena, known as Nena'                         },
-      @{ Name = 'Carlo Karges'             ; SamAccountName = 'carlo.karges'      ; UserPrincipalName = 'carlo.karges@example.net'       ; OU = @('Locations','Germany','West Berlin','Nena')                         ; Groups = @('Nena','Musicians')                          ; Title = 'Guitarist'                   ; Email = 'carlo.karges@example.net'       ; Country = 'DE' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 112'  ; MobilePhone = '+49 1712 2112'   ; Street = 'Kurfurstendamm 101'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Guitarist for Nena (1951-2002) - Account disabled'            },
-      @{ Name = 'Uwe Fahrenkrog-Petersen'  ; SamAccountName = 'uwe.fahrenkrog'    ; UserPrincipalName = 'uwe.fahrenkrog@example.net'     ; OU = @('Locations','Germany','West Berlin','Nena')                         ; Groups = @('Nena','Musicians')                          ; Title = 'Keyboardist'                 ; Email = 'uwe.fahrenkrog@example.net'     ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 113'  ; MobilePhone = '+49 1712 2113'   ; Street = 'Kurfurstendamm 102'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = 'Gabriele Kerner'  ; Description = 'Keyboardist and songwriter for Nena'                          },
-      @{ Name = 'Jurgen Dehmel'            ; SamAccountName = 'jurgen.dehmel'     ; UserPrincipalName = 'jurgen.dehmel@example.net'      ; OU = @('Locations','Germany','West Berlin','Nena')                         ; Groups = @('Nena','Musicians')                          ; Title = 'Bassist'                     ; Email = 'jurgen.dehmel@example.net'      ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 114'  ; MobilePhone = '+49 1712 2114'   ; Street = 'Kurfurstendamm 103'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = 'Gabriele Kerner'  ; Description = 'Bassist for Nena'                                             },
-      @{ Name = 'Rolf Brendel'             ; SamAccountName = 'rolf.brendel'      ; UserPrincipalName = 'rolf.brendel@example.net'       ; OU = @('Locations','Germany','West Berlin','Nena')                         ; Groups = @('Nena','Musicians','Percussionists')         ; Title = 'Drummer'                     ; Email = 'rolf.brendel@example.net'       ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 115'  ; MobilePhone = '+49 1712 2115'   ; Street = 'Kurfurstendamm 104'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = 'Gabriele Kerner'  ; Description = 'Drummer for Nena'                                             },
+      @{ Name = 'Gabriele Kerner'          ; SamAccountName = 'nena'              ; UserPrincipalName = 'nena@example.net'               ; OU = @('Locations','Germany','West Berlin','Nena')                                    ; Groups = @('Nena','Vocalists')                          ; Title = 'Lead Vocalist'               ; Email = 'nena@example.net'                 ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 111'  ; MobilePhone = '+49 1712 2111'   ; Street = 'Kurfurstendamm 100'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Lead vocalist of Nena, known as Nena'                         },
+      @{ Name = 'Carlo Karges'             ; SamAccountName = 'carlo.karges'      ; UserPrincipalName = 'carlo.karges@example.net'       ; OU = @('Locations','Germany','West Berlin','Nena')                                    ; Groups = @('Nena','Musicians')                          ; Title = 'Guitarist'                   ; Email = 'carlo.karges@example.net'         ; Country = 'DE' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 112'  ; MobilePhone = '+49 1712 2112'   ; Street = 'Kurfurstendamm 101'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Guitarist for Nena (1951-2002) - Account disabled'            },
+      @{ Name = 'Uwe Fahrenkrog-Petersen'  ; SamAccountName = 'uwe.fahrenkrog'    ; UserPrincipalName = 'uwe.fahrenkrog@example.net'     ; OU = @('Locations','Germany','West Berlin','Nena')                                    ; Groups = @('Nena','Musicians')                          ; Title = 'Keyboardist'                 ; Email = 'uwe.fahrenkrog@example.net'       ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 113'  ; MobilePhone = '+49 1712 2113'   ; Street = 'Kurfurstendamm 102'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = 'Gabriele Kerner'  ; Description = 'Keyboardist and songwriter for Nena'                          },
+      @{ Name = 'Jurgen Dehmel'            ; SamAccountName = 'jurgen.dehmel'     ; UserPrincipalName = 'jurgen.dehmel@example.net'      ; OU = @('Locations','Germany','West Berlin','Nena')                                    ; Groups = @('Nena','Musicians')                          ; Title = 'Bassist'                     ; Email = 'jurgen.dehmel@example.net'        ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 114'  ; MobilePhone = '+49 1712 2114'   ; Street = 'Kurfurstendamm 103'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = 'Gabriele Kerner'  ; Description = 'Bassist for Nena'                                             },
+      @{ Name = 'Rolf Brendel'             ; SamAccountName = 'rolf.brendel'      ; UserPrincipalName = 'rolf.brendel@example.net'       ; OU = @('Locations','Germany','West Berlin','Nena')                                    ; Groups = @('Nena','Musicians','Percussionists')         ; Title = 'Drummer'                     ; Email = 'rolf.brendel@example.net'         ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 115'  ; MobilePhone = '+49 1712 2115'   ; Street = 'Kurfurstendamm 104'       ; City = 'Berlin'      ; PostalCode = '10709'       ; Company = 'Example Music GmbH'  ; Manager = 'Gabriele Kerner'  ; Description = 'Drummer for Nena'                                             },
 
       ## ========== Tangerine Dream - Germany/West Berlin ==========
-      @{ Name = 'Edgar Froese'            ; SamAccountName = 'edgar.froese'       ; UserPrincipalName = 'edgar.froese@example.net'       ; OU = @('Locations','Germany','West Berlin','Tangerine Dream')              ; Groups = @('Tangerine Dream','Musicians')               ; Title = 'Synthesizer/Guitar'          ; Email = 'edgar.froese@example.net'       ; Country = 'DE' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 121'  ; MobilePhone = '+49 171 2221121' ; Street = 'Kantstrasse 50'           ; City = 'Berlin'      ; PostalCode = '10625'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Founder of Tangerine Dream (1944-2015) - Account disabled'    },
-      @{ Name = 'Christopher Franke'      ; SamAccountName = 'christopher.franke' ; UserPrincipalName = 'christopher.franke@example.net' ; OU = @('Locations','Germany','West Berlin','Tangerine Dream')              ; Groups = @('Tangerine Dream','Musicians')               ; Title = 'Synthesizer/Drums'           ; Email = 'christopher.franke@example.net' ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 122'  ; MobilePhone = '+49 171 2221122' ; Street = 'Kantstrasse 51'           ; City = 'Berlin'      ; PostalCode = '10625'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Synthesizer and electronic drums for Tangerine Dream'         },
-      @{ Name = 'Peter Baumann'           ; SamAccountName = 'peter.baumann'      ; UserPrincipalName = 'peter.baumann@example.net'      ; OU = @('Locations','Germany','West Berlin','Tangerine Dream')              ; Groups = @('Tangerine Dream','Musicians')               ; Title = 'Synthesizer'                 ; Email = 'peter.baumann@example.net'      ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 123'  ; MobilePhone = '+49 171 2221123' ; Street = 'Kantstrasse 52'           ; City = 'Berlin'      ; PostalCode = '10625'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Synthesizer player for Tangerine Dream'                       },
+      @{ Name = 'Edgar Froese'            ; SamAccountName = 'edgar.froese'       ; UserPrincipalName = 'edgar.froese@example.net'       ; OU = @('Locations','Germany','West Berlin','Tangerine Dream')                         ; Groups = @('Tangerine Dream','Musicians')               ; Title = 'Synthesizer/Guitar'          ; Email = 'edgar.froese@example.net'         ; Country = 'DE' ; Disabled = $true  ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 121'  ; MobilePhone = '+49 171 2221121' ; Street = 'Kantstrasse 50'           ; City = 'Berlin'      ; PostalCode = '10625'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Founder of Tangerine Dream (1944-2015) - Account disabled'    },
+      @{ Name = 'Christopher Franke'      ; SamAccountName = 'christopher.franke' ; UserPrincipalName = 'christopher.franke@example.net' ; OU = @('Locations','Germany','West Berlin','Tangerine Dream')                         ; Groups = @('Tangerine Dream','Musicians')               ; Title = 'Synthesizer/Drums'           ; Email = 'christopher.franke@example.net'   ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 122'  ; MobilePhone = '+49 171 2221122' ; Street = 'Kantstrasse 51'           ; City = 'Berlin'      ; PostalCode = '10625'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Synthesizer and electronic drums for Tangerine Dream'         },
+      @{ Name = 'Peter Baumann'           ; SamAccountName = 'peter.baumann'      ; UserPrincipalName = 'peter.baumann@example.net'      ; OU = @('Locations','Germany','West Berlin','Tangerine Dream')                         ; Groups = @('Tangerine Dream','Musicians')               ; Title = 'Synthesizer'                 ; Email = 'peter.baumann@example.net'        ; Country = 'DE' ; Disabled = $false ; Locked = $false ; MustChangePassword = $false ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+49 30 2222 123'  ; MobilePhone = '+49 171 2221123' ; Street = 'Kantstrasse 52'           ; City = 'Berlin'      ; PostalCode = '10625'       ; Company = 'Example Music GmbH'  ; Manager = ''                 ; Description = 'Synthesizer player for Tangerine Dream'                       },
 
       ## Dummy user- for setting up new users via template - as is common
-      @{ Name = 'Template User'           ; SamAccountName = 'template.users'     ; UserPrincipalName = 'template.user@example.com'      ; OU = @('Locations','Templates','Users')                                    ; Groups = @('Disabled Users','Template Users')           ; Title = 'Template User'               ; Email = 'template.user@example.com'      ; Country = 'GL' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $true  ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+00 00 0000 000'  ; MobilePhone = '+00 000 0000000' ; Street = '1 Example Street'         ; City = 'Nuuk'        ; PostalCode = '00000'       ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Counting Paperclips'                                          }
+      @{ Name = 'Template User'           ; SamAccountName = 'template.users'     ; UserPrincipalName = 'template.user@example.com'      ; OU = @('Locations','Templates','Users')                                               ; Groups = @('Disabled Users','Template Users')           ; Title = 'Template User'               ; Email = 'template.user@example.com'        ; Country = 'GL' ; Disabled = $true  ; Locked = $true  ; MustChangePassword = $true  ; Department = 'Music' ; Office = 'Berlin Office'     ; Phone = '+00 00 0000 000'  ; MobilePhone = '+00 000 0000000' ; Street = '1 Example Street'         ; City = 'Nuuk'        ; PostalCode = '00000'       ; Company = 'Example Music ApS'   ; Manager = ''                 ; Description = 'Counting Paperclips'                                          }
     ## Demo Users ending stanza
     )
 
@@ -4897,13 +5415,13 @@ function Load-DomainData {
       @{ Name = 'EXADCBIR01' ; SamAccountName = 'EXADCBIR01$' ; DNSHostName = 'EXADCBIR01.example.net' ; HostName = 'EXADCBIR01.example.net' ; Site = 'BIR' ; Location = 'Birmingham, UK'       ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.121.10'  ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @()                                                         ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddMinutes(-46) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-120)   ; LastBootUpTime = (Get-Date).AddDays(-120)  ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '58 GB' ; Free = '62 GB' ; PercentFree = 52} ; 'SYSVOL' = @{Total = '50 GB'  ; Used = '11 GB' ; Free = '39 GB'  ; PercentFree = 78} }  ; ReplicationPartners = @('EXABONDC01', 'EXAMUCDC01')                             },
       @{ Name = 'EXADCBIR02' ; SamAccountName = 'EXADCBIR02$' ; DNSHostName = 'EXADCBIR02.example.net' ; HostName = 'EXADCBIR02.example.net' ; Site = 'BIR' ; Location = 'Birmingham, UK'       ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.121.11'  ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @()                                                         ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddMinutes(-3)  ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-11)    ; LastBootUpTime = (Get-Date).AddDays(-11)   ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '500 GB'; Used = '10 GB' ; Free = '490 GB'; PercentFree = 98} ; 'SYSVOL' = @{Total = '100GB'  ; Used = '6 GB'  ; Free = '94 GB'  ; PercentFree = 94} }  ; ReplicationPartners = @('EXABERDC01', 'EXABRKDC01')                             },
       @{ Name = 'EXADCCLY01' ; SamAccountName = 'EXADCCLY01$' ; DNSHostName = 'EXADCCLY01.example.net' ; HostName = 'EXADCCLY01.example.net' ; Site = 'CLY' ; Location = 'Clydebank, UK'        ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.141.9'   ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @()                                                         ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddMinutes(-38) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-18)    ; LastBootUpTime = (Get-Date).AddDays(-18)   ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '80 GB' ; Used = '61 GB' ; Free = '19 GB' ; PercentFree = 24} ; 'SYSVOL' = @{Total = '200GB'  ; Used = '18 GB' ; Free = '182GB'  ; PercentFree = 91} }  ; ReplicationPartners = @('EXAGLADC01', 'EXAEDIDC01', 'EXAKBRDC01', 'EXACPHDC01') },
-      @{ Name = 'EXADCEDI03' ; SamAccountName = 'EXADCEDI03$' ; DNSHostName = 'EXADCEDI03.example.net' ; HostName = 'EXADCEDI03.example.net' ; Site = 'EDI' ; Location = 'Edinburgh Office'     ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.131.10'  ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $false ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('RID Master', 'Infrastructure Master')                    ; OperationMasterRoles = @('RID Master', 'Infrastructure Master')                       ; LastReplication = (Get-Date).AddMinutes(-17) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-60)    ; LastBootUpTime = (Get-Date).AddDays(-60)   ; Services = @{DNS = 'Running'; DFSR = 'Stopped' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '114 GB'; Free = '6 GB'  ; PercentFree = 5 } ; 'SYSVOL' = @{Total = '40 GB'  ; Used = '32 GB' ; Free = '8 GB'   ; PercentFree = 20} }  ; ReplicationPartners = @('EXALIVDC01', 'EXAEDIDC01', 'EXAGLADC01', 'EXALNDDC01') },
+      @{ Name = 'EXADCEDI03' ; SamAccountName = 'EXADCEDI03$' ; DNSHostName = 'EXADCEDI03.example.net' ; HostName = 'EXADCEDI03.example.net' ; Site = 'EDI' ; Location = 'Edinburgh, UK'        ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.131.10'  ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $false ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('RID Master', 'Infrastructure Master')                    ; OperationMasterRoles = @('RID Master', 'Infrastructure Master')                       ; LastReplication = (Get-Date).AddMinutes(-17) ; ReplicationHealth = 'Unhealthy'             ; LastBoot = (Get-Date).AddDays(-60)    ; LastBootUpTime = (Get-Date).AddDays(-60)   ; Services = @{DNS = 'Running'; DFSR = 'Stopped' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '114 GB'; Free = '6 GB'  ; PercentFree = 5 } ; 'SYSVOL' = @{Total = '40 GB'  ; Used = '32 GB' ; Free = '8 GB'   ; PercentFree = 20} }  ; ReplicationPartners = @('EXALIVDC01', 'EXAEDIDC01', 'EXAGLADC01', 'EXALNDDC01') },
       @{ Name = 'EXADCCLY02' ; SamAccountName = 'EXADCCLY02$' ; DNSHostName = 'EXADCCLY02.example.net' ; HostName = 'EXADCCLY02.example.net' ; Site = 'CLY' ; Location = 'Clydebank Office'     ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.141.11'  ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @()                                                         ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddMinutes(-31) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-4)     ; LastBootUpTime = (Get-Date).AddDays(-4)    ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '150 GB'; Used = '123 GB'; Free = '27 GB' ; PercentFree = 18} ; 'SYSVOL' = @{Total = '60 GB'  ; Used = '29 GB' ; Free = '31 GB'  ; PercentFree = 52} }  ; ReplicationPartners = @('EXADCCLY01', 'EXAGLADC01')                             },
 
-      ## ===== Denmark DCs (example.com) =====
-      @{ Name = 'EXACPHDC01' ; SamAccountName ='EXACPHDC01$'  ; DNSHostName = 'EXACPHDC01.example.com' ; HostName = 'EXACPHDC01.example.com' ; Site = 'CPH' ; Location = 'Copenhagen, Denmark'  ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.6.20'    ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @()                                                         ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddMinutes(-41) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-34)    ; LastBootUpTime = (Get-Date).AddDays(-34)   ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '41 GB' ; Free = '79 GB' ; PercentFree = 66} ; 'SYSVOL' = @{Total = '50 GB'  ; Used = '9 GB'  ; Free = '41 GB'  ; PercentFree = 82} }  ; ReplicationPartners = @('EXALNDDC01', 'EXAKBRDC01', 'EXAODEDC01')               },
-      @{ Name = 'EXAKBRDC01' ; SamAccountName ='EXAKBRDC01$'  ; DNSHostName = 'EXAKBRDC01.example.com' ; HostName = 'EXAKBRDC01.example.com' ; Site = 'KGE' ; Location = 'Køge, Denmark'        ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2016 Standard' ; OperatingSystemVersion = '10.0 (14393)' ; IPv4Address = '192.168.5.20'    ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $false ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @()                                                         ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddDays(-27)    ; ReplicationHealth = 'Warning - Out of Sync' ; LastBoot = (Get-Date).AddDays(-156)   ; LastBootUpTime = (Get-Date).AddDays(-156)  ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '100 GB'; Used = '78 GB' ; Free = '22 GB' ; PercentFree = 22} ; 'SYSVOL' = @{Total = '40 GB'  ; Used = '28 GB' ; Free = '12 GB'  ; PercentFree = 30} }  ; ReplicationPartners = @('EXALNDDC01', 'EXACPHDC01')                             },
-      @{ Name = 'EXAODEDC01' ; SamAccountName ='EXAODEDC01$'  ; DNSHostName = 'EXAODEDC01.example.com' ; HostName = 'EXAODEDC01.example.com' ; Site = 'ODE' ; Location = 'Odense, Denmark'      ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.7.20'    ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('PDC Emulator', 'RID Master', 'Infrastructure Master')    ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddMinutes(-39) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-28)    ; LastBootUpTime = (Get-Date).AddDays(-28)   ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '42 GB' ; Free = '78 GB' ; PercentFree = 65} ; 'SYSVOL' = @{Total = '50 GB'  ; Used = '7 GB'  ; Free = '43 GB'  ; PercentFree = 86} }  ; ReplicationPartners = @('EXACPHDC01', 'EXAKBRDC01')                             },
+      ## ===== Danmark DCs (example.com) =====
+      @{ Name = 'EXACPHDC01' ; SamAccountName ='EXACPHDC01$'  ; DNSHostName = 'EXACPHDC01.example.com' ; HostName = 'EXACPHDC01.example.com' ; Site = 'CPH' ; Location = 'Copenhagen, Danmark'  ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.6.20'    ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @()                                                         ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddMinutes(-41) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-34)    ; LastBootUpTime = (Get-Date).AddDays(-34)   ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '41 GB' ; Free = '79 GB' ; PercentFree = 66} ; 'SYSVOL' = @{Total = '50 GB'  ; Used = '9 GB'  ; Free = '41 GB'  ; PercentFree = 82} }  ; ReplicationPartners = @('EXALNDDC01', 'EXAKBRDC01', 'EXAODEDC01')               },
+      @{ Name = 'EXAKBRDC01' ; SamAccountName ='EXAKBRDC01$'  ; DNSHostName = 'EXAKBRDC01.example.com' ; HostName = 'EXAKBRDC01.example.com' ; Site = 'KGE' ; Location = 'Køge, Danmark'        ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2016 Standard' ; OperatingSystemVersion = '10.0 (14393)' ; IPv4Address = '192.168.5.20'    ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $false ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @()                                                         ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddDays(-27)    ; ReplicationHealth = 'Warning - Out of Sync' ; LastBoot = (Get-Date).AddDays(-156)   ; LastBootUpTime = (Get-Date).AddDays(-156)  ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '100 GB'; Used = '78 GB' ; Free = '22 GB' ; PercentFree = 22} ; 'SYSVOL' = @{Total = '40 GB'  ; Used = '28 GB' ; Free = '12 GB'  ; PercentFree = 30} }  ; ReplicationPartners = @('EXALNDDC01', 'EXACPHDC01')                             },
+      @{ Name = 'EXAODEDC01' ; SamAccountName ='EXAODEDC01$'  ; DNSHostName = 'EXAODEDC01.example.com' ; HostName = 'EXAODEDC01.example.com' ; Site = 'ODE' ; Location = 'Odense, Danmark'      ; Domain = 'example.com' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.7.20'    ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('PDC Emulator', 'RID Master', 'Infrastructure Master')    ; OperationMasterRoles = @()                                                            ; LastReplication = (Get-Date).AddMinutes(-39) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-28)    ; LastBootUpTime = (Get-Date).AddDays(-28)   ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'} ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '42 GB' ; Free = '78 GB' ; PercentFree = 65} ; 'SYSVOL' = @{Total = '50 GB'  ; Used = '7 GB'  ; Free = '43 GB'  ; PercentFree = 86} }  ; ReplicationPartners = @('EXACPHDC01', 'EXAKBRDC01')                             },
 
       ## ===== Germany DCs (example.net) =====
       @{ Name = 'EXABONDC01' ; SamAccountName = 'EXABONDC01$' ; DNSHostName = 'EXABONDC01.example.net' ; HostName = 'EXABONDC01.example.net' ; Site = 'BON' ; Location = 'Bonn, Germany'        ; Domain = 'example.net' ; Forest = 'jukebox.example' ; OS = 'Windows Server 2022 Standard' ; OperatingSystemVersion = '10.0 (20348)' ; IPv4Address = '192.168.22.20'   ; IPv6Address = $null ; Enabled = $true ; IsGlobalCatalog = $true  ; IsReadOnly = $false ; LdapPort = 389 ; SslPort = 636 ; FSMORoles = @('Schema Master', 'Domain Naming Master')                  ; OperationMasterRoles = @('Schema Master', 'Domain Naming Master')                     ; LastReplication = (Get-Date).AddMinutes(-11) ; ReplicationHealth = 'Healthy'               ; LastBoot = (Get-Date).AddDays(-38)    ; LastBootUpTime = (Get-Date).AddDays(-38)   ; Services = @{DNS = 'Running'; DFSR = 'Running' ; Netlogon = 'Running' ; KDC = 'Running'}  ; DiskSpace = @{ 'C:' = @{Total = '120 GB'; Used = '48 GB'; Free = '72 GB' ; PercentFree = 60} ; 'SYSVOL' = @{Total = '50 GB'  ; Used = '10 GB' ; Free = '40 GB'  ; PercentFree = 80} }  ; ReplicationPartners = @('EXABERDC01')                                           },
@@ -4995,22 +5513,22 @@ function Load-DomainData {
       @{ Name = 'EXANIXBRD002' ; SamAccountName = 'EXANIXBRD002$' ; Type = 'Unix'          ; Role = 'NIX' ; Site = 'BRD' ; Location = 'West Berlin, FRG (DE)'        ; DNSHostName = 'EXANIXBRD002.example.net' ; OU = @('Locations','Germany','West Berlin','Computers')            ; OS = 'Debian 12'                         ; OperatingSystemVersion = '12.2'                 ; Description = 'Linux server hosting internal services'         ; LastLogon = (Get-Date).AddDays(-5)     ; IPAddress = '192.168.30.22'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
 
       ## Odense, DK
-      @{ Name = 'EXAMACODE001' ; SamAccountName = 'EXAMACODE001$' ; Type = 'Computer'      ; Role = 'MAC' ; Site = 'ODE' ; Location = 'Odense, Danmark'              ; DNSHostName = 'EXAMACODE001.example.com' ; OU = @('Locations','Denmark','Odense','Computers')                 ; OS = 'MacOS Tahoe'                       ; OperatingSystemVersion = '26.0.1'               ; Description = 'Design team iMac workstation'                   ; LastLogon = (Get-Date).AddDays(-7)     ; IPAddress = '192.168.66.150'  ; Domain = 'example.com' ; 'msLAPS-AccountName' = 'Administrator' ; 'msLAPS-Password' = 'Ode#Mac@44'     ; 'msLAPS-PasswordExpirationTime' = (Get-Date).AddDays(14).ToFileTimeUtc() ; LAPSPasswordLastSet = (Get-Date).AddDays(-21) ; LAPSPasswordExpiration = (Get-Date).AddDays(14) ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
-      @{ Name = 'EXAMBPODE002' ; SamAccountName = 'EXAMBPODE002$' ; Type = 'Computer'      ; Role = 'MBP' ; Site = 'ODE' ; Location = 'Odense, Danmark'              ; DNSHostName = 'EXAMBPODE002.example.com' ; OU = @('Locations','Denmark','Odense','Computers')                 ; OS = 'MacOS Tahoe'                       ; OperatingSystemVersion = '26.0.1'               ; Description = 'Executive MacBook Pro'                          ; LastLogon = (Get-Date).AddDays(-23)    ; IPAddress = '192.168.66.151'  ; Domain = 'example.com' ; 'msLAPS-AccountName' = 'Administrator' ; 'msLAPS-Password' = 'Ode#Mac@81'     ; 'msLAPS-PasswordExpirationTime' = (Get-Date).AddDays(10).ToFileTimeUtc() ; LAPSPasswordLastSet = (Get-Date).AddDays(-30) ; LAPSPasswordExpiration = (Get-Date).AddDays(10) ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXAMACODE001' ; SamAccountName = 'EXAMACODE001$' ; Type = 'Computer'      ; Role = 'MAC' ; Site = 'ODE' ; Location = 'Odense, Danmark'              ; DNSHostName = 'EXAMACODE001.example.com' ; OU = @('Locations','Danmark','Odense','Computers')                 ; OS = 'MacOS Tahoe'                       ; OperatingSystemVersion = '26.0.1'               ; Description = 'Design team iMac workstation'                   ; LastLogon = (Get-Date).AddDays(-7)     ; IPAddress = '192.168.66.150'  ; Domain = 'example.com' ; 'msLAPS-AccountName' = 'Administrator' ; 'msLAPS-Password' = 'Ode#Mac@44'     ; 'msLAPS-PasswordExpirationTime' = (Get-Date).AddDays(14).ToFileTimeUtc() ; LAPSPasswordLastSet = (Get-Date).AddDays(-21) ; LAPSPasswordExpiration = (Get-Date).AddDays(14) ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXAMBPODE002' ; SamAccountName = 'EXAMBPODE002$' ; Type = 'Computer'      ; Role = 'MBP' ; Site = 'ODE' ; Location = 'Odense, Danmark'              ; DNSHostName = 'EXAMBPODE002.example.com' ; OU = @('Locations','Danmark','Odense','Computers')                 ; OS = 'MacOS Tahoe'                       ; OperatingSystemVersion = '26.0.1'               ; Description = 'Executive MacBook Pro'                          ; LastLogon = (Get-Date).AddDays(-23)    ; IPAddress = '192.168.66.151'  ; Domain = 'example.com' ; 'msLAPS-AccountName' = 'Administrator' ; 'msLAPS-Password' = 'Ode#Mac@81'     ; 'msLAPS-PasswordExpirationTime' = (Get-Date).AddDays(10).ToFileTimeUtc() ; LAPSPasswordLastSet = (Get-Date).AddDays(-30) ; LAPSPasswordExpiration = (Get-Date).AddDays(10) ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
       ## Jukebox. This will be funny to you, if you have ever stayed at First Hotel Grand Odense Jernbanegade 18, 5000 Odense, Danmark
-      @{ Name = 'EXAMUSODE001' ; SamAccountName = 'EXAMUSODE001$' ; Type = 'Jukebox'       ; Role = 'MUS' ; Site ='ODE'  ; Location = 'Odense Office – Ground Floor' ; DNSHostName = 'EXAMUSODE001.example.org' ; OU = @('Locations','Denmark','Odense','Computers')                 ; OS = 'Pureline 128V Retro Vinyl Jukebox' ; OperatingSystemVersion = 'PL128V-ODE-095823'    ; Description = 'Retro Vinyl jukebox in the Odense office.'      ; LastLogon = (Get-Date).AddHours(-4)    ; IPAddress = '192.168.66.18'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXAMUSODE001' ; SamAccountName = 'EXAMUSODE001$' ; Type = 'Jukebox'       ; Role = 'MUS' ; Site ='ODE'  ; Location = 'Odense Office – Ground Floor' ; DNSHostName = 'EXAMUSODE001.example.org' ; OU = @('Locations','Danmark','Odense','Computers')                 ; OS = 'Pureline 128V Retro Vinyl Jukebox' ; OperatingSystemVersion = 'PL128V-ODE-095823'    ; Description = 'Retro Vinyl jukebox in the Odense office.'      ; LastLogon = (Get-Date).AddHours(-4)    ; IPAddress = '192.168.66.18'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
 
       ## Køge, DK
-      @{ Name = 'EXAWAPKGE001' ; SamAccountName = 'EXAWAPKGE001$' ; Type = 'Network'       ; Role = 'WAP' ; Site = 'KGE' ; Location = 'Køge, Danmark'                ; DNSHostName = 'EXAWAPKGE001.example.com' ; OU = @('Locations','Denmark','Køge','Computers')                   ; OS = 'Ubiquiti UniFi U6-Pro'             ; OperatingSystemVersion = 'U6P-KGE-847392'       ; Description = 'Enterprise Wi-Fi access point'                  ; LastLogon = (Get-Date).AddDays(-18)    ; IPAddress = '192.168.56.5'    ; Domain = 'example.com' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
-      @{ Name = 'EXAPRNKGE001' ; SamAccountName = 'EXAPRNKGE001$' ; Type = 'Peripheral'    ; Role = 'PRN' ; Site = 'KGE' ; Location = 'Køge, Danmark'                ; DNSHostName = 'EXAPRNKGE001.example.com' ; OU = @('Locations','Denmark','Køge','Computers')                   ; OS = 'HP LaserJet Enterprise MFP M528'   ; OperatingSystemVersion = 'HPM528-KGE-193847'    ; Description = 'Networked multifunction printer'                ; LastLogon = (Get-Date).AddDays(-10)    ; IPAddress = '192.168.56.16'   ; Domain = 'example.com' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXAWAPKGE001' ; SamAccountName = 'EXAWAPKGE001$' ; Type = 'Network'       ; Role = 'WAP' ; Site = 'KGE' ; Location = 'Køge, Danmark'                ; DNSHostName = 'EXAWAPKGE001.example.com' ; OU = @('Locations','Danmark','Køge','Computers')                   ; OS = 'Ubiquiti UniFi U6-Pro'             ; OperatingSystemVersion = 'U6P-KGE-847392'       ; Description = 'Enterprise Wi-Fi access point'                  ; LastLogon = (Get-Date).AddDays(-18)    ; IPAddress = '192.168.56.5'    ; Domain = 'example.com' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXAPRNKGE001' ; SamAccountName = 'EXAPRNKGE001$' ; Type = 'Peripheral'    ; Role = 'PRN' ; Site = 'KGE' ; Location = 'Køge, Danmark'                ; DNSHostName = 'EXAPRNKGE001.example.com' ; OU = @('Locations','Danmark','Køge','Computers')                   ; OS = 'HP LaserJet Enterprise MFP M528'   ; OperatingSystemVersion = 'HPM528-KGE-193847'    ; Description = 'Networked multifunction printer'                ; LastLogon = (Get-Date).AddDays(-10)    ; IPAddress = '192.168.56.16'   ; Domain = 'example.com' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
 
       ## København, DK
-      @{ Name = 'EXACLKCPH001' ; SamAccountName = 'EXACLKCPH001$' ; Type = 'IoT'           ; Role = 'CLK' ; Site = 'CPH' ; Location = 'Christianshavn, København'    ; DNSHostName = 'EXACLKCPH001.example.com' ; OU = @('Locations','Denmark','Copenhagen','Computers')             ; OS = 'Meinberg LANTIME M300'             ; OperatingSystemVersion = 'M300-CPH-661204'      ; Description = 'Network-synchronised NTP clock'                 ; LastLogon = (Get-Date).AddDays(-4)     ; IPAddress = '192.168.228.18'  ; Domain = 'example.com' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
-      @{ Name = 'EXARACCPH001' ; SamAccountName = 'EXARACCPH001$' ; Type = 'Hardware'      ; Role = 'RAC' ; Site = 'CPH' ; Location = 'Christianshavn, København'    ; DNSHostName = 'EXARACCPH001.example.net' ; OU = @('Locations','Denmark','Copenhagen','Infrastructure')        ; OS = 'Dell iDRAC9'                       ; OperatingSystemVersion = 'N/A'                  ; Description = 'iDRAC – root / CPH-rac01!'                      ; LastLogon = 'N/A'                      ; IPAddress = '192.168.31.2'    ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
-      @{ Name = 'EXASWICPH001' ; SamAccountName = 'EXASWICPH001$' ; Type = 'Network'       ; Role = 'SWI' ; Site = 'CPH' ; Location = 'Christianshavn, København'    ; DNSHostName = 'EXASWICPH001.example.net' ; OU = @('Locations','Denmark','Copenhagen','Network')               ; OS = 'TP-Link JetStream'                 ; OperatingSystemVersion = 'N/A'                  ; Description = 'Office switch – admin / CPHsw!'                 ; LastLogon = 'N/A'                      ; IPAddress = '192.168.31.5'    ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
-      @{ Name = 'EXASBCCPH001' ; SamAccountName = 'EXASBCCPH001$' ; Type = 'VOIP'          ; Role = 'SBC' ; Site = 'CPH' ; Location = 'Christianshavn, København'    ; DNSHostName = 'EXASBCCPH001.example.net' ; OU = @('Locations','Denmark','Copenhagen','Servers')               ; OS = '3CX SBC Debian'                    ; OperatingSystemVersion = 'N/A'                  ; Description = '3CX SBC – ssh:root / 3cx-CPH-49'                ; LastLogon = 'N/A'                      ; IPAddress = '192.168.31.49'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXACLKCPH001' ; SamAccountName = 'EXACLKCPH001$' ; Type = 'IoT'           ; Role = 'CLK' ; Site = 'CPH' ; Location = 'Christianshavn, København'    ; DNSHostName = 'EXACLKCPH001.example.com' ; OU = @('Locations','Danmark','Copenhagen','Computers')             ; OS = 'Meinberg LANTIME M300'             ; OperatingSystemVersion = 'M300-CPH-661204'      ; Description = 'Network-synchronised NTP clock'                 ; LastLogon = (Get-Date).AddDays(-4)     ; IPAddress = '192.168.228.18'  ; Domain = 'example.com' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXARACCPH001' ; SamAccountName = 'EXARACCPH001$' ; Type = 'Hardware'      ; Role = 'RAC' ; Site = 'CPH' ; Location = 'Christianshavn, København'    ; DNSHostName = 'EXARACCPH001.example.net' ; OU = @('Locations','Danmark','Copenhagen','Infrastructure')        ; OS = 'Dell iDRAC9'                       ; OperatingSystemVersion = 'N/A'                  ; Description = 'iDRAC – root / CPH-rac01!'                      ; LastLogon = 'N/A'                      ; IPAddress = '192.168.31.2'    ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXASWICPH001' ; SamAccountName = 'EXASWICPH001$' ; Type = 'Network'       ; Role = 'SWI' ; Site = 'CPH' ; Location = 'Christianshavn, København'    ; DNSHostName = 'EXASWICPH001.example.net' ; OU = @('Locations','Danmark','Copenhagen','Network')               ; OS = 'TP-Link JetStream'                 ; OperatingSystemVersion = 'N/A'                  ; Description = 'Office switch – admin / CPHsw!'                 ; LastLogon = 'N/A'                      ; IPAddress = '192.168.31.5'    ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXASBCCPH001' ; SamAccountName = 'EXASBCCPH001$' ; Type = 'VOIP'          ; Role = 'SBC' ; Site = 'CPH' ; Location = 'Christianshavn, København'    ; DNSHostName = 'EXASBCCPH001.example.net' ; OU = @('Locations','Danmark','Copenhagen','Servers')               ; OS = '3CX SBC Debian'                    ; OperatingSystemVersion = 'N/A'                  ; Description = '3CX SBC – ssh:root / 3cx-CPH-49'                ; LastLogon = 'N/A'                      ; IPAddress = '192.168.31.49'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
 
-      @{ Name = 'EXATVSCPH001' ; SamAccountName = 'EXATVSCPH001$' ; Type = 'TVs'           ; Role = 'TVS' ; Site='CPH'   ; Location = 'København Centrum office'     ; DNSHostName = 'EXATVSCPH001.example.com' ; OU = @('Locations','Denmark','Copenhagen','Computers')             ; OS = 'Bella Kronik 42X'                  ; OperatingSystemVersion = 'BTV-042001'           ; Description = 'Bella TV streams DR/TV2 in the CPH office..'    ; LastLogon = 'N/A'                      ; IPAddress = '192.168.31.17'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXATVSCPH001' ; SamAccountName = 'EXATVSCPH001$' ; Type = 'TVs'           ; Role = 'TVS' ; Site='CPH'   ; Location = 'København Centrum office'     ; DNSHostName = 'EXATVSCPH001.example.com' ; OU = @('Locations','Danmark','Copenhagen','Computers')             ; OS = 'Bella Kronik 42X'                  ; OperatingSystemVersion = 'BTV-042001'           ; Description = 'Bella TV streams DR/TV2 in the CPH office..'    ; LastLogon = 'N/A'                      ; IPAddress = '192.168.31.17'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
 
       ## Manchester, UK
       @{ Name = 'EXALAPMCR001' ; SamAccountName = 'EXALAPMCR001$' ; Type = 'Laptop'        ; Role = 'LAP' ; Site = 'MCR' ; Location = 'Manchester, UK'               ; DNSHostName = 'EXALAPMCR001.example.org' ; OU = @('Locations','UK','England','Manchester','Computers')        ; OS = 'Windows 11 Enterprise'             ; OperatingSystemVersion = '10.0.22631'           ; Description = 'Management laptop – Manchester office'          ; LastLogon = (Get-Date).AddDays(-12)    ; IPAddress = '192.168.228.19'  ; Domain = 'example.org' ; 'msLAPS-AccountName' = 'Administrator' ; 'msLAPS-Password'='Mcr#Lap@18'       ; 'msLAPS-PasswordExpirationTime' = (Get-Date).AddDays(7).ToFileTimeUtc()  ; LAPSPasswordLastSet = (Get-Date).AddDays(-20) ; LAPSPasswordExpiration = (Get-Date).AddDays(7)  ; TPMEnabled = $true  ; TPMActivated = $true  ; TPMVersion = '2.0'  ; Enabled = $true  },
@@ -5032,7 +5550,9 @@ function Load-DomainData {
       @{ Name = 'EXATABBIR001' ; SamAccountName = 'EXATABBIR001$' ; Type = 'Tablet'        ; Role = 'TAB' ; Site = 'BIR' ; Location = 'Birmingham, UK'               ; DNSHostName = 'EXATABLIV001.example.net' ; OU = @('Locations','UK','England','Liverpool','Tablets')           ; OS = 'Samsung Galaxy Tab A10'            ; OperatingSystemVersion = 'Lineage OS'           ; Description = 'Android tablet – setlists (service account)'    ; LastLogon = 'N/A'                      ; IPAddress = '192.168.121.61'  ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
       @{ Name = 'EXAPHNBIR001' ; SamAccountName = 'EXAPHNBIR001$' ; Type = 'Phone'         ; Role = 'PHN' ; Site = 'BIR' ; Location = 'Birmingham, UK'               ; DNSHostName = 'EXAPHNLIV001.example.net' ; OU = @('Locations','UK','England','Liverpool','Phones')            ; OS = 'Samsung Glalaxy S25 Ultra'         ; OperatingSystemVersion = 'Linage OS'            ; Description = 'Android phone – touring handset'                ; LastLogon = 'N/A'                      ; IPAddress = $null             ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
       @{ Name = 'EXASWIBIR002' ; SamAccountName = 'EXASWIBIR002$' ; Type = 'Switch'        ; Role = 'SWI' ; Site = 'BIR' ; Location = 'Birmingham, UK'               ; DNSHostName = 'EXASWIBIR002.example.net' ; OU = @('Locations','UK','England','Birmingham','Network')          ; OS = 'N/A'                               ; OperatingSystemVersion = 'N/A'                  ; Description = 'Cisco Catalyst 48-port (admin:catalyst80s)'     ; LastLogon = 'N/A'                      ; IPAddress = '192.168.121.20'  ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
-      @{ Name = 'EXARACBIR001' ; SamAccountName = 'EXARACBIR001$' ; Type = 'RAC'           ; Role = 'RAC' ; Site = 'BIR' ; Location = 'Birmingham, UK'               ; DNSHostName = 'EXARACBIR001.example.net' ; OU = @('Locations','UK','England','Birmingham','Infrastructure')   ; OS = 'N/A'                               ; OperatingSystemVersion = 'N/A'                  ; Description = 'Dell DRAC Birmingham   (dracadmin:Dr@c1983)'    ; LastLogon = 'N/A'                      ; IPAddress = '192.168.121.30'  ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXARACBIR001' ; SamAccountName = 'EXARACBIR001$' ; Type = 'RAC'           ; Role = 'RAC' ; Site = 'BIR' ; Location = 'Birmingham, UK'               ; DNSHostName = 'EXARACBIR001.example.net' ; OU = @('Locations','UK','England','Birmingham','Infrastructure')   ; OS = 'N/A'                               ; OperatingSystemVersion = 'N/A'                  ; Description = 'Dell DRAC Birmingham   (dracadmin:Dr@c1983)'    ; LastLogon = 'N/A'                      ; IPAddress = '192.168.121.6'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+      @{ Name = 'EXALCDBIR001' ; SamAccountName = 'EXALCDBIR001$' ; Type = 'Wall Display'  ; Role = 'LCD' ; Site = 'BIR' ; Location = 'Birmingham, UK'               ; DNSHostName = 'EXALCDBIR001.example.net' ; OU = @('Locations','UK','England','Birmingham','Displays')         ; OS = 'NEC PlasmaSync 42MP1'              ; OperatingSystemVersion = 'PlasmaSync v1.x'      ; Description = 'LCD status display (NOC / call queue display)'  ; LastLogon = 'N/A'                      ; IPAddress = '192.168.121.30'  ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
+
 
       ## Clydebank Infra
       @{ Name = 'EXASWICLY001' ; SamAccountName = 'EXASWICLY001$' ; Type = 'Network'       ; Role = 'SWI' ; Site = 'CLY' ; Location = 'Clydebank, UK'                ; DNSHostName = 'EXASWICLY001.example.net' ; OU = @('Locations','UK','Scotland','Clydebank','Network')           ; OS = 'Cisco Catalyst 9300'              ; OperatingSystemVersion = 'N/A'                  ; Description = 'Cisco Catalyst 48-port (admin:catalyst80s)'     ; LastLogon = 'N/A'                      ; IPAddress = '192.168.141.2'   ; Domain = 'example.net' ; 'msLAPS-AccountName' = $null           ; 'msLAPS-Password' = $null            ; 'msLAPS-PasswordExpirationTime' = $null                                  ; LAPSPasswordLastSet = $null                   ; LAPSPasswordExpiration = $null                  ; TPMEnabled = $false ; TPMActivated = $false ; TPMVersion = $null  ; Enabled = $true  },
@@ -5707,6 +6227,8 @@ function Build-DomainContent {
   Debug-Log ": Finished building content for domain $domain" -Type "Success"
 }
 
+#### This is never called - is it dead code?
+
 function New-TreeObjectNode {
     param(
         [string]$Type,   # user | group | computer | dc | ou
@@ -6061,6 +6583,7 @@ function Get-LDAPFilteredUsers {
   }
 }
 
+### Never called, but surely can be mergeed with sister user function above...?
 function Get-LDAPFilteredGroups {
   <#
   .SYNOPSIS
@@ -6494,348 +7017,1146 @@ function Show-QuickFilterDialog {
   [Terminal.Gui.Application]::Run($dlg)
 }
 
+##bums
 
-<#
- -------------------------{ Get-ADHealth }-------------------------
-  - Tabbed AD Health modal for DSA-TUI (Final: Tools row, Health icons, Alt-key accelerators, help line)
-  - Uses $Script:CurrentDomain for the domain to query
-  - auto-refresh Domain if it changes
-  - No F-keys, no Ctrl+Q/Ctrl+D; uses Alt+... + Esc as needed
-#>
-
-## ==================== HELPER: Execute External Commands ====================
-function Invoke-ExternalCommand {
+## ==================== MAIN GET-ADHEALTH FUNCTION ====================
+function Show-ADHealthDialog {
   <#
-    .SYNOPSIS
-    Safely execute external commands and capture output
+  .SYNOPSIS
+  Comprehensive Active Directory health check with tabbed interface for DSA-TUI
 
-    .PARAMETER Exe
-    Executable name (e.g., "repadmin.exe")
+  .DESCRIPTION
+  Performs multiple health checks on Active Directory environment with tabbed UI:
+  - System Info
+  - Domain Controller Status
+  - Replication Health
+  - DNS Records
+  - SYSVOL/NETLOGON Shares
+  - FSMO Roles
+  - Group Policy Objects
 
-    .PARAMETER Args
-    Command arguments
+  .PARAMETER Domain
+  The domain to check. Defaults to $Script:CurrentDomain
 
-    .EXAMPLE
-    $result = Invoke-ExternalCommand -Exe "repadmin.exe" -Args "/replsummary"
+  .EXAMPLE
+  Show-ADHealthDialog
+
+  .EXAMPLE
+  Show-ADHealthDialog -Domain "contoso.com"
   #>
 
+  [CmdletBinding()]
   param(
-    [string]$Exe,
-    [string]$arguments
+    [Parameter(Position=0)]
+    [string]$Domain
   )
 
+  Debug-Log ": Show-ADHealthDialog called" -Type "Info"
+
+  ## ==================== OS & TOOL DETECTION ====================
+
+  ## Detect OS
+  $osInfo = @{
+    IsWindows = $false
+    IsLinux = $false
+    IsMacOS = $false
+    OSName = "Unknown"
+  }
+
+  if ($PSVersionTable.PSVersion.Major -ge 6) {
+    ## PowerShell Core 6+
+    $osInfo.IsWindows = $IsWindows
+    $osInfo.IsLinux = $IsLinux
+    $osInfo.IsMacOS = $IsMacOS
+  } else {
+    ## Windows PowerShell 5.1
+    $osInfo.IsWindows = $true
+  }
+
+  if ($osInfo.IsWindows) { $osInfo.OSName = "Windows $($PSVersionTable.PSVersion)" }
+  elseif ($osInfo.IsLinux) { $osInfo.OSName = "Linux" }
+  elseif ($osInfo.IsMacOS) { $osInfo.OSName = "macOS" }
+
+  Debug-Log ": Detected OS: $($osInfo.OSName)" -Type "Info"
+
+  ## Check tool availability
+  $tools = Test-ToolsAvailability
+  Debug-Log ": Tool availability checked" -Type "Info"
+
+  ## Check AD module
+  $hasADModule = $null -ne (Get-Module -ListAvailable -Name ActiveDirectory)
+  Debug-Log ": ActiveDirectory module available: $hasADModule" -Type "Info"
+
+  if (-not $hasADModule -and -not $Script:DemoMode) {
+    Show-Modal "AD Module Missing" "ActiveDirectory PowerShell module is not available.`n`nOS: $($osInfo.OSName)`n`nInstall RSAT (Windows) or realmd/sssd (Linux/macOS) to use this feature."
+    return
+  }
+
+  ## Determine domain to check
+  if (-not $Domain) {
+    if ($Script:CurrentDomain) {
+      $Domain = $Script:CurrentDomain
+    } else {
+      if (-not $Script:DemoMode) {
+        try {
+          $Domain = (Get-ADDomain -Current LocalComputer).DNSRoot
+        } catch {
+          Show-Modal "Error" "Could not determine domain. Please specify domain in demo mode or ensure AD module is available."
+          return
+        }
+      } else {
+        $Domain = "example.com"
+      }
+    }
+  }
+
+  Debug-Log ": Checking AD Health for domain: $Domain" -Type "Info"
+
+  ## Store tools and OS info in script scope for helper functions
+  $Script:ADHealthTools = $tools
+  $Script:ADHealthOS = $osInfo
+  $Script:ADHealthDomain = $Domain
+
+  ## Create main dialog
+  $dialog = [Terminal.Gui.Dialog]::new("AD Health Check - $Domain", 120, 35)
+
+  ## Create TabView
+  $tabView = [Terminal.Gui.TabView]::new()
+  $tabView.X = 0
+  $tabView.Y = 0
+  $tabView.Width = [Terminal.Gui.Dim]::Fill()
+  $tabView.Height = [Terminal.Gui.Dim]::Fill(2)
+
+  ## Tab definitions
+  $tabs = @(
+    @{ Name = "System Info"; Generator = { Get-SystemInfoText } }
+    @{ Name = "Domain Controllers"; Generator = { Get-DCStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Replication"; Generator = { Get-ReplicationStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "DNS Records"; Generator = { Get-DNSStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "SYSVOL/NETLOGON"; Generator = { Get-SysvolStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "FSMO Roles"; Generator = { Get-FSMOStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Group Policy"; Generator = { Get-GPOStatusText -Domain $Script:ADHealthDomain } }
+  )
+
+  ## Create tabs
+  foreach ($tabDef in $tabs) {
+    $tab = [Terminal.Gui.TabView+Tab]::new()
+    $tab.Text = [NStack.ustring]::Make($tabDef.Name)
+    $tab.View = [Terminal.Gui.View]::new()
+    $tab.View.Width = [Terminal.Gui.Dim]::Fill()
+    $tab.View.Height = [Terminal.Gui.Dim]::Fill()
+
+    $text = & $tabDef.Generator
+    $textView = [Terminal.Gui.TextView]::new()
+    $textView.X = 1
+    $textView.Y = 0
+    $textView.Width = [Terminal.Gui.Dim]::Fill(1)
+    $textView.Height = [Terminal.Gui.Dim]::Fill()
+    $textView.ReadOnly = $true
+    $textView.Text = [NStack.ustring]::Make($text)
+    $tab.View.Add($textView)
+
+    $tabView.AddTab($tab, $false)
+  }
+
+  $dialog.Add($tabView)
+
+  ## ==================== CTRL+F SEARCH ====================
+
+  ## Add key handler for Ctrl+F
+  $dialog.add_KeyPress({
+    param($e)
+
+    if ($e.KeyEvent.Key -eq [Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::f) {
+      $currentTab = $tabView.SelectedTab
+      $textView = $currentTab.View.Subviews[0]
+
+      if ($textView -and $textView -is [Terminal.Gui.TextView]) {
+        ## Simple search prompt
+        $searchText = Show-InputDialog -Title "Search" -Label "Search for:" -Width 50
+
+        if ($searchText) {
+          $content = $textView.Text.ToString()
+          $index = $content.IndexOf($searchText, [StringComparison]::OrdinalIgnoreCase)
+
+          if ($index -ge 0) {
+            ## Calculate line number
+            $lines = $content.Substring(0, $index) -split "`n"
+            $lineNum = $lines.Count - 1
+
+            ## Move cursor to that line
+            try {
+              $textView.CursorPosition = [Terminal.Gui.Point]::new(0, $lineNum)
+              $textView.SetNeedsDisplay()
+            } catch { }
+
+            Show-Modal "Search" "Found at line $($lineNum + 1)"
+          } else {
+            Show-Modal "Search" "Text '$searchText' not found"
+          }
+        }
+      }
+
+      $e.Handled = $true
+    }
+  })
+
+  ## ==================== BUTTONS ====================
+
+  $btnRefresh = [Terminal.Gui.Button]::new("Refresh")
+  $btnRefresh.X = 2
+  $btnRefresh.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnRefresh.add_Clicked({
+    Debug-Log ": Refreshing current tab..." -Type "Info"
+    $currentTab = $tabView.SelectedTab
+    $tabName = $currentTab.Text.ToString()
+
+    ## Find matching tab definition
+    $tabDef = $tabs | Where-Object { $_.Name -eq $tabName } | Select-Object -First 1
+    if ($tabDef) {
+      ## Refresh tools check if System Info
+      if ($tabName -eq "System Info") {
+        $Script:ADHealthTools = Test-ToolsAvailability
+      }
+
+      $newText = & $tabDef.Generator
+      $currentTab.View.Subviews[0].Text = [NStack.ustring]::Make($newText)
+    }
+  })
+  $dialog.Add($btnRefresh)
+
+  $btnExport = [Terminal.Gui.Button]::new("Export Report")
+  $btnExport.X = 15
+  $btnExport.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnExport.add_Clicked({
+    Debug-Log ": Exporting AD health report..." -Type "Info"
+
+    $report = @"
+AD HEALTH REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Domain: $Domain
+Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+
+SYSTEM INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-SystemInfoText)
+
+DOMAIN CONTROLLERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-DCStatusText -Domain $Domain)
+
+REPLICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-ReplicationStatusText -Domain $Domain)
+
+DNS RECORDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-DNSStatusText -Domain $Domain)
+
+SYSVOL/NETLOGON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-SysvolStatusText -Domain $Domain)
+
+FSMO ROLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-FSMOStatusText -Domain $Domain)
+
+GROUP POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-GPOStatusText -Domain $Domain)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+End of Report
+"@
+
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $savePath = Show-FileBrowserDialog -StartDir "." -Title "Save AD Health Report" -Filter @("*.txt", "*.log")
+
+    if ($savePath) {
+      try {
+        $report | Out-File -FilePath $savePath -Encoding UTF8
+        Debug-Log ": Report exported to $savePath" -Type "Success"
+        Show-Modal "Export Complete" "AD Health Report saved to:`n`n$savePath"
+      } catch {
+        Debug-Log ": Failed to export report: $($_.Exception.Message)" -Type "Error"
+        Show-Modal "Export Failed" "Failed to save report:`n`n$($_.Exception.Message)"
+      }
+    }
+  })
+  $dialog.Add($btnExport)
+
+  $btnClose = [Terminal.Gui.Button]::new("Close")
+  $btnClose.X = [Terminal.Gui.Pos]::AnchorEnd(10)
+  $btnClose.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnClose.add_Clicked({
+    Debug-Log ": AD Health dialog closed" -Type "Info"
+    [Terminal.Gui.Application]::RequestStop()
+  })
+  $dialog.Add($btnClose)
+
+  ## Run dialog
+  Debug-Log ": Running AD Health dialog" -Type "Info"
+  [Terminal.Gui.Application]::Run($dialog)
+}
+
+
+## ==================== CONTENT GENERATORS ====================
+
+function Get-SystemInfoText {
+  $output = @()
+  $output += "SYSTEM INFORMATION"
+  $output += "=" * 80
+  $output += ""
+
+  ## Operating System
+  $output += "Operating System:"
+  $output += "  Platform:  $($Script:ADHealthOS.OSName)"
+  $output += "  Windows:   $($Script:ADHealthOS.IsWindows)"
+  $output += "  Linux:     $($Script:ADHealthOS.IsLinux)"
+  $output += "  macOS:     $($Script:ADHealthOS.IsMacOS)"
+  $output += ""
+
+  ## PowerShell Version
+  $output += "PowerShell:"
+  $output += "  Version:   $($PSVersionTable.PSVersion)"
+  $output += "  Edition:   $($PSVersionTable.PSEdition)"
+  $output += ""
+
+  ## Module Availability
+  $output += "PowerShell Modules:"
+  $hasAD = Get-Module -ListAvailable -Name ActiveDirectory -ErrorAction SilentlyContinue
+  $output += "  ActiveDirectory:    $(if ($hasAD) { '✓ Available' } else { '✗ Not Found' })"
+
+  $hasTerminalIcons = Get-Module -ListAvailable -Name Terminal-Icons -ErrorAction SilentlyContinue
+  $output += "  Terminal-Icons:     $(if ($hasTerminalIcons) { '✓ Available' } else { '✗ Not Found' })"
+
+  $hasNerdFonts = Get-Module -ListAvailable -Name NerdFonts -ErrorAction SilentlyContinue
+  $output += "  NerdFonts:          $(if ($hasNerdFonts) { '✓ Available' } else { '✗ Not Found' })"
+  $output += ""
+
+  ## Tool Availability
+  $output += "External Tools:"
+  foreach ($tool in $Script:ADHealthTools.Keys | Sort-Object) {
+    $status = if ($Script:ADHealthTools[$tool]) { "✓ Available" } else { "✗ Not Found" }
+    $output += "  {0,-20} {1}" -f "${tool}:", $status
+  }
+  $output += ""
+
+  ## Demo Mode
+  $output += "Application Mode:"
+  $output += "  Demo Mode:  $($Script:DemoMode)"
+  $output += "  Domain:     $($Script:ADHealthDomain)"
+  $output += ""
+
+  ## Data Summary (from Script variables)
+  if ($Script:DemoMode) {
+    $output += "Demo Data Summary:"
+    $output += "  Users:      $(if ($Script:rawUsers) { $Script:rawUsers.Count } else { 0 })"
+    $output += "  DCs:        $(if ($Script:rawDCs) { $Script:rawDCs.Count } elseif ($Script:DCs) { $Script:DCs.Count } else { 0 })"
+    $output += "  Computers:  $(if ($Script:rawComputers) { $Script:rawComputers.Count } else { 0 })"
+    $output += "  Groups:     $(if ($Script:rawDemoGroups) { $Script:rawDemoGroups.Count } else { 0 })"
+    $output += ""
+  }
+
+  ## Installation Instructions
+  if (-not $hasAD) {
+    $output += "⚠ ActiveDirectory Module Not Found"
+    $output += ""
+    if ($Script:ADHealthOS.IsWindows) {
+      $output += "To install on Windows:"
+      $output += "  1. Open PowerShell as Administrator"
+      $output += "  2. Run: Add-WindowsFeature RSAT-AD-PowerShell"
+      $output += "     OR: Install-WindowsFeature RSAT-AD-PowerShell"
+    } elseif ($Script:ADHealthOS.IsLinux) {
+      $output += "To install on Linux:"
+      $output += "  1. Install realmd: sudo apt install realmd sssd sssd-tools adcli"
+      $output += "  2. Join domain: sudo realm join domain.com"
+    } elseif ($Script:ADHealthOS.IsMacOS) {
+      $output += "To install on macOS:"
+      $output += "  1. Install via Homebrew: brew install realmd"
+      $output += "  2. Configure AD integration"
+    }
+    $output += ""
+  }
+
+  return ($output -join "`n")
+}
+
+
+function Get-DCStatusText {
+  param([string]$Domain)
+
+  $output = @()
+  $output += "DOMAIN CONTROLLER STATUS"
+  $output += "=" * 80
+  $output += ""
+
+  if ($Script:DemoMode) {
+    ## Use Script:DCs or Script:rawDCs
+    $dcs = if ($Script:DCs) { $Script:DCs } elseif ($Script:rawDCs) { $Script:rawDCs } else { @() }
+
+    if ($dcs.Count -gt 0) {
+      $fmt = "{0,-20} {1,-20} {2,-16} {3,-10} {4,-6} {5,-6} {6,-6} {7,-6}"
+      $output += $fmt -f "DC Name", "Site", "IP Address", "Status", "LDAP", "Kerb", "SMB", "DNS"
+      $output += $fmt -f ("─" * 20), ("─" * 20), ("─" * 16), ("─" * 10), ("─" * 6), ("─" * 6), ("─" * 6), ("─" * 6)
+      $output += ""
+
+      $onlineCount = 0
+      foreach ($dc in $dcs) {
+        $dcName = $dc.Name
+        $site = if ($dc.Site) { $dc.Site } else { "Unknown" }
+        $ip = if ($dc.IPv4Address) { $dc.IPv4Address } elseif ($dc.IP) { $dc.IP -join "," } else { "N/A" }
+        $status = if ($dc.Enabled) { $onlineCount++; "✓ Online" } else { "✗ Offline" }
+        $ldap = "✓ OK"
+        $kerb = "✓ OK"
+        $smb = "✓ OK"
+        $dns = "✓ OK"
+
+        $output += $fmt -f $dcName, $site, $ip, $status, $ldap, $kerb, $smb, $dns
+      }
+
+      $output += ""
+      $output += "Summary:"
+      $output += "  Total DCs:     $($dcs.Count)"
+      $output += "  Online:        $onlineCount"
+      $output += "  Offline:       $($dcs.Count - $onlineCount)"
+      $output += "  Health:        $(if ($onlineCount -eq $dcs.Count) { '✓ HEALTHY' } elseif ($onlineCount -gt 0) { '⚠ DEGRADED' } else { '✗ CRITICAL' })"
+      $output += ""
+      $output += "Ports: LDAP (389), Kerberos (88), SMB (445), DNS (53)"
+    } else {
+      $output += "No domain controllers found in demo data."
+    }
+  } else {
+    ## Production mode - check ports
+    $result = Test-DCStatus -Domain $Domain
+
+    if ($result.Summary) {
+      $fmt = "{0,-20} {1,-20} {2,-16} {3,-10} {4,-6} {5,-6} {6,-6} {7,-6}"
+      $output += $fmt -f "DC Name", "Site", "IP Address", "Status", "LDAP", "Kerb", "SMB", "DNS"
+      $output += $fmt -f ("─" * 20), ("─" * 20), ("─" * 16), ("─" * 10), ("─" * 6), ("─" * 6), ("─" * 6), ("─" * 6)
+      $output += ""
+
+      foreach ($dc in $result.Summary) {
+        $status = if ($dc.Reachable -eq "OK") { "✓ Online" } else { "✗ Offline" }
+
+        ## Port checks
+        $ldap = if ($dc.LDAP) { "✓ OK" } else { "✗ DOWN" }
+        $kerb = if ($dc.Kerberos) { "✓ OK" } else { "✗ DOWN" }
+        $smb = if ($dc.SMB) { "✓ OK" } else { "✗ DOWN" }
+        $dns = if ($dc.DNS -eq "Running") { "✓ OK" } else { "✗ DOWN" }
+
+        $output += $fmt -f $dc.Name, $dc.Site, $dc.IP, $status, $ldap, $kerb, $smb, $dns
+      }
+
+      $onlineCount = ($result.Summary | Where-Object { $_.Reachable -eq "OK" }).Count
+      $totalCount = $result.Summary.Count
+
+      $output += ""
+      $output += "Summary:"
+      $output += "  Total DCs:     $totalCount"
+      $output += "  Online:        $onlineCount"
+      $output += "  Offline:       $($totalCount - $onlineCount)"
+      $output += "  Health:        $($result.Health)"
+      $output += ""
+      $output += "Ports: LDAP (389), Kerberos (88), SMB (445), DNS (53)"
+    }
+
+    if ($result.Details) {
+      $output += ""
+      $output += "Details:"
+      $output += $result.Details
+    }
+  }
+
+  return ($output -join "`n")
+}
+
+
+function Get-ReplicationStatusText {
+  param([string]$Domain)
+
+  $output = @()
+  $output += "REPLICATION STATUS"
+  $output += "=" * 80
+  $output += ""
+
+  $hasRepadmin = $Script:ADHealthTools['repadmin.exe']
+  $output += "Tool Status: repadmin.exe $(if ($hasRepadmin) { '✓ Available' } else { '✗ Not Found' })"
+  $output += ""
+
+  if ($Script:DemoMode) {
+    $output += "Demo Mode - Simulated replication status for domain: $Domain"
+    $output += ""
+
+    $dcs = if ($Script:DCs) { $Script:DCs } elseif ($Script:rawDCs) { $Script:rawDCs } else { @() }
+
+    if ($dcs.Count -gt 1) {
+      $fmt = "{0,-20} {1,-20} {2,-10} {3}"
+      $output += $fmt -f "Source DC", "Target DC", "Status", "Last Sync"
+      $output += $fmt -f ("─" * 20), ("─" * 20), ("─" * 10), ("─" * 20)
+
+      foreach ($sourceDC in $dcs) {
+        foreach ($targetDC in $dcs) {
+          if ($sourceDC.Name -ne $targetDC.Name) {
+            $output += $fmt -f $sourceDC.Name, $targetDC.Name, "✓ OK", (Get-Date -Format "yyyy-MM-dd HH:mm")
+          }
+        }
+      }
+
+      $output += ""
+      $output += "All replication partners healthy."
+      $output += "No errors detected."
+    } else {
+      $output += "Single DC - no replication partners."
+    }
+  } else {
+    ## Production mode - actually run repadmin
+    $result = Test-ADReplication -Domain $Domain
+
+    if ($hasRepadmin) {
+      $output += "Running repadmin /replsummary..."
+      $output += ""
+    }
+
+    if ($result.Summary) {
+      foreach ($line in $result.Summary) {
+        $output += $line
+      }
+    }
+
+    $output += ""
+    $output += "Health: $($result.Health)"
+
+    if ($result.Details) {
+      $output += ""
+      $output += "Details:"
+      $output += $result.Details
+    }
+  }
+
+  return ($output -join "`n")
+}
+
+
+function Get-DNSStatusText {
+  param([string]$Domain)
+
+  $output = @()
+  $output += "DNS RECORDS STATUS"
+  $output += "=" * 80
+  $output += ""
+
+  $hasNslookup = $Script:ADHealthTools['nslookup.exe']
+  $output += "Tool Status: nslookup.exe $(if ($hasNslookup) { '✓ Available' } else { '✗ Not Found' })"
+  $output += ""
+
+  if ($Script:DemoMode) {
+    $output += "Demo Mode - Simulated DNS status for domain: $Domain"
+    $output += ""
+
+    $dcs = if ($Script:DCs) { $Script:DCs } elseif ($Script:rawDCs) { $Script:rawDCs } else { @() }
+
+    $fmt = "{0,-45} {1}"
+    $output += $fmt -f "SRV Record", "Count"
+    $output += $fmt -f ("─" * 45), ("─" * 10)
+    $output += $fmt -f "_ldap._tcp.dc._msdcs.$Domain", "$($dcs.Count)"
+    $output += $fmt -f "_kerberos._tcp.$Domain", "$($dcs.Count)"
+    $output += $fmt -f "_ldap._tcp.$Domain", "$($dcs.Count)"
+    $output += ""
+
+    if ($dcs.Count -gt 0) {
+      $output += "DC DNS Service Status:"
+      foreach ($dc in $dcs) {
+        $output += "  $($dc.Name): ✓ Running"
+      }
+    }
+
+    $output += ""
+    $output += "All DNS records appear healthy."
+  } else {
+    ## Production mode - actually query DNS
+    $result = Test-ADDnsRecords -Domain $Domain
+
+    $output += "Querying DNS records for domain: $Domain"
+    $output += ""
+
+    if ($result.Summary) {
+      foreach ($line in $result.Summary) {
+        $output += $line
+      }
+    }
+
+    $output += ""
+    $output += "Health: $($result.Health)"
+
+    if ($result.Details) {
+      $output += ""
+      $output += "Details:"
+      $output += $result.Details
+    }
+  }
+
+  return ($output -join "`n")
+}
+
+
+function Get-SysvolStatusText {
+  param([string]$Domain)
+
+  $output = @()
+  $output += "SYSVOL/NETLOGON STATUS"
+  $output += "=" * 80
+  $output += ""
+
+  $hasDfsrdiag = $Script:ADHealthTools['dfsrdiag.exe']
+  $output += "Tool Status: dfsrdiag.exe $(if ($hasDfsrdiag) { '✓ Available' } else { '✗ Not Found' })"
+  $output += ""
+
+  if ($Script:DemoMode) {
+    $output += "Demo Mode - Simulated SYSVOL status for domain: $Domain"
+    $output += ""
+
+    $dcs = if ($Script:DCs) { $Script:DCs } elseif ($Script:rawDCs) { $Script:rawDCs } else { @() }
+
+    if ($dcs.Count -gt 0) {
+      $fmt = "{0,-25} {1,-20} {2}"
+      $output += $fmt -f "DC Name", "Share", "Status"
+      $output += $fmt -f ("─" * 25), ("─" * 20), ("─" * 20)
+
+      foreach ($dc in $dcs) {
+        $output += $fmt -f $dc.Name, "SYSVOL", "✓ Available"
+        $output += $fmt -f $dc.Name, "NETLOGON", "✓ Available"
+      }
+
+      $output += ""
+      $output += "All shares accessible."
+    } else {
+      $output += "No domain controllers found."
+    }
+  } else {
+    ## Production mode - actually check shares
+    $result = Test-SysvolHealth -Domain $Domain
+
+    $output += "Checking SYSVOL/NETLOGON shares for domain: $Domain"
+    $output += ""
+
+    if ($result.Summary) {
+      foreach ($line in $result.Summary) {
+        $output += $line
+      }
+    }
+
+    $output += ""
+    $output += "Health: $($result.Health)"
+
+    if ($result.Details) {
+      $output += ""
+      $output += "Details:"
+      $output += $result.Details
+    }
+  }
+
+  return ($output -join "`n")
+}
+
+
+function Get-FSMOStatusText {
+  param([string]$Domain)
+
+  $output = @()
+  $output += "FSMO ROLES"
+  $output += "=" * 80
+  $output += ""
+
+  if ($Script:DemoMode) {
+    $output += "Demo Mode - Simulated FSMO roles for domain: $Domain"
+    $output += ""
+
+    $dcs = if ($Script:DCs) { $Script:DCs } elseif ($Script:rawDCs) { $Script:rawDCs } else { @() }
+
+    if ($dcs.Count -gt 0) {
+      $fmt = "{0,-30} {1,-30} {2}"
+      $output += $fmt -f "Role", "Holder", "Status"
+      $output += $fmt -f ("─" * 30), ("─" * 30), ("─" * 15)
+
+      $primaryDC = $dcs[0].Name
+      $output += $fmt -f "Schema Master", $primaryDC, "✓ Online"
+      $output += $fmt -f "Domain Naming Master", $primaryDC, "✓ Online"
+      $output += $fmt -f "PDC Emulator", $primaryDC, "✓ Online"
+      $output += $fmt -f "RID Master", $primaryDC, "✓ Online"
+      $output += $fmt -f "Infrastructure Master", $primaryDC, "✓ Online"
+
+      $output += ""
+      $output += "All FSMO role holders are reachable."
+    } else {
+      $output += "No domain controllers found."
+    }
+  } else {
+    ## Production mode - actually query FSMO
+    $result = Test-FSMORoles -Domain $Domain
+
+    $output += "Checking FSMO roles for domain: $Domain"
+    $output += ""
+
+    if ($result.Summary) {
+      $fmt = "{0,-30} {1,-30} {2}"
+      $output += $fmt -f "Role", "Holder", "Status"
+      $output += $fmt -f ("─" * 30), ("─" * 30), ("─" * 15)
+
+      foreach ($line in $result.Summary) {
+        if ($line -match '^(.+?)\s*->\s*(.+)$') {
+          $role = $matches[1]
+          $holder = $matches[2]
+          $output += $fmt -f $role, $holder, "✓ Online"
+        }
+      }
+    }
+
+    $output += ""
+    $output += "Health: $($result.Health)"
+
+    if ($result.Details) {
+      $output += ""
+      $output += "Details:"
+      $output += $result.Details
+    }
+  }
+
+  return ($output -join "`n")
+}
+
+
+function Get-GPOStatusText {
+  param([string]$Domain)
+
+  $output = @()
+  $output += "GROUP POLICY STATUS"
+  $output += "=" * 80
+  $output += ""
+
+  if ($Script:DemoMode) {
+    $output += "Demo Mode - Simulated GPO status for domain: $Domain"
+    $output += ""
+
+    $demoGPOs = @(
+      @{ Name = "Default Domain Policy"; Status = "✓ Healthy" }
+      @{ Name = "Default Domain Controllers Policy"; Status = "✓ Healthy" }
+      @{ Name = "Password Policy"; Status = "✓ Healthy" }
+      @{ Name = "Desktop Settings"; Status = "✓ Healthy" }
+      @{ Name = "Security Baseline"; Status = "✓ Healthy" }
+    )
+
+    $output += "Total GPOs: $($demoGPOs.Count)"
+    $output += ""
+
+    $fmt = "{0,-45} {1}"
+    $output += $fmt -f "GPO Name", "Status"
+    $output += $fmt -f ("─" * 45), ("─" * 15)
+
+    foreach ($gpo in $demoGPOs) {
+      $output += $fmt -f $gpo.Name, $gpo.Status
+    }
+
+    $output += ""
+    $output += "All GPOs in sync."
+  } else {
+    ## Production mode - actually query GPOs
+    $result = Test-GPOHealth -Domain $Domain
+
+    $output += "Checking GPOs for domain: $Domain"
+    $output += ""
+
+    if ($result.Summary) {
+      foreach ($line in $result.Summary) {
+        $output += $line
+      }
+    }
+
+    $output += ""
+    $output += "Health: $($result.Health)"
+
+    if ($result.Details) {
+      $output += ""
+      $output += "Details:"
+      $output += $result.Details
+    }
+  }
+
+  return ($output -join "`n")
+}
+
+
+## ==================== PRODUCTION CHECK FUNCTIONS ====================
+
+function Test-ToolsAvailability {
+  $tools = @{
+    'repadmin.exe' = $false
+    'dfsrdiag.exe' = $false
+    'dcdiag.exe'   = $false
+    'nslookup.exe' = $false
+    'ping.exe'     = $false
+    'netstat.exe'  = $false
+    'csvde.exe'    = $false
+    'portqry.exe'  = $false
+    'nltest.exe'   = $false
+  }
+
+  foreach ($tool in $tools.Keys) {
+    try {
+      ## nslookup is built-in on Windows, won't show up in Get-Command
+      if ($tool -eq 'nslookup.exe' -and $Script:ADHealthOS.IsWindows) {
+        $tools[$tool] = $true
+      } else {
+        $null = Get-Command $tool -ErrorAction Stop
+        $tools[$tool] = $true
+      }
+    } catch {
+      $tools[$tool] = $false
+    }
+  }
+
+  return $tools
+}
+
+
+function Invoke-ExternalCommand {
+  param([string]$Exe, [string]$Args)
+
   try {
-    $proc = Start-Process -FilePath $Exe -ArgumentList $arguments -NoNewWindow -RedirectStandardOutput -RedirectStandardError -PassThru -WindowStyle Hidden
-    $proc.WaitForExit()
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $Exe
+    $psi.Arguments = $Args
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $proc = New-Object System.Diagnostics.Process
+    $proc.StartInfo = $psi
+    $proc.Start() | Out-Null
+
     $out = $proc.StandardOutput.ReadToEnd()
     $err = $proc.StandardError.ReadToEnd()
+    $proc.WaitForExit()
+
     return @{ ExitCode = $proc.ExitCode; StdOut = $out; StdErr = $err }
   } catch {
-   return @{ ExitCode = -1; StdOut = ""; StdErr = $_.Exception.Message }
+    return @{ ExitCode = -1; StdOut = ""; StdErr = $_.Exception.Message }
   }
 }
 
-## ==================== DC STATUS CHECK ====================
+
 function Test-DCStatus {
   param([string]$Domain)
 
   $summary = @()
-  $sb = New-Object System.Text.StringBuilder
+  $details = ""
+  $health = "OK"
 
   try {
     $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
-  } catch {
-    return @{
-      Summary = @(": Could not enumerate domain controllers.")
-      Details = "Failed to enumerate DCs: $($_.Exception.Message)"
-      Health = "FAIL"
-     }
-  }
 
-  foreach ($dc in $dcs) {
-    $name = $dc.HostName
-    $ip   = $dc.IPAddress -join ","
-    $site = $dc.Site
-    $os   = $dc.OperatingSystem
-    $isGC = $dc.IsGlobalCatalog
+    foreach ($dc in $dcs) {
+      $dc = Get-ADDomainController -Identity $dc.HostName -Server $Domain
+      $name = $dc.HostName
+      $ip = if ($dc.IPv4Address) { $dc.IPv4Address } else { "N/A" }
+      $site = $dc.Site
 
-    ## Reachability
-    try { $ping = Test-Connection -ComputerName $name -Count 1 -Quiet -ErrorAction SilentlyContinue } catch { $ping = $false }
-    $reachable = if ($ping) { "OK" } else { "FAIL" }
+      $ping = Test-Connection -ComputerName $name -Count 1 -Quiet -ErrorAction SilentlyContinue
+      $reachable = if ($ping) { "OK" } else { "FAIL" }
 
-    ## Uptime
-    try {
-      $wmi = Get-WmiObject -Class Win32_OperatingSystem -ComputerName $name -ErrorAction Stop
-      $lastBoot = $wmi.LastBootUpTime
-      $uptimeDays = ((Get-Date) - [Management.ManagementDateTimeConverter]::ToDateTime($lastBoot)).Days
-    } catch { $uptimeDays = "?" }
+      $uptimeDays = "?"
+      try {
+        $wmi = Get-WmiObject -Class Win32_OperatingSystem -ComputerName $name -ErrorAction Stop
+        $lastBoot = [Management.ManagementDateTimeConverter]::ToDateTime($wmi.LastBootUpTime)
+        $uptimeDays = ((Get-Date) - $lastBoot).Days
+      } catch { }
 
-    ## Services
-      try { $svcNTDS = (Get-Service -ComputerName $name -Name "NTDS" -ErrorAction SilentlyContinue).Status } catch { $svcNTDS = "Err" }
-      try { $svcDNS = (Get-Service -ComputerName $name -Name "DNS" -ErrorAction SilentlyContinue).Status } catch { $svcDNS = "Err" }
+      ## Port checks using Test-NetConnection
+      $ldapOK = $false
+      $kerbOK = $false
+      $smbOK = $false
+      $dnsOK = $false
+
+      try {
+        $ldapOK = (Test-NetConnection -ComputerName $name -Port 389 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
+        $kerbOK = (Test-NetConnection -ComputerName $name -Port 88 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
+        $smbOK = (Test-NetConnection -ComputerName $name -Port 445 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
+        $dnsOK = (Test-NetConnection -ComputerName $name -Port 53 -InformationLevel Quiet -WarningAction SilentlyContinue -ErrorAction SilentlyContinue)
+      } catch { }
+
+      $svcNTDS = "?"
+      $svcDNS = "?"
+      try {
+        $svcNTDS = (Get-Service -ComputerName $name -Name "NTDS" -ErrorAction SilentlyContinue).Status
+        $svcDNS = (Get-Service -ComputerName $name -Name "DNS" -ErrorAction SilentlyContinue).Status
+      } catch { }
 
       $obj = [PSCustomObject]@{
-        Name = $name; IP = $ip; Site = $site; OS = $os; Reachable = $reachable;
-        UptimeDays = $uptimeDays; NTDS = $svcNTDS; DNS = $svcDNS; IsGC = $isGC
+        Name       = $name
+        IP         = $ip
+        Site       = $site
+        Reachable  = $reachable
+        UptimeDays = $uptimeDays
+        NTDS       = $svcNTDS
+        DNS        = $svcDNS
+        LDAP       = $ldapOK
+        Kerberos   = $kerbOK
+        SMB        = $smbOK
       }
       $summary += $obj
 
-      $sb.AppendLine("=== $name ($ip) ===")
-      $sb.AppendLine("Site: $site; OS: $os; GC: $isGC")
-      $sb.AppendLine("Reachable: $reachable; UptimeDays: $uptimeDays")
-      $sb.AppendLine("NTDS: $svcNTDS; DNS: $svcDNS")
-      $sb.AppendLine("")
+      if ($reachable -ne "OK") { $health = "FAIL" }
     }
 
-    ## Determine health
-    $fails = ($summary | Where-Object { $_.Reachable -ne "OK" }).Count
-    if ($fails -eq 0) { $health = "OK" }
-    elseif ($fails -lt ($summary.Count / 2)) { $health = "WARN" }
-    else { $health = "FAIL" }
+    $details = "Checked $($dcs.Count) domain controller(s) in $Domain"
 
-    return @{
-      Summary = $summary
-      Details = $sb.ToString()
-      Health = $health
-    }
+  } catch {
+    $summary = @()
+    $details = "Error: $($_.Exception.Message)"
+    $health = "FAIL"
+  }
+
+  return @{
+    Summary = $summary
+    Details = $details
+    Health  = $health
+  }
 }
 
-## ==================== REPLICATION CHECK ====================
+
 function Test-ADReplication {
   param([string]$Domain)
 
-  $sb = New-Object System.Text.StringBuilder
   $summary = @()
+  $details = ""
   $health = "OK"
 
-  if ($Script:ADHealth.Tools.Repadmin) {
+  if ($Script:ADHealthTools['repadmin.exe']) {
+    ## Actually run repadmin
     $r = Invoke-ExternalCommand -Exe "repadmin.exe" -Args "/replsummary"
-    $sb.AppendLine($r.StdOut)
 
     if ($r.ExitCode -eq 0) {
-      $lines = ($r.StdOut -split "`r?`n") | Select-Object -First 12
-      $summary += "repadmin /replsummary (top lines):"
-      $summary += $lines
+      $lines = ($r.StdOut -split "`r?`n") | Where-Object { $_ -match '\S' } | Select-Object -First 20
+      $summary = $lines
+      $details = $r.StdOut
 
-      if ($r.StdOut -imatch "(fail|error|last attempt)") { $health = "FAIL" }
-      } else {
-        $summary += "repadmin returned error: $($r.StdErr)"
-        $health = "WARN"
+      if ($r.StdOut -match "error|fail") {
+        $health = "FAIL"
       }
-
-      $r2 = Invoke-ExternalCommand -Exe "repadmin.exe" -Args "/showrepl * /errorsonly"
-      if ($r2.ExitCode -eq 0) { $sb.AppendLine($r2.StdOut) }
     } else {
-      try {
-        $fails = Get-ADReplicationFailure -Scope Domain -ErrorAction Stop
-        if ($fails) {
-          foreach ($f in $fails) {
-            $summary += "Replication failure: $($f.SourceServer) -> $($f.DestinationServer): $($f.FirstFailureMessage)"
-            $sb.AppendLine(($f | Format-List | Out-String))
-          }
-          $health = "WARN"
-        } else {
-          $summary += "No replication failures detected."
-          $health = "OK"
+      $summary += "repadmin returned error code $($r.ExitCode)"
+      $details = $r.StdErr
+      $health = "WARN"
+    }
+  } else {
+    ## Fallback to AD cmdlet
+    try {
+      $failures = Get-ADReplicationFailure -Scope Domain -Target $Domain -ErrorAction Stop
+
+      if ($failures) {
+        foreach ($f in $failures) {
+          $summary += "FAIL: $($f.Server) - $($f.FirstFailureMessage)"
         }
+        $health = "FAIL"
+      } else {
+        $summary += "No replication failures detected."
+      }
+    } catch {
+      $summary += "Error checking replication: $($_.Exception.Message)"
+      $health = "WARN"
+    }
+  }
+
+  return @{
+    Summary = $summary
+    Details = $details
+    Health  = $health
+  }
+}
+
+
+function Test-ADDnsRecords {
+  param([string]$Domain)
+
+  $summary = @()
+  $details = ""
+  $health = "OK"
+
+  $srvRecords = @(
+    "_ldap._tcp.dc._msdcs.$Domain"
+    "_kerberos._tcp.$Domain"
+    "_ldap._tcp.$Domain"
+  )
+
+  ## Actually query DNS
+  foreach ($srv in $srvRecords) {
+    try {
+      $q = Resolve-DnsName -Name $srv -Type SRV -ErrorAction Stop
+      $count = ($q | Measure-Object).Count
+      $summary += "$srv : $count record(s)"
+      $details += "SRV $srv : $count records`n"
+    } catch {
+      $summary += "$srv : NOT FOUND"
+      $details += "SRV $srv : Error - $($_.Exception.Message)`n"
+      $health = "FAIL"
+    }
+  }
+
+  ## Check DNS service on DCs
+  try {
+    $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
+    foreach ($dc in $dcs) {
+      try {
+        $svc = (Get-Service -ComputerName $dc.HostName -Name "DNS" -ErrorAction SilentlyContinue).Status
+        $summary += "DNS on $($dc.HostName): $svc"
       } catch {
-        $summary += "Replication check error: $($_.Exception.Message)"
-        $sb.AppendLine("Get-ADReplicationFailure error: $($_.Exception.Message)")
+        $summary += "DNS on $($dc.HostName): Error"
         $health = "WARN"
       }
     }
+  } catch {
+    $summary += "Could not enumerate DCs for DNS check"
+    $health = "WARN"
+  }
 
-    return @{
-      Summary = $summary
-      Details = $sb.ToString()
-      Health = $health
-    }
+  return @{
+    Summary = $summary
+    Details = $details
+    Health  = $health
+  }
 }
 
-## ==================== DNS CHECK ====================
-function Test-ADDnsRecords {
-    param([string]$Domain)
 
-    $summary = @()
-    $sb = New-Object System.Text.StringBuilder
-    $srvRecords = @("_ldap._tcp.dc._msdcs.$Domain", "_kerberos._tcp.$Domain", "_ldap._tcp.$Domain")
-
-    foreach ($srv in $srvRecords) {
-        try {
-            $q = Resolve-DnsName -Name $srv -ErrorAction Stop
-            $count = ($q | Measure-Object).Count
-            $summary += "$srv -> $count records"
-            $sb.AppendLine("SRV ${srv}:")
-            $sb.AppendLine(($q | Out-String).Trim())
-        } catch {
-            $summary += "$srv -> NOT FOUND"
-            $sb.AppendLine("SRV $srv not found: $($_.Exception.Message)")
-        }
-    }
-
-    ## Per-DC DNS service status
-    try {
-        $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
-        foreach ($dc in $dcs) {
-            try { $svc = (Get-Service -ComputerName $dc.HostName -Name "DNS" -ErrorAction SilentlyContinue).Status } catch { $svc = "Err" }
-            $summary += "DNS on $($dc.HostName): $svc"
-            $sb.AppendLine("DNS on $($dc.HostName): $svc")
-        }
-    } catch {
-        $summary += "Could not enumerate DCs for DNS check."
-        $sb.AppendLine("Enumeration error: $($_.Exception.Message)")
-    }
-
-    ## Health deduction
-    $fails = ($summary -match "NOT FOUND|Err|Error").Count
-    if ($fails -eq 0) { $health = "OK" }
-    elseif ($fails -lt 2) { $health = "WARN" }
-    else { $health = "FAIL" }
-
-    return @{
-        Summary = $summary
-        Details = $sb.ToString()
-        Health = $health
-    }
-}
-
-## ==================== SYSVOL CHECK ====================
 function Test-SysvolHealth {
-    param([string]$Domain)
+  param([string]$Domain)
 
-    $summary = @()
-    $sb = New-Object System.Text.StringBuilder
+  $summary = @()
+  $details = ""
+  $health = "OK"
 
-    try {
-        $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
-        foreach ($dc in $dcs) {
-            try {
-                $shares = Get-WmiObject -Class Win32_Share -ComputerName $dc.HostName -ErrorAction Stop
-                $sys = $shares | Where-Object { $_.Name -match 'SYSVOL' -or $_.Name -match 'NETLOGON' }
-                if ($sys) {
-                    $summary += "SYSVOL on $($dc.HostName): SHARE_OK"
-                    $sb.AppendLine("SYSVOL/Netlogon on $($dc.HostName):")
-                    $sb.AppendLine(($sys | Format-List | Out-String).Trim())
-                } else {
-                    $summary += "SYSVOL on $($dc.HostName): MISSING"
-                    $sb.AppendLine("SYSVOL missing on $($dc.HostName)")
-                }
-            } catch {
-                $summary += "SYSVOL error on $($dc.HostName): $($_.Exception.Message)"
-                $sb.AppendLine("Error enumerating shares: $($_.Exception.Message)")
-            }
+  try {
+    $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
 
-            if ($Script:ADHealth.Tools.DfsrDiag) {
-                $r = Invoke-ExternalCommand -Exe "dfsrdiag.exe" -Args "backlog /rgname:DOMAIN /v /sendingcomputer:$($dc.HostName) /receivingcomputer:$($dc.HostName)"
-                $sb.AppendLine("dfsrdiag backlog for $($dc.HostName):")
-                $sb.AppendLine($r.StdOut)
-            }
-        }
-    } catch {
-        $summary += "SYSVOL check failed: $($_.Exception.Message)"
-        $sb.AppendLine("SYSVOL error: $($_.Exception.Message)")
+    foreach ($dc in $dcs) {
+      ## Actually check shares
+      try {
+        $sysvolPath = "\\$($dc.HostName)\SYSVOL"
+        $netlogonPath = "\\$($dc.HostName)\NETLOGON"
+
+        $sysvolOK = Test-Path $sysvolPath -ErrorAction SilentlyContinue
+        $netlogonOK = Test-Path $netlogonPath -ErrorAction SilentlyContinue
+
+        $sysvolStatus = if ($sysvolOK) { "✓ Available" } else { "✗ Unavailable"; $health = "FAIL" }
+        $netlogonStatus = if ($netlogonOK) { "✓ Available" } else { "✗ Unavailable"; $health = "FAIL" }
+
+        $summary += "SYSVOL on $($dc.HostName): $sysvolStatus"
+        $summary += "NETLOGON on $($dc.HostName): $netlogonStatus"
+        $details += "$($dc.HostName) - SYSVOL: $sysvolStatus, NETLOGON: $netlogonStatus`n"
+      } catch {
+        $summary += "Error checking $($dc.HostName): $($_.Exception.Message)"
+        $details += "Error on $($dc.HostName): $($_.Exception.Message)`n"
+        $health = "WARN"
+      }
     }
+  } catch {
+    $summary += "Could not enumerate DCs for SYSVOL check"
+    $details = "Error: $($_.Exception.Message)"
+    $health = "FAIL"
+  }
 
-    $fails = ($summary -match "MISSING|ERROR").Count
-    if ($fails -eq 0) { $health = "OK" }
-    elseif ($fails -lt 2) { $health = "WARN" }
-    else { $health = "FAIL" }
-
-    return @{
-        Summary = $summary
-        Details = $sb.ToString()
-        Health = $health
-    }
+  return @{
+    Summary = $summary
+    Details = $details
+    Health  = $health
+  }
 }
 
-## ==================== FSMO ROLES CHECK ====================
+
 function Test-FSMORoles {
-    param([string]$Domain)
+  param([string]$Domain)
 
-    $sb = New-Object System.Text.StringBuilder
-    $summary = @()
+  $summary = @()
+  $details = ""
+  $health = "OK"
 
-    try {
-        $forest = Get-ADForest -Identity $Domain -ErrorAction Stop
-        $domainObj = Get-ADDomain -Identity $Domain -ErrorAction Stop
+  try {
+    $forest = Get-ADForest -Identity $Domain -ErrorAction Stop
+    $domainObj = Get-ADDomain -Identity $Domain -ErrorAction Stop
 
-        $fsmoForest = @{
-            SchemaMaster = $forest.SchemaMaster
-            DomainNamingMaster = $forest.DomainNamingMaster
-        }
-        $fsmoDomain = @{
-            PDCEmulator = $domainObj.PDCEmulator
-            RIDMaster = $domainObj.RIDMaster
-            InfrastructureMaster = $domainObj.InfrastructureMaster
-        }
+    $summary += "Schema Master -> $($forest.SchemaMaster)"
+    $summary += "Domain Naming Master -> $($forest.DomainNamingMaster)"
+    $summary += "PDC Emulator -> $($domainObj.PDCEmulator)"
+    $summary += "RID Master -> $($domainObj.RIDMaster)"
+    $summary += "Infrastructure Master -> $($domainObj.InfrastructureMaster)"
 
-        $sb.AppendLine("Forest FSMO holders:")
-        $sb.AppendLine(($fsmoForest | Out-String).Trim())
-        $sb.AppendLine("Domain FSMO holders:")
-        $sb.AppendLine(($fsmoDomain | Out-String).Trim())
+    $details = "Forest FSMO:`n"
+    $details += "  SchemaMaster: $($forest.SchemaMaster)`n"
+    $details += "  DomainNamingMaster: $($forest.DomainNamingMaster)`n"
+    $details += "`nDomain FSMO:`n"
+    $details += "  PDCEmulator: $($domainObj.PDCEmulator)`n"
+    $details += "  RIDMaster: $($domainObj.RIDMaster)`n"
+    $details += "  InfrastructureMaster: $($domainObj.InfrastructureMaster)`n"
 
-        foreach ($k in $fsmoForest.Keys) { $summary += "$k -> $($fsmoForest[$k])" }
-        foreach ($k in $fsmoDomain.Keys) { $summary += "$k -> $($fsmoDomain[$k])" }
+    ## Test reachability
+    $holders = @($forest.SchemaMaster, $forest.DomainNamingMaster, $domainObj.PDCEmulator, $domainObj.RIDMaster, $domainObj.InfrastructureMaster) | Where-Object { $_ } | Select-Object -Unique
 
-        ## Health: check if any holder resolves and is reachable
-        $holders = ($fsmoForest.Values + $fsmoDomain.Values) | Where-Object { $_ -ne $null } | Select-Object -Unique
-        $unreachable = 0
-        foreach ($h in $holders) {
-            try { $ok = Test-Connection -ComputerName $h -Count 1 -Quiet -ErrorAction SilentlyContinue } catch { $ok = $false }
-            if (-not $ok) { $unreachable++ }
-        }
-
-        if ($unreachable -eq 0) { $health = "OK" }
-        elseif ($unreachable -lt 2) { $health = "WARN" }
-        else { $health = "FAIL" }
-    } catch {
-        $summary += "FSMO check failed: $($_.Exception.Message)"
-        $sb.AppendLine("FSMO error: $($_.Exception.Message)")
+    foreach ($holder in $holders) {
+      $ping = Test-Connection -ComputerName $holder -Count 1 -Quiet -ErrorAction SilentlyContinue
+      if (-not $ping) {
         $health = "WARN"
+        $details += "`nWARNING: Cannot reach $holder`n"
+      }
     }
 
-    return @{
-        Summary = $summary
-        Details = $sb.ToString()
-        Health = $health
-    }
+  } catch {
+    $summary += "Error checking FSMO roles: $($_.Exception.Message)"
+    $details = "Error: $($_.Exception.Message)"
+    $health = "FAIL"
+  }
+
+  return @{
+    Summary = $summary
+    Details = $details
+    Health  = $health
+  }
 }
 
-## ==================== GPO CHECK ====================
+
 function Test-GPOHealth {
-    param([string]$Domain)
+  param([string]$Domain)
 
-    $sb = New-Object System.Text.StringBuilder
-    $summary = @()
+  $summary = @()
+  $details = ""
+  $health = "OK"
 
-    try {
-        $gpos = Get-GPO -All -Domain $Domain -ErrorAction Stop
-        $summary += "Total GPOs: $($gpos.Count)"
-        $sb.AppendLine("GPO list (top 50):")
-        $sb.AppendLine(($gpos | Select-Object DisplayName,Id | Select-Object -First 50 | Format-Table -AutoSize | Out-String).Trim())
+  try {
+    $gpos = Get-GPO -All -Domain $Domain -ErrorAction Stop
 
-        ## Quick version compare for first 20 GPOs
-        foreach ($g in $gpos | Select-Object -First 20) {
-            try {
-                $xml = [xml](Get-GPOReport -Guid $g.Id -ReportType Xml -Domain $Domain -ErrorAction Stop)
-                $ver = $xml.GPO.VersionInfo.Version
-                $sb.AppendLine("GPO: $($g.DisplayName) Version: $ver")
-            } catch {
-                $sb.AppendLine("Could not get GPOReport for $($g.DisplayName): $($_.Exception.Message)")
-            }
-        }
-        $health = "OK"
-    } catch {
-        $summary += "GPO check failed: $($_.Exception.Message)"
-        $sb.AppendLine("GPO error: $($_.Exception.Message)")
-        $health = "WARN"
+    $summary += "Total GPOs: $($gpos.Count)"
+    $details = "GPO List (first 50):`n"
+
+    foreach ($gpo in $gpos | Select-Object -First 50) {
+      $summary += "$($gpo.DisplayName)"
+      $details += "  $($gpo.DisplayName) (ID: $($gpo.Id))`n"
     }
 
-    return @{
-        Summary = $summary
-        Details = $sb.ToString()
-        Health = $health
+    if ($gpos.Count -gt 50) {
+      $summary += "... and $($gpos.Count - 50) more"
+      $details += "`n... and $($gpos.Count - 50) more GPOs"
     }
+
+  } catch {
+    $summary += "Error checking GPOs: $($_.Exception.Message)"
+    $details = "Error: $($_.Exception.Message)"
+    $health = "FAIL"
+  }
+
+  return @{
+    Summary = $summary
+    Details = $details
+    Health  = $health
+  }
 }
 
 ## Generate Random Password modal
@@ -7000,167 +8321,367 @@ function Generate-RandomPassword {
 ## Show LAPS Passwords
 function Show-LAPSSearchModal {
   <#
-    Modal LAPS lookup UI
-      - Browse all LAPS-enabled computers
-      - Search by computer name
-      - Masked password with press-to-reveal
-      - Copy-to-clipboard (timeout currently DISABLED)
-      - Expiry warning highlighting
-      - DemoMode support
+  .SYNOPSIS
+  Modal LAPS lookup UI with inline password reveal/hide
 
-    NOTE ON CLIPBOARD TIMEOUT:
-    ==========================
-    Clipboard auto-clear is intentionally DISABLED for now.
-    To re-enable later, search for the section marked:
-    ### CLIPBOARD TIMEOUT (DISABLED) ###
-    and uncomment the timer block.
+  .DESCRIPTION
+  - Browse all LAPS-enabled computers
+  - Search by computer name
+  - Inline masked password with Reveal/Hide toggle
+  - Copy buttons next to each field
+  - Expiry warning highlighting
+  - DemoMode support
   #>
+
+  Debug-Log ": Show-LAPSSearchModal called" -Type "Info"
+  Debug-Log ": DemoMode = $($Script:DemoMode)" -Type "Info"
 
   ## -------------------------{ Safety: AD availability }-------------------------
   if (-not $Script:DemoMode) {
+    Debug-Log ": Production mode - checking AD module" -Type "Info"
     if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
-      Show-Modal -Title "LAPS Error" -Message "ActiveDirectory module not available." -Buttons @("OK")
+      Debug-Log ": ActiveDirectory module not available" -Type "Error"
+      Show-Modal "LAPS Error" "ActiveDirectory module not available."
       return
     }
-    Import-Module ActiveDirectory -ErrorAction Stop
+
+    try {
+      Import-Module ActiveDirectory -ErrorAction Stop
+      Debug-Log ": ActiveDirectory module imported" -Type "Success"
+    } catch {
+      Debug-Log ": Failed to import AD module: $($_.Exception.Message)" -Type "Error"
+      Show-Modal "LAPS Error" "Failed to import ActiveDirectory module:`n`n$($_.Exception.Message)"
+      return
+    }
   }
 
   ## -------------------------{ Modal }-------------------------
-  $dialog = [Terminal.Gui.Dialog]::new("LAPS Password Lookup", 90, 26)
-  $lblSearch = [Terminal.Gui.Label]::new(1,1,"Computer name (blank = all):")
+  Debug-Log ": Creating LAPS dialog" -Type "Info"
+
+  $dialog = [Terminal.Gui.Dialog]::new("LAPS Password Lookup", 50, 25)
+
+  $lblSearch = [Terminal.Gui.Label]::new("Computer name (blank = all):")
+  $lblSearch.X = 1
+  $lblSearch.Y = 1
   $dialog.Add($lblSearch)
 
   $txtSearch = [Terminal.Gui.TextField]::new("")
   $txtSearch.X = 1
   $txtSearch.Y = 2
-  $txtSearch.Width = 40
+  $txtSearch.Width = 30
   $dialog.Add($txtSearch)
 
   $lstComputers = [Terminal.Gui.ListView]::new()
   $lstComputers.X = 1
   $lstComputers.Y = 4
-  $lstComputers.Width = 86
-  $lstComputers.Height = 13
+  $lstComputers.Width = 30
+  $lstComputers.Height = 16
   $dialog.Add($lstComputers)
 
-  $computers = @()
+  ## Script-scoped variable to hold computers
+  $Script:LAPSComputers = @()
 
   ## ---------------- Data loader ----------------
   $loadComputers = {
     param($filter)
 
+    Debug-Log ": Loading LAPS computers with filter: '$filter'" -Type "Info"
+
     try {
       if ($Script:DemoMode) {
-        ## ---- Demo stub ----
-        $computers = @(
-          [pscustomobject]@{
-            Name = 'DEMO-PC-01'
-            'msLAPS-AccountName' = 'Administrator'
-            'msLAPS-Password' = 'DemoPassword!123'
-            'msLAPS-PasswordExpirationTime' = (Get-Date).AddDays(5).ToFileTimeUtc()
+        Debug-Log ": Demo mode - loading from rawComputers" -Type "Info"
+
+        ## Filter computers that have LAPS properties
+        $allComputers = $Script:rawComputers | Where-Object {
+          $null -ne $_.'msLAPS-Password' -and
+          $_.'msLAPS-Password' -ne '' -and
+          $_.'msLAPS-Password' -ne $null
+        }
+
+        Debug-Log ": Found $($allComputers.Count) computers with LAPS in rawComputers" -Type "Info"
+
+        ## Apply name filter if specified
+        if (-not [string]::IsNullOrWhiteSpace($filter)) {
+          $Script:LAPSComputers = $allComputers | Where-Object { $_.Name -like "*$filter*" }
+          Debug-Log ": Filtered to $($Script:LAPSComputers.Count) computers matching '$filter'" -Type "Info"
+        } else {
+          $Script:LAPSComputers = $allComputers
+          Debug-Log ": No filter - showing all $($Script:LAPSComputers.Count) LAPS computers" -Type "Info"
+        }
+
+        ## Convert hashtables to PSCustomObjects for consistent access
+        $Script:LAPSComputers = $Script:LAPSComputers | ForEach-Object {
+          if ($_ -is [hashtable]) {
+            [PSCustomObject]$_
+          } else {
+            $_
           }
-        )
-      }
-      else {
+        }
+
+      } else {
+        ## Production mode
+        Debug-Log ": Production mode - querying AD" -Type "Info"
+
         if ([string]::IsNullOrWhiteSpace($filter)) {
-          $computers = Get-ADComputer -Filter * -Properties msLAPS-Password,msLAPS-AccountName,msLAPS-PasswordExpirationTime | Where-Object { $_.'msLAPS-Password' }
+          $Script:LAPSComputers = Get-ADComputer -Filter * -Properties 'ms-Mcs-AdmPwd','ms-Mcs-AdmPwdExpirationTime' |
+            Where-Object { $_.'ms-Mcs-AdmPwd' }
+        } else {
+          $Script:LAPSComputers = Get-ADComputer -Filter "Name -like '*$filter*'" -Properties 'ms-Mcs-AdmPwd','ms-Mcs-AdmPwdExpirationTime' |
+            Where-Object { $_.'ms-Mcs-AdmPwd' }
         }
-      else {
-          $computers = Get-ADComputer -Filter "Name -like '*$filter*'" -Properties msLAPS-Password,msLAPS-AccountName,msLAPS-PasswordExpirationTime | Where-Object { $_.'msLAPS-Password' }
-        }
+
+        Debug-Log ": Found $($Script:LAPSComputers.Count) computers with LAPS in AD" -Type "Info"
       }
 
-      $lstComputers.SetSource($computers.Name)
-    }
-    catch {
-      Show-Modal -Title "Error" -Message $_.Exception.Message -Buttons @("OK")
+      ## Update ListView
+      if ($Script:LAPSComputers.Count -eq 0) {
+        Debug-Log ": No LAPS computers found" -Type "Warn"
+        $lstComputers.SetSource(@("(No computers with LAPS found)"))
+      } else {
+        $computerNames = $Script:LAPSComputers | ForEach-Object { $_.Name }
+        Debug-Log ": Setting ListView with $($computerNames.Count) computer names" -Type "Info"
+        $lstComputers.SetSource($computerNames)
+      }
+
+    } catch {
+      $errMsg = $_.Exception.Message
+      Debug-Log ": Error loading LAPS computers: $errMsg" -Type "Error"
+      Debug-Log ": Stack trace: $($_.ScriptStackTrace)" -Type "Error"
+      Show-Modal "Error" "Failed to load LAPS computers:`n`n$errMsg"
     }
   }
 
+  ## Initial load
+  Debug-Log ": Performing initial computer load" -Type "Info"
   & $loadComputers ""
 
   ## ---------------- Buttons ----------------
   $btnSearch = [Terminal.Gui.Button]::new("Search")
-  $btnSearch.X = 45
+  $btnSearch.X = 32
   $btnSearch.Y = 2
-  $btnSearch.Add_Clicked({ & $loadComputers $txtSearch.Text.ToString() })
+  $btnSearch.add_Clicked({
+    $searchText = $txtSearch.Text.ToString()
+    Debug-Log ": Search button clicked with text: '$searchText'" -Type "Info"
+    & $loadComputers $searchText
+  })
   $dialog.Add($btnSearch)
 
   $btnView = [Terminal.Gui.Button]::new("View")
-  $btnView.X = 60
-  $btnView.Y = 18
+  $btnView.X = 10
+  $btnView.Y = 21
   $dialog.Add($btnView)
 
   $btnClose = [Terminal.Gui.Button]::new("Close")
-  $btnClose.X = 72
-  $btnClose.Y = 18
-  $btnClose.Add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+  $btnClose.X = 30
+  $btnClose.Y = 21
+  $btnClose.add_Clicked({
+    Debug-Log ": LAPS dialog closed" -Type "Info"
+    [Terminal.Gui.Application]::RequestStop()
+  })
   $dialog.Add($btnClose)
 
   ## ---------------- View handler ----------------
-  $btnView.Add_Clicked({
-    if ($lstComputers.SelectedItem -lt 0) { return }
+  $btnView.add_Clicked({
+    Debug-Log ": View button clicked" -Type "Info"
 
-      $computer = $computers[$lstComputers.SelectedItem]
-      $expires = [DateTime]::FromFileTimeUtc($computer.'msLAPS-PasswordExpirationTime')
-      $daysLeft = ($expires - (Get-Date)).Days
+    if ($lstComputers.SelectedItem -lt 0) {
+      Debug-Log ": No computer selected" -Type "Warn"
+      Show-Modal "No Selection" "Please select a computer from the list."
+      return
+    }
 
-      ## ---- Mask password ----
-      $masked = ('*' * ($computer.'msLAPS-Password'.Length))
-      $warn = if ($daysLeft -le 3) { "WARNING: Password expires in ${daysLeft} day(s)" } else { "Expires in ${daysLeft} days" }
-      $msg = @"
-Computer : ${computer.Name}
+    if ($Script:LAPSComputers.Count -eq 0) {
+      Debug-Log ": No computers available to view" -Type "Warn"
+      Show-Modal "No Data" "No computers with LAPS available."
+      return
+    }
 
-LAPS User:
-${computer.'msLAPS-AccountName'}
+    try {
+      $computer = $Script:LAPSComputers[$lstComputers.SelectedItem]
+      Debug-Log ": Selected computer: $($computer.Name)" -Type "Info"
 
-LAPS Password (masked):
-${masked}
+      ## Get LAPS properties (handle both naming conventions)
+      if ($Script:DemoMode) {
+        $lapsUser = $computer.'msLAPS-AccountName'
+        $lapsPassword = $computer.'msLAPS-Password'
+        $lapsExpiry = $computer.'msLAPS-PasswordExpirationTime'
+      } else {
+        $lapsUser = if ($computer.'ms-Mcs-AdmPwd') { 'Administrator' } else { 'Unknown' }
+        $lapsPassword = $computer.'ms-Mcs-AdmPwd'
+        $lapsExpiry = $computer.'ms-Mcs-AdmPwdExpirationTime'
+      }
 
-${warn}
+      Debug-Log ": LAPS User: $lapsUser" -Type "Info"
+      Debug-Log ": LAPS Password length: $($lapsPassword.Length)" -Type "Info"
+      Debug-Log ": LAPS Expiry (raw): $lapsExpiry" -Type "Info"
 
-[Press Reveal to show password]
-"@
+      ## Calculate expiry
+      if ($lapsExpiry) {
+        try {
+          $expires = [DateTime]::FromFileTimeUtc([long]$lapsExpiry)
+          $daysLeft = [Math]::Round(($expires - (Get-Date)).TotalDays)
+          Debug-Log ": Password expires: $expires ($daysLeft days)" -Type "Info"
+        } catch {
+          Debug-Log ": Failed to parse expiry: $($_.Exception.Message)" -Type "Warn"
+          $expires = Get-Date
+          $daysLeft = 999
+        }
+      } else {
+        $expires = Get-Date
+        $daysLeft = 999
+      }
 
-    $detailDlg = [Terminal.Gui.Dialog]::new("LAPS Details", 70, 20)
-    $lbl = [Terminal.Gui.Label]::new(1,1,$msg)
-    $detailDlg.Add($lbl)
+      ## Expiry warning
+      $warn = if ($daysLeft -le 3) {
+        "⚠ WARNING: Password expires in $daysLeft day(s)"
+      } elseif ($daysLeft -le 7) {
+        "⏰ Password expires in $daysLeft days"
+      } else {
+        "Expires in $daysLeft days"
+      }
 
-    $btnReveal = [Terminal.Gui.Button]::new("Reveal")
-    $btnReveal.X = 1
-    $btnReveal.Y = 14
-    $detailDlg.Add($btnReveal)
+      ## Create detail dialog (more compact)
+      $detailDlg = [Terminal.Gui.Dialog]::new("LAPS Details - $($computer.Name)", 50, 14)
 
-    $btnCopy = [Terminal.Gui.Button]::new("Copy Password")
-    $btnCopy.X = 12
-    $btnCopy.Y = 14
-    $detailDlg.Add($btnCopy)
+      ## Computer name
+      $lblComputer = [Terminal.Gui.Label]::new("Computer: $($computer.Name)")
+      $lblComputer.X = 2
+      $lblComputer.Y = 1
+      $detailDlg.Add($lblComputer)
 
-    $btnOk = [Terminal.Gui.Button]::new("OK")
-    $btnOk.X = 30
-    $btnOk.Y = 14
-    $btnOk.Add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-    $detailDlg.Add($btnOk)
-    $btnReveal.Add_Clicked({ $lbl.Text = $lbl.Text + "\n\nUNMASKED PASSWORD:\n${computer.'msLAPS-Password'}" })
+      ## LAPS User (inline with aligned spacing)
+      $lblUserLabel = [Terminal.Gui.Label]::new("LAPS User:")
+      $lblUserLabel.X = 2
+      $lblUserLabel.Y = 3
+      $detailDlg.Add($lblUserLabel)
 
-    $btnCopy.Add_Clicked({
-    Set-Clipboard -Value $computer.'msLAPS-Password'
+      $lblUserValue = [Terminal.Gui.Label]::new($lapsUser)
+      $lblUserValue.X = 18  # Aligned at column 18
+      $lblUserValue.Y = 3
+      $lblUserValue.Width = 25
+      $detailDlg.Add($lblUserValue)
 
-    ### CLIPBOARD TIMEOUT (DISABLED) ###
-    ## To re-enable later:
-    ## Start-Job { Start-Sleep 15; Set-Clipboard -Value "" }
-      Show-Modal -Title "Clipboard" -Message "Password copied to clipboard." -Buttons @("OK")
-    })
+      $btnCopyUser = [Terminal.Gui.Button]::new("📋")
+      $btnCopyUser.X = 40  ## button placement horiztonally
+      $btnCopyUser.Y = 3
+      $btnCopyUser.Width = 4
+      $btnCopyUser.add_Clicked({
+        Set-Clipboard -Value $lapsUser
+        Debug-Log ": LAPS user copied to clipboard" -Type "Info"
+        Show-Modal "Copied" "Username copied to clipboard."
+      })
+      $detailDlg.Add($btnCopyUser)
 
-    [Terminal.Gui.Application]::Run($detailDlg)
+      ## LAPS Password (inline with reveal/hide) - ALIGNED
+      $lblPasswordLabel = [Terminal.Gui.Label]::new("LAPS Password:")
+      $lblPasswordLabel.X = 2
+      $lblPasswordLabel.Y = 5
+      $detailDlg.Add($lblPasswordLabel)
+
+      ## Create masked version
+      $masked = ('*' * $lapsPassword.Length)
+
+      ## Use script-scoped variable for toggle state (IMPORTANT for closure)
+      $Script:LAPSPasswordRevealed = $false
+
+      $lblPasswordValue = [Terminal.Gui.Label]::new($masked)
+      $lblPasswordValue.X = 18  # Aligned at column 18
+      $lblPasswordValue.Y = 5
+      $lblPasswordValue.Width = 22
+      $detailDlg.Add($lblPasswordValue)
+
+      $btnReveal = [Terminal.Gui.Button]::new("👁")
+      $btnReveal.X = 34
+      $btnReveal.Y = 5
+      $btnReveal.Width = 3
+      $btnReveal.add_Clicked({
+        if ($Script:LAPSPasswordRevealed) {
+          ## Hide password
+          $lblPasswordValue.Text = [NStack.ustring]::Make($masked)
+          $btnReveal.Text = [NStack.ustring]::Make("👁")
+          $Script:LAPSPasswordRevealed = $false
+          Debug-Log ": Password hidden" -Type "Info"
+        } else {
+          ## Show password
+          $lblPasswordValue.Text = [NStack.ustring]::Make($lapsPassword)
+          $btnReveal.Text = [NStack.ustring]::Make("🙈")
+          $Script:LAPSPasswordRevealed = $true
+          Debug-Log ": Password revealed" -Type "Info"
+        }
+      })
+      $detailDlg.Add($btnReveal)
+
+      $btnCopyPassword = [Terminal.Gui.Button]::new("📋")
+      $btnCopyPassword.X = 40  ## Horizontal alignment
+      $btnCopyPassword.Y = 5
+      $btnCopyPassword.Width = 4
+      $btnCopyPassword.add_Clicked({
+        Set-Clipboard -Value $lapsPassword
+        Debug-Log ": LAPS password copied to clipboard" -Type "Info"
+        Show-Modal "Copied" "Password copied to clipboard."
+      })
+      $detailDlg.Add($btnCopyPassword)
+
+      ## Expiry warning
+      $lblExpiry = [Terminal.Gui.Label]::new($warn)
+      $lblExpiry.X = 2
+      $lblExpiry.Y = 7
+      $lblExpiry.Width = 62
+      $detailDlg.Add($lblExpiry)
+
+      ## Force Rotation button - ALWAYS show (works in both demo and production)
+      $btnRotate = [Terminal.Gui.Button]::new("🔄 Force Rotation")
+      $btnRotate.X = 2
+      $btnRotate.Y = 9
+      $btnRotate.add_Clicked({
+        if ($Script:DemoMode) {
+          ## Demo mode - just show what would happen
+          Debug-Log ": LAPS rotation simulated (demo mode) for $($computer.Name)" -Type "Info"
+          Show-Modal "Demo Mode" "In production, this would:`n`n1. Set ms-Mcs-AdmPwdExpirationTime to 0`n2. Force password rotation on next GP refresh`n`nRun 'gpupdate /force' on the computer to trigger immediately."
+        } else {
+          ## Production mode - actually do it
+          try {
+            Set-ADComputer -Identity $computer.Name -Replace @{'ms-Mcs-AdmPwdExpirationTime' = '0'}
+            Debug-Log ": LAPS password rotation forced for $($computer.Name)" -Type "Success"
+            Show-Modal "Rotation Requested" "LAPS password will rotate on next Group Policy refresh.`n`nRun 'gpupdate /force' on $($computer.Name) to trigger immediately.`n`nRemote option:`nInvoke-GPUpdate -Computer $($computer.Name) -Force"
+          } catch {
+            Debug-Log ": Failed to force LAPS rotation: $($_.Exception.Message)" -Type "Error"
+            Show-Modal "Error" "Failed to force rotation:`n`n$($_.Exception.Message)"
+          }
+        }
+      })
+      $detailDlg.Add($btnRotate)
+
+      ## Close button
+      $btnOk = [Terminal.Gui.Button]::new("Close")
+      $btnOk.X = 26
+      $btnOk.Y = 9
+      $btnOk.add_Clicked({
+        Debug-Log ": LAPS detail dialog closed" -Type "Info"
+        [Terminal.Gui.Application]::RequestStop()
+      })
+      $detailDlg.Add($btnOk)
+
+      Debug-Log ": Running LAPS detail dialog" -Type "Info"
+      [Terminal.Gui.Application]::Run($detailDlg)
+
+    } catch {
+      $errMsg = $_.Exception.Message
+      Debug-Log ": Error showing LAPS details: $errMsg" -Type "Error"
+      Debug-Log ": Stack trace: $($_.ScriptStackTrace)" -Type "Error"
+      Show-Modal "Error" "Failed to show LAPS details:`n`n$errMsg"
+    }
   })
 
+  Debug-Log ": Running LAPS search dialog" -Type "Info"
   [Terminal.Gui.Application]::Run($dialog)
+  Debug-Log ": LAPS search dialog closed" -Type "Info"
 }
 
 # ====================================================={ Global Helper Functions for Multi-Row Tab System }=====================================================
 
 # ---------------------- Select-TabGlobal Function ----------------------
+### Never called. This is the start of tabbed window cod,e but I think it was never finished properly
 function Select-TabGlobal {
   param(
     $tab,
@@ -8040,7 +9561,18 @@ function Show-NewObjectWizard {
 
 # -------------------------[] Change Domain Dialog ]-------------------------
 function Show-ChangeDomainDialog {
+  <#
+  .SYNOPSIS
+  Dialog to change the current domain with fallback support
+
+  .DESCRIPTION
+  Allows user to change to a different domain. If the domain change fails,
+  automatically falls back to the previous domain. Performs full reset and
+  reload of all Script variables and tree view.
+  #>
+
   $dlg = [Terminal.Gui.Dialog]::new("Change Domain", 50, 8)
+
   $lbl = [Terminal.Gui.Label]::new("Domain Name:")
   $lbl.X = 2
   $lbl.Y = 1
@@ -8064,35 +9596,93 @@ function Show-ChangeDomainDialog {
 
     ## Schedule the domain change after dialog closes
     [Terminal.Gui.Application]::MainLoop.Invoke({
+      ## Save previous domain for fallback
+      $Script:PreviousDomain = $Script:CurrentDomain
+      Debug-Log (": Saved previous domain: $Script:PreviousDomain") -Type "Info"
+
       try {
         Set-StatusBar "Changing domain to $domainString..." -spinner
-        Start-Sleep -Milliseconds 100  # Brief pause so user sees the message
+        Start-Sleep -Milliseconds 100
 
         ## Update the current domain
         $Script:CurrentDomain = $domainString
+        $Script:Domain = $Script:CurrentDomain  ## Compatibility
         Debug-Log (": CurrentDomain set to: $Script:CurrentDomain") -Type "Info"
 
-        ## Refresh data with tree rebuild
-        Set-StatusBar "Loading domain data..." -spinner
-        $result = Refresh-Data -domain $Script:CurrentDomain -RebuildTree
+        ## Reset all Script variables
+        Debug-Log (": Resetting Script variables...") -Type "Info"
+        $Script:CurrentDC       = $null
+        $Script:Users           = @()
+        $Script:Groups          = @()
+        $Script:DCs             = @()
+        $Script:ADObjects       = @()
+        $Script:SelectedObjects = @()
+        $Script:SelectionMode   = $false
 
-        if ($result) {
-          Debug-Log (": Domain change successful") -Type "Success"
-          Set-StatusBar "Domain changed to $domainString" -final
+        ## Load domain data
+        Set-StatusBar "Loading domain data for $($Script:CurrentDomain)..." -Spinner
+        Debug-Log "Loading domain data for $($Script:CurrentDomain)..." -Type "Info"
+
+        Load-DomainData -domain $Script:CurrentDomain
+
+        Debug-Log ("POST-LOAD: Users=$($Script:Users.Count), Objects=$($Script:ADObjects.Count), DCs=$($Script:DCs.Count)") -Type "Info"
+        Debug-Log "Forest/Domain initialization complete: CurrentDomain=$($Script:CurrentDomain)" -Type "Info"
+
+        ## Build tree
+        Set-StatusBar "Building tree..." -Spinner
+        $rootNode = Build-Tree -domain $Script:CurrentDomain
+
+        if ($null -ne $rootNode) {
+          $Script:tree.ClearObjects()
+          $Script:tree.AddObject($rootNode)
+          Debug-Log ": Root node added to TreeView" -Type "Success"
+          Debug-Log ": TreeView created and added to window successfully" -Type "Success"
 
           ## Update filter status if it exists
           if ($Script:FilterStatusLabel) {
             Manage-FilterStatusLabel -Action 'Update' -Label $Script:FilterStatusLabel
           }
+
+          Set-StatusBar "Ready" -Final
+          Debug-Log (": Domain change successful to $domainString") -Type "Success"
         } else {
-          Debug-Log (": Domain change failed - Refresh-Data returned false") -Type "Error"
-          Set-StatusBar "Failed to load domain $domainString" -final
-          Show-Modal "Error" "Failed to load domain '$domainString'`n`nCheck logs for details"
+          throw "Build-Tree returned null root node"
         }
+
       } catch {
         Debug-Log (": Domain change error: $($_.Exception.Message)") -Type "Error"
-        Set-StatusBar "Domain change error" -final
-        Show-Modal "Error" "Error changing domain:`n`n$($_.Exception.Message)"
+        Debug-Log (": Falling back to previous domain: $Script:PreviousDomain") -Type "Warn"
+
+        ## Fallback to previous domain
+        $Script:CurrentDomain = $Script:PreviousDomain
+        $Script:Domain = $Script:CurrentDomain
+
+        ## Reset variables
+        $Script:CurrentDC       = $null
+        $Script:Users           = @()
+        $Script:Groups          = @()
+        $Script:DCs             = @()
+        $Script:ADObjects       = @()
+        $Script:SelectedObjects = @()
+        $Script:SelectionMode   = $false
+
+        ## Reload previous domain
+        try {
+          Set-StatusBar "Restoring previous domain $Script:PreviousDomain..." -Spinner
+          Load-DomainData -domain $Script:CurrentDomain
+          $rootNode = Build-Tree -domain $Script:CurrentDomain
+
+          if ($null -ne $rootNode) {
+            $Script:tree.ClearObjects()
+            $Script:tree.AddObject($rootNode)
+            Debug-Log ": Restored previous domain successfully" -Type "Success"
+          }
+        } catch {
+          Debug-Log (": Failed to restore previous domain: $($_.Exception.Message)") -Type "Error"
+        }
+
+        Set-StatusBar "Domain change failed - restored to $Script:PreviousDomain" -final
+        Show-Modal "Error" "Failed to load domain '$domainString'`n`nError: $($_.Exception.Message)`n`nRestored to previous domain: $Script:PreviousDomain"
       }
     })
   })
@@ -9030,9 +10620,149 @@ function Show-DCPropertiesDialog {
       }
     }
   }
+
+# ===================== Search / Lookup (Domain Controller) Tab =====================
+$searchDCPropertiesTab = @{
+  Name = "Search/Lookup"
+  Builder = {
+    param($view, $dc, $state)
+
+    $y = 1
+
+    # ---- Domain ----
+    $lblSearchDomain = [Terminal.Gui.Label]::new("Domain:")
+    $lblSearchDomain.X = 2
+    $lblSearchDomain.Y = $y
+    $view.Add($lblSearchDomain)
+
+    $state.txtSearchDomain = [Terminal.Gui.TextField]::new($Global:CurrentDomain ?? "")
+    $state.txtSearchDomain.X = 15
+    $state.txtSearchDomain.Y = $y
+    $state.txtSearchDomain.Width = 30
+    $view.Add($state.txtSearchDomain)
+    $y += 2
+
+    # ---- DC Name ----
+    $lblSearchName = [Terminal.Gui.Label]::new("DC:")
+    $lblSearchName.X = 2
+    $lblSearchName.Y = $y
+    $view.Add($lblSearchName)
+
+    $state.txtSearchUser = [Terminal.Gui.TextField]::new($dc.Name ?? "")
+    $state.txtSearchUser.X = 15
+    $state.txtSearchUser.Y = $y
+    $state.txtSearchUser.Width = 30
+    $view.Add($state.txtSearchUser)
+    $y += 2
+
+    # ---- Search Type ----
+    $lblSearchType = [Terminal.Gui.Label]::new("Type:")
+    $lblSearchType.X = 2
+    $lblSearchType.Y = $y
+    $view.Add($lblSearchType)
+
+    $state.cmbSearchType = [Terminal.Gui.ComboBox]::new()
+    $state.cmbSearchType.X = 15
+    $state.cmbSearchType.Y = $y
+    $state.cmbSearchType.Width = 20
+    $state.cmbSearchType.SetSource(@("Domain Controller","Computer","OU"))
+    $state.cmbSearchType.SelectedItem = 0
+    $view.Add($state.cmbSearchType)
+    $y += 2
+
+    # ---- Filter Results ----
+    $lblSearchFilter = [Terminal.Gui.Label]::new("Filter Results:")
+    $lblSearchFilter.X = 48
+    $lblSearchFilter.Y = 1
+    $view.Add($lblSearchFilter)
+
+    $state.txtSearchFilter = [Terminal.Gui.TextField]::new("")
+    $state.txtSearchFilter.X = 62
+    $state.txtSearchFilter.Y = 1
+    $state.txtSearchFilter.Width = 20
+    $view.Add($state.txtSearchFilter)
+
+    $state.txtSearchFilter.add_TextChanged({
+      if ($state.currentSearchOutputLines) {
+        $search = $state.txtSearchFilter.Text.ToString().Trim()
+        if ($search) {
+          $state.txtSearchOutput.Text =
+            ($state.currentSearchOutputLines | Where-Object { $_ -match "(?i)$search" }) -join "`n"
+        }
+        else {
+          $state.txtSearchOutput.Text = $state.currentSearchOutputLines -join "`n"
+        }
+      }
+    }.GetNewClosure())
+
+    # ---- Results ----
+    $lblSearchResult = [Terminal.Gui.Label]::new("Results:")
+    $lblSearchResult.X = 2
+    $lblSearchResult.Y = $y
+    $view.Add($lblSearchResult)
+    $y += 1
+
+    $state.txtSearchOutput = [Terminal.Gui.TextView]::new()
+    $state.txtSearchOutput.X = 2
+    $state.txtSearchOutput.Y = $y
+    $state.txtSearchOutput.Width  = [Terminal.Gui.Dim]::Fill(2)
+    $state.txtSearchOutput.Height = [Terminal.Gui.Dim]::Fill(4)
+    $state.txtSearchOutput.ReadOnly = $true
+    $state.txtSearchOutput.WordWrap = $false
+    $view.Add($state.txtSearchOutput)
+
+    # ---- DC Status ----
+    $state.chkSearchLocked = [Terminal.Gui.CheckBox]::new("Global Catalog")
+    $state.chkSearchLocked.X = 2
+    $state.chkSearchLocked.Y = [Terminal.Gui.Pos]::Bottom($state.txtSearchOutput) + 1
+    $state.chkSearchLocked.CanFocus = $true
+    $view.Add($state.chkSearchLocked)
+
+    $state.chkSearchDisabled = [Terminal.Gui.CheckBox]::new("Read-Only DC")
+    $state.chkSearchDisabled.X = 2
+    $state.chkSearchDisabled.Y = [Terminal.Gui.Pos]::Bottom($state.chkSearchLocked) + 1
+    $state.chkSearchDisabled.CanFocus = $true
+    $view.Add($state.chkSearchDisabled)
+
+    # ---- Search Button (UI only) ----
+    $btnDoSearch = [Terminal.Gui.Button]::new("Search")
+    $btnDoSearch.X = 48
+    $btnDoSearch.Y = 3
+    $view.Add($btnDoSearch)
+
+    # ---- Auto-populate DC properties ----
+    [Terminal.Gui.Application]::MainLoop.Invoke({
+      if ($dc) {
+
+        $lines = @()
+        $dc.PSObject.Properties | ForEach-Object {
+          $value = if ($_.Value -is [array]) {
+            $_.Value -join ', '
+          }
+          elseif ($null -eq $_.Value) {
+            ''
+          }
+          else {
+            $_.Value.ToString()
+          }
+
+          $lines += "$($_.Name.PadRight(25)): $value"
+        }
+
+        $state.txtSearchOutput.Text = $lines -join "`n"
+        $state.currentSearchOutputLines = $lines
+
+        # Best-effort flags (safe for demo objects)
+        $state.chkSearchLocked.Checked   = [bool]($dc.IsGlobalCatalog)
+        $state.chkSearchDisabled.Checked = [bool]($dc.IsReadOnly)
+      }
+    }.GetNewClosure())
+  }
+}
+
   ## ==================== Create and Show Dialog ====================
   # DC properties are read-only, no Apply logic needed
-  $tabs = @($generalTab, $rolesTab, $replicationTab, $servicesTab, $diskTab)
+  $tabs = @($generalTab, $rolesTab, $replicationTab, $servicesTab, $diskTab, $searchDCPropertiesTab)
 
   Debug-Log ": All DC tabs added, running dialog" -Type "Success"
 
@@ -10382,6 +12112,145 @@ function Show-ComputerPropertiesDialog {
     }
   }
 
+## Add in a search properties tab
+# ========================= Search / Lookup (Computer) Tab =========================
+$searchComputerTab = @{
+  Name = "Search/Lookup"
+  Builder = {
+    param($view, $computer, $state)
+
+    $y = 1
+
+    # ---- Domain ----
+    $lblSearchDomain = [Terminal.Gui.Label]::new("Domain:")
+    $lblSearchDomain.X = 2
+    $lblSearchDomain.Y = $y
+    $view.Add($lblSearchDomain)
+
+    $state.txtSearchDomain = [Terminal.Gui.TextField]::new($Global:CurrentDomain ?? "")
+    $state.txtSearchDomain.X = 15
+    $state.txtSearchDomain.Y = $y
+    $state.txtSearchDomain.Width = 30
+    $view.Add($state.txtSearchDomain)
+    $y += 2
+
+    # ---- Computer Name ----
+    $lblSearchName = [Terminal.Gui.Label]::new("Computer:")
+    $lblSearchName.X = 2
+    $lblSearchName.Y = $y
+    $view.Add($lblSearchName)
+
+    $state.txtSearchUser = [Terminal.Gui.TextField]::new($computer.Name ?? "")
+    $state.txtSearchUser.X = 15
+    $state.txtSearchUser.Y = $y
+    $state.txtSearchUser.Width = 30
+    $view.Add($state.txtSearchUser)
+    $y += 2
+
+    # ---- Search Type ----
+    $lblSearchType = [Terminal.Gui.Label]::new("Type:")
+    $lblSearchType.X = 2
+    $lblSearchType.Y = $y
+    $view.Add($lblSearchType)
+
+    $state.cmbSearchType = [Terminal.Gui.ComboBox]::new()
+    $state.cmbSearchType.X = 15
+    $state.cmbSearchType.Y = $y
+    $state.cmbSearchType.Width = 20
+    $state.cmbSearchType.SetSource(@("Computer","Group","OU"))
+    $state.cmbSearchType.SelectedItem = 0
+    $view.Add($state.cmbSearchType)
+    $y += 2
+
+    # ---- Filter Results ----
+    $lblSearchFilter = [Terminal.Gui.Label]::new("Filter Results:")
+    $lblSearchFilter.X = 48
+    $lblSearchFilter.Y = 1
+    $view.Add($lblSearchFilter)
+
+    $state.txtSearchFilter = [Terminal.Gui.TextField]::new("")
+    $state.txtSearchFilter.X = 62
+    $state.txtSearchFilter.Y = 1
+    $state.txtSearchFilter.Width = 20
+    $view.Add($state.txtSearchFilter)
+
+    $state.txtSearchFilter.add_TextChanged({
+      if ($state.currentSearchOutputLines) {
+        $search = $state.txtSearchFilter.Text.ToString().Trim()
+        if ($search) {
+          $state.txtSearchOutput.Text =
+            ($state.currentSearchOutputLines | Where-Object { $_ -match "(?i)$search" }) -join "`n"
+        }
+        else {
+          $state.txtSearchOutput.Text = $state.currentSearchOutputLines -join "`n"
+        }
+      }
+    }.GetNewClosure())
+
+    # ---- Results ----
+    $lblSearchResult = [Terminal.Gui.Label]::new("Results:")
+    $lblSearchResult.X = 2
+    $lblSearchResult.Y = $y
+    $view.Add($lblSearchResult)
+    $y += 1
+
+    $state.txtSearchOutput = [Terminal.Gui.TextView]::new()
+    $state.txtSearchOutput.X = 2
+    $state.txtSearchOutput.Y = $y
+    $state.txtSearchOutput.Width  = [Terminal.Gui.Dim]::Fill(2)
+    $state.txtSearchOutput.Height = [Terminal.Gui.Dim]::Fill(4)
+    $state.txtSearchOutput.ReadOnly = $true
+    $state.txtSearchOutput.WordWrap = $false
+    $view.Add($state.txtSearchOutput)
+
+    # ---- Computer State ----
+    $state.chkSearchLocked = [Terminal.Gui.CheckBox]::new("Enabled")
+    $state.chkSearchLocked.X = 2
+    $state.chkSearchLocked.Y = [Terminal.Gui.Pos]::Bottom($state.txtSearchOutput) + 1
+    $state.chkSearchLocked.CanFocus = $true
+    $view.Add($state.chkSearchLocked)
+
+    $state.chkSearchDisabled = [Terminal.Gui.CheckBox]::new("Disabled")
+    $state.chkSearchDisabled.X = 2
+    $state.chkSearchDisabled.Y = [Terminal.Gui.Pos]::Bottom($state.chkSearchLocked) + 1
+    $state.chkSearchDisabled.CanFocus = $true
+    $view.Add($state.chkSearchDisabled)
+
+    # ---- Search Button (UI only for now) ----
+    $btnDoSearch = [Terminal.Gui.Button]::new("Search")
+    $btnDoSearch.X = 48
+    $btnDoSearch.Y = 3
+    $view.Add($btnDoSearch)
+
+    # ---- Auto-populate computer properties ----
+    [Terminal.Gui.Application]::MainLoop.Invoke({
+      if ($computer) {
+
+        $lines = @()
+        $computer.PSObject.Properties | ForEach-Object {
+          $value = if ($_.Value -is [array]) {
+            $_.Value -join ', '
+          }
+          elseif ($null -eq $_.Value) {
+            ''
+          }
+          else {
+            $_.Value.ToString()
+          }
+
+          $lines += "$($_.Name.PadRight(25)): $value"
+        }
+
+        $state.txtSearchOutput.Text = $lines -join "`n"
+        $state.currentSearchOutputLines = $lines
+
+        $state.chkSearchLocked.Checked   = [bool]$computer.Enabled
+        $state.chkSearchDisabled.Checked = -not [bool]$computer.Enabled
+      }
+    }.GetNewClosure())
+  }
+}
+
   ## ==================== Apply Logic ====================
   # Computer properties are mostly read-only, but we can update Description and Location
   $applyLogic = {
@@ -10435,229 +12304,205 @@ function Show-ComputerPropertiesDialog {
   }
 
   ## ==================== Create and Show Dialog ====================
-  $tabs = @($generalTab, $accountTab, $securityTab, $memberOfTab, $spnTab, $lapsTab, $advancedTab)
+  $tabs = @($generalTab, $accountTab, $securityTab, $memberOfTab, $spnTab, $lapsTab, $advancedTab, $searchComputerTab)
 
   New-PropertiesDialog -Title "Computer Properties - $($computer.Name)" -Width 100 -Height 40 -Tabs $tabs -Data $computer -OnApply $applyLogic
 }
 
 # -------------------------[ Context Menu Handler }-------------------------
 function Show-ContextMenu {
-    param(
-        [array]$menuItems,
-        [object]$obj,
-        [string]$objType
-    )
+  param(
+    [array]$menuItems,
+    [object]$obj,
+    [string]$objType
+  )
 
-    Debug-Log ": Showing context menu for $($obj.Name) (Type: $objType)" -Type "Info"
+  Debug-Log ": Showing context menu for $($obj.Name) (Type: $objType)" -Type "Info"
 
-    ## Create dialog
-    $contextDialog = [Terminal.Gui.Dialog]::new("Actions", 30, ($menuItems.Count + 4))
-    $contextDialog.X = [Terminal.Gui.Pos]::Center()
-    $contextDialog.Y = [Terminal.Gui.Pos]::Center()
+  ## Create dialog
+  $contextDialog = [Terminal.Gui.Dialog]::new("Actions", 30, ($menuItems.Count + 4))
+  $contextDialog.X = [Terminal.Gui.Pos]::Center()
+  $contextDialog.Y = [Terminal.Gui.Pos]::Center()
 
-    ## Create list view
-    $listView = [Terminal.Gui.ListView]::new()
-    $listView.SetSource($menuItems)
-    $listView.X = 0
-    $listView.Y = 0
-    $listView.Width = [Terminal.Gui.Dim]::Fill()
-    $listView.Height = [Terminal.Gui.Dim]::Fill(2)
-    $contextDialog.Add($listView)
+  ## Create list view
+  $listView = [Terminal.Gui.ListView]::new()
+  $listView.SetSource($menuItems)
+  $listView.X = 0
+  $listView.Y = 0
+  $listView.Width = [Terminal.Gui.Dim]::Fill()
+  $listView.Height = [Terminal.Gui.Dim]::Fill(2)
+  $contextDialog.Add($listView)
 
-    ## Handle selection
-    $listView.add_OpenSelectedItem({
-        $selected = $menuItems[$listView.SelectedItem]
-        Debug-Log ": Menu item selected: $selected" -Type "Info"
-        [Terminal.Gui.Application]::RequestStop()
+  ## Handle selection
+  $listView.add_OpenSelectedItem({
+  $selected = $menuItems[$listView.SelectedItem]
+  Debug-Log ": Menu item selected: $selected" -Type "Info"
+  [Terminal.Gui.Application]::RequestStop()
 
-        if ($selected -ne "---") {
-            switch ($selected) {
-                "Properties" {
-                    switch ($objType) {
-                        'user' {
-                            Debug-Log ": Showing user properties for $($obj.Name)" -Type "Info"
-                            Show-UserPropertiesDialog -user $obj
-                        }
-                        'group' {
-                            Debug-Log ": Showing group properties for $($obj.Name)" -Type "Info"
-                            Show-GroupPropertiesDialog -group $obj
-                        }
-                        'computer' {
-                            Debug-Log ": Showing computer properties for $($obj.Name)" -Type "Info"
-                            Show-ComputerPropertiesDialog -computerName $obj.Name
-                        }
-                        'dc' {
-                            Debug-Log ": Showing DC properties for $($obj.Name)" -Type "Info"
-                            Show-DCPropertiesDialog -dc $obj
-                        }
-                        'ou' {
-                          Debug-Log ": Showing OU properties for $($obj.Name)" -Type "Info"
-                          Show-OUPropertiesDialog -ouname $obj.Name
-                        }
-                    }
-                }
-                "Reset Password" {
-                    Show-ResetPasswordDialog -userName $obj.Name
-                }
-                "Disable Account" {
-                    Toggle-UserAccount -userName $obj.Name -disable $true
-                }
-                "Enable Account" {
-                    Toggle-UserAccount -userName $obj.Name -disable $false
-                }
-                "Unlock Account" {
-                    Unlock-UserAccount -userName $obj.Name
-                }
-                "Disable" {
-                    Toggle-ComputerAccount -computerName $obj.Name -disable $true
-                }
-                "Enable" {
-                    Toggle-ComputerAccount -computerName $obj.Name -disable $false
-                }
-                "Move to OU..." {
-                    Invoke-ObjectOperation -Objects @($selectedNode.Tag) -Operation 'Move'
-                }
-                "Delete" {
-                    Invoke-ObjectOperation -Objects @($selectedNode.Tag) -Operation 'Delete'
-                }
-                "Add Member..." {
-                    Show-EditGroupMembershipDialog -groupName $obj.Name
-                }
-                "Remove Member..." {
-                    Show-EditGroupMembershipDialog -groupName $obj.Name
-                }
-                "Check Replication" {
-                    Check-DCReplication -dcName $obj.Name
-                }
-                "Refresh" {
-                    Refresh-TreeData
-                }
-            }
-        }
-    })
+  if ($selected -ne "---") {
+    switch ($selected) {
+      "Properties" {
+        switch ($objType) {
+      'user' {
+        Debug-Log ": Showing user properties for $($obj.Name)" -Type "Info"
+        Show-UserPropertiesDialog -user $obj
+      }
+      'group' {
+        Debug-Log ": Showing group properties for $($obj.Name)" -Type "Info"
+        Show-GroupPropertiesDialog -group $obj
+      }
+      'computer' {
+        Debug-Log ": Showing computer properties for $($obj.Name)" -Type "Info"
+        Show-ComputerPropertiesDialog -computerName $obj.Name
+      }
+      'dc' {
+        Debug-Log ": Showing DC properties for $($obj.Name)" -Type "Info"
+        Show-DCPropertiesDialog -dc $obj
+      }
+      'ou' {
+        Debug-Log ": Showing OU properties for $($obj.Name)" -Type "Info"
+        Show-OUPropertiesDialog -ouname $obj.Name
+      }
+    }
+  }
+      "Reset Password"    { Show-ResetPasswordDialog -userName $obj.Name                             }
+      "Disable Account"   { Toggle-UserAccount -userName $obj.Name -disable $true                    }
+      "Enable Account"    { Toggle-UserAccount -userName $obj.Name -disable $false                   }
+      "Unlock Account"    { Unlock-UserAccount -userName $obj.Name                                   }
+      "Disable"           { Toggle-ComputerAccount -computerName $obj.Name -disable $true            }
+      "Enable"            { Toggle-ComputerAccount -computerName $obj.Name -disable $false           }
+      "Move to OU..."     { Invoke-ObjectOperation -Objects @($selectedNode.Tag) -Operation 'Move'   }
+      "Delete"            { Invoke-ObjectOperation -Objects @($selectedNode.Tag) -Operation 'Delete' }
+      "Add Member..."     { Show-EditGroupMembershipDialog -groupName $obj.Name                      }
+      "Remove Member..."  { Show-EditGroupMembershipDialog -groupName $obj.Name                      }
+      "Check Replication" { Check-DCReplication -dcName $obj.Name                                    }
+      "Refresh"           { Refresh-TreeData                                                         }
+    }
+  }
+})
 
-    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
-    $contextDialog.AddButton($btnCancel)
+  $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
+  $contextDialog.AddButton($btnCancel)
 
-    [Terminal.Gui.Application]::Run($contextDialog)
+  [Terminal.Gui.Application]::Run($contextDialog)
 }
 
 function Invoke-BulkMove {
-    if ($Script:SelectedObjects.Count -eq 0) {
-        Show-Modal "No Selection" "No objects selected"
-        return
-    }
+  if ($Script:SelectedObjects.Count -eq 0) {
+    Show-Modal "No Selection" "No objects selected"
+    return
+  }
 
-    $objects = @()
-    foreach ($objName in $Script:SelectedObjects) {
-        $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
-        $obj = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
-        if (-not $obj) { $obj = $Script:Groups | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1 }
-        if ($obj) { $objects += $obj }
-    }
+  $objects = @()
+  foreach ($objName in $Script:SelectedObjects) {
+    $cleanName = $objName -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', ''
+    $obj = $Script:Users | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1
+    if (-not $obj) { $obj = $Script:Groups | Where-Object { $_.Name -eq $cleanName } | Select-Object -First 1 }
+    if ($obj) { $objects += $obj }
+  }
 
-    if ($objects.Count -gt 0) {
-        Invoke-ObjectOperation -Objects $objects -Operation 'Move' -IsBulk
-        $Script:SelectedObjects = @()
-        $Script:SelectionMode = $false
-        if ($Script:selectionPanel) { Update-SelectionPanel -panel $Script:selectionPanel }
-    }
+  if ($objects.Count -gt 0) {
+    Invoke-ObjectOperation -Objects $objects -Operation 'Move' -IsBulk
+    $Script:SelectedObjects = @()
+    $Script:SelectionMode = $false
+    if ($Script:selectionPanel) { Update-SelectionPanel -panel $Script:selectionPanel }
+  }
 }
 
 function Show-Properties {
-    Debug-Log ": Show-Properties called" -Type "Info"
-    $node = $Script:tree.SelectedObject
-    if (-not $node) {
-        Debug-Log ": No object selected" -Type "Info"
-        Show-Modal "Debug" "No object selected in tree"
-        return
+  Debug-Log ": Show-Properties called" -Type "Info"
+  $node = $Script:tree.SelectedObject
+  if (-not $node) {
+    Debug-Log ": No object selected" -Type "Info"
+    Show-Modal "Debug" "No object selected in tree"
+    return
+  }
+  Debug-Log ": Selected node text: '$($node.Text)'" -Type "Info"
+  $tag = $node.Tag
+
+  Debug-Log ": Tag is null: $($null -eq $tag)" -Type "Info"
+  if ($tag) {
+    Debug-Log ": Tag.Type: '$($tag.Type)'" -Type "Info"
+    Debug-Log ": Tag.Object is null: $($null -eq $tag.Object)" -Type "Info"
+    if ($tag.Object) {
+      Debug-Log ": Tag.Object type: $($tag.Object.GetType().Name)" -Type "Info"
+      }
+  }
+
+  ## ---- Containers / OUs (no backing object) ----
+  #if (-not $tag -or -not $tag.Object) {
+  #    Debug-Log ": Container / OU selected (Type: $($tag.Type))" -Type "Info"
+  #    return
+  #}
+
+  ## Get the actual AD object from the Tag
+  $obj = $tag.Object
+
+  ## ---- Use the Type property first (more reliable) ----
+  switch ($tag.Type) {
+    'user' {
+      Debug-Log ": USER object selected: $($obj.Name)" -Type "Info"
+      Show-UserPropertiesDialog -user $obj
+      return
     }
-    Debug-Log ": Selected node text: '$($node.Text)'" -Type "Info"
-    $tag = $node.Tag
-
-    # ADD THESE DEBUG LINES:
-    Debug-Log ": Tag is null: $($null -eq $tag)" -Type "Info"
-    if ($tag) {
-        Debug-Log ": Tag.Type: '$($tag.Type)'" -Type "Info"
-        Debug-Log ": Tag.Object is null: $($null -eq $tag.Object)" -Type "Info"
-        if ($tag.Object) {
-            Debug-Log ": Tag.Object type: $($tag.Object.GetType().Name)" -Type "Info"
-        }
+    'group' {
+      Debug-Log ": GROUP object selected: $($obj.Name)" -Type "Info"
+      Show-GroupPropertiesDialog -group $obj
+      return
     }
-
-    ## ---- Containers / OUs (no backing object) ----
-    #if (-not $tag -or -not $tag.Object) {
-    #    Debug-Log ": Container / OU selected (Type: $($tag.Type))" -Type "Info"
-    #    return
-    #}
-
-    # Get the actual AD object from the Tag
-    $obj = $tag.Object
-
-    # ---- Use the Type property first (more reliable) ----
-    switch ($tag.Type) {
-        'user' {
-            Debug-Log ": USER object selected: $($obj.Name)" -Type "Info"
-            Show-UserPropertiesDialog -user $obj
-            return
-        }
-        'group' {
-            Debug-Log ": GROUP object selected: $($obj.Name)" -Type "Info"
-            Show-GroupPropertiesDialog -group $obj
-            return
-        }
-        'dc' {
-            Debug-Log ": DC object selected: $($obj.Name)" -Type "Info"
-            Show-DCPropertiesDialog -dc $obj
-            return
-        }
-        'dc-container' {
-            Debug-Log ": DC container selected (no properties to show)" -Type "Info"
-           Show-Modal "Domain Controllers" "This is a container for Domain Controllers in this domain.`n`nSelect an individual DC to view its properties."
-          return
-        }
-        'computer' {
-            Debug-Log ": COMPUTER object selected: $($obj.Name)" -Type "Info"
-            Show-ComputerPropertiesDialog -computerName $obj.Name  # ← Changed to -computerName and .Name
-            return
-        }
-        'ou' {
-          Debug-Log ": Showing OU properties for $($obj.Name)" -Type "Info"
-            Show-OUPropertiesDialog -ou $obj
-        }
+    'dc' {
+      Debug-Log ": DC object selected: $($obj.Name)" -Type "Info"
+      Show-DCPropertiesDialog -dc $obj
+      return
     }
-
-    # ---- Fallback: Try to detect type from properties (for backward compatibility) ----
-    if ($obj.PSObject.Properties.Match('SamAccountName').Count -gt 0) {
-        Debug-Log ": Detected USER object (fallback): $($obj.Name)" -Type "Info"
-        Show-UserPropertiesDialog -user $obj
-        return
+    'dc-container' {
+      Debug-Log ": DC container selected (no properties to show)" -Type "Info"
+      Show-Modal "Domain Controllers" "This is a container for Domain Controllers in this domain.`n`nSelect an individual DC to view its properties."
+      return
     }
-
-    if ($obj.PSObject.Properties.Match('GroupScope').Count -gt 0 -or
-        $obj.PSObject.Properties.Match('Members').Count -gt 0) {
-        Debug-Log ": Detected GROUP object (fallback): $($obj.Name)" -Type "Info"
-        Show-GroupPropertiesDialog -group $obj
-        return
+    'computer' {
+      Debug-Log ": COMPUTER object selected: $($obj.Name)" -Type "Info"
+      Show-ComputerPropertiesDialog -computerName $obj.Name  # ← Changed to -computerName and .Name
+      return
     }
-
-    if ($obj.PSObject.Properties.Match('Site').Count -gt 0) {
-        Debug-Log ": Detected DC object (fallback): $($obj.Name)" -Type "Info"
-        Show-DCPropertiesDialog -dc $obj
-        return
+    'ou' {
+      Debug-Log ": Showing OU properties for $($obj.Name)" -Type "Info"
+      Show-OUPropertiesDialog -ou $obj
     }
+  }
 
-    if ($obj.PSObject.Properties.Match('OperatingSystem').Count -gt 0) {
-        Debug-Log ": Detected COMPUTER object (fallback): $($obj.Name)" -Type "Info"
-        Show-ComputerPropertiesDialog -computer $obj
-        return
-    }
+  ## ---- Fallback: Try to detect type from properties (for backward compatibility) ----
+  if ($obj.PSObject.Properties.Match('SamAccountName').Count -gt 0) {
+    Debug-Log ": Detected USER object (fallback): $($obj.Name)" -Type "Info"
+    Show-UserPropertiesDialog -user $obj
+    return
+  }
 
-    Debug-Log ": Selected object type unknown, cannot show properties" -Type "Warn"
+  if ($obj.PSObject.Properties.Match('GroupScope').Count -gt 0 -or
+    $obj.PSObject.Properties.Match('Members').Count -gt 0) {
+    Debug-Log ": Detected GROUP object (fallback): $($obj.Name)" -Type "Info"
+    Show-GroupPropertiesDialog -group $obj
+    return
+  }
+
+  if ($obj.PSObject.Properties.Match('Site').Count -gt 0) {
+    Debug-Log ": Detected DC object (fallback): $($obj.Name)" -Type "Info"
+    Show-DCPropertiesDialog -dc $obj
+    return
+  }
+
+  if ($obj.PSObject.Properties.Match('OperatingSystem').Count -gt 0) {
+    Debug-Log ": Detected COMPUTER object (fallback): $($obj.Name)" -Type "Info"
+    Show-ComputerPropertiesDialog -computer $obj
+    return
+  }
+
+  Debug-Log ": Selected object type unknown, cannot show properties" -Type "Warn"
 }
 
 ## Additional debug helper - call this to verify your demo data loaded correctly
+## This one not being called isn't criticla, it just needs to exist for when we do need it called
 function Test-DemoData {
   Debug-Log ("========== DEMO DATA CHECK ==========") -Type "Info"
   Debug-Log ("Global:Users count: $($Script:Users.Count)") -Type "Info"
@@ -10779,8 +12624,8 @@ function Toggle-SelectionMode {
   }
 }
 
-
 ## -------------------------{ Enhanced Tree with Selection Support }-------------------------
+## Never called - confirm if it's still needed or is dead code for removal
 function Handle-TreeClick {
   param($mouseArgs)
 
@@ -10833,60 +12678,57 @@ function Add-SelectionKeyBindings {
 }
 
 function Manage-Selection {
-    <#
-    .SYNOPSIS
-    Select all or deselect all objects
+  <#
+  .SYNOPSIS
+  Select all or deselect all objects
 
-    .PARAMETER Action
-    'SelectAll' to select all objects, 'DeselectAll' to clear selection
+  .PARAMETER Action
+ 'SelectAll' to select all objects, 'DeselectAll' to clear selection
 
-    .EXAMPLE
-    Manage-Selection -Action 'SelectAll'
+  .EXAMPLE
+  Manage-Selection -Action 'SelectAll'
 
-    .EXAMPLE
-    Manage-Selection -Action 'DeselectAll'
-    #>
-    param(
-        [Parameter(Mandatory=$true)]
-        [ValidateSet('SelectAll', 'DeselectAll')]
-        [string]$Action
-    )
+  .EXAMPLE
+  Manage-Selection -Action 'DeselectAll'
+  #>
 
-    if ($Action -eq 'SelectAll') {
-        ## Check if selection mode is enabled
-        if (-not $Script:SelectionMode) {
-            Show-Modal "Selection Mode" "Enable selection mode first (Ctrl+S)"
-            return
-        }
+  param(
+    [Parameter(Mandatory=$true)]
+    [ValidateSet('SelectAll', 'DeselectAll')]
+    [string]$Action
+  )
 
-        ## Clear existing selection
-        $Script:SelectedObjects = @()
-
-        ## Get all users from tree
-        foreach ($user in $Script:Users) {
-            $statusIcon = if ($user.Disabled) { "⊗" } else { "○" }
-            $displayName = "(U) $statusIcon $($user.Name)"
-            $Script:SelectedObjects += $displayName
-        }
-
-        Debug-Log ": Selected all users ($($Script:SelectedObjects.Count))" -Type "Info"
-
-        if ($Script:selectionPanel) {
-            Update-SelectionPanel -panel $Script:selectionPanel
-        }
-
-        Show-Modal "Selected All" "Selected $($Script:SelectedObjects.Count) users"
+  if ($Action -eq 'SelectAll') {
+    ## Check if selection mode is enabled
+    if (-not $Script:SelectionMode) {
+      Show-Modal "Selection Mode" "Enable selection mode first (Ctrl+S)"
+      return
     }
 
-    if ($Action -eq 'DeselectAll') {
-        $Script:SelectedObjects = @()
+    ## Clear existing selection
+    $Script:SelectedObjects = @()
 
-        Debug-Log ": Deselected all objects" -Type "Info"
-
-        if ($Script:selectionPanel) {
-            Update-SelectionPanel -panel $Script:selectionPanel
-        }
+    ## Get all users from tree
+    foreach ($user in $Script:Users) {
+      $statusIcon = if ($user.Disabled) { "⊗" } else { "○" }
+      $displayName = "(U) $statusIcon $($user.Name)"
+      $Script:SelectedObjects += $displayName
     }
+
+    Debug-Log ": Selected all users ($($Script:SelectedObjects.Count))" -Type "Info"
+
+    if ($Script:selectionPanel) { Update-SelectionPanel -panel $Script:selectionPanel }
+    Show-Modal "Selected All" "Selected $($Script:SelectedObjects.Count) users"
+  }
+
+  if ($Action -eq 'DeselectAll') {
+    $Script:SelectedObjects = @()
+    Debug-Log ": Deselected all objects" -Type "Info"
+
+    if ($Script:selectionPanel) {
+      Update-SelectionPanel -panel $Script:selectionPanel
+    }
+  }
 }
 
 ## -------------------------[ Bulk Disable/Enable }-------------------------
@@ -11036,6 +12878,7 @@ function Invoke-BulkAddToGroup {
 }
 
 ## Add keyboard shortcuts for selection
+## Never callled - confirm if it needs ot be, or is dead code for removal
 function Add-SelectionKeyBindings {
   param($view)
 
@@ -11126,8 +12969,6 @@ function Invoke-BulkDisableEnable {
     Update-SelectionPanel -panel $selectionPanel
   }
 }
-
-
 
 # -------------------------{} Bulk Add to Group }-------------------------
 function Invoke-BulkAddToGroup {
@@ -11265,7 +13106,6 @@ function Create-SelectionPanel {
 
   return $selPanel
 }
-
 
 ## -------------------------{ Update Selection Panel }-------------------------
 function Update-SelectionPanel {
@@ -11514,8 +13354,6 @@ function Check-DCReplication {
   Show-Modal "Replication Check" "Checking replication for $dcName`n(Coming soon)"
 }
 
-## We draw a lot of messageboxes. This makes the code cleaner
-
 function Show-OUPropertiesDialog {
   param($ou)
   ## ---------------------- Safety Checks ----------------------
@@ -11755,7 +13593,7 @@ if ($DemoMode -and $PSBoundParameters.ContainsKey('Domain')) {
 }
 
 ## Echo basic info for debugging
-Debug-Log "DemoMode: $DemoMode" "info"
+Debug-Log "DemoMode: $DemoMode" -Type "info"
 Debug-Log "Logging: $Logging" -Type "Info"
 Debug-Log "LogFile: $LogFile" -Type "Info"
 
