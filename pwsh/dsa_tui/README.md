@@ -21,17 +21,17 @@ Information one may find useful:
   Reference URLs for AD Forest & Get-ADForest usage:
 
   - Microsoft Official Documentation
-    (https://learn.microsoft.com/powershell/module/activedirectory/get-adforest)
-    (https://learn.microsoft.com/windows-server/identity/ad-ds/plan/active-directory-forest-and-domain-guide)
+    [Get-ADForest](https://learn.microsoft.com/powershell/module/activedirectory/get-adforest)
+    [AD Forest and domain guide](https://learn.microsoft.com/windows-server/identity/ad-ds/plan/active-directory-forest-and-domain-guide)
 
   - General AD Forest Structure Explanations
-    (https://learn.microsoft.com/windows-server/identity/ad-ds/plan/understanding-active-directory-domain-services)
-    (https://learn.microsoft.com/windows-server/identity/ad-ds/plan/designing-the-logical-structure)
+    [Microsoft: Undderstanding AD](https://learn.microsoft.com/windows-server/identity/ad-ds/plan/understanding-active-directory-domain-services)
+    [Microsoft: Designing AD Structure] (https://learn.microsoft.com/windows-server/identity/ad-ds/plan/designing-the-logical-structure)
 
   - Community / Confirmatory Sources
-    (https://ss64.com/ps/get-adforest.html)
-    (https://4sysops.com/archives/get-adforest-cmdlet-what-it-does-and-how-to-use-it/)
-    (https://social.technet.microsoft.com/wiki/contents/articles/22953.active-directory-forest.aspx)
+    [SS64 AD](https://ss64.com/ps/get-adforest.html)
+    [4sysops](https://4sysops.com/archives/get-adforest-cmdlet-what-it-does-and-how-to-use-it/)
+    [Technet AD forest discussion](https://social.technet.microsoft.com/wiki/contents/articles/22953.active-directory-forest.aspx)
 
 Notes:
 ```
@@ -99,6 +99,8 @@ Distribution groups:                (&(objectClass=group)(!(groupType:1.2.840.11
 | Example Music (CA) Inc.               | Canada               | Inc.                  | Federal / provincial corporations |
 | Example Music (US) LLC.               | USA                  | LLC.                  | Standard US corporation suffix |
 
+**Demo Site Names and subnets**
+
 | **Site** | **City / Location**          | **Country** | **Subnet**            | **Landline Range**                    | **Mobile Range** |
 |---------:|------------------------------|-------------|-----------------------|---------------------------------------|------------------|
 | ABR | Aberdeen, Scotland             | UK | 192.168.224.0/24 | +44 1224 496 0xxx               | +44 7700 900 2xxx |
@@ -133,7 +135,7 @@ Distribution groups:                (&(objectClass=group)(!(groupType:1.2.840.11
     - Manchester:              0161 715 xxxx - Weatherfield
     - UK Wide Mobiles: Mobile: 0770 090 0xxx
 ```
-  Per: [Ofcom Fictitious_numbers[(https://en.wikipedia.org/wiki/Telephone_numbers_in_the_United_Kingdom?useskin=vector#Fictitious_numbers)
+  Per: [Ofcom Fictitious_numbers](https://en.wikipedia.org/wiki/Telephone_numbers_in_the_United_Kingdom?useskin=vector#Fictitious_numbers)
   and: [Numbers Ffor Drama](https://web.archive.org/web/20140216214400/http://stakeholders.ofcom.org.uk/telecoms/numbering/guidance-tele-no/numbers-for-drama)
 
 **Yes, 0161 715 is a call back to [Coronation Street](https://en.wikipedia.org/wiki/Coronation_Street?useskin=vector) per the ["Coronation Street test" procedure](https://en.wikipedia.org/wiki/TV_pickup?useskin=vector)**
