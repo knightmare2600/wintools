@@ -1,6 +1,7 @@
-===========================================================================================
-DSA-TUI Blåbær — Active Directory TUI Tool - Historical Build Notes and Change Log
-===========================================================================================
+
+# DSA-TUI Blåbær — Active Directory TUI Tool 
+
+**<ins>Historical Build Notes and Change Log</ins>**
 
  1.0.0.0  (Initial Experimental)
  - First internal test build. Basic TUI scaffolding only.
