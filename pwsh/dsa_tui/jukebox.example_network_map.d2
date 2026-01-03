@@ -70,6 +70,23 @@ DUN: {
   EXAPRNDUN001: {class: iot_node; label: "EXAPRNDUN001\n192.168.25.200\nKyocera\nMFP"}
 }
 
+// Perth
+  EXADUNDC01-: {class: dc_node; label: "EXAPERDC01\n192.168.173.10\nWin Srv\nDC 01"}
+  EXAFWLPER001: {class: net_node; label: "EXAFWLDUN001\n192.168.173.1\nFortiOS\nFW"}
+  EXASWIPER001: {class: net_node; label: "EXASWIDUN001\n192.168.173.2\nCisco\nSwitch"}
+  EXAPRNPER001: {class: iot_node; label: "EXAPRNPER001\n192.168.173.20\nHP MFP LaserJet\nMulti-function printer / scanner"}
+  EXASBCPER001: {class: net_node; label: "EXASBCPER001\n192.168.173.30\n3CX SBC Debian\n3CX SBC – VOIP gateway for Perth"}
+  EXANIXPER001: {class: srv_node; label: "EXANIXPER001\n192.168.173.40\nSolaris 11.5\nMIDI/Music archive server for Fiction Factory"}
+  EXANASPER001: {class: peripheral_node; label: "EXANASPER001\n192.168.173.50\nSynology DSM 7.1\nFile storage for user profiles & music archive"}
+  EXACVMPER001: {class: iot_node; label: "EXACVMPER001\n192.168.173.60\nSmart Bakery Vending Machine SP100\nScone Palace vending machine"}
+  EXAMBPPER001: {class: user_node; label: "EXAMBPPER001\n192.168.173.70\nmacOS Ventura 13.5\nMacBook Pro assigned to staff"}
+  EXASURPER001: {class: user_node; label: "EXASURPER001\n192.168.173.71\nWindows 11 Pro\nSurface Laptop assigned to staff"}
+  EXAPHNPER001: {class: user_node; label: "EXAPHNPER001\n192.168.173.82\nYealink T46G\nDesk VOIP phone"}
+  EXAPHNPER002: {class: user_node; label: "EXAPHNPER002\n192.168.173.83\nYealink T46G\nDesk VOIP phone"}
+  EXAPHNPER003: {class: user_node; label: "EXAPHNPER003\n192.168.173.83\nYealink T46G\nDesk VOIP phone"}
+  EXAPHNPER004: {class: user_node; label: "EXAPHNPER004\n192.168.173.84\nYealink T46G\nDesk VOIP phone"}
+}
+
 // G Postcode
 GLA: {
   class: site_box
@@ -330,6 +347,8 @@ GLA <-> EDI: Fiber {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5
 DUN <-> GLA: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 DUN <-> EDI: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 ABD <-> DUN: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+PER <-> DUN: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+PER <-> EDI: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 ABD <-> EDI: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 GLA <-> CLY: PPTP {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 
