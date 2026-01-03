@@ -223,6 +223,7 @@ Some information which might come in handy: [Someone else who likes the projct n
 | MUN | Munich, West Germany           | DE | 192.168.189.0/24 | +49 893  555 33xx               | +49 893  555 99xx |
 | NEW | Newcastle, England             | UK | 192.168.191.0/24 | +44 191  496 0xxx               | +44 770  090 9xxx |
 | ODE | Odense, Danmark                | DK | 192.168.126.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
+| PER | Perth, Scotland                | UK | 192.168.173.0/24 | +44 173  849 60xx               | +44 770  0173 0xx |
 | VIE | Vienna, Austria                | AT | 192.168.xxx.0/24 | +43 800  078  0xx               | +43 664  665 xxx |
 
 **__A note on phone numbers:__**
