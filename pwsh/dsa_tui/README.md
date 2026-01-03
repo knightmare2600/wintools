@@ -10,11 +10,81 @@ DSA-TUI Text Mode version of dsa.msc for powershell using ConsoleTools 1.16 on P
 
 __If you don't have them, you can run in Demo mode__
 
-## Using The Script
+# dsa_tui.ps1 — Parameters & Usage
 
-Information one may find useful:
+The `dsa_tui.ps1` script supports several command-line parameters to control behaviour, data sources, and targeting of Active Directory environments.
 
-[Someone else who likes the projct name](https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-hvem-pokker-har-fundet-paa-det-her)
+---
+
+## Parameters
+
+| **Command Line Parameter** | **Type** | **Description** | **Example Usage In Script** |
+|---------------|----------|------------------|-------------|
+| `-ImportCsv`  | `string` | Path to a CSV file containing objects to import into Active Directory. The CSV should follow a standard `csvde` layout (attribute names as headers). | `.\dsa_tui.ps1 -ImportCsv C:\temp\users.csv` |
+| `-Domain` | `string` | Specifies the Active Directory domain to operate against. If omitted, the current logon domain is used. | `.\dsa_tui.ps1 -Domain corp.example.com` |
+| `-DC` | `string` | Explicitly specifies a domain controller. Useful in multi-site or troubleshooting scenarios. | `.\dsa_tui.ps1 -DC dc01.corp.example.com` |
+| `-Verbose` | `switch` | Enables verbose output during execution. | `.\dsa_tui.ps1 -Verbose` |
+| `-Help` | `switch` | Displays usage information. | `.\dsa_tui.ps1 -Help` |
+
+---
+
+## CSV Import Notes
+
+When using `-ImportCsv`, the CSV must already exist. The script does **not** generate or infer CSV structure.
+
+A common workflow is to export existing objects using `csvde`:
+
+```powershell
+csvde -f exported_users.csv
+```
+
+More information on the `csvde.exe` tool can be found [here](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc732101(v=ws.11))
+
+---
+
+## Required PowerShell Modules
+
+### ActiveDirectory (RSAT)
+
+Install RSAT:
+
+    Add-WindowsCapability -Name Rsat.ActiveDirectory.DS-Lite~~~~0.0.1.0
+
+Load the module:
+
+    Import-Module ActiveDirectory
+
+---
+
+## Special Days & Emoji Easter Eggs
+
+| **Date** | **Emoji** | **Description** | **Reference** |
+|---------:|-----------|-----------------|---------------|
+| April 9 | 🇩🇰 | German invasion of Denmark (1940) – start of occupation | https://en.wikipedia.org/wiki/German_invasion_of_Denmark_(1940) |
+| May 4 | 🕯️ | Danish remembrance candle for the occupation (Besættelsen) | https://en.wikipedia.org/wiki/Denmark_in_World_War_II |
+| June 5 | 🇩🇰 | Liberation of Denmark (1945) | https://en.wikipedia.org/wiki/Liberation_of_Denmark |
+| June 21 | 🇬🇱 | Greenland National Day | https://en.wikipedia.org/wiki/Greenland_National_Day |
+| July 29 | 🇫🇴 | Ólavsøka – Faroe Islands national festival | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka |
+| November 9 | 🇩🇪 | Historical in-joke referencing Erich Honecker | https://en.wikipedia.org/wiki/Erich_Honecker |
+| December 24–25 | 🎄 | Christmas / Jul | https://en.wikipedia.org/wiki/Christmas |
+
+Default emoji on all other days: 🗂️
+
+For November 9th, reference, check out the movie _The Lives of Others_ — [here](https://www.imdb.com/title/tt0405094/)
+
+
+---
+
+## Notes
+
+- CSV files must already exist before import.
+- Attribute names must match the Active Directory schema.
+- RSAT / ActiveDirectory module is required.
+- Emoji easter eggs are cosmetic only.
+
+# Information one may find useful:
+
+Some information which might come in handy: [Someone else who likes the projct name](https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-hvem-pokker-har-fundet-paa-det-her)
 
 ## Citations for the Active directory commands:
 
