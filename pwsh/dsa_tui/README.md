@@ -177,7 +177,7 @@ For November 9th, reference, check out the movie _The Lives of Others_ — [here
 - RSAT / ActiveDirectory module is required.
 - Emoji easter eggs are cosmetic only.
 
-# Information one may find useful:
+## Information one may find useful:
 
 Some information which might come in handy: [Someone else who likes the projct name](https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-hvem-pokker-har-fundet-paa-det-her)
 
