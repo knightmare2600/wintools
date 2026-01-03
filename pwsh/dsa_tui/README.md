@@ -248,7 +248,7 @@ Some information which might come in handy: [Someone else who likes the projct n
 ## Other information relating to the demo data:
 
 Yes, Christianshavn alludes to [this](https://en.wikipedia.org/wiki/Huset_p%C3%A5_Christianshavn?useskin=vector) Danish TV show and
-[Helena Christensen](https://en.wikipedia.org/wiki/Helena_Christensen?useskin=vector) is the lady from the Chris Issak music video and you'll find other such Easter Eggs in the codeand AD Data
+[Helena Christensen](https://en.wikipedia.org/wiki/Helena_Christensen?useskin=vector) is the lady from the Chris Issak music video and you'll find other such Easter Eggs in the code and AD Data.
 
 **__NB: I don't believe Denmark uses 0000 but this is not confirmed!__**
 
