@@ -13,14 +13,11 @@
 - [Information One May Find Useful](#information-one-may-find-useful)
   - [Companies](##Companies)
   - [Demo Data And Other Relevant Information](#Demo-Data-And-Other-Relevant-Information)
-
-Here you will find some infromation relating to the dmeo data and quesitons you may have regarding it. Along with some fun Easter eggs
-
-## Special Days & Emoji Easter Eggs
+  - [Special Days And easter Eggs](#Special-Days-And-Emoji-Easter-Eggs)
   - [Device Naming & Demo Data Conventions](#device-naming--demo-data-conventions)
-    - [Company Suffixes](##Companies)
-    - [Demo Site Names and Subnets](#demo-site-names-and-subnets)
-    - [Device Role Codes](##Device-Naming-Conventions)
+  - [Company Suffixes](#Companies)
+  - [Demo Site Names and Subnets](#demo-site-names-and-subnets)
+  - [Device Role Codes](#Device-Naming-Conventions)
 <!-- /TOC -->
 
 # About This project
@@ -154,7 +151,7 @@ Distribution groups:                (&(objectClass=group)(!(groupType:1.2.840.11
 
 Here you will find some infromation relating to the dmeo data and quesitons you may have regarding it. Along with some fun Easter eggs
 
-## Special Days & Emoji Easter Eggs
+## Special Days And Emoji Easter Eggs
 
 | **Date** | **Emoji** | **Description** | **Reference** |
 |---------:|-----------|-----------------|---------------|
