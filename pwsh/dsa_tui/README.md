@@ -206,7 +206,7 @@ Distribution groups:                (&(objectClass=group)(!(groupType:1.2.840.11
     - UK Wide Mobiles: Mobile: 0770 090 0xxx
 ```
   Per: [Ofcom Fictitious_numbers](https://en.wikipedia.org/wiki/Telephone_numbers_in_the_United_Kingdom?useskin=vector#Fictitious_numbers)
-  and: [Numbers Ffor Drama](https://web.archive.org/web/20140216214400/http://stakeholders.ofcom.org.uk/telecoms/numbering/guidance-tele-no/numbers-for-drama)
+  and: [Numbers For Drama](https://web.archive.org/web/20140216214400/http://stakeholders.ofcom.org.uk/telecoms/numbering/guidance-tele-no/numbers-for-drama)
 
 **Yes, 0161 715 is a call back to [Coronation Street](https://en.wikipedia.org/wiki/Coronation_Street?useskin=vector) per the ["Coronation Street test" procedure](https://en.wikipedia.org/wiki/TV_pickup?useskin=vector)**
 
@@ -215,6 +215,7 @@ Distribution groups:                (&(objectClass=group)(!(groupType:1.2.840.11
     - Copenhagen landline: +45 0000 xxxx
     - Denmark mobile:      +45 2xxx xxxx
 ```
+## Other information relating to the demo data:
 
 Yes, Christianshavn alludes to [this](https://en.wikipedia.org/wiki/Huset_p%C3%A5_Christianshavn?useskin=vector) Danish TV show and
 [Helena Christensen](https://en.wikipedia.org/wiki/Helena_Christensen?useskin=vector) is the lady from the Chris Issak music video and you'll find other such Easter Eggs in the codeand AD Data
