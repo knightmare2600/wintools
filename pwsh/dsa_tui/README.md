@@ -18,6 +18,7 @@
   - [Company Suffixes](#Companies)
   - [Demo Site Names and Subnets](#demo-site-names-and-subnets)
   - [Device Role Codes](#Device-Naming-Conventions)
+  - [Notes](#Additional-Notes)
 <!-- /TOC -->
 
 # About This project
@@ -280,6 +281,8 @@ Examples:
   EXASRVEDI003  -> Edinburgh server
   EXAWAPLND001  -> London Wi-Fi access point
 ```
+
+## Additional Notes
 
 Notes:
   - Not all devices are AD-aware
