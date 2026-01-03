@@ -319,6 +319,45 @@ VIE: {
   EXASBCVIE001: {class: voip_node; label: "EXASBCVIE001\n3CX SBC\n.49"}
 }
 
+// Links
+
+// North America
+BRK <-> MIA: vDSL {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+MIA <-> DUN: Satellite Uplink {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+
+// Scotland
+GLA <-> EDI: Fiber {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+DUN <-> GLA: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+DUN <-> EDI: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+ABD <-> DUN: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+ABD <-> EDI: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+GLA <-> CLY: PPTP {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+
+// England
+EDI -> MCR: PPTP (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+EDI <-> NEW: PPTP (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+GLA <-> MCR: PPTP (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+MCR <-> LIV: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+// TODO: force directions so it matches geography
+BIR <-> LND: "ISDN (Bonded)" {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+NEW <-> AAR: ISDN (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+
+// Danmark
+BRA -> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+ESB -> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+AAR -> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+KGE -> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+ODE -> CPH: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+ESB <- ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+BRA <- ESB: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+BRA <-> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+
+// Deutschland
+BON <-> BER: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+HAM <-> BER: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+BON <-> HAM: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+BON <-> MUC: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
+
 // LEGEND
 LEGEND: {
   style: {stroke: "#333333"; fill: "#f8f9fa"; font-color: "#000000"}
