@@ -1,3 +1,28 @@
+<!-- TOC -->
+- [About This Project](#about-this-project)
+- [Requirements](#requirements)
+- [Parameters](#parameters)
+  - [CSV Import Notes](#csv-import-notes)
+- [Required PowerShell Modules](#required-powershell-modules)
+  - [ActiveDirectory (RSAT)](#activedirectory-rsat)
+- [Citations for the Active Directory Commands](#citations-for-the-active-directory-commands)
+- [Example Common LDAP Filters (for reference/docs)](#example-common-ldap-filters-for-referencedocs)
+- [Demo Data And Other Relevant Information](#demo-data-and-other-relevant-information)
+  - [Special Days & Emoji Easter Eggs](#special-days--emoji-easter-eggs)
+- [Notes](#notes)
+- [Information One May Find Useful](#information-one-may-find-useful)
+  - [Companies](##Companies)
+  - [Demo Data And Other Relevant Information](#Demo-Data-And-Other-Relevant-Information)
+
+Here you will find some infromation relating to the dmeo data and quesitons you may have regarding it. Along with some fun Easter eggs
+
+## Special Days & Emoji Easter Eggs
+  - [Device Naming & Demo Data Conventions](#device-naming--demo-data-conventions)
+    - [Company Suffixes](##Companies)
+    - [Demo Site Names and Subnets](#demo-site-names-and-subnets)
+    - [Device Role Codes](##Device-Naming-Conventions)
+<!-- /TOC -->
+
 # About This project
 
 DSA-TUI Text Mode version of dsa.msc for powershell using ConsoleTools 1.16 on Powershell 7.x
@@ -55,36 +80,6 @@ Load the module:
     Import-Module ActiveDirectory
 
 ---
-
-## Special Days & Emoji Easter Eggs
-
-| **Date** | **Emoji** | **Description** | **Reference** |
-|---------:|-----------|-----------------|---------------|
-| April 9 | 🇩🇰 | German invasion of Denmark (1940) – start of occupation | https://en.wikipedia.org/wiki/German_invasion_of_Denmark_(1940) |
-| May 4 | 🕯️ | Danish remembrance candle for the occupation (Besættelsen) | https://en.wikipedia.org/wiki/Denmark_in_World_War_II |
-| June 5 | 🇩🇰 | Liberation of Denmark (1945) | https://en.wikipedia.org/wiki/Liberation_of_Denmark |
-| June 21 | 🇬🇱 | Greenland National Day | https://en.wikipedia.org/wiki/Greenland_National_Day |
-| July 29 | 🇫🇴 | Ólavsøka – Faroe Islands national festival | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka |
-| November 9 | 🇩🇪 | Historical in-joke referencing Erich Honecker | https://en.wikipedia.org/wiki/Erich_Honecker |
-| December 24–25 | 🎄 | Christmas / Jul | https://en.wikipedia.org/wiki/Christmas |
-
-Default emoji on all other days: 🗂️
-
-For November 9th, reference, check out the movie _The Lives of Others_ — [here](https://www.imdb.com/title/tt0405094/)
-
-
----
-
-## Notes
-
-- CSV files must already exist before import.
-- Attribute names must match the Active Directory schema.
-- RSAT / ActiveDirectory module is required.
-- Emoji easter eggs are cosmetic only.
-
-# Information one may find useful:
-
-Some information which might come in handy: [Someone else who likes the projct name](https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-hvem-pokker-har-fundet-paa-det-her)
 
 ## Citations for the Active directory commands:
 
@@ -155,6 +150,41 @@ Security groups:                    (&(objectClass=group)(groupType:1.2.840.1135
 Distribution groups:                (&(objectClass=group)(!(groupType:1.2.840.113556.1.4.803:=2147483648)))
 ```
 
+# Demo Data And Other Relevant Information
+
+Here you will find some infromation relating to the dmeo data and quesitons you may have regarding it. Along with some fun Easter eggs
+
+## Special Days & Emoji Easter Eggs
+
+| **Date** | **Emoji** | **Description** | **Reference** |
+|---------:|-----------|-----------------|---------------|
+| April 9 | 🇩🇰 | German invasion of Denmark (1940) – start of occupation | https://en.wikipedia.org/wiki/German_invasion_of_Denmark_(1940) |
+| May 4 | 🕯️ | Danish remembrance candle for the occupation (Besættelsen) | https://en.wikipedia.org/wiki/Denmark_in_World_War_II |
+| June 5 | 🇩🇰 | Liberation of Denmark (1945) | https://en.wikipedia.org/wiki/Liberation_of_Denmark |
+| June 21 | 🇬🇱 | Greenland National Day | https://en.wikipedia.org/wiki/Greenland_National_Day |
+| July 29 | 🇫🇴 | Ólavsøka – Faroe Islands national festival | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka |
+| November 9 | 🇩🇪 | Historical in-joke referencing Erich Honecker | https://en.wikipedia.org/wiki/Erich_Honecker |
+| December 24–25 | 🎄 | Christmas / Jul | https://en.wikipedia.org/wiki/Christmas |
+
+Default emoji on all other days: 🗂️
+
+For November 9th, reference, check out the movie _The Lives of Others_ — [here](https://www.imdb.com/title/tt0405094/)
+
+---
+
+## Notes
+
+- CSV files must already exist before import.
+- Attribute names must match the Active Directory schema.
+- RSAT / ActiveDirectory module is required.
+- Emoji easter eggs are cosmetic only.
+
+# Information one may find useful:
+
+Some information which might come in handy: [Someone else who likes the projct name](https://nyheder.tv2.dk/lokalt/2021-10-19-er-det-her-postbuddets-vaerste-skraek-hvem-pokker-har-fundet-paa-det-her)
+
+## Companies
+
 <ins>DEVICE NAMING & DEMO DATA CONVENTIONS</ins>
 
 **Company Suffixes:**
@@ -168,6 +198,8 @@ Distribution groups:                (&(objectClass=group)(!(groupType:1.2.840.11
 | Example Music (Österreich) GmbH       | Austria              | GmbH                  | Gesellschaft mit beschränkter Haftung |
 | Example Music (CA) Inc.               | Canada               | Inc.                  | Federal / provincial corporations |
 | Example Music (US) LLC.               | USA                  | LLC.                  | Standard US corporation suffix |
+
+## Site Names And subnets
 
 **Demo Site Names and subnets**
 
@@ -221,6 +253,8 @@ Yes, Christianshavn alludes to [this](https://en.wikipedia.org/wiki/Huset_p%C3%A
 [Helena Christensen](https://en.wikipedia.org/wiki/Helena_Christensen?useskin=vector) is the lady from the Chris Issak music video and you'll find other such Easter Eggs in the codeand AD Data
 
 **__NB: I don't believe Denmark uses 0000 but this is not confirmed!__**
+
+## Device Naming Conventions
 
 Device Role Codes:
 ```
