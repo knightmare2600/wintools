@@ -1,3 +1,5 @@
+// https://d2lang.com/tour/shapes/
+
 layout: elk
 direction: right
 
@@ -10,15 +12,25 @@ vars: {
 }
 
 classes: {
-  site_box: {
-    style: {stroke-dash: 0; fill: "#1a1a1a"; font-color: "#ffffff"; border-radius: 12; stroke-width: 2}
+  site_box: {style: {stroke-dash: 0; fill: "#ffffff"; font-color: "blue"; border-radius: 12; stroke-width: 2}
     grid-columns: 3
   }
-  dc_node: {shape: cylinder; style: {fill: "#01579b"; stroke: "#ffffff"; stroke-width: 2; font-color: "#ffffff"}}
-  srv_node: {style: {fill: "#01579b"; stroke: "#ffffff"; font-color: "#ffffff"}}
-  user_node: {style: {fill: "#1b5e20"; stroke: "#ffffff"; font-color: "#ffffff"}}
-  net_node: {shape: hexagon; style: {fill: "#e65100"; stroke: "#ffffff"; font-color: "#ffffff"}}
-  iot_node: {style: {fill: "#4a148c"; stroke: "#ffffff"; font-color: "#ffffff"}}
+  dc_node: {shape: cylinder; style: {fill: "green"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+  srv_node: {shape: package; style: {fill: "green"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+  server_node: {shape: package; style: {fill: "pink"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+  net_node: {shape: diamond; style: {fill: "orange"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+
+  // User Elements
+  user_node: {shape: person; style: {fill: "yellow"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+  voip_node: {shape: callout; style: {fill: "pink"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+
+  // Hardware
+  hardware_node: {shape: page; style: {fill: "pink"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+  edge_node: {shape: cloud; style: {fill: "pink"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+  peripheral_node: {shape: circle; style: {fill: "pink"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+  iot_node: {shape: oval; style: {fill: "pink"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+  lcd_node: {shape: document; style: {fill: "orange"; stroke: "blue"; stroke-width: 2; font-color: "blue"}}
+
 }
 
 # --- NORTH AMERICA ---
@@ -32,7 +44,7 @@ BRK: {
   EXAPBXBRK001: {class: voip_node; label: "EXAPBXBRK001\n3CX PBX\nVOIP Server\n.200"}
 }
 
-# --- Vice City
+# --- Vice City ---
 MIA: {
   class: site_box
   label: "MIA - Miami (US)\n192.168.135.0/24"
@@ -82,7 +94,7 @@ CLY: {
   EXADCCLY01: {class: server_node; label: "EXADCCLY01\n192.168.141.9\nWindows Server 2022\nDomain Controller"}
   EXADCCLY02: {class: server_node; label: "EXADCCLY02\n192.168.141.11\nWindows Server 2022\nDomain Controller"}
   EXASRVCLY001: {class: server_node; label: "EXASRVCLY001\n192.168.141.20\nRocky Linux\nOracle DB Server"}
-  EXAFWLCLY001: {class: network_node; label: "EXAFWLCLY001\n192.168.141.1\nFortiOS 7.6.5\nFirewall"}
+  EXAFWLCLY001: {class: edge_node; label: "EXAFWLCLY001\n192.168.141.1\nFortiOS 7.6.5\nFirewall"}
   EXASWICLY001: {class: network_node; label: "EXASWICLY001\n192.168.141.2\nCisco Catalyst 9300\nCore Switch"}
   EXAILOCLY001: {class: hardware_node; label: "EXAILOCLY001\n192.168.141.30\nHPE iLO5\niLO Management"}
   EXARACCLY001: {class: hardware_node; label: "EXARACCLY001\n192.168.141.30\nHP iLO5\nDRAC Management"}
@@ -151,7 +163,7 @@ BIR: {
   label: "BIR - Birmingham, UK\n192.168.121.0/24\n"
   EXADCBIR02: {class: server_node; label: "EXADCBIR02\n192.168.121.11\nWindows Server 2022\nDomain Controller"}
   EXASRVBIR001: {class: server_node; label: "EXASRVBIR001\n192.168.121.20\nRocky Linux\nOracle DB Node"}
-  EXAFWLBIR001: {class: network_node; label: "EXAFWLBIR001\n192.168.121.1\nPalo Alto PanOS\nFirewall"}
+  EXAFWLBIR001: {class: edge_node; label: "EXAFWLBIR001\n192.168.121.1\nPalo Alto PanOS\nFirewall"}
   EXASWIBIR001: {class: network_node; label: "EXASWIBIR001\n192.168.121.2\nCisco Catalyst 9300\nCore Switch"}
   EXASWIBIR002: {class: network_node; label: "EXASWIBIR002\n192.168.121.20\nCisco Catalyst\n48-port Switch"}
   EXAILOBIR001: {class: hardware_node; label: "EXAILOBIR001\n192.168.121.30\nHPE iLO5\nILO Management"}
@@ -160,7 +172,7 @@ BIR: {
   EXAMBPBIR001: {class: user_node; label: "EXAMBPBIR001\n192.168.121.41\nmacOS Sonoma\nTouring MacBook"}
   EXATABBIR001: {class: user_node; label: "EXATABBIR001\n192.168.121.61\nLineage OS\nSetlist Tablet"}
   EXAPHNBIR001: {class: user_node; label: "EXAPHNBIR001\nDHCP\nLineage OS\nTouring Phone"}
-  EXALCDBIR001: {class: iot_node; label: "EXALCDBIR001\n192.168.121.30\nNEC PlasmaSync\nNOC Display"}
+  EXALCDBIR001: {class: lcd_node; label: "EXALCDBIR001\n192.168.121.30\nNEC PlasmaSync\nNOC Display"}
 }
 
 LND: {
@@ -169,8 +181,8 @@ LND: {
   EXALNDDC01: {class: server_node; label: "EXALNDDC01\n192.168.2.20\nWindows Server 2022\nDomain Controller"}
   EXAWKSLND001: {class: user_node; label: "EXAWKSLND001\n192.168.20.150\nWindows 11 Pro\nHot Desk PC"}
   EXAPRNLND001: {class: peripheral_node; label: "EXAPRNLND001\n192.168.20.16\nPrinter\nXerox WorkCentre"}
-  EXARTRLND001: {class: network_node; label: "EXARTRLND001\n192.168.20.254\nCisco ISR 4331\nWAN Router"}
-  EXAFWLLND001: {class: network_node; label: "EXAFWLLND001\n192.168.20.1\nCisco ASA 5516-X\nFirewall"}
+  EXARTRLND001: {class: nework_node; label: "EXARTRLND001\n192.168.20.254\nCisco ISR 4331\nWAN Router"}
+  EXAFWLLND001: {class: edge_node; label: "EXAFWLLND001\n192.168.20.1\nCisco ASA 5516-X\nFirewall"}
   EXARACLND001: {class: hardware_node; label: "EXARACLND001\n192.168.20.2\nDell iDRAC9\nManagement"}
   EXASWILND001: {class: network_node; label: "EXASWILND001\n192.168.20.5\nCisco Catalyst 9300\nCore Switch"}
   EXASBCLND001: {class: voip_node; label: "EXASBCLND001\n192.168.20.49\n3CX SBC\nVOIP Gateway"}
@@ -196,7 +208,7 @@ CPH: {
   EXASWICPH001: {class: network_node; label: "EXASWICPH001\n192.168.31.5\nTP-Link\nSwitch"}
   EXASBCCPH001: {class: voip_node; label: "EXASBCCPH001\n192.168.31.49\n3CX SBC\nGateway"}
   EXATVSCPH001: {class: iot_node; label: "EXATVSCPH001\n192.168.31.17\nBella Krøniklen\nTV"}
-  EXAFWLCPH001: {class: network_node; label: "EXAFWLCPH001\n192.168.31.1\nFortiOS\nFirewall"}
+  EXAFWLCPH001: {class: edge_node; label: "EXAFWLCPH001\n192.168.31.1\nFortiOS\nFirewall"}
   EXAWKSCPH001: {class: user_node; label: "EXAWKSCPH001\n192.168.31.30\nWin 10\nWorkstation"}
   EXAOELCPH001: {class: iot_node; label: "EXABERCPH001\n192.168.31.105\nVxWorks\nAlbani Vending Model Rottehullet"}
 }
@@ -222,7 +234,7 @@ EBJ: {
   label: "ESB - Esbjerg, Danmark\n192.168.111.0/24\n"
   EXAESBDC01: {class: server_node; label: "EXAEBJDC01\n192.168.11.20\nWindows Server 2022\nDomain Controller"}
   EXAPRNESB001: {class: peripheral_node; label: "EXAPRNEBJ001\n192.168.111.16\nBrother MFC\nOffice Printer"}
-  EXAFWLESB001: {class: network_node; label: "EXAFWLEBJ001\n192.168.111.1\nUDM Pro\nSite Gateway"}
+  EXAFWLESB001: {class: edge_node; label: "EXAFWLEBJ001\n192.168.111.1\nUDM Pro\nSite Gateway"}
   EXASWIESB001: {class: network_node; label: "EXASWIEBJ001\n192.168.111.5\nUniFi Switch\nCore Switch"}
   EXAWKSESB001: {class: user_node; label: "EXAWKSEBJ001\n192.168.111.150\nWindows 11 Pro\nPort Ops PC"}
 }
@@ -246,7 +258,7 @@ MUC: {
   EXAWKSMUC001: {class: user_node; label: "EXAWKSMUC001\n192.168.88.150\nWindows 11 Pro\nEng Workstation"}
   EXAWKSMUC002: {class: user_node; label: "EXAWKSMUC002\n192.168.88.151\nWindows 11 Pro\nEng Workstation"}
   EXASWIMUC001: {class: network_node; label: "EXASWIMUC001\n192.168.88.5\nCisco 9200L\nSite Switch"}
-  EXAFWLMUC001: {class: network_node; label: "EXAFWLMUC001\n192.168.88.1\nFortiGate 60F\nFirewall"}
+  EXAFWLMUC001: {class: edge_node; label: "EXAFWLMUC001\n192.168.88.1\nFortiGate 60F\nFirewall"}
   EXASBCMUC001: {class: voip_node; label: "EXASBCMUC001\n192.168.88.49\n3CX SBC\nVOIP Gateway"}
 }
 
@@ -270,7 +282,7 @@ HAM: {
   class: site_box
   label: "HAM - Hamburg, Germany\n192.168.112.0/24\n"
   EXAHAMDC01: {class: server_node; label: "EXAHAMDC01\n192.168.12.20\nWindows Server 2022\nDomain Controller"}
-  EXAFWLHAM001: {class: network_node; label: "EXAFWLHAM001\n192.168.112.1\nFortiGate 80F\nFirewall"}
+  EXAFWLHAM001: {class: edge_node; label: "EXAFWLHAM001\n192.168.112.1\nFortiGate 80F\nFirewall"}
   EXASWIHAM001: {class: network_node; label: "EXASWIHAM001\n192.168.112.5\nCisco 9300\nCore Switch"}
   EXAWKSHAM001: {class: user_node; label: "EXAWKSHAM001\n192.168.112.150\nWindows 11 Pro\nLogistics PC"}
   EXASBCHAM001: {class: voip_node; label: "EXASBCHAM001\n192.168.112.49\n3CX SBC\nVOIP Gateway"}
@@ -280,7 +292,7 @@ BER: {
   class: site_box
   label: "BER - Berlin, Germany\n192.168.113.0/24\n"
   EXABERDC01: {class: server_node; label: "EXABERDC01\n192.168.13.20\nWindows Server 2022\nDomain Controller"}
-  EXAFWLBER001: {class: network_node; label: "EXAFWLBER001\n192.168.113.1\nFortiGate 100F\nFirewall"}
+  EXAFWLBER001: {class: edge_node; label: "EXAFWLBER001\n192.168.113.1\nFortiGate 100F\nFirewall"}
   EXASWIBER001: {class: network_node; label: "EXASWIBER001\n192.168.113.5\nCisco 9500\nCore Switch"}
   EXASBCBER001: {class: voip_node; label: "EXASBCBER001\n192.168.113.49\n3CX SBC\nVOIP Gateway"}
   EXAWKSBER001: {class: user_node; label: "EXAWKSBER001\n192.168.113.150\nWindows 11 Pro\nAdmin PC"}
