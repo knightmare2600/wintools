@@ -156,8 +156,6 @@ Here you will find some infromation relating to the dmeo data and quesitons you 
 
 | **Date** | **Emoji** | **Description** | **Reference** |
 |---------:|-----------|-----------------|---------------|
-
-    { $month -eq 1  -and $day -eq 2  }                   { $emoji = "🦄" ; break }                    ## Wild haggis Hunting
 | Jan 1  | 📅 | New Year's day. Start of a new calendar year | |
 | Jan 2  | 🦄 | Tradiitonal day to hunt Wild Haggis in Scotland | https://haggiswildlifefoundation.com |
 | Apr 9  | 🇩🇰 | German invasion of Denmark (1940) – start of occupation | https://en.wikipedia.org/wiki/German_invasion_of_Denmark_(1940) |
@@ -254,12 +252,12 @@ Some information which might come in handy: [Someone else who likes the projct n
     - Copenhagen landline: +45 0000 xxxx
     - Denmark mobile:      +45 2xxx xxxx
 ```
+**__NB: I don't believe Denmark uses 0000 but this is not confirmed!__**
+
 ## Other information relating to the demo data:
 
 Yes, Christianshavn alludes to [this](https://en.wikipedia.org/wiki/Huset_p%C3%A5_Christianshavn?useskin=vector) Danish TV show and
 [Helena Christensen](https://en.wikipedia.org/wiki/Helena_Christensen?useskin=vector) is the lady from the Chris Issak music video and you'll find other such Easter Eggs in the code and AD Data.
-
-**__NB: I don't believe Denmark uses 0000 but this is not confirmed!__**
 
 ## Device Naming Conventions
 
