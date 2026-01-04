@@ -156,17 +156,21 @@ Here you will find some infromation relating to the dmeo data and quesitons you 
 
 | **Date** | **Emoji** | **Description** | **Reference** |
 |---------:|-----------|-----------------|---------------|
-| April 9 | 🇩🇰 | German invasion of Denmark (1940) – start of occupation | https://en.wikipedia.org/wiki/German_invasion_of_Denmark_(1940) |
-| May 4 | 🕯️ | Danish remembrance candle for the occupation (Besættelsen) | https://en.wikipedia.org/wiki/Denmark_in_World_War_II |
-| June 5 | 🇩🇰 | Liberation of Denmark (1945) | https://en.wikipedia.org/wiki/Liberation_of_Denmark |
-| June 21 | 🇬🇱 | Greenland National Day | https://en.wikipedia.org/wiki/Greenland_National_Day |
-| July 1 | 🇨🇦 | Canada Day eh / Fête du Canada le eh  | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka](https://en.wikipedia.org/wiki/Canada_Day |
-| July 4 | 🫖 | Drink a cup of tea | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka](https://en.wikipedia.org/wiki/Tea_in_the_United_Kingdom |
-| July 29 | 🇫🇴 | Ólavsøka – Faroe Islands national festival | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka |
-| November 9 | 🇩🇪 | Historical in-joke referencing Erich Honecker | https://en.wikipedia.org/wiki/Erich_Honecker |
-| November 24 | 👑 | Historical in-joke referencing Prince Knud Of Denmark | https://en.wikipedia.org/wiki/Knud,_Hereditary_Prince_of_Denmark |
-| November 30 | 🏴󠁧󠁢󠁳󠁣󠁴󠁿 | St Andrew’s Day | https://en.wikipedia.org/wiki/Saint_Andrew's_Day |
-| December 24–25 | 🎄 | Christmas / Jul | https://en.wikipedia.org/wiki/Christmas |
+
+    { $month -eq 1  -and $day -eq 2  }                   { $emoji = "🦄" ; break }                    ## Wild haggis Hunting
+| Jan 1  | 📅 | New Year's day. Start of a new calendar year | |
+| Jan 2  | 🦄 | Tradiitonal day to hunt Wild Haggis in Scotland | https://haggiswildlifefoundation.com |
+| Apr 9  | 🇩🇰 | German invasion of Denmark (1940) – start of occupation | https://en.wikipedia.org/wiki/German_invasion_of_Denmark_(1940) |
+| May 4  | 🕯️ | Danish remembrance candle for the occupation (Besættelsen) | https://en.wikipedia.org/wiki/Denmark_in_World_War_II |
+| Jun 5  | 🇩🇰 | Liberation of Denmark (1945) | https://en.wikipedia.org/wiki/Liberation_of_Denmark |
+| Jun 21 | 🇬🇱 | Greenland National Day | https://en.wikipedia.org/wiki/Greenland_National_Day |
+| Jul 1  | 🇨🇦 | Canada Day eh / Fête du Canada le eh  | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka](https://en.wikipedia.org/wiki/Canada_Day |
+| Jul 4  | 🫖 | Drink a cup of tea | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka](https://en.wikipedia.org/wiki/Tea_in_the_United_Kingdom |
+| Jul 29 | 🇫🇴 | Ólavsøka – Faroe Islands national festival | https://en.wikipedia.org/wiki/%C3%93lavs%C3%B8ka |
+| Nov 9  | 🇩🇪 | Historical in-joke referencing Erich Honecker | https://en.wikipedia.org/wiki/Erich_Honecker |
+| Nov 24 | 👑 | Historical in-joke referencing Prince Knud Of Denmark | https://en.wikipedia.org/wiki/Knud,_Hereditary_Prince_of_Denmark |
+| Nov 30 | 🏴󠁧󠁢󠁳󠁣󠁴󠁿 | St Andrew’s Day | https://en.wikipedia.org/wiki/Saint_Andrew's_Day |
+| Dec 24–25 | 🎄 | Christmas / Jul | https://en.wikipedia.org/wiki/Christmas |
 
 Default emoji on all other days: 🗂️
 
