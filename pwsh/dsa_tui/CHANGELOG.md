@@ -6,7 +6,7 @@
 - Fixed CSV importing and reduced unnecessary functions, replacing them with `$Script:` checks
   for Demo mode vs CSV vs Production AD.
 - Began melding repetitive code in the Show-*Properties dialogs to reduce duplication.
-- The Show-{Computer|User|Group|OU|Etc}-Properties dialogs previously contained significant duplicated
+- The `Show-{Computer|User|Group|OU|Etc}-Properties` dialogs previously contained significant duplicated
   code; this has now been cleaned up and refined.
 - Search tabs in each properties dialog have been finessed and merged with the corresponding
   *-Dialog properties.
