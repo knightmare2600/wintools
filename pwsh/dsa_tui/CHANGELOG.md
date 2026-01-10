@@ -3,9 +3,6 @@
 ## Historical Build Notes and Change Log (Newest → Oldest)
 
 ---
-## Additional Change Log Entries (Newest → Oldest)
-
----
 
 ### 3.0.0.84 (Bug fix and refactoring)
 - Fixed CSV importing and reduced unnecessary functions, replacing them with `$Script:` checks
