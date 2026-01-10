@@ -60,20 +60,21 @@ KEY CONCEPT:
 
 Recent changelog
 
-3.0.0.84
-  - Fix CSV Importing and reduce functions where they are not required, replace with if $Script e.g.
-    for Demo Mode vs CSV vs Prod AD
-  - Begin melding of repetitive code in the Show-*Properties dialogs to reduce code duplication
-  - The Show-{Cmputer|User|Group|OU|Etc}-Properties had a lot of duplicted code, this has been
-    cleaned up and refined
-  - Search tabs in each one have been finessed and melded with the *-Dialog properties
-  - LAPS dialog now both the old and new types properly and displays them
-  - DNS queries now run automatically - also fix an nslookup regression
-  - CSV import now imports the CSV, redraws the tree, and updates the info panel
-  - Handle-CSVAction fixed so refreshing the CSV also refreshes the tree automatically
-  - Rework Refresh-Tree so a startup bug is squashed
-  - Fix regression in change DC so the current correctly formatted DC list is used
-  - Use the straight AD command and retire the now function Invoke-AD
+3.0.0.84 (Bug fix and refactoring)
+  - Fixed CSV importing and reduced unnecessary functions, replacing them with `$Script:` checks
+    for Demo mode vs CSV vs Production AD.
+  - Began melding repetitive code in the Show-*Properties dialogs to reduce duplication.
+  - The Show-{Computer|User|Group|OU|Etc}-Properties dialogs previously contained significant duplicated
+    code; this has now been cleaned up and refined.
+  - Search tabs in each properties dialog have been finessed and merged with the corresponding
+    *-Dialog properties.
+  - LAPS dialog now correctly handles and displays both legacy and modern LAPS types.
+  - DNS queries now run automatically; also fixed an `nslookup` regression.
+  - CSV import now imports data, redraws the tree, and updates the information panel.
+  - Handle-CSVAction fixed so refreshing CSV data also refreshes the tree automatically.
+  - Reworked Refresh-Tree to squash a startup bug.
+  - Fixed regression in Change DC so the correctly formatted DC list is used.
+  - Retired the now-unnecessary Invoke-AD function in favour of direct AD commands.
 
 -------------------------------------------------------------------------------
 TODO / COME BACK TO
