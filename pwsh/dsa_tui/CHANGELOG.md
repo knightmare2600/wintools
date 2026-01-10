@@ -3,6 +3,76 @@
 ## Historical Build Notes and Change Log (Newest → Oldest)
 
 ---
+## Additional Change Log Entries (Newest → Oldest)
+
+---
+
+### 3.0.0.84 (Bug fix and refactoring)
+- Fixed CSV importing and reduced unnecessary functions, replacing them with `$Script:` checks
+  for Demo mode vs CSV vs Production AD.
+- Began melding repetitive code in the Show-*Properties dialogs to reduce duplication.
+- The Show-{Computer|User|Group|OU|Etc}-Properties dialogs previously contained significant duplicated
+  code; this has now been cleaned up and refined.
+- Search tabs in each properties dialog have been finessed and merged with the corresponding
+  *-Dialog properties.
+- LAPS dialog now correctly handles and displays both legacy and modern LAPS types.
+- DNS queries now run automatically; also fixed an `nslookup` regression.
+- CSV import now imports data, redraws the tree, and updates the information panel.
+- Handle-CSVAction fixed so refreshing CSV data also refreshes the tree automatically.
+- Reworked Refresh-Tree to squash a startup bug.
+- Fixed regression in Change DC so the correctly formatted DC list is used.
+- Retired the now-unnecessary Invoke-AD function in favour of direct AD commands.
+
+---
+
+### 3.0.0.78 (Bug fixes, code merge and cleanup)
+- Refactored data initialisation into a single authoritative entry point.
+- Introduced Initialise-DataSource as the primary loader.
+- Standardised load priority and fallback order:
+  - Active Directory (via Load-DomainData)
+  - CSV import
+  - Demo data generation (jukebox.example)
+- Centralised Active Directory loading:
+  - All AD-specific logic now lives in Load-DomainData.
+  - Removed duplicated forest, domain, user, group and computer loading code.
+- Added explicit domain support:
+  - Initialise-DataSource now accepts `-Domain` and correctly passes it to Load-DomainData.
+- Improved state consistency and tracking:
+  - Ensures script-scoped objects (Users, Groups, Computers, DCs, Forest, Domains) are always coherent.
+  - Introduced consistent `$Script:DataSource` and `$Script:DataSourceInfo` metadata.
+- Improved error handling and fallback behaviour:
+  - Clean fallback from AD → CSV → Demo without partial or corrupt state.
+  - Clear logging and user feedback on failures.
+- Clarified invocation pattern:
+  - Replaced direct calls to Load-DomainData with Initialise-DataSource -Domain `<domain>`.
+- Script-wide module checks; modules are now imported exactly once.
+
+---
+
+### 3.0.0.58 (More bug fixes)
+- Groups were not enumerated properly in the tree.
+- Groups were not enumerated properly in production.
+- Added OU statistics and summary support.
+- Demo mode now enumerates sites the same way as production (no hard-coded variables).
+- Reset-LapsPassword can now perform remote LAPS rotation (pending UI integration in LAPS window).
+- Clarified proper log closure using `[System.IO.StreamWriter]`.
+- Improved Test-ToolsAvailability function:
+  - Fixed enumeration bug when checking tools (collection was modified).
+  - Made tool checks cross-platform (Windows, macOS, Linux).
+  - Fixed unreachable Debug-Log call after `return $false`.
+  - Added operating system detection.
+  - Added cross-platform-aware checks for Group Policy tools.
+- Ensured Import-DemoData does not overwrite newly added demo data with existing data.
+- Repadmin now prints output correctly instead of throwing a syntax error.
+- Added OS-specific advice for GPMC and AD modules.
+- Added Perth office with Fiction Factory.
+- Split historical build notes into a dedicated CHANGELOG.md.
+- Began building a network diagram using d2 (WIP).
+- Cleaned up hashtable spacing.
+- Created an Actions submenu to reduce menu crowding.
+
+
+---
 
 ### 3.0.0.31 (Bug fix)
 - Users are now enumerated properly and shown in real AD.
