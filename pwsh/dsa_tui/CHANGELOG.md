@@ -1,396 +1,257 @@
+# DSA-TUI Blåbær — Active Directory TUI Tool
 
-# DSA-TUI Blåbær — Active Directory TUI Tool 
+## Historical Build Notes and Change Log (Newest → Oldest)
 
-**<ins>Historical Build Notes and Change Log</ins>**
+---
 
- 1.0.0.0  (Initial Experimental)
- - First internal test build. Basic TUI scaffolding only.
- - Bare Window + Menu + Exit only. No AD integration.
- - Non-functional placeholder TreeView.
+### 3.0.0.31 (Bug fix)
+- Users are now enumerated properly and shown in real AD.
+- LAPS password modal now shows correctly.
+- Group, OU, Computer and DC objects now all have a Properties tab.
+- AD tools added into the AD Health modal.
+- AD Health reworked to be more feature rich.
+- Change domain bug fixed (first refresh crash resolved).
+- Change domain now falls back to previous domain on failure.
 
- 1.1.0.0  (Initial AD Integration)
- - Added basic Domain Bind and LDAP query functions.
- - Added Build-Tree function (initial non-recursive prototype).
- - Added minimal Properties popup (placeholder).
+---
 
- 1.1.0.1  (Bugfix)
- - Fixed null-domain crash.
- - Fixed title bar misalignment on Linux/macOS terminals.
+### 3.0.0.29 (Cleanup and reflow many areas of code)
+- Massive consolidation and feature expansion session. Reduced code duplication with unified functions, added bulk
+  operations and auditing features.
+- **Manage-FilterStatusLabel**
+  - Unified Create-FilterStatusLabel + Update-FilterStatusLabel
+  - Single function with `-Action 'Create'/'Update'` parameter
+  - Supports both standalone and in-panel creation with `-InPanel` switch
+  - Replaced: Create-FilterStatusLabel, Update-FilterStatusLabel
+- **Manage-Spinner**
+  - Unified `Start-Spinner` + `Stop-Spinner`
+  - Single function with `-Action 'Start'/'Stop'` parameter
+  - Message parameter validation when starting
+  - Replaced: Start-Spinner, Stop-Spinner
+- **Manage-Selection**
+  - Unified Select-AllObjects and Deselect-AllObjects
+  - Single function with `-Action 'SelectAll'/'DeselectAll'` parameter
+- **Get-Theme**
+  - Combined Get-Theme + Dump-ColourScheme
+  - Added `-Dump` switch for debugging theme colours
+  - All 19 themes preserved
+- **Apply-ObjectChanges**
+  - Unified User/Group/OU/Computer apply logic
+- **Invoke-ObjectOperation**
+  - Unified delete/move/bulk operations
+- **AD Health refactor**
+  - Refactored monolithic Get-ADHealth into modular checks
+  - Renamed Get-ADHealth → Check-ADHealth
+- Added AD Tools modal.
+- Added bulk account enable/disable.
+- Added bulk attribute editor.
+- Added stale account finder.
+- Added AD object cloning.
+- Added demo data import/export.
+- Introduced New-PropertiesDialog.
 
- 1.2.0.0  (Tree + Navigation)
- - Introduced TreeView AD structure display.
- - Added OU expansion, user nodes, group nodes.
- - Implemented Refresh `(F5)` bound to Build-Tree.
- - Added basic status bar with simple messages only.
+---
 
- 1.2.0.1  (Bugfix)
- - Fixed node-expansion crash when encountering empty OUs.
- - Fixed cosmetic padding/spacing inconsistencies.
+### 2.3.8.21 (Bug fix and code consolidation)
+- Fixed Theme selector and background colour issues.
+- Improved Show-Modal Yes/No handling.
+- Added more themes.
+- Introduced New-PropertiesDialog.
+- Rewrote all object property dialogs to use it.
+- Added expired LAPS and stale device demo scenarios.
+- Reduced redundant functions.
+- Added CSV import/export tooling (no validation).
 
- 1.3.0.0  (Selection, Node Info)
- - Added node selection handling.
- - Added `Show-Properties` modal (initial version).
- - Added object type detection for icons `(U/G/OU/DC)`.
+---
 
- 1.3.0.1  (Bugfix)
- - Fixed Properties dialog not clearing previous content.
- - Fixed MessageBox misalignment under Terminal.Gui 1.16.
+### 2.3.8.0 (Code reflow)
+- Nerd font icons used when available.
+- Removed Get-CleanObjectInfo.
+- Simplified object handling and icon detection.
+- Improved startup repaint logic.
 
- 1.4.0.0  (Filter System v1)
- - Added Filter Panel (right side) with toggles.
- - Added Global:FilterOptions hashtable.
- - Added Update-FilterStatusLabel function.
- - Added name-filter support (“search by name”).
+---
 
- 1.4.0.1  (Bugfix)
- - Fixed filter panel overlapping TreeView.
- - Fixed name-filter not persisting during refresh.
- - Fixed missing redrawing after filter changes.
+### 2.3.7.2 (Bug fix and cleanup)
+- Fixed leftover `$Global` usage.
+- Fixed group membership modal.
+- Load terminal icons module if present.
+- Advise about Nerd Fonts.
+- Added non-computer devices.
+- Added Altered Images and Eurythmics.
+- Added UPNs and SamAccountNames.
+- Restored search/lookup tab for users.
 
- 1.5.0.0  (Full Refresh Engine + Searchable Properties Rewrite)
- - Major rewrite of Refresh / Build-Tree pipeline.
- - Added "Searchable Attributes" handling:
-       - name
-       - displayName
-       - sAMAccountName
-       - userPrincipalName
-       - givenName / sn
- - Optimized LDAP lookups to only fetch required fields.
- - Added caching to reduce domain traffic.
+---
 
- 1.5.0.1  (Bugfix)
- - Fixed several typos in attribute lookup keys (`displayName` vs `displayname`).
- - Fixed `"OU:"` prefixes duplicating on some nodes.
- - Fixed sorting of users/groups inside OUs.
+### 2.3.7.1 (Bug fix)
+- Added Initialize-DirectoryEmoji (date-based emojis).
 
- 1.5.0.2  (Bugfix)
- - Fixed rare crash when node had malformed DN.
- - Corrected spacing in status label (`"No filters active"` line).
- - Fixed cosmetic typo: `"Serach"` → `"Search"`.
+---
 
- 1.5.0.3  (Bugfix)
- - Fixed name filter not updating until second refresh.
- - Fixed stale nodes remaining after filter changes.
- - Added missing "show groups" toggle check.
+### 2.3.7.0 (Logic, order of operations, and plumbing fixed)
+- Faux multi-row tabs implemented.
+- Standardised Debug-Log output.
+- Added TWA Airlines theme.
+- Menu creation moved into a function.
+- Reworked startup phases.
+- Added runtime tree debugging.
+- Improved domain switching UX.
+- Added LAPS search modal.
+- Improved User and Computer properties with tabs.
+- Unified status bar logic.
+- Enabled copying, pasting and exporting LDAP output.
+- Reworked group membership logic.
 
- 1.6.0.0  (Major UI Improvements)
- - Introduced fully functional modal system (non-blocking).
- - Replaced Read-Host prompts with TUI modals.
- - Added `Create-FilterPanel` (initial modern version).
- - Added `Show-QuickFilterDialog` function.
- - Added TreeView bounds fixes + visibility fixes.
+---
 
- 1.6.0.1  (Bugfix)
- - Fixed filter panel incorrectly covering entire window.
- - Fixed TreeView being hidden beneath filter layer.
- - Fixed `Update-FilterStatusLabel` rendering directly on main window.
+### 2.1.5.2 (Computers, refresh debug, new bands, status bar++)
+- Added Computer objects.
+- Added Computer properties.
+- Enhanced refresh debugging.
+- Improved search modal with multi-domain support.
+- Enhanced status bar with progress indicators.
+- Added new demo bands and locations.
+- RFC-compliant example domains used.
 
- 1.6.0.2  (Bugfix)
- - Fixed MessageBox defaultButton index errors.
- - Fixed Password Generator dialog always showing success regardless of click.
- - Corrected missing `.Visible = $false` on filter panel startup.
+---
 
- 1.6.3.0  (New Feature: Password Generator)
- - Added `Generate-RandomPassword` function.
- - Added menu entry `"_Password Generator"`.
- - Added modal with secret password textbox.
- - Added copy-to-clipboard support.
- - Added character-set toggles: upper/lower/numbers/symbols.
+### 2.0.0.1 (Bug fix release)
+- Fixed window fill layout leaving space for status bar.
+- Debug log optional file output.
+- Documented right-click context menu issues (WIP).
+- Increased text field lengths.
+- Improved search reactivity.
+- Status indicators for locked and disabled accounts.
 
- 1.6.4.0  (Bugfix)
- - Fixed "password copied" message showing when NOT copying.
- - Fixed textbox not rendering due to incorrect X/Y offsets.
- - Fixed modal stacking order (TreeView was drawing under modals).
+---
 
- 1.6.5.0  (Bugfix)
- - Fixed MessageBox.Query always returning OK due to wrong button array.
- - Corrected typos: “Copie” → “Copied”, “Genertor” → "Generator".
- - Fixed UI padding around password modal.
+### 2.0.0.0 (Multi-domain support with skittles mode)
+- Multi-domain support added.
+- Demo-mode refresh crash fixed.
+- Major code cleanup.
+- Added multiple new themes.
+- Two-column theme selector.
 
- 1.6.6.0  (UI & Layout Fixes)
- - Fixed TreeView not anchored properly when window resized.
- - Fixed filter panel stealing focus on startup.
- - Fixed modal shadows not redrawing.
+---
 
- 1.6.7.0  (Bugfix)
- - Corrected menu hotkeys.
- - Fixed password modal height too small on macOS Terminal.
- - Fixed Build-Tree not auto-refreshing after filter changes.
+### 1.8.6.0 (Colour my life)
+- Added DSB Danish State Railways and Pan American Airlines themes.
 
- 1.6.8.0  (Stability & AD Query Fixes)
- - Fixed recursive OU building missing final child nodes.
- - Fixed groups sometimes displayed as users due to schema mismatch.
- - Fixed refresh loop running twice on some domains.
- - Added safer DN parsing with fallback.
+---
 
- 1.6.9.0  (Today’s Fixes — Window/Layout Rebuild)
- - Reimplemented main window cleanly:
-    * Menu bar
-    * TreeView left pane
-    * Status bar bottom
-    * Filter panel hidden by default
- - Fixed filter panel appearing as full-size window.
- - Fixed TreeView not rendering due to misplaced Add() calls.
- - Fixed `Update-FilterStatusLabel` drawing onto main window instead of label.
- - Fixed modal stacking/z-order interference.
- - Fixed several cosmetic layout typos (“fitler”, “proprties”, “protaitonal”).
- - Code cleanup: removed obsolete commented blocks interfering with layout.
+### 1.8.4.0 (Refactoring)
+- Large refactor and cleanup.
+- Added OU, DC and Group editing support.
+- Reduced dialog duplication using Show-Modal.
+- Demo-mode checks consolidated.
 
- 1.7.0.0  (Demo data and menu fixes)
- - Rework demo data to be more AD like cleaning up redundancy
- - Create dedicated about menu
- - Add shortcuts modal
+---
 
- 1.7.0.1  (Demo data expansion - New cities and band)
- - Rendr demo data in a better fashion
- - Add user devices and office printers
- - Add Rocazino form the Koge office
- - Have other locations in Danmark along with different user properites e.g. Alan Wilder
+### 1.8.3.0 (More cowbell)
+- Added missing and former band members.
+- Added Get-CleanObjectInfo.
+- Fixed properties modal buttons.
+- Streamlined `$Script` usage.
 
- 1.7.1.1  (Fixes for regressions in 1.7.0.1)
- - Clean up entropy box
- - Clean up Demo data tree building
- - Add and Remove button code fixes
+---
 
-1.8.0.0  (Domian Controller Information)
- - Domain controller informaiton (WIP)
- - Domain replication and syncing modal (WIP)
- - Fix tree view right click context menu so it shows now
+### 1.8.2.0 (Lumberjack mode)
+- Reworked Build-Tree logic.
+- Removed duplicate code.
+- Added Theme Selector modal.
+- Verbose-only debug output.
+- Documented why Show-Properties is used.
 
-1.8.1.0  (Verbosity)
- - Add Debug-Log and clean up `Debug-Log` calls
- - Convert Demo data to use same forma as produciton data which cuts code down significantly
- - clean up outut via Debug-Log and removing dead or unused  dmeo code stanzas
+---
 
-1.8.2.0  (Lumberjack mode)
- - Rework `Build-Tree` from [here](https://jdhitsolutions.com/blog/active-directory/8173/climbing-trees-in-powershell/)
- - Remove duplicatedd `Build-Tree` code
- - Add updated Theme-Selector modal
- - Additional `Debug-Log` code printed only when Verbose is true
- - Explain Show-Properties and why that is called instead of e.g. `Show-UserProperties`
+### 1.8.1.0 (Verbosity)
+- Added Debug-Log.
+- Unified demo and production data models.
+- Removed dead demo code.
 
-1.8.3.0  (More cowbell)
-  - Add misisng and former group memebrs of bands
-  - Add `Get-CleanObjectInfo` to reduce code re-use
-  - Fix buttons on user properties modal
-  - Bring forward `$Script` code for a more streamlined approach
+---
 
-1.8.4.0  (Refactoring)
-  - Refactor code, clean up spacing, unify comments, clean up stanza spacing, etc.
-  - Add OU, DC and group propery and editing support where possible
-  - Add more Debug code where needed in debug mode
-  - Swap out many dialog windows for the pre-exisintg Show-Modal code for to reduce bloat
-  - Add certain check modes for Demo data which is still required, but in less areas of code
+### 1.8.0.0 (Domain Controller information)
+- Domain Controller information modal (WIP).
+- Replication and synchronisation modal (WIP).
+- Fixed TreeView right-click context menu visibility.
 
-1.8.6.0  (Colour my life)
-  - New themes: DSB Danish State Railways and Pan American Airlines
+---
 
-2.0.0.0  (Multi Domain support with skittles mode)
-  - Mutliple domains support
-  - Fix `Refresh-Data` tree crash in menu - it's tied to not chekcing Demo mode
-  - Further Code alignment, cleanup and redundancy clear out
-  - Add gemstones, scotrail and class91 (British Rail Intercity Swallow livery) themes
-  - Rework theme selection to have two columns
+### 1.7.1.1 (Fixes for regressions)
+- Cleaned up demo tree building.
+- Fixed Add and Remove button logic.
 
-2.0.0.1  (Bug fix release)
- - Fix window fill so it's leaving a single line for the status bar
- - Debug log now also writes to a file if asked
- - document - thogugh not yet fix - the right click context menu issues (WIP)
- - Modals such as displayname text boxes now 60 chars because Danes and Germans have long names
- - Search user properties now dynamically searches again with addition of textChainged
- - Cosmetic fixes for theme selection to be more intuitive
- - Reflect if account is locked and/or disabled in the search modal too
+---
 
-2.1.5.2  (Computers, refresh debug, new bands, statusbar++)
-  - Add computers to the mix
-  - Allow properties of computers to display
-  - Code to give more debug output to track down the refresh bug
-  - Close-LoadingDialog $loadingDlg seems to be the source of this as it's not a funciton
-  - Search AD properties modal now more refined and supports multiple domains via combobox
-  - if the pswritecoloour module is installed fancy up debug output
-  - print instrucitons on how to install missing modules
-  - statusbar shortcuts are visible and a new "refreshing..." counter status on the right
-  - use jukebox.example TLD which is RFC 2606 and RFC 6761 compliant for documentation and testing.
-  - Add The Police in Newcastle and Echo and The Bunnymen in Liverpool
-  - [RFC 2606](https://www.rfc-editor.org/rfc/rfc2606.html) — Reserved Second-Level Domains: example.com example.net example.org
-  - [RFC 6761](https://www.rfc-editor.org/rfc/rfc6761.html) — Special-Use Domain Names: example (TLD) invalid localhost test
-  - Domain data loading and refresh loads computers
-  - New and improved status bar
-  - More natural keyboard shortcuts
+### 1.7.0.1 (Demo data expansion)
+- Added devices and office printers.
+- Added Rocazino from the Køge office.
+- Added multiple Denmark locations.
+- Expanded user attributes (e.g. Alan Wilder).
 
-2.3.7.0 - (Logic, Order of operations, and Plumbing fixed)
-  - Tab views are now so complex we'll use functions as 1.16 does not support multiple tab lines in
-    window. This is scaffolding for implementing all (!!) dsa.msc properties for produciton.
-  - Clean up and standardis Debug-Log calls. Add Debug with a spanner and STOP SHOUTING in messages
-  - Add TWA Airlines Theme
-  - Move menus to a function
-  - Rebuild tabs to have two tab rows. This is not technically possible, so call it "faux" tab rows
-  - Refactor and introduce Steps (phases) of code so the order of operations is natural
-  - Add Debug-DumpViewTree to debug the application at runtime
-  - Clean-up redundant code and merge fitlering boxes into two panes
-  - Change domain text box reworked and inut box widened
-  - Refresh Domian data no longer kills the script, and status bar messages advise on progress
-  - Show-UserProperties renders demo and real world information properly
-  - Add `Show-LAPSSearchModal` modal to look up LAPS passwords
-  - Fixed the regression where themes apply just fine from Selector Modal but not from command line.
-  - Fix both the tree and the top left modal to not show different background colours.
-  - Improve the User and Computer properties with tabs
-  - Changing domain updates syatus bar during each step, and refreshes the tree
-  - Statusbar hotkeys don't work but code is there
-  - Password entrpoy strength follows colour scheme now, rather than always being green
-  - Use one statusbar inside a function, so updates and UX feedback to the user is consistent. also helps
-    with feedback during startup
-  - Allow copying, pasting and exporting of output of LDAP queries
-  - Move add and remove groups into functions and rework it to be aware if called from group or user properties tab
+---
 
-2.3.7.1 (Bug fix)
-  - Add `Initialize-DirectoryEmoji` based on date. Special days use different emojis, e.g. Dec 25th
+### 1.7.0.0 (Demo data and menu fixes)
+- Demo data reworked to be more AD-like.
+- Dedicated About menu added.
+- Shortcuts modal added.
 
-2.3.7.2 (Bug fix and cleanup. more bands)
-  - Fix some erroneous $Globals that were left in
-  - Fix group membership modal
-  - Load the terminal icons module, if found
-  - Advise user about the Nerd fonts for directory icons in pwsh 7+
-  - Add other devices besides comptuer and printers. While not strictly part of AD corporate networks owuld have this.
-  - Add Altered Images and Eurythmics Bands
-  - Add `UPNs` and `SamAccountName` to align with real world AD
-  - Bring back thw search/lookup tab for users... Spis lige brød til!
+---
 
-2.3.8.0 (Code reflow)
-  - If terminal icons and a suitable nerd font is avilable, it will be used for prefixes, rather than (U), (G), etc.
-  - **REMOVED** `Get-CleanObjectInfo` function which is no longer needed by switching to .Tag to detect type
-  - Simplify calls to Objects and add icons for them too
-  - Rework startup of app to avoid "hanging" by repainting status bar as enumeration progresses
+### 1.6.9.0 (Window and layout rebuild)
+- Clean main window layout.
+- Fixed TreeView rendering issues.
+- Fixed filter panel behaviour.
+- Fixed modal stacking and z-order issues.
+- Removed obsolete commented code.
 
-2.3.8.21  (Bug fix and code consolidaiton)
-  - Fix Theme selector and bug in main window background arising from it
-  - Upgrade Show-Modal to also handle Yes/No returning 0 for YES and 1 for NO (The order the buttons show)
-  - Even more themes!
-  - Create a New-PropertiesDialog to redcue repetitve code. Part of a wider refsctoring effort for code maintainability
-  - With the above function rework, rewrtie `Show-{Computer|DC|OU|User}-Properties` to use it
-  - Show-EditGroupMembershipDialog to reduce code reuse even more
-  - Add in some "fun" things, such as xpired LAPS and Laptops that haven't been "on" for months, etc.
-  - Clean up and merge a number of funcitons to reduce code re-use
-  - [New tools](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc732101(v=ws.11))
-    Also allows import (or export) their own data. This code is use as is, it does not syntax check the CSV!
+---
 
-3.0.0.29 (Cleanup and reflow many areas of code)
-  - Massive consolidation / feature expansion session. Reduced code duplication with unified functions, added bulk
-    operations and auditing features.
-  - Manage-FilterStatusLabel
-    - Unified Create-FilterStatusLabel + Update-FilterStatusLabel
-    - Single function with `-Action 'Create'/'Update'` parameter
-    - Supports both standalone and in-panel creation with -InPanel switch
-    - Replaced: Create-FilterStatusLabel, Update-FilterStatusLabel
-  - Add `Manage-Spinner`
-   - Unified `Start-Spinner` + `Stop-Spinner`
-   - Single function with `-Action 'Start'/'Stop'` parameter
-   - Message parameter validation when starting
-   - Replaced: `Start-Spinner` and `Stop-Spinner`
-  - Manage-Selection
-   - Unified `Select-AllObjects` and `Deselect-AllObjects`
-   - Single function with `-Action 'SelectAll'/'DeselectAll'` parameter
-   - Replaced: `Select-AllObjects and Deselect-AllObjects`
-  - Add `Get-Theme`
-   - Combined `Get-Theme` + `Dump-ColourScheme` into single function
-   - Added `-Dump` switch for debugging theme colours
-   - Can dump current theme or specific theme: Get-Theme -Mode "matrix" -Dump
-   - All 19 themes preserved (British, Class91, Dark, DB-1980s, etc.)
-   - Replaced: Separate `Dump-ColourScheme` function
-  - Add `Apply-ObjectChanges` function
-   - Unified `Apply-UserChanges`, `Apply-GroupChanges` and `Apply-OUChanges` into Single function handles User/Group/OU/Computer
-     with `-ObjectType` parameter
-   - Handles both `DemoMode` and `Production` with all field types
-   - User fields: 13 attributes including DisplayName, Email, Phone, Address
-   - Group fields: Description, Email, ManagedBy
-   - OU fields: Name (with rename + user reference updates), Description
-   - Computer fields: Description, Location
-   - Replaced: Apply-UserChanges, Apply-GroupChanges, Apply-OUChanges, Update-UserObjectFromFields
-  - Add `Invoke-ObjectOperation` funciton
-   - Unified `Show-DeleteObjectDialog`, `Show-MoveObjectDialog` and `Invoke-BulkMove`
-   - Single function with `-Operation Move/Delete` and `-IsBulk` switch
-   - DELETE: Auto-detects object type, double confirmation, removes from arrays/AD
-   - MOVE: Validates moveability, shows OU picker, bulk/single UI modes
-   - Supports Users, Groups, Computers, OUs, Domain Controllers
-   - Success/failure tracking with detailed error reporting
-   - Replaced: Show-DeleteObjectDialog, Show-MoveObjectDialog, Invoke-BulkMove
-  - Extracted AD Health Functions (582 lines total - MAJOR REFACTOR)
-   - Broke 400+ line monolith Get-ADHealth into modular components
-   - Created 7 standalone test functions and unified orchestrator
-     - Invoke-ExternalCommand (helper for safe command execution)
-     - Test-DCStatus (Domain Controller health checks)
-     - Test-ADReplication (replication status with repadmin/Get-ADReplicationFailure)
-     - Test-ADDnsRecords (DNS SRV records and service status)
-     - Test-SysvolHealth (SYSVOL shares and DFSR status)
-     - Test-FSMORoles (FSMO role holders and reachability)
-     - Test-GPOHealth (GPO enumeration and version checks)
-     - Check-ADHealth (main orchestrator with tabbed UI)
-     - Each check independently callable
-     - Reusable in other scripts
-     - Easier testing and maintenance
-     - Renamed from Get-ADHealth to Check-ADHealth for clarity
-  - Show-ADToolsModal
-    - Added: csvde.exe, nslookup.exe, ping.exe, net.exe, tracert.exe
-    - Shows tool availability with descriptions and Microsoft docs links
-    - Note about future CSV import feature for csvde
-  - Manage-AccountStatus
-    - Bulk Enable/Disable for users and computers
-    - Validates object types before processing
-    - Optional reason logging
-    - Demo + Production mode support
-    - Success/failure tracking with error summary
-    - Usage: Manage-AccountStatus -Objects $users -Action 'Disable' -Reason "Offboarding"
-  - Set-BulkAttribute
-    - Change any attribute across multiple objects
-    - Interactive dialog mode with attribute picker
-    - Supports Users (13 attributes), Groups (3), Computers (2)
-    - ChangePasswordAtLogon - Force password change at next login
-    - ResetPassword - Bulk password reset with random generation
-    - Random password generator (12 chars: A-Z, a-z, 0-9, special)
-    - Context-sensitive help in dialog
-    - Demo mode logs generated passwords
-      ATTRIBUTES SUPPORTED: Users: DisplayName, Description, EmailAddress, Title, Department, Company, Manager, OfficePhone, MobilePhone, StreetAddress,
-                            City, PostalCode, Country, ChangePasswordAtLogon,  ResetPassword
-                            Groups: Description, Email, ManagedBy
-                            Computers: Description, Location
-  - Find-StaleAccounts
-    - Find accounts not used in X days (default: 90)
-    - Interactive parameter selection dialog with radio buttons
-    - Supports Users, Computers, or Both
-    - Shows last logon date and days inactive
-    - Export to CSV functionality
-    - CAN DISABLE DIRECTLY from results dialog
-    - Demo mode: pseudo-random last logon dates based on name hash
-    - Production: queries AD LastLogonTimeStamp
-    - Usage: Find-StaleAccounts -ShowDialog (shows parameter picker first)
-  - Copy-ADObject
-    - Template-based user/group cloning
-    - Interactive dialog with auto-generation
-    - Auto-generates SamAccountName from display name (firstname.lastname)
-    - Optional group membership/member copying
-    - Copies all relevant fields (Department, Title, Company, Manager, etc.)
-    - Demo + Production mode support
-    - Usage: Copy-ADObject -SourceObject $templateUser -ShowDialog
-  - Manage-DemoData
-    - Import/Export demo data to CSV
-    - DEMO MODE ONLY - blocks production mode with warning
-    - Uses Show-FileBrowserDialog for file selection
-    - Exports Users, Groups, Computers with all fields
-    - Auto-rebuilds tree after import
-    - UTF-8 encoding for international characters
-    - Compatible with Microsoft csvde.exe format
-    - Usage: Manage-DemoData -Action 'Export'/'Import'
-  - New-PropertiesDialog
-    - Tab builder pattern for property dialogs
-    - Eliminates boilerplate in User/Group/OU/Computer/DC properties
-    - Centralized Apply logic with shared state hashtables
-    - Fixed Debug-Log scope issues (uses plain calls, not Get-Command)
+### 1.6.3.0 (Password Generator)
+- Added password generator modal.
+- Clipboard copy support.
+- Character set toggles.
 
-3.0.0.31  (Bug fixes)
-  - Users are now enumerated proprly and shown in real AD.
-  - LAPS Password modal now shows correctly
-  - Group OU, Computer and DC properties all now have a properties tab too
-  - Add the AD tools into the AD Health modal. This also checks AD health
-  - Rework AD Health to be more feature rich
-  - Change domain worked first time to type in, didn't refresh anything, then crashed is now fixed
-  - Change domain now falls back ot previous domain on failed to load a new domain
+---
+
+### 1.5.0.0 (Refresh engine rewrite)
+- Major rewrite of refresh and Build-Tree pipeline.
+- Searchable attributes added.
+- LDAP query optimisation.
+- Caching introduced.
+
+---
+
+### 1.4.0.0 (Filter system v1)
+- Filter panel added.
+- Global FilterOptions introduced.
+- Name-based search added.
+
+---
+
+### 1.3.0.0 (Selection and node information)
+- Node selection handling added.
+- Properties modal introduced.
+- Object type icons added (U/G/OU/DC).
+
+---
+
+### 1.2.0.0 (Tree and navigation)
+- TreeView implemented.
+- Refresh bound to F5.
+- Status bar added.
+
+---
+
+### 1.1.0.0 (Initial AD integration)
+- LDAP domain bind and query functions.
+- Initial Build-Tree prototype.
+
+---
+
+### 1.0.0.0 (Initial experimental)
+- First internal test build.
+- Basic TUI scaffolding only.
+- Placeholder TreeView.
