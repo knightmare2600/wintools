@@ -29,19 +29,19 @@ Some Screenshots of the script in action. For example, user properties modal wit
 
 ![dsa_tui_001](dsa_tui_001.png?raw=true "Example User Properties")
 
-there are also 
+Some Easter eggs hidden in the data, here using the procomm theme:
 
 ![Alt text](dsa_tui_002.png?raw=true "Title")
 
-and
+It is also possible to query the properties of other AD objects,along with the Pan Am theme:
 
 ![Alt text](dsa_tui_003.png?raw=true "Title")
 
-along iwth
+The LAPS username and password viewer is included, to avoid having to remember esoteric powershell commands:
 
 ![Alt text](dsa_tui_004.png?raw=true "Title")
 
-you can also
+A complimentary password generator, this time in the gemstones theme:
 
 ![Alt text](dsa_tui_005.png?raw=true "Title")
 
