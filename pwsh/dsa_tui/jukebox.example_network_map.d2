@@ -25,9 +25,8 @@ classes: {
 }
 
 BRK: {
-  // Brockville, Ontario
   class: site_box
-  label: "BRK - Brockville (CA)\n192.168.136.0/24"
+  label: "BRK - Brockville, Ontario (CA)\n192.168.136.0/24"
   EXADONBRK001: {class: iot_node; label: "EXADONBRK001\nVxWorks\nDonut Mach\n.101"}
   EXALAPBRK001: {class: user_node; label: "EXALAPBRK001\nWin 11\nTour Laptop\n.50"}
   EXAMBPBRK001: {class: user_node; label: "EXAMBPBRK001\nmacOS\nStaff MBP\n.51"}
@@ -36,18 +35,16 @@ BRK: {
 }
 
 MIA: {
-  // Vice City, Florida
   class: site_box
-  label: "MIA - Miami (US)\n192.168.135.0/24"
+  label: "MIA - Vice City, FL (US)\n192.168.135.0/24"
   EXACOFMIA001: {class: iot_node; label: "EXACOFMIA001\nVxWorks\nCoffee Mach\n.102"}
   EXAPHNMIA001: {class: user_node; label: "EXAPHNMIA001\niOS 17\niPhone\n.61"}
   EXALAPMIA001: {class: user_node; label: "EXALAPMIA001\nmacOS\nTour MBP\n.51"}
 }
 
 ABD: {
-  // Aberdeen
   class: site_box
-  label: "ABD - Aberdeen, UK\n192.168.224.0/24\n"
+  label: "ABD - Aberdeen, Scotland\n192.168.224.0/24\n"
   EXAPHNABD001: {class: user_node; label: "EXAPHNABD001\nDHCP\niOS 17.x\nStaff Phone"}
   EXAPHNABD002: {class: user_node; label: "EXAPHNABD002\nDHCP\niOS 17.x\nStaff Phone"}
   EXAMBPABD001: {class: user_node; label: "EXAMBPABD001\nDHCP\nmacOS Sonoma 14.2.1\nStaff MacBook"}
@@ -55,9 +52,8 @@ ABD: {
 }
 
 DUN: {
-  // Dundee
   class: site_box
-  label: "DUN - Dundee\n192.168.25.0/24"
+  label: "DUN - Dundee, Scotland\n192.168.25.0/24"
   EXADUNDC01: {class: dc_node; label: "EXADUNDC01\n192.168.25.10\nWin Srv\nDC 01"}
   EXAFWLDUN001: {class: net_node; label: "EXAFWLDUN001\n192.168.25.1\nFortiOS\nFW"}
   EXASWIDUN001: {class: net_node; label: "EXASWIDUN001\n192.168.25.2\nCisco\nSwitch"}
@@ -68,10 +64,9 @@ DUN: {
 }
 
 PER: {
-  // Perth
   class: site_box
-  label: "DUN - Dundee\n192.168.173.0/24"
-  EXADUNDC01-: {class: dc_node; label: "EXAPERDC01\n192.168.173.10\nWin Srv\nDC 01"}
+  label: "PER - Perth, Scotland\n192.168.173.0/24"
+  EXADUNDC01-:: {class: dc_node; label: "EXAPERDC01\n192.168.173.10\nWin Srv\nDC 01"}
   EXAFWLPER001: {class: net_node; label: "EXAFWLDUN001\n192.168.173.1\nFortiOS\nFW"}
   EXASWIPER001: {class: net_node; label: "EXASWIDUN001\n192.168.173.2\nCisco\nSwitch"}
   EXAPRNPER001: {class: iot_node; label: "EXAPRNPER001\n192.168.173.20\nHP MFP LaserJet\nMulti-function printer / scanner"}
@@ -88,9 +83,8 @@ PER: {
 }
 
 GLA: {
-  // G Postcode
   class: site_box
-  label: "GLA - Glasgow\n192.168.21.0/24"
+  label: "GLA - Glasgow, Scotland\n192.168.21.0/24"
   EXAGLADC001: {class: dc_node; label: "EXAGLADC001\n192.168.21.10\nWin Srv\nDC 01"}
   EXAFWLGLA001: {class: net_node; label: "EXAFWLGLA001\n192.168.21.1\nFortiOS\nFW"}
   EXASWIGLA001: {class: net_node; label: "EXASWIGLA001\n192.168.21.2\nCisco\nSwitch"}
@@ -102,9 +96,8 @@ GLA: {
 }
 
 CLY: {
-  // Cyldebank
   class: site_box
-  label: "CLY - Clydebank, UK\n192.168.141.0/24\n"
+  label: "CLY - Clydebank, Scotland\n192.168.141.0/24\n"
   EXADCCLY01: {class: server_node; label: "EXADCCLY01\n192.168.141.9\nWindows Server 2022\nDomain Controller"}
   EXADCCLY02: {class: server_node; label: "EXADCCLY02\n192.168.141.11\nWindows Server 2022\nDomain Controller"}
   EXASRVCLY001: {class: server_node; label: "EXASRVCLY001\n192.168.141.20\nRocky Linux\nOracle DB Server"}
@@ -119,9 +112,8 @@ CLY: {
 }
 
 EDI: {
-  // Edinburgh
   class: site_box
-  label: "EDI - Edinburgh, UK\n192.168.131.0/24\n"
+  label: "EDI - Edinburgh, Scotland\n192.168.131.0/24\n"
   EXAEDIDC01: {class: server_node; label: "EXAEDIDC01\n192.168.3.20\nWindows Server 2019\nDomain Controller"}
   EXADCEDI03: {class: server_node; label: "EXADCEDI03\n192.168.131.10\nWindows Server 2022\nDomain Controller"}
   EXAWKSEDI001: {class: user_node; label: "EXAWKSEDI001\n192.168.131.150\nWindows 10 Pro\nShared Workstation"}
@@ -133,12 +125,9 @@ EDI: {
   EXATEAEDI001: {class: iot_node; label: "EXATEAEDI001\n192.168.131.16\nSiemens EQ700\nCoffee Machine"}
 }
 
-// South of Hadrian's Wall
-
 NEW: {
-  // Newcastle
   class: site_box
-  label: "NEW - Newcastle\n192.168.191.0/24"
+  label: "NEW - Newcastle, England\n192.168.191.0/24"
   EXASBCNEW001: {class: net_node; label: "SBC\n.15"}
   EXASRVNEW001: {class: srv_node; label: "Ubuntu Srv\n.20"}
   EXARACNEW001: {class: net_node; label: "iDRAC\n.250"}
@@ -147,9 +136,8 @@ NEW: {
 }
 
 MCR: {
-  // Manchester
   class: site_box
-  label: "MCR - Manchester, UK\n192.168.161.0/24\n"
+  label: "MCR - Manchester, England\n192.168.161.0/24\n"
   EXAMCRDC01: {class: server_node; label: "EXAMCRDC01\n192.168.61.10\nWindows Server 2022\nDomain Controller"}
   EXAMCRDC02: {class: server_node; label: "EXAMCRDC02\n192.168.61.11\nWindows Server 2022\nDomain Controller"}
   EXALAPMCR001: {class: user_node; label: "EXALAPMCR001\n192.168.228.19\nWindows 11 Ent\nMgmt Laptop"}
@@ -163,9 +151,8 @@ MCR: {
 }
 
 LIV: {
-  // Liverpool
   class: site_box
-  label: "LIV - Liverpool, UK\n192.168.151.0/24\n"
+  label: "LIV - Liverpool, England\n192.168.151.0/24\n"
   EXALIVDC01: {class: server_node; label: "EXALIVDC01\n192.168.51.11\nWindows Server 2025\nDomain Controller"}
   EXASVRLIV001: {class: server_node; label: "EXASVRLIV001\n192.168.151.10\nWindows Server 2022\nFile Server"}
   EXAMBPLIV001: {class: user_node; label: "EXAMBPLIV001\n192.168.151.150\nmacOS Tahoe 26.0.1\nPool MacBook"}
@@ -178,9 +165,8 @@ LIV: {
 }
 
 BIR: {
-  // Birmingham
   class: site_box
-  label: "BIR - Birmingham, UK\n192.168.121.0/24\n"
+  label: "BIR - Birmingham, England\n192.168.121.0/24\n"
   EXADCBIR02: {class: server_node; label: "EXADCBIR02\n192.168.121.11\nWindows Server 2022\nDomain Controller"}
   EXASRVBIR001: {class: server_node; label: "EXASRVBIR001\n192.168.121.20\nRocky Linux\nOracle DB Node"}
   EXAFWLBIR001: {class: edge_node; label: "EXAFWLBIR001\n192.168.121.1\nPalo Alto PanOS\nFirewall"}
@@ -193,16 +179,15 @@ BIR: {
   EXATABBIR001: {class: user_node; label: "EXATABBIR001\n192.168.121.61\nLineage OS\nSetlist Tablet"}
   EXAPHNBIR001: {class: user_node; label: "EXAPHNBIR001\nDHCP\nLineage OS\nTouring Phone"}
   EXALCDBIR001: {class: lcd_node; label: "EXALCDBIR001\n192.168.121.30\nNEC PlasmaSync\nNOC Display"}
-  EXAMUSBIR007: {class:iot_node; label: "EXAMUSBIR07\n192.168.121.70\nMoog analog synthesizer"}
-  EXAMUSBIR001: {class:iot_node; label: "EXAMUSBIR001\n192.168.121.71\nLinnDrum drum machine"}
-  EXAMUSBIR001: {class:iot_node; label: "EXAMUSBIR001\n192.168.121.72\nFairlight CMI – digital sampler in studio"}
-  EXAMUSBIR001: {class:iot_node; label: "EXAMUSBIR001\n192.168.121.73\nAtari ST – MIDI workstation (dial-up / SLIP capable)"}
+  EXAMUSBIR007: {class: iot_node; label: "EXAMUSBIR07\n192.168.121.70\nMoog analog synthesizer"}
+  EXAMUSBIR001: {class: iot_node; label: "EXAMUSBIR001\n192.168.121.71\nLinnDrum drum machine"}
+  EXAMUSBIR001: {class: iot_node; label: "EXAMUSBIR001\n192.168.121.72\nFairlight CMI – digital sampler in studio"}
+  EXAMUSBIR001: {class: iot_node; label: "EXAMUSBIR001\n192.168.121.73\nAtari ST – MIDI workstation (dial-up / SLIP capable)"}
 }
 
 LND: {
-  // Avocado Central
   class: site_box
-  label: "LND - London, UK\n192.168.20.0/24\n"
+  label: "LND - Avocado Central, Inside The M25\n192.168.20.0/24\n"
   EXALNDDC01: {class: server_node; label: "EXALNDDC01\n192.168.2.20\nWindows Server 2022\nDomain Controller"}
   EXAWKSLND001: {class: user_node; label: "EXAWKSLND001\n192.168.20.150\nWindows 11 Pro\nHot Desk PC"}
   EXAPRNLND001: {class: peripheral_node; label: "EXAPRNLND001\n192.168.20.16\nPrinter\nXerox WorkCentre"}
@@ -211,20 +196,19 @@ LND: {
   EXARACLND001: {class: hardware_node; label: "EXARACLND001\n192.168.20.2\nDell iDRAC9\nManagement"}
   EXASWILND001: {class: net_node; label: "EXASWILND001\n192.168.20.5\nCisco Catalyst 9300\nCore Switch"}
   EXASBCLND001: {class: voip_node; label: "EXASBCLND001\n192.168.20.49\n3CX SBC\nVOIP Gateway"}
-  EXAPRNLND002: {class: iot_node; label: "EXAPRNLND002\nDHCP\nProCAT Stylus`nSteno Writer – Court Device"}
-  EXAPHNLND006: {class:voip_node; label: "EXAPHNLND006\n192.168.121.74\nK6 GPO Red British Telephone box (with VoIP ATA)"}
-  EXATIMLON001: {class:io_node; label: "EXATIMLND01\n192.168.20.10\nSpeaking Clock service – Company time signal (LND)"}
-  EXALAPLND008: {class:user_node; label: "EXALAPLND001\n192.168.191.81\nPsion Series 3 – journalist field notes (remote / dial-up capable)"}
-  EXAPHNLND012: {class:user_node; label: "EXAPHNLND012\nDHCP\nMotorola DynaTAC 8000X – satellite / analogue mobile (journalist)"}
-  EXAMUSLND015: {class:peripheral_node; label: "EXAMUSLND015\n192.168.20.31\nBBC ribbon microphone (Marconi / STC style) – studio audio over IP"}
-  EXAMUSLND028: {class:peripheral_node; label: "EXAMUSLND028\n192.168.20.32\nRevox B77 reel-to-reel recorder – continuity playout & archiving"}
-  EXABBCMUS001: {class:user_node; label: "EXABBCRAD001\n192.168.20.33\nBBC Office Radio automation console – continuity announcer desk"}
+  EXAPRNLND002: {class: iot_node; label: "EXAPRNLND002\nDHCP\nProCAT Stylus\nSteno Writer – Court Device"}
+  EXAPHNLND006: {class: voip_node; label: "EXAPHNLND006\n192.168.121.74\nK6 GPO Red British Telephone box (with VoIP ATA)"}
+  EXATIMLON001: {class: io_node; label: "EXATIMLND01\n192.168.20.10\nSpeaking Clock service – Company time signal (LND)"}
+  EXALAPLND008: {class: user_node; label: "EXALAPLND001\n192.168.191.81\nPsion Series 3 – journalist field notes (remote / dial-up capable)"}
+  EXAPHNLND012: {class: user_node; label: "EXAPHNLND012\nDHCP\nMotorola DynaTAC 8000X – satellite / analogue mobile (journalist)"}
+  EXAMUSLND015: {class: peripheral_node; label: "EXAMUSLND015\n192.168.20.31\nBBC ribbon microphone (Marconi / STC style) – studio audio over IP"}
+  EXAMUSLND028: {class: peripheral_node; label: "EXAMUSLND028\n192.168.20.32\nRevox B77 reel-to-reel recorder – continuity playout & archiving"}
+  EXABBCMUS001: {class: user_node; label: "EXABBCRAD001\n192.168.20.33\nBBC Office Radio automation console – continuity announcer desk"}
 }
 
 ODE: {
-  // Odense, Fyn
   class: site_box
-  label: "ODE - Odense, Danmark (Primay Europe Site)\n192.168.66.0/24\n\n"
+  label: "ODE - Odense, Fyn, Danmark (Primay Europe Site)\n192.168.66.0/24\n\n"
   EXAODEDC01: {class: server_node; label: "EXAODEDC01\n192.168.7.20\nWindows Server 2022\nDomain Controller"}
   EXAMACODE001: {class: user_node; label: "EXAMACODE001\n192.168.66.150\nmacOS Tahoe 26.0.1\nDesign iMac"}
   EXAMBPODE002: {class: user_node; label: "EXAMBPODE002\n192.168.66.151\nmacOS Tahoe 26.0.1\nExec MacBook"}
@@ -234,9 +218,8 @@ ODE: {
 }
 
 CPH: {
-  // København, Lorry
   class: site_box
-  label: "CPH - Christianshavn, København\n192.168.31.0/24\n"
+  label: "CPH - Christianshavn, København, Lorry\n192.168.31.0/24\n"
   EXACLKCPH001: {class: iot_node; label: "EXACLKCPH001\n192.168.228.18\nMeinberg M300\nNTP Clock"}
   EXARACCPH001: {class: hardware_node; label: "EXARACCPH001\n192.168.31.2\nDell iDRAC9\nManagement"}
   EXASWICPH001: {class: net_node; label: "EXASWICPH001\n192.168.31.5\nTP-Link\nSwitch"}
@@ -248,27 +231,24 @@ CPH: {
 }
 
 KGE: {
-  // Køge, Syd Jyland
   class: site_box
-  label: "KGE - Køge, Danmark\n192.168.56.0/24\n"
+  label: "KGE - Køge, Syd Jyland, Danmark\n192.168.56.0/24\n"
   EXAKBRDC01: {class: server_node; label: "EXAKBRDC01\n192.168.5.20\nWindows Server 2016\nDomain Controller"}
   EXAWAPKGE001: {class: net_node; label: "EXAWAPKGE001\n192.168.56.5\nUniFi U6-Pro\nAccess Point"}
   EXAPRNKGE001: {class: peripheral_node; label: "EXAPRNKGE001\n192.168.56.16\nHP LaserJet\nMFP Printer"}
 }
 
 BRA: {
-  // Bramming, Syd Jyland
   class: site_box
-  label: "BRA - Bramming, Danmark\n192.168.110.0/24\n"
+  label: "BRA - Bramming, Syd Jyland, Danmark\n192.168.110.0/24\n"
   EXABRADC01: {class: server_node; label: "EXABMGDC01\n192.168.10.20\nWindows Server 2019\nDomain Controller"}
   EXAWKSBRA001: {class: user_node; label: "EXAWKSBMG001\n192.168.110.150\nWindows 10 Pro\nLogistics PC"}
   EXASWIBRA001: {class: net_node; label: "EXASWIBMG001\n192.168.110.5\nCisco 2960L\nSite Switch"}
 }
 
 EBJ: {
-  // Esjberg, Syd Jyland
   class: site_box
-  label: "ESB - Esbjerg, Danmark\n192.168.111.0/24\n"
+  label: "ESB - Esjberg, Syd Jyland, Danmark\n192.168.111.0/24\n"
   EXAESBDC01: {class: server_node; label: "EXAEBJDC01\n192.168.11.20\nWindows Server 2022\nDomain Controller"}
   EXAPRNESB001: {class: peripheral_node; label: "EXAPRNEBJ001\n192.168.111.16\nBrother MFC\nOffice Printer"}
   EXAFWLESB001: {class: edge_node; label: "EXAFWLEBJ001\n192.168.111.1\nUDM Pro\nSite Gateway"}
@@ -277,9 +257,8 @@ EBJ: {
 }
 
 AAR: {
-  // Aarhus, Nord Jyland
   class: site_box
-  label: "AAR - Aarhus, Danmark\n192.168.99.0/24\n"
+  label: "AAR - Aarhus, Nord Jyland, Danmark\n192.168.99.0/24\n"
   EXAAARDC01: {class: server_node; label: "EXAAARDC01\n192.168.9.20\nWindows Server 2022\nDomain Controller"}
   EXAMBPAAR001: {class: user_node; label: "EXAMBPAAR001\n192.168.99.150\nmacOS Sonoma\nMarketing Mac"}
   EXAWKSAAR001: {class: user_node; label: "EXAWKSAAR001\n192.168.99.151\nWindows 11 Pro\nSales PC"}
@@ -289,9 +268,8 @@ AAR: {
 }
 
 MUC: {
-  // Munich, Barvaria
   class: site_box
-  label: "MUC - Munich, Germany\n192.168.88.0/24\n"
+  label: "MUC - Munich, Barvaria, Deutschland\n192.168.88.0/24\n"
   EXAMUCDC01: {class: server_node; label: "EXAMUCDC01\n192.168.8.20\nWindows Server 2022\nDomain Controller"}
   EXAWKSMUC001: {class: user_node; label: "EXAWKSMUC001\n192.168.88.150\nWindows 11 Pro\nEng Workstation"}
   EXAWKSMUC002: {class: user_node; label: "EXAWKSMUC002\n192.168.88.151\nWindows 11 Pro\nEng Workstation"}
@@ -301,9 +279,8 @@ MUC: {
 }
 
 BON: {
-  // Bonn, North Rhine-Westphalia
   class: site_box
-  label: "BON - Bonn\n192.168.228.0/24"
+  label: "BON - Bonn, North Rhine-Westphalia, Deutschland\n192.168.228.0/24"
   EXAVCUBON001: {class: iot_node; label: "EXAVCUBON001\n192.168.228.115\nPoly OS\nVCU"}
   EXACAMBON001: {class: iot_node; label: "EXACAMBON001\n192.168.228.130\nLinux\nCam 01"}
   EXAWKSBON001: {class: user_node; label: "EXAWKSBON001\n192.168.228.30\nWindows 10\nWKS 01"}
@@ -318,9 +295,8 @@ BON: {
 }
 
 HAM: {
-  // Hamburg, Hamburg
   class: site_box
-  label: "HAM - Hamburg, Germany\n192.168.112.0/24\n"
+  label: "HAM - Hamburg, Hamburg, Deutschland\n192.168.112.0/24\n"
   EXAHAMDC01: {class: server_node; label: "EXAHAMDC01\n192.168.12.20\nWindows Server 2022\nDomain Controller"}
   EXAFWLHAM001: {class: edge_node; label: "EXAFWLHAM001\n192.168.112.1\nFortiGate 80F\nFirewall"}
   EXASWIHAM001: {class: net_node; label: "EXASWIHAM001\n192.168.112.5\nCisco 9300\nCore Switch"}
@@ -329,9 +305,8 @@ HAM: {
 }
 
 BER: {
-  // West Berlin
   class: site_box
-  label: "BER - Berlin, Germany\n192.168.113.0/24\n"
+  label: "BER - Vest Berlin, Deutschland\n192.168.113.0/24\n"
   EXABERDC01: {class: server_node; label: "EXABERDC01\n192.168.13.20\nWindows Server 2022\nDomain Controller"}
   EXAFWLBER001: {class: edge_node; label: "EXAFWLBER001\n192.168.113.1\nFortiGate 100F\nFirewall"}
   EXASWIBER001: {class: net_node; label: "EXASWIBER001\n192.168.113.5\nCisco 9500\nCore Switch"}
@@ -341,20 +316,14 @@ BER: {
 }
 
 VIE: {
-  // Vienna, Austria
   class: site_box
   label: "VIE - Vienna, Austria\n192.168.116.0/24\n"
   EXASRVVIE001: {class: server_node; label: "EXASRVVIE001\nLinux Srv\n.20"}
   EXASBCVIE001: {class: voip_node; label: "EXASBCVIE001\n3CX SBC\n.49"}
 }
 
-// VPN Links
-
-// North America
 BRK <-> MIA: vDSL {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 MIA <-> DUN: Satellite Uplink {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
-
-// Scotland
 GLA <-> EDI: Fiber {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 DUN <-> GLA: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 DUN <-> EDI: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
@@ -363,8 +332,6 @@ PER <-> DUN: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-d
 PER <-> EDI: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 ABD <-> EDI: Leased Line {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 GLA <-> CLY: PPTP {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
-
-// England
 EDI -> MCR: PPTP (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 EDI <-> NEW: PPTP (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 GLA <-> MCR: PPTP (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
@@ -372,8 +339,6 @@ MCR <-> LIV: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}
 // TODO: force directions so it matches geography
 BIR <-> LND: "ISDN (Bonded)" {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 NEW <-> AAR: ISDN (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
-
-// Danmark
 BRA -> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 ESB -> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 AAR -> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
@@ -382,15 +347,12 @@ ODE -> CPH: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke
 ESB <- ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 BRA <- ESB: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 BRA <-> ODE: Fiber (Bonded) {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
-
-// Deutschland
 BON <-> BER: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 HAM <-> BER: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 BON <-> HAM: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 BON <-> MUC: ISDN {style: {stroke: "lightblue"; stroke-width: 4; stroke-dash: 5}}
 
 LEGEND: {
-  // LEGEND
   style: {stroke: "#333333"; fill: "#f8f9fa"; font-color: "#000000"}
   label: |md
     ```text
