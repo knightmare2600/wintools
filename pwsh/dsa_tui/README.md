@@ -25,25 +25,25 @@
 
 DSA-TUI Text Mode version of dsa.msc for powershell using ConsoleTools 1.16 on Powershell 7.x
 
-Some Screenshots of the script in action:
+Some Screenshots of the script in action. For example, user properties modal with the DSB (Danske Statsbaner) theme:
 
 ![dsa_tui_001](dsa_tui_001.png?raw=true "Example User Properties")
 
 there are also 
 
-![Alt text](relative%20path/to/img.jpg?raw=true "Title")
+![Alt text](dsa_tui_002.png?raw=true "Title")
 
 and
 
-![Alt text](relative%20path/to/img.jpg?raw=true "Title")
+![Alt text](dsa_tui_003.png?raw=true "Title")
 
 along iwth
 
-![Alt text](relative%20path/to/img.jpg?raw=true "Title")
+![Alt text](dsa_tui_004.png?raw=true "Title")
 
 you can also
 
-![Alt text](relative%20path/to/img.jpg?raw=true "Title")
+![Alt text](dsa_tui_005.png?raw=true "Title")
 
 The demo data for AD Forest `jukebox.example` is all stored inside the code, so can be executed safely.
 
