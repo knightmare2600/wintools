@@ -25,6 +25,28 @@
 
 DSA-TUI Text Mode version of dsa.msc for powershell using ConsoleTools 1.16 on Powershell 7.x
 
+Some Screenshots of the script in action:
+
+![dsa_tui_001](dsa_tui_001.png?raw=true "Example User Properties")
+
+there are also 
+
+![Alt text](relative%20path/to/img.jpg?raw=true "Title")
+
+and
+
+![Alt text](relative%20path/to/img.jpg?raw=true "Title")
+
+along iwth
+
+![Alt text](relative%20path/to/img.jpg?raw=true "Title")
+
+you can also
+
+![Alt text](relative%20path/to/img.jpg?raw=true "Title")
+
+The demo data for AD Forest `jukebox.example` is all stored inside the code, so can be executed safely.
+
 # Requirements
 
 - Locked-in baseline: dynamic resize, menu, demo data mirrors prod format, Change Domain fixed, fixed DC selection, full production AD object detection, properties modal, AD search popup
