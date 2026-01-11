@@ -31,19 +31,19 @@ Some Screenshots of the script in action. For example, user properties modal wit
 
 Some Easter eggs hidden in the data, here using the procomm theme:
 
-![Alt text](dsa_tui_002.png?raw=true "Title")
+![Alt text](dsa_tui_002.png?raw=true "Example Easter Egg")
 
-It is also possible to query the properties of other AD objects,along with the Pan Am theme:
+It is also possible to query the properties of other AD objects, along with the Pan Am theme:
 
-![Alt text](dsa_tui_003.png?raw=true "Title")
+![Alt text](dsa_tui_003.png?raw=true "Example OU Properties")
 
 The LAPS username and password viewer is included, to avoid having to remember esoteric powershell commands:
 
-![Alt text](dsa_tui_004.png?raw=true "Title")
+![Alt text](dsa_tui_004.png?raw=true "LAPS Viewer")
 
 A complimentary password generator, this time in the gemstones theme:
 
-![Alt text](dsa_tui_005.png?raw=true "Title")
+![Alt text](dsa_tui_005.png?raw=true "Password Generator")
 
 The demo data for AD Forest `jukebox.example` is all stored inside the code, so can be executed safely.
 
