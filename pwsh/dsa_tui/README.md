@@ -318,7 +318,6 @@ Examples:
 
 DSB network map:
 
-![DSB_Map.png]
 ![dsb_map](screenshots/DSB_Map.png?raw=true "The day we caught the train")
 
 ## Additional Notes
