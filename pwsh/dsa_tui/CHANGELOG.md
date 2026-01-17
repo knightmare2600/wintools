@@ -2,6 +2,26 @@
 
 ## Historical Build Notes and Change Log (Newest → Oldest)
 
+## 3.0.1.76 (More bug fixes and more refactoring)
+  - Ensure Change DC modal doens't crash the app by returning variables instead of outright calling functiions
+  - Remove some redundant debug code around function calling
+  - Fix regression in Show-ADSearch modal so it now loads correctly
+  - Add some ancillory staff such as lawyers, finance, journalists, etc. More Easter eggs from those.
+  - Fix regression bug in `Show-{User|Computer}Properties` relating ot bitlocker keys and group comparison
+  - Fix a DC refresh not updating `Show-InoPane`l, the code now refreshes as expected
+  - Move terminal GUI initialisation code inside `Test-RequiredModule` and give advice on installing missing dependencies
+  - Tidy up spacing and formatting of demo data
+  - Fix `ADSearch` and `ADSearchDialog` to use the correct types of `string.object` etc.
+  - Group Membership Report/Comparison crash resolved. New search tab and comparison dynamic search box added
+  - Changing filters, e.g. turning off computers or enabled users now filters correctly
+  - Fix logic bug where `"show locked users"` actually showed `"computers under maintenence"`
+  - Produciton AD mode now builds the tree properly, including sub OUs and sub CNs
+  - Audit Log Viewer (also add demo mode fake logs to demo data)
+  - Retire unneeded function `Apply-ObjectChange`
+  - Add Easter Egg to `Why Blåbær` modal
+  - Make `Debug-Log` messages consistent
+  - Rework `Show-Debug` with new icons and better phrasing
+
 ### 3.0.0.84 (Bug fix and refactoring)
 - Fixed CSV importing and reduced unnecessary functions, replacing them with `$Script:` checks
   for Demo mode vs CSV vs Production AD.
