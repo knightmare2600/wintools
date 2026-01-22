@@ -316,11 +316,139 @@ Examples:
 
 ###
 
-DSB network map:
+Railway Maps giving an idea of office lcoaitons in relation to each other:
 
-![dsb_map](screenshots/DSB_Map.png?raw=true "The day we caught the train")
+Danmark: DSB network map:
+
+![DK_map](screenshots/DSB_Map.png?raw=true "The day we caught the train")
+
+Germany:
+
+![DE_map](screenshots/DB1980s.jpg?raw=true "Trans Europe express")
+
+Canada eh:
+
+![CA_map](screenshots/Viarail80s.png?raw=true "Take off to the Great White North")
+
+Scotland:
+
+![Scotland_map](screenshots/ScotFail.jpeg?raw=true "I saw you up on a clear day. First taking hearts. Then our last breath away")
+
+England:
+
+![BR_map](screenshots/BREngland.jpg?raw=true "Found myself in a strange town")
+
+This may help with the Geography.
 
 ## Additional Notes
+
+## LAPS
+
+## 📘 LAPS Handling & Application Flow — Technical Documentation
+
+---
+
+## 🔐 LAPS Versions Explained
+
+### Legacy LAPS (2015)
+Legacy Microsoft LAPS stores credentials using the following Active Directory attributes:
+
+- **`ms-Mcs-AdmPwd`**  
+  Stores the local administrator password (plaintext in AD, ACL-protected).
+
+- **`ms-Mcs-AdmPwdExpirationTime`**  
+  Stores password expiry as a Windows **FileTime** value.
+
+
+### Windows LAPS (2023+)
+Modern Windows LAPS introduces a new schema with clearer semantics and better extensibility:
+
+- **`msLAPS-Password`**  
+  Stores the managed local administrator password.
+
+- **`msLAPS-PasswordExpirationTime`**  
+  Password expiration stored as **FileTimeUtc**.
+
+- **`msLAPS-AccountName`**  
+  Name of the managed local account (defaults to `Administrator`).
+
+---
+
+## 🧩 TDF Property Mappings
+
+The **TDF (TUI DSA Format)** file uses Windows LAPS–style properties internally.
+
+### Raw Properties
+- `msLAPS-Password` → `Bon#Lap@64`
+- `msLAPS-PasswordExpirationTime` → `FileTimeUtc`
+- `msLAPS-AccountName` → `Administrator`
+
+
+## 🔍 LAPS Detection Order
+
+The application resolves LAPS data using a strict priority order to ensure compatibility across environments:
+
+1. **Windows LAPS attributes**  
+   (`msLAPS-*`)
+
+2. **Friendly aliases**  
+   (`LAPSPassword`, `LAPSPasswordExpiration`, etc.)
+
+3. **Legacy LAPS attributes**  
+   (`ms-Mcs-*`)
+
+This guarantees:
+- Forward compatibility
+- Backward compatibility
+- Seamless demo and production behaviour
+
+---
+
+### Friendly Aliases
+
+To simplify UI and scripting, the following aliases are also supported:
+
+- **`LAPSPassword`**			Alias for `msLAPS-Password`
+- **`LAPSPasswordExpiration`**  	Expiration converted to `DateTime`
+- **`LAPSPasswordLastSet`**		Derived `DateTime` value for display and auditing
+
+## 🧠 Summary of Code Changes
+
+### ✅ What Changed
+The **only** changes compared to the original implementation are:
+
+1. **Progress percentages** added to `Set-StatusBar` calls  
+2. **Verification log** added immediately after data load  
+3. **Object count log** added before tree construction  
+
+### ❌ What Did *Not* Change
+Everything else remains **exactly the same**, including:
+
+- Menu system
+- Filter panel
+- Selection panel
+- Information panel
+- Tree structure
+- Key handlers
+- UI layout
+- Navigation logic
+
+No refactors. No behavioural drift. No regressions.
+
+## 🔁 Application Startup Order
+
+The application always executes in the following order:
+
+1. Load data (**Step 6**)
+2. Create menu
+3. Create filter panel
+4. Create selection panel
+5. Create info panel
+6. Build tree
+7. Add key handlers
+8. Run application
+
+This order is **intentional and fixed** to preserve predictable UI behaviour and startup performance.
 
 Notes:
   - Not all devices are AD-aware
