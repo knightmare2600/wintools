@@ -2,6 +2,48 @@
 
 ## Historical Build Notes and Change Log (Newest → Oldest)
 
+## 3.1.2.86 (Yet more bug fixes and more refactoring)
+  - Check for modules and windows features depending on OS SKU
+  - Refactor import data so it can handle the *.tdf files properly, they are powershell style but not directly powershell
+  - Forbid people running the code on Powershell 5.1
+  - Test-Requirement builds on the Test-Module foundations. Covering: pwsh modules, windows features & is OS agnostic
+  - Tree no longer displays people twice in demo mode, CSV import, or production
+  - Missing AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
+  - Fixed OU hierarchy bug where users were added at the wrong tree level. The issue was caused by navigating into
+    .Children while building the OU tree, but not doing the same when resolving the deepest OU during user insertion.
+  - Refactored OU handling to use a consistent traversal approach, ensuring users are added to the correct OU node. This
+  - also reduced complexity in Build-DomainContent, eliminating nested functions, and introduces reusable helper functions
+  - Remove the additional two (!!) New-searchTab functions due to a copy pasting error
+  - label spacing on Search-Tab was is a bit... off... Fixed the spacing
+  - Audit logs now render if they are supplied in the CSV, JSONC or TDF file
+  - Move the jukebox domain data out into a TDF file to reduce hardcoded data
+  - Fix spacing on the computer properties account tab
+  - Group properties spacing fixed
+  - Computer properties last logon spacing fix
+  - Update Set-StatusBar function to allow "-Icon Working -Percent 15" and see a [ooooo---------------] progress bar
+  - LAPS passwords tab enhanced to be more secure and detect legacy vs modern LAPS
+  - Production enumeration now refreshes and build the tree at startup, fixing a regression
+
+## 3.0.1.76 (More bug fixes and more refactoring)
+  - Ensure Change DC modal doesn't crash the app by returning variables instead of outright calling functions
+  - Remove some redundant debug code around function calling
+  - Fix regression in Show-ADSearch modal so it now loads correctly
+  - Add some ancillary staff such as lawyers, finance, journalists, etc. More Easter eggs from those.
+  - Fix regression bug in Show-{User|Computer}Properties relating to bitlocker keys and group comparison
+  - Fix a DC refresh not updating Show-InoPanel, the code now refreshes as expected
+  - Move terminal GUI initialisation code inside Test-RequiredModule and give advice on installing missing dependencies
+  - Tidy up spacing and formatting of demo data
+  - Fix ADSearch and ADSearchDialog to use the correct types of string.object etc.
+  - Group Membership Report/Comparison crash resolved. New search tab and comparison dynamic search box added
+  - Changing filters, e.g. turning off computers or enabled users now filters correctly
+  - Fix logic bug where "show locked users" actually showed "computers under maintenance"
+  - Production AD mode now builds the tree properly, including sub OUs and sub CNs
+  - Audit Log Viewer (also add demo mode fake logs to demo data)
+  - Retire unneeded function Apply-ObjectChange
+  - Add Easter Egg to Why Blåbær modal
+  - Make Debug-Log messages consistent
+  - Rework Show-Debug with new icons and better phrasing
+
 ## 3.0.1.76 (More bug fixes and more refactoring)
   - Ensure Change DC modal doens't crash the app by returning variables instead of outright calling functiions
   - Remove some redundant debug code around function calling
