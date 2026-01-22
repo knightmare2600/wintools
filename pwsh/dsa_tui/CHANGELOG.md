@@ -6,30 +6,31 @@ Not all version are released publically, but they will all be documented here.
 
 ## 3.1.2.86 (Yet more bug fixes and more refactoring)
   - Check for modules and windows features depending on OS SKU
-  - Refactor import data so it can handle the *.tdf files properly, they are powershell style but not directly powershell
+  - Refactor import data so it can handle the `*.tdf` files properly, they are powershell style but not directly powershell
   - Forbid people running the code on Powershell 5.1
-  - Test-Requirement builds on the Test-Module foundations. Covering: pwsh modules, windows features & is OS agnostic
+  - New function `Test-Requirement` builds on the `Test-Module` foundations. Covering: pwsh modules, windows features & is OS agnostic
   - Tree no longer displays people twice in demo mode, CSV import, or production
   - Missing AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
   - Fixed OU hierarchy bug where users were added at the wrong tree level. The issue was caused by navigating into
     .Children while building the OU tree, but not doing the same when resolving the deepest OU during user insertion.
   - Refactored OU handling to use a consistent traversal approach, ensuring users are added to the correct OU node. This
-  - also reduced complexity in Build-DomainContent, eliminating nested functions, and introduces reusable helper functions
-  - Remove the additional two (!!) New-searchTab functions due to a copy pasting error
+  - also reduced complexity in `Build-DomainContent`, eliminating nested functions, and introduces reusable helper functions
+  - Remove the additional two (!!) `New-searchTab` functions due to a copy pasting error
   - label spacing on Search-Tab was is a bit... off... Fixed the spacing
   - Audit logs now render if they are supplied in the CSV, JSONC or TDF file
   - Move the jukebox domain data out into a TDF file to reduce hardcoded data
   - Fix spacing on the computer properties account tab
   - Group properties spacing fixed
   - Computer properties last logon spacing fix
-  - Update Set-StatusBar function to allow "-Icon Working -Percent 15" and see a [ooooo---------------] progress bar
+  - Update `Set-StatusBar` function to allow `"-Icon Working -Percent 15"` and see a `[ooooo---------------]` progress bar
   - LAPS passwords tab enhanced to be more secure and detect legacy vs modern LAPS
   - Production enumeration now refreshes and build the tree at startup, fixing a regression
+  - Remove duplicate right-click tree function code and refactor
 
 ## 3.0.1.76 (More bug fixes and more refactoring)
   - Ensure Change DC modal doens't crash the app by returning variables instead of outright calling functiions
   - Remove some redundant debug code around function calling
-  - Fix regression in Show-ADSearch modal so it now loads correctly
+  - Fix regression in `Show-ADSearch` modal so it now loads correctly
   - Add some ancillory staff such as lawyers, finance, journalists, etc. More Easter eggs from those.
   - Fix regression bug in `Show-{User|Computer}Properties` relating ot bitlocker keys and group comparison
   - Fix a DC refresh not updating `Show-InoPane`l, the code now refreshes as expected
@@ -53,24 +54,24 @@ Not all version are released publically, but they will all be documented here.
 - The `Show-{Computer|User|Group|OU|Etc}-Properties` dialogs previously contained significant duplicated
   code; this has now been cleaned up and refined.
 - Search tabs in each properties dialog have been finessed and merged with the corresponding
-  *-Dialog properties.
+  `*-Dialog` properties.
 - LAPS dialog now correctly handles and displays both legacy and modern LAPS types.
 - DNS queries now run automatically; also fixed an `nslookup` regression.
 - CSV import now imports data, redraws the tree, and updates the information panel.
-- Handle-CSVAction fixed so refreshing CSV data also refreshes the tree automatically.
+- `Handle-CSVAction` fixed so refreshing CSV data also refreshes the tree automatically.
 - Reworked Refresh-Tree to squash a startup bug.
 - Fixed regression in Change DC so the correctly formatted DC list is used.
-- Retired the now-unnecessary Invoke-AD function in favour of direct AD commands.
+- Retired the now-unnecessary `Invoke-AD` function in favour of direct AD commands.
 
 ---
 
 ### 3.0.0.78 (Bug fixes, code merge and cleanup)
 - Refactored data initialisation into a single authoritative entry point.
-- Introduced Initialise-DataSource as the primary loader.
+- Introduced `Initialise-DataSource` as the primary loader.
 - Standardised load priority and fallback order:
   - Active Directory (via Load-DomainData)
   - CSV import
-  - Demo data generation (jukebox.example)
+  - Demo data generation (`jukebox.example`)
 - Centralised Active Directory loading:
   - All AD-specific logic now lives in Load-DomainData.
   - Removed duplicated forest, domain, user, group and computer loading code.
@@ -83,8 +84,8 @@ Not all version are released publically, but they will all be documented here.
   - Clean fallback from AD → CSV → Demo without partial or corrupt state.
   - Clear logging and user feedback on failures.
 - Clarified invocation pattern:
-  - Replaced direct calls to Load-DomainData with Initialise-DataSource -Domain `<domain>`.
-- Script-wide module checks; modules are now imported exactly once.
+  - Replaced direct calls to `Load-DomainData` with `Initialise-DataSource -Domain <domain>`.
+  - Script-wide module checks; modules are now imported exactly once.
 
 ---
 
@@ -101,7 +102,7 @@ Not all version are released publically, but they will all be documented here.
   - Fixed unreachable Debug-Log call after `return $false`.
   - Added operating system detection.
   - Added cross-platform-aware checks for Group Policy tools.
-- Ensured Import-DemoData does not overwrite newly added demo data with existing data.
+- Ensured `Import-DemoData` does not overwrite newly added demo data with existing data.
 - Repadmin now prints output correctly instead of throwing a syntax error.
 - Added OS-specific advice for GPMC and AD modules.
 - Added Perth office with Fiction Factory.
