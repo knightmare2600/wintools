@@ -2,6 +2,8 @@
 
 ## Historical Build Notes and Change Log (Newest → Oldest)
 
+Not all version are released publically, but they will all be documented here.
+
 ## 3.1.2.86 (Yet more bug fixes and more refactoring)
   - Check for modules and windows features depending on OS SKU
   - Refactor import data so it can handle the *.tdf files properly, they are powershell style but not directly powershell
