@@ -4,6 +4,11 @@
 
 Not all version are released publically, but they will all be documented here.
 
+## 3.1.2.91 (Nød lærer nøgen kvinde at spinde)
+  - Add F8 to select the tree for keyboard aficionados
+  - Start using dynamically resizing panels
+  - Re-add accidentally removed `Show-ADHealthPDialog` function
+
 ## 3.1.2.88 (Finding what I'm looking for)
   - Account Expiration Management and date validation
   - Menu entries for `Set-BulkAttribute` and `Find-StaleAccounts` now merged into search AD and given a facelift
