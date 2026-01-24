@@ -60,28 +60,13 @@ KEY CONCEPT:
 
 Recent changelog
 
-3.1.2.86 (Yet more bug fixes and more refactoring)
-  - Check for modules and windows features depending on OS SKU
-  - Refactor import data so it can handle the *.tdf files properly, they are powershell style but not directly powershell
-  - Forbid people running the code on Powershell 5.1
-  - New function Test-Requirement builds on the Test-Module foundations. Covering: pwsh modules, windows features & is OS agnostic
-  - Tree no longer displays people twice in demo mode, CSV import, or production
-  - Missing AD module is non fatal BUT if it's not installed, a global needs to not let users do stupid stuff
-  - Fixed OU hierarchy bug where users were added at the wrong tree level. The issue was caused by navigating into
-    .Children while building the OU tree, but not doing the same when resolving the deepest OU during user insertion.
-  - Refactored OU handling to use a consistent traversal approach, ensuring users are added to the correct OU node. This
-  - also reduced complexity in Build-DomainContent, eliminating nested functions, and introduces reusable helper functions
-  - Remove the additional two (!!) New-searchTab functions due to a copy pasting error
-  - label spacing on Search-Tab was is a bit... off... Fixed the spacing
-  - Audit logs now render if they are supplied in the CSV, JSONC or TDF file
-  - Move the jukebox domain data out into a TDF file to reduce hardcoded data
-  - Fix spacing on the computer properties account tab
-  - Group properties spacing fixed
-  - Computer properties last logon spacing fix
-  - Update Set-StatusBar function to allow "-Icon Working -Percent 15" and see a [ooooo---------------] progress bar
-  - LAPS passwords tab enhanced to be more secure and detect legacy vs modern LAPS
-  - Production enumeration now refreshes and build the tree at startup, fixing a regression
-  - Remove duplicate right-click tree function code and refactor
+3.1.2.88 (Finding what I'm looking for)
+  - Account Expiration Management and date validation
+  - Menu entries for Set-BulkAttribute and Find-StaleAccounts now merged into search AD and given a facelift
+  - More code clean-up / formatting fixes
+  - Remove dead function Get-OUPathFromDN
+  - Integrate Apply-CombinedFilters into the Build-DomainContent function so filters actually work
+  - Glyphs / Emojis now work as expected in tree view
 
 -------------------------------------------------------------------------------
 TODO / COME BACK TO
@@ -89,15 +74,12 @@ TODO / COME BACK TO
 
 REMAINING FEATURES TO IMPLEMENT:
 
-  - Account Expiration Management
-  - Menu entries for Set-BulkAttribute and Find-StaleAccounts
-    (Need to use existing helper functions for selection conversion)
   - AD Health tabs like Group Policy and domain controllers the tab pane could be smaller with a search box in them to help out
   - Start using dynamic resizes in panels and so on - slowly!
 
   BUGS:
   - Did the right click popup go away or is it broken...? Yes. Fix it later
-  - the panels on the right are actually not positioned dynamically it renders fine on my monitor but not on anyone else
+  - The panels on the right are actually not positioned dynamically it renders fine on my monitor but not on anyone else
 
 ===========================================================================================
 #>
@@ -148,9 +130,9 @@ if ($invalidParams) {
 ## execution loop, where they belong
 $Script:ProjectName  = "DSA-TUI pwsh dsa.msc TUI"
 $Script:FruitName    = "Blåbær"
-$Script:BuildVersion = "3.0.1.76"
+$Script:BuildVersion = "3.1.2.88"
 
-## Global emojis TODO: Once code is in a good spot, confirm these are being used
+## Global emojis
 $Script:Icons = @{
   ## Core AD object types
   User      = "👤"
@@ -158,7 +140,6 @@ $Script:Icons = @{
   Computer  = "💻"
   OU        = "📁"
   DC        = "🖥"
-
   ## Status indicators
   Locked    = "🔒"
   Disabled  = "⊗"
@@ -216,7 +197,7 @@ $Script:CurrentDCName   = "(None)" ## No DC set initially
 $Script:ImportedRawData = $null    ## Stores data from imported files
 $Script:ImportSource    = $null    ## Track where data came from ('File', 'AD', 'Demo')
 
-## DIAGNOSTIC - Check what type it is
+## Diagnostic - Check what type it is
 Write-Output "FilterOptions type: $($Script:FilterOptions.GetType().Name)"
 Write-Output "FilterOptions is hashtable: $($Script:FilterOptions -is [hashtable])"
 
@@ -271,7 +252,6 @@ function Test-Requirement {
           if ($InstallMsg) { Debug-Log "Please run: $InstallMsg" -Type "Insight" }
           return $false
         }
-
         Debug-Log "Module '$Name' is installed. Importing..." -Type "Success"
         try {
           Import-Module $Name -ErrorAction Stop
@@ -307,19 +287,16 @@ function Test-Requirement {
         Debug-Log "Cannot check Windows Feature '$Name' — not running on Windows." -Type "Warning"
         return $false
       }
-
       if (-not $IsWindowsServer -or -not $HasServerManagerModule) {
         Debug-Log "Windows Feature '$Name' cannot be checked on this OS (not Server / ServerManager module missing)." -Type "Warning"
         if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
         return $false
       }
-
       if (-not $IsAdmin) {
         Debug-Log "Cannot check/install Windows Feature '$Name' — requires admin privileges." -Type "Warning"
         if ($InstallMsg) { Debug-Log "Suggested action (run elevated): $InstallMsg" -Type "Insight" }
         return $false
       }
-
       try {
         Import-Module ServerManager -ErrorAction Stop
         $feature = Get-WindowsFeature $Name -ErrorAction SilentlyContinue
@@ -354,7 +331,6 @@ function Test-Requirement {
         if ($InstallMsg) { Debug-Log "Suggested action (run elevated): $InstallMsg" -Type "Insight" }
         return $false
       }
-
       try {
         $cap = Get-WindowsCapability -Name $Name -Online -ErrorAction SilentlyContinue
       } catch {
@@ -383,7 +359,6 @@ function Test-Requirement {
         Debug-Log "Cannot check ChocoApp '$Name' — Chocolatey only works on Windows." -Type "Warning"
         return $false
       }
-
       $installed = choco list --local-only | Where-Object { $_ -match "^$Name" }
       if ($installed) {
         Debug-Log "Choco App '$Name' is installed." -Type "Success"
@@ -404,7 +379,6 @@ function Debug-DumpViewTree {
   )
 
   if (-not $View) { return }
-
   $pad = (' ' * ($Indent * 2))
   $type = $View.GetType().Name
 
@@ -418,9 +392,7 @@ function Debug-DumpViewTree {
   Debug-Log ("$pad$type | X=$x Y=$y W=$w H=$h Visible=$vis Theme=$scheme") -Type "Tracing"
 
   if ($View.Subviews -and $View.Subviews.Count -gt 0) {
-    foreach ($child in $View.Subviews) {
-      Debug-DumpViewTree -View $child -Indent ($Indent + 1)
-    }
+    foreach ($child in $View.Subviews) { Debug-DumpViewTree -View $child -Indent ($Indent + 1) }
   }
 }
 
@@ -528,6 +500,7 @@ function Build-MainMenu {
   $mBulkEnable        = [Terminal.Gui.MenuItem]::new("_Enable Selected", "Enable selected accounts", [Action]{$objects = Get-SelectedObjectsAsObjects ; Manage-AccountStatus -Objects $objects -Action 'Enable'})
   $mBulkAddGroup      = [Terminal.Gui.MenuItem]::new("Add to _Group...","Add selected users to group",[Action]{Invoke-BulkAddToGroup})
   $mBulkEdit          = [Terminal.Gui.MenuItem]::new("_Edit Attribute (Bulk)", "Change one attribute across selected objects", [Action]{$objects = Get-SelectedObjectsAsObjects ; Set-BulkAttribute -Objects $objects -ShowDialog})
+  $mStaleAll          = [Terminal.Gui.MenuItem]::new("Find _All Stale Accounts", "Find all inactive accounts", [Action]{Show-ADSearchDialog})
   $mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator (F2)",[Action]{Generate-RandomPassword})
   $mLAPSPasswords     = [Terminal.Gui.MenuItem]::new("_LAPS Passwords","Lookup LAPS Creds (Fx)",[Action]{Show-LAPSSearchModal})
   $mADHealth          = [Terminal.Gui.MenuItem]::new("_AD Health Status", "AD Health And Replication Status", [Action]{Show-ADHealthDialog })
@@ -560,7 +533,7 @@ function Build-MainMenu {
   $menu = [Terminal.Gui.MenuBar]::new(@(
     $mExtraFunctions = [Terminal.Gui.MenuBarItem]::new("_AD Properties",@($mPasswordGenerator, $mLAPSPasswords, $mCopyTemplate, $menuItemGPOs, $menuItemTrusts, $menuItemPrinters, $menuItemDNSDialog, $menuItemIPSec))
     [Terminal.Gui.MenuBarItem]::new("_File", @($mRefresh, $mDemoExport, $mDemoImport, $mTheme, $mFile)),
-    [Terminal.Gui.MenuBarItem]::new("_Action", @($mNew, $mProps, $mExtraFunctions, $mQuickFilter, $mUndo, $mChangeDomain, $mChangeDC, $mSearchAD, $mADHealth)),
+    [Terminal.Gui.MenuBarItem]::new("_Action", @($mNew, $mProps, $mExtraFunctions, $mQuickFilter, $mUndo, $mChangeDomain, $mChangeDC, $mSearchAD, $mADHealth, $mStaleAll)),
     [Terminal.Gui.MenuBarItem]::new("_Selection", @($mSelectionMode, $mSelectAll, $mDeselectAll, $mBulkEdit, $mBulkAddGroup, $mBulkEnable, $mBulkDisable)),
     [Terminal.Gui.MenuBarItem]::new("_Help", @($mShortcuts, $menuItemIPSecHelp, $mAboutDSATUI, $mWhyBlaabaer))
   ))
@@ -594,7 +567,6 @@ function script:Set-ObjectCheckboxes {
         $State.chkSearchLocked.Y = [Terminal.Gui.Pos]::Bottom($State.txtSearchOutput) + 1
         $State.chkSearchLocked.CanFocus = $true
         $View.Add($State.chkSearchLocked)
-
         $State.chkSearchDisabled = [Terminal.Gui.CheckBox]::new("Account Disabled")
         $State.chkSearchDisabled.X = 2
         $State.chkSearchDisabled.Y = [Terminal.Gui.Pos]::Bottom($State.chkSearchLocked) + 1
@@ -691,12 +663,8 @@ function script:Set-ObjectCheckboxes {
         $State.chkSearchRODC.CanFocus = $true
         $View.Add($State.chkSearchRODC)
       } else {
-        if ($State.chkSearchGC) {
-          $State.chkSearchGC.Checked = [bool]$Data.IsGlobalCatalog
-        }
-        if ($State.chkSearchRODC) {
-          $State.chkSearchRODC.Checked = [bool]$Data.IsReadOnly
-        }
+        if ($State.chkSearchGC) { $State.chkSearchGC.Checked = [bool]$Data.IsGlobalCatalog }
+        if ($State.chkSearchRODC) { $State.chkSearchRODC.Checked = [bool]$Data.IsReadOnly }
       }
     }
   }
@@ -722,7 +690,7 @@ function Show-Properties {
   ## Get the actual AD object from the Tag
   $obj = $tag.Object
 
-  ## ---- Handle containers without objects ----
+  ##  Handle containers without objects
   if (-not $obj) {
     if ($tag.Type -eq 'container') {
       Debug-Log "Container selected (no properties to show)" -Type "Insight"
@@ -733,7 +701,7 @@ function Show-Properties {
     return
   }
 
-  ## ---- Use the Type property first (more reliable) ----
+  ##  Use the Type property first (more reliable)
   switch ($tag.Type) {
     'user' {
       Debug-Log "USER object selected: $($obj.Name)" -Type "Insight"
@@ -772,7 +740,7 @@ function Show-Properties {
     }
   }
 
-  ## ---- Fallback: Try to detect type from properties (for backward compatibility) ----
+  ##  Fallback: Try to detect type from properties (for backward compatibility)
   if ($obj.PSObject.Properties.Match('SamAccountName').Count -gt 0) {
     Debug-Log "Detected USER object (fallback): $($obj.Name)" -Type "Insight"
     Show-UserPropertiesDialog -user $obj
@@ -800,7 +768,7 @@ function Show-Properties {
 function Show-UserPropertiesDialog {
   param($user)
 
-  ## CAPTURE FUNCTIONS FOR THIS BUILDER'S CLOSURES
+  ## Capture functions for this builder's closure
   $showAuditLogFunc = ${function:Show-AuditLogDialog}
   if (-not $user) {
     Debug-Log "User object is null" -Type "Warning"
@@ -863,36 +831,101 @@ function Show-UserPropertiesDialog {
       $state.lblDaysUntilExpiry = [Terminal.Gui.Label]::new("N/A")
       $state.lblDaysUntilExpiry.X = 22; $state.lblDaysUntilExpiry.Y = $y
       $view.Add($state.lblDaysUntilExpiry)
+      $y += 1
+
+      ## Validation message label (hidden by default)
+      $state.lblValidationError = [Terminal.Gui.Label]::new("")
+      $state.lblValidationError.X = 20
+      $state.lblValidationError.Y = $y
+      $state.lblValidationError.ColorScheme = [Terminal.Gui.Colors]::Error
+      $view.Add($state.lblValidationError)
 
       ## Event handlers
       $null = $state.chkNeverExpires.add_Toggled({
-        $state.txtExpirationDate.ReadOnly = $state.chkNeverExpires.Checked
-        if ($state.chkNeverExpires.Checked) {
-          $state.txtExpirationDate.Text  = [NStack.ustring]::Make("")
-          $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("N/A")
-        }
-      }.GetNewClosure())
+      $state.txtExpirationDate.ReadOnly = $state.chkNeverExpires.Checked
+      if ($state.chkNeverExpires.Checked) {
+        $state.txtExpirationDate.Text   = [NStack.ustring]::Make("")
+        $state.lblDaysUntilExpiry.Text  = [NStack.ustring]::Make("N/A")
+        $state.lblValidationError.Text  = [NStack.ustring]::Make("")
+      }
+    }.GetNewClosure())
 
-      $null = $state.txtExpirationDate.add_TextChanged({
-        $text = $state.txtExpirationDate.Text.ToString()
-        if ([string]::IsNullOrWhiteSpace($text)) {
-          $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("N/A")
-          return
-        }
-        try {
-          $dt = [DateTime]::Parse($text)
-          $days = ($dt - (Get-Date)).Days
-          if ($days -lt 0)       { $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("EXPIRED ($([Math]::Abs($days)) days ago)")
-          } elseif ($days -eq 0) { $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("TODAY")
-          } else                 { $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("$days days")          }
-        } catch {
-          $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("Invalid date")
-        }
-      }.GetNewClosure())
-    }
+  $null = $state.txtExpirationDate.add_TextChanged({
+  $text = $state.txtExpirationDate.Text.ToString()
+  ## Clear validation error
+  $state.lblValidationError.Text = [NStack.ustring]::Make("")
+
+  if ([string]::IsNullOrWhiteSpace($text)) {
+    $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("N/A")
+    return
   }
 
-  ## ==================== Account Tab ====================
+  ## Validate YYYY-MM-DD format first
+  if ($text -notmatch '^\d{4}-\d{2}-\d{2}$') {
+    $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("Invalid format")
+    $state.lblValidationError.Text = [NStack.ustring]::Make("Use YYYY-MM-DD format")
+    return
+  }
+
+  ## Extract components and validate ranges
+  $parts = $text -split '-'
+  $year  = [int]$parts[0]
+  $month = [int]$parts[1]
+  $day   = [int]$parts[2]
+
+  ## Validate month (1-12)
+  if ($month -lt 1 -or $month -gt 12) {
+    $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("Invalid month")
+    $state.lblValidationError.Text = [NStack.ustring]::Make("Month must be 01-12")
+    return
+  }
+
+  ## Validate day (1-31, but also check for month)
+  if ($day -lt 1 -or $day -gt 31) {
+    $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("Invalid day")
+    $state.lblValidationError.Text = [NStack.ustring]::Make("Day must be 01-31")
+    return
+  }
+
+    ## Try to parse as actual date (this catches Feb 30, etc.)
+    try {
+      $dt = [DateTime]::new($year, $month, $day)
+      ## Calculate days until expiry
+      $days = ($dt - (Get-Date)).Days
+      if ($days -lt 0) {
+        $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("EXPIRED ($([Math]::Abs($days)) days ago)")
+        $state.lblValidationError.Text = [NStack.ustring]::Make("⚠ Date is in the past")
+      } elseif ($days -eq 0) {
+        $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("TODAY")
+      } else {
+        $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("$days days")
+      }
+    } catch {
+      $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("Invalid date")
+      $state.lblValidationError.Text = [NStack.ustring]::Make("Not a valid calendar date")
+    }
+  }.GetNewClosure())
+
+  $null = $state.txtExpirationDate.add_TextChanged({
+    $text = $state.txtExpirationDate.Text.ToString()
+    if ([string]::IsNullOrWhiteSpace($text)) {
+      $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("N/A")
+      return
+    }
+    try {
+      $dt = [DateTime]::Parse($text)
+      $days = ($dt - (Get-Date)).Days
+      if ($days -lt 0)       { $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("EXPIRED ($([Math]::Abs($days)) days ago)")
+      } elseif ($days -eq 0) { $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("TODAY")
+      } else                 { $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("$days days")          }
+    } catch {
+      $state.lblDaysUntilExpiry.Text = [NStack.ustring]::Make("Invalid date")
+    }
+  }.GetNewClosure())
+  }
+}
+
+## ==================== Account Tab ====================
 $accountTab = @{
   Name = "Account"
   Builder = {
@@ -950,13 +983,12 @@ $accountTab = @{
 
     ## Audit Log Button - ALWAYS show, not conditional
     Add-SectionHeader -View $view -Y ([ref]$y) -Text "Audit & Security" -SpaceBefore 1
-
     $btnAuditLog = [Terminal.Gui.Button]::new("View Audit Log...")
     $btnAuditLog.X = 4
     $btnAuditLog.Y = $y
     $btnAuditLog.add_Clicked({
       Show-AuditLogDialog -Object $user -ObjectType 'User'
-    })  # NO .GetNewClosure() !
+    })  ## NO .GetNewClosure() !
     $view.Add($btnAuditLog)
     $y += 1
     }
@@ -1023,13 +1055,11 @@ $accountTab = @{
       $state.lstGroups.X = 2; $state.lstGroups.Y = $y
       $state.lstGroups.Width = [Terminal.Gui.Dim]::Fill(2)
       $state.lstGroups.Height = 25
-
-      ## FORCE ARRAY: Use @() to ensure it's always an array
+      ## Force array: Use @() to ensure it's always an array
       $state.groupList = @()
       if ($user.Groups) { $state.groupList = @($user.Groups)
       } elseif ($user.MemberOf) { $state.groupList = @($user.MemberOf | ForEach-Object { if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ } })
       }
-
       if ($state.groupList.Count -gt 0) { $state.lstGroups.SetSource($state.groupList)
       } else { $state.lstGroups.SetSource(@("(No group memberships)"))
       }
@@ -1056,36 +1086,32 @@ $accountTab = @{
       $btnRemove.add_Clicked({
         $selectedIndex = $state.lstGroups.SelectedItem
 
-        ## FORCE ARRAY
+        ## Force array
         $currentGroups = @()
         if ($user.Groups) { $currentGroups = @($user.Groups)
         } elseif ($user.MemberOf) { $currentGroups = @($user.MemberOf | ForEach-Object {
             if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
           })
         }
-
         if ($selectedIndex -ge 0 -and $selectedIndex -lt $currentGroups.Count) {
           $selectedGroup = $currentGroups[$selectedIndex]
           if ($selectedGroup -eq "(No group memberships)") {
             Show-Modal "Info" "No group selected"
             return
           }
-
           $confirmDlg = Show-Modal "Confirm Removal" "Remove $($user.Name) from group '$selectedGroup'?" -YesNo
           if ($confirmDlg -eq 0) {
             try {
               if ($Script:DemoMode) { $user.Groups = @($user.Groups | Where-Object { $_ -ne $selectedGroup })
               } else { Remove-ADGroupMember -Identity $selectedGroup -Members $user.SamAccountName -Confirm:$false
               }
-
-              ## FORCE ARRAY
+              ## Force array
               $updatedGroups = @()
               if ($user.Groups) { $updatedGroups = @($user.Groups)
               } elseif ($user.MemberOf) { $updatedGroups = @($user.MemberOf | Where-Object { $_ -ne $selectedGroup } | ForEach-Object {
                   if ($_ -match '^CN=([^,]+)') { $matches[1] } else { $_ }
                 })
               }
-
               if ($updatedGroups.Count -gt 0) { $state.lstGroups.SetSource($updatedGroups)
               } else { $state.lstGroups.SetSource(@("(No group memberships)"))
               }
@@ -1155,6 +1181,71 @@ $accountTab = @{
           $changesMade = $true
         }
       }
+      ## Handle Account Expiration
+      if ($state.chkNeverExpires) {
+        if ($state.chkNeverExpires.Checked) {
+          ## User wants account to never expire
+          if ($user.PSObject.Properties.Match('AccountExpirationDate') -and $user.AccountExpirationDate) {
+            if ($Script:DemoMode) {
+              $user.AccountExpirationDate = $null
+            } else {
+              Set-UnifiedObject -ObjectType User -Object $user -Properties @{ AccountExpirationDate = $null }
+              $user.AccountExpirationDate = $null
+            }
+            $changesMade = $true
+          }
+        } else {
+          ## User set an expiration date
+          $expiryText = $state.txtExpirationDate.Text.ToString().Trim()
+
+          if (-not [string]::IsNullOrWhiteSpace($expiryText)) {
+          ## Validate format
+          if ($expiryText -notmatch '^\d{4}-\d{2}-\d{2}$') {
+            Show-Modal "Error" "Invalid date format. Use YYYY-MM-DD"
+            return
+          }
+      ## Try to parse the date
+      try {
+        $parts = $expiryText -split '-'
+        $year  = [int]$parts[0]
+        $month = [int]$parts[1]
+        $day   = [int]$parts[2]
+
+        ## Validate ranges
+        if ($month -lt 1 -or $month -gt 12) {
+          Show-Modal "Error" "Invalid month. Must be 01-12, not $month"
+          return
+        }
+        if ($day -lt 1 -or $day -gt 31) {
+          Show-Modal "Error" "Invalid day. Must be 01-31, not $day"
+          return
+        }
+        ## Create the date (this will fail for invalid dates like Feb 30)
+        $newExpiryDate = [DateTime]::new($year, $month, $day)
+
+        ## Check if date is different from current
+        $currentExpiry = if ($user.PSObject.Properties.Match('AccountExpirationDate')) { $user.AccountExpirationDate } else { $null }
+
+        if ($null -eq $currentExpiry -or $newExpiryDate -ne $currentExpiry) {
+          if ($Script:DemoMode) {
+            $user.AccountExpirationDate = $newExpiryDate
+          } else {
+            Set-UnifiedObject -ObjectType User -Object $user -Properties @{ AccountExpirationDate = $newExpiryDate }
+            $user.AccountExpirationDate = $newExpiryDate
+          }
+          $changesMade = $true
+          }
+          } catch [System.ArgumentOutOfRangeException] {
+            Show-Modal "Error" "Invalid date: '$expiryText' is not a valid calendar date (e.g., Feb 30 doesn't exist)"
+            return
+          } catch {
+            Show-Modal "Error" "Failed to parse date: $($_.Exception.Message)"
+            return
+            }
+          }
+        }
+      }
+
       if ($changesMade) { Show-Modal "Success" "Changes applied successfully"
       } else { Show-Modal "Info" "No changes to apply"
       }
@@ -1222,7 +1313,7 @@ function Add-SectionHeader {
 
 ## -----------------------{ Pretty Themes Selection }----------------------
 function Show-ThemeSelector {
-  ## --- Theme list ---
+  ## Theme list
   $themes = @("british", "class91", "dark", "db-1980s", "dsb", "gemstones", "intercity-swallow", "irn-bru", "light", "matrix", "ns", "network-southeast", "panam", "procomm", "scotrail", "twa", "viarail", "viarail-soft")
 
   ## Split into two columns
@@ -1230,7 +1321,7 @@ function Show-ThemeSelector {
   $leftThemes  = $themes[0..($half-1)]
   $rightThemes = $themes[$half..($themes.Count-1)]
 
-  ## --- Determine current theme (case-insensitive) ---
+  ## Determine current theme (case-insensitive)
   $currentTheme = $Script:ThemeMode
   Debug-Log (" Global ThemeMode = ${Global:ThemeMode}") -Type "Tracing"
   Debug-Log (" Current theme for selection = ${currentTheme}") -Type "Tracing"
@@ -1249,20 +1340,20 @@ function Show-ThemeSelector {
   $rightSelected = if ($currentIndex -ge $leftThemes.Count) { $currentIndex - $leftThemes.Count } else { -1 }
   Debug-Log (" LeftSelected = ${leftSelected}, RightSelected = ${rightSelected}") -Type "Tracing"
 
-  ## --- Create dialog ---
+  ## Create dialog
   $dlg = [Terminal.Gui.Dialog]::new("Select Theme", 60, 16)
   $lbl = [Terminal.Gui.Label]::new("Choose a color theme:")
   $lbl.X = 2; $lbl.Y = 1
   $dlg.Add($lbl)
 
-  ## --- Left column RadioGroup ---
+  ## Left column RadioGroup
   $rdoLeft = [Terminal.Gui.RadioGroup]::new($leftThemes)
   $rdoLeft.X = 2
   $rdoLeft.Y = 3
   $rdoLeft.SelectedItem = $leftSelected
   $dlg.Add($rdoLeft)
 
-  ## --- Right column RadioGroup ---
+  ## Right column RadioGroup
   $rdoRight = [Terminal.Gui.RadioGroup]::new($rightThemes)
   $rdoRight.X = 32
   $rdoRight.Y = 3
@@ -1270,11 +1361,11 @@ function Show-ThemeSelector {
   $dlg.Add($rdoRight)
   Debug-Log (" rdoLeft.SelectedItem = ${rdoLeft.SelectedItem}, rdoRight.SelectedItem = ${rdoRight.SelectedItem}") -Type "Tracing"
 
-  ## --- Sync columns so only one can be selected ---
+  ## Sync columns so only one can be selected
   $rdoLeft.add_SelectedItemChanged({ if ($rdoLeft.SelectedItem -ge 0) { $rdoRight.SelectedItem = -1 } })
   $rdoRight.add_SelectedItemChanged({ if ($rdoRight.SelectedItem -ge 0) { $rdoLeft.SelectedItem = -1  }})
 
-  ## --- Apply Button ---
+  ## Apply Button
   $btnApply = [Terminal.Gui.Button]::new("Apply")
   $btnApply.add_Clicked({
     $sel = if ($rdoLeft.SelectedItem -ge 0) { $leftThemes[$rdoLeft.SelectedItem]
@@ -1303,326 +1394,13 @@ function Show-ThemeSelector {
   }).GetNewClosure()
   $dlg.AddButton($btnApply)
 
-  ## --- Cancel Button ---
+  ## Cancel Button
   $btnCancel = [Terminal.Gui.Button]::new("Cancel")
   $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }).GetNewClosure()
   $dlg.AddButton($btnCancel)
 
-  ## --- Run the dialog ---
+  ## Run the dialog
   [Terminal.Gui.Application]::Run($dlg)
-}
-
-## ==================== STALE ACCOUNT DETECTION ====================
-function Find-StaleAccounts {
-  <#
-  .SYNOPSIS
-    Find accounts that haven't been used in a specified number of days
-  .PARAMETER DaysSinceLogon
-    Number of days since last logon to consider account stale
-  .PARAMETER ObjectType
-    'User', 'Computer', or 'Both'
-
-  .PARAMETER ShowDialog
-  If specified, shows interactive dialog with results
-
-  .PARAMETER ExportPath
-  Optional - export results to CSV
-
-  .EXAMPLE
-  Find-StaleAccounts -DaysSinceLogon 90 -ObjectType 'User' -ShowDialog
-
-  .EXAMPLE
-  Find-StaleAccounts -DaysSinceLogon 180 -ObjectType 'Computer' -ExportPath "stale_computers.csv"
-
-  .EXAMPLE
-  Find-StaleAccounts -DaysSinceLogon 90 -ObjectType 'Both' -ShowDialog
-  #>
-
-  param(
-    [Parameter(Mandatory=$false)]
-    [int]$DaysSinceLogon = 90,
-    [Parameter(Mandatory=$false)]
-    [ValidateSet('User', 'Computer', 'Both')]
-    [string]$ObjectType = 'User',
-    [switch]$ShowDialog,
-    [string]$ExportPath
-  )
-
-  ## ==================== PARAMETER SELECTION DIALOG ====================
-  if ($ShowDialog -and -not $PSBoundParameters.ContainsKey('DaysSinceLogon')) {
-    ## Show dialog to select parameters
-    $paramDlg = [Terminal.Gui.Dialog]::new("Stale Account Detection", 60, 16)
-    $lblTitle = [Terminal.Gui.Label]::new("Configure stale account search:")
-    $lblTitle.X = 2
-    $lblTitle.Y = 1
-    $paramDlg.Add($lblTitle)
-    ## Days threshold
-    $lblDays = [Terminal.Gui.Label]::new("Days since last logon:")
-    $lblDays.X = 2
-    $lblDays.Y = 3
-    $paramDlg.Add($lblDays)
-    $txtDays = [Terminal.Gui.TextField]::new("90")
-    $txtDays.X = 25
-    $txtDays.Y = 3
-    $txtDays.Width = 10
-    $paramDlg.Add($txtDays)
-    ## Object type selection
-    $lblType = [Terminal.Gui.Label]::new("Search for:")
-    $lblType.X = 2
-    $lblType.Y = 5
-    $paramDlg.Add($lblType)
-    $rdoType = [Terminal.Gui.RadioGroup]::new(@("Users", "Computers", "Both"))
-    $rdoType.X = 2
-    $rdoType.Y = 6
-    $rdoType.SelectedItem = 0  # Users by default
-    $paramDlg.Add($rdoType)
-    ## Search button
-    $btnSearch = [Terminal.Gui.Button]::new("Search")
-    $btnSearch.add_Clicked({
-      ## Validate days input
-      $daysValue = 90
-      if (-not [int]::TryParse($txtDays.Text.ToString(), [ref]$daysValue) -or $daysValue -lt 1) {
-        Show-Modal "Invalid Input" "Days must be a positive number"
-        return
-      }
-      ## Get object type
-      $typeValue = switch ($rdoType.SelectedItem) {
-        0 { 'User' }
-        1 { 'Computer' }
-        2 { 'Both' }
-      }
-      [Terminal.Gui.Application]::RequestStop()
-      ## Run search with selected parameters
-      Find-StaleAccounts -DaysSinceLogon $daysValue -ObjectType $typeValue -ShowDialog
-    }.GetNewClosure())
-
-    $paramDlg.AddButton($btnSearch)
-    ## Cancel button
-    $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-    $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }).GetNewClosure()
-    $paramDlg.AddButton($btnCancel)
-    [Terminal.Gui.Application]::Run($paramDlg)
-    return
-  }
-  Debug-Log "Starting stale account detection - $ObjectType, $DaysSinceLogon days threshold" -Type "Insight"
-  $cutoffDate = (Get-Date).AddDays(-$DaysSinceLogon)
-  $staleAccounts = @()
-
-  ## ==================== FIND STALE USERS ====================
-  if ($ObjectType -eq 'User' -or $ObjectType -eq 'Both') {
-    if ($Script:DemoMode) {
-      ## Demo mode - use simulated LastLogonDate
-      foreach ($user in $Script:Users) {
-        ## Generate pseudo-random last logon based on name hash
-        $hash = 0
-        foreach ($char in $user.Name.ToCharArray()) { $hash += [int]$char }
-        $daysAgo = ($hash % 365) + 1  # 1-365 days ago
-        $lastLogon = (Get-Date).AddDays(-$daysAgo)
-
-        if ($lastLogon -lt $cutoffDate) {
-          $staleAccounts += [PSCustomObject]@{
-          ObjectType      = 'User'
-          Name            = $user.Name
-          SamAccountName  = $user.SamAccountName
-          Enabled         = $user.Enabled
-          Disabled        = $user.Disabled
-          LastLogon       = $lastLogon
-          DaysSinceLogon  = $daysAgo
-          OU              = ($user.OU -join ';')
-          Department      = $user.Department
-          Title           = $user.Title
-        }
-      }
-    }
-    } else {
-    ## Production mode - query AD
-    try {
-      $lastLogonDate = $cutoffDate.ToFileTime()
-      $users = Get-ADUser -Filter "LastLogonTimeStamp -lt $lastLogonDate" -Properties LastLogonTimeStamp,Department,Title,Enabled
-      foreach ($user in $users) {
-      $lastLogon = if ($user.LastLogonTimeStamp) {
-        [DateTime]::FromFileTime($user.LastLogonTimeStamp)
-      } else {
-        [DateTime]::MinValue
-      }
-
-      $daysAgo = ((Get-Date) - $lastLogon).Days
-      $staleAccounts += [PSCustomObject]@{
-        ObjectType = 'User'
-        Name           = $user.Name
-        SamAccountName = $user.SamAccountName
-        Enabled        = $user.Enabled
-        Disabled       = -not $user.Enabled
-        LastLogon      = $lastLogon
-        DaysSinceLogon = $daysAgo
-        OU             = $user.DistinguishedName -replace '^CN=[^,]+,', ''
-        Department     = $user.Department
-        Title          = $user.Title
-        }
-      }
-    } catch {
-      Debug-Log "Error querying stale users: $($_.Exception.Message)" -Type "Problem"
-      Show-Modal "Query Error" "Failed to query stale users:`n`n$($_.Exception.Message)"
-      return
-    }
-  }
-  }
-
-  ## ==================== FIND STALE COMPUTERS ====================
-  if ($ObjectType -eq 'Computer' -or $ObjectType -eq 'Both') {
-    if ($Script:DemoMode) {
-      ## Demo mode - use simulated LastLogonDate
-      foreach ($computer in $Script:Computers) {
-        ## Generate pseudo-random last logon based on name hash
-        $hash = 0
-        foreach ($char in $computer.Name.ToCharArray()) { $hash += [int]$char }
-        $daysAgo   = ($hash % 365) + 1  # 1-365 days ago
-        $lastLogon = (Get-Date).AddDays(-$daysAgo)
-
-        if ($lastLogon -lt $cutoffDate) {
-          $staleAccounts += [PSCustomObject]@{
-          ObjectType      = 'Computer'
-          Name            = $computer.Name
-          SamAccountName  = $computer.SamAccountName
-          Enabled         = $computer.Enabled
-          Disabled        = $computer.Disabled
-          LastLogon       = $lastLogon
-          DaysSinceLogon  = $daysAgo
-          OU              = 'Computers'
-          OperatingSystem = $computer.OperatingSystem
-          Location        = $computer.Location
-        }
-      }
-    }
-  } else {
-    ## Production mode - query AD
-    try {
-      $lastLogonDate = $cutoffDate.ToFileTime()
-      $computers = Get-ADComputer -Filter "LastLogonTimeStamp -lt $lastLogonDate" -Properties LastLogonTimeStamp,OperatingSystem,Location,Enabled
-      foreach ($computer in $computers) {
-        $lastLogon = if ($computer.LastLogonTimeStamp) {
-        [DateTime]::FromFileTime($computer.LastLogonTimeStamp)
-      } else { [DateTime]::MinValue
-      }
-
-      $daysAgo = ((Get-Date) - $lastLogon).Days
-      $staleAccounts   += [PSCustomObject]@{
-        ObjectType      = 'Computer'
-        Name            = $computer.Name
-        SamAccountName  = $computer.SamAccountName
-        Enabled         = $computer.Enabled
-        Disabled        = -not $computer.Enabled
-        LastLogon       = $lastLogon
-        DaysSinceLogon  = $daysAgo
-        OU              = $computer.DistinguishedName -replace '^CN=[^,]+,', ''
-        OperatingSystem = $computer.OperatingSystem
-        Location        = $computer.Location
-      }
-    }
-  } catch {
-      Debug-Log "Error querying stale computers: $($_.Exception.Message)" -Type "Problem"
-      Show-Modal "Query Error" "Failed to query stale computers:`n`n$($_.Exception.Message)"
-      return
-    }
-  }
-  }
-
-  ## Sort by days since logon (most stale first)
-  $staleAccounts = $staleAccounts | Sort-Object -Property DaysSinceLogon -Descending
-  Debug-Log "Found $($staleAccounts.Count) stale accounts" -Type "Insight"
-
-  ## ==================== EXPORT TO CSV ====================
-  if ($ExportPath) {
-    try {
-      $staleAccounts | Export-Csv -Path $ExportPath -NoTypeInformation -Encoding UTF8
-      Debug-Log "Exported stale accounts to $ExportPath" -Type "Success"
-      Show-Modal "Export Complete" "Exported $($staleAccounts.Count) stale accounts to:`n`n$ExportPath"
-    } catch {
-      Debug-Log "Export failed: $($_.Exception.Message)" -Type "Problem"
-      Show-Modal "Export Failed" "Failed to export:`n`n$($_.Exception.Message)"
-    }
-  }
-
-  ## ==================== SHOW DIALOG ====================
-  if ($ShowDialog) {
-    $dlg = [Terminal.Gui.Dialog]::new("Stale Account Report", 100, 30)
-
-    ## Header info
-    $lblInfo = [Terminal.Gui.Label]::new("Accounts not used in $DaysSinceLogon+ days (Cutoff: $($cutoffDate.ToString('yyyy-MM-dd')))")
-    $lblInfo.X = 2
-    $lblInfo.Y = 1
-    $dlg.Add($lblInfo)
-    $lblCount = [Terminal.Gui.Label]::new("Found: $($staleAccounts.Count) stale accounts")
-    $lblCount.X = 2
-    $lblCount.Y = 2
-    $dlg.Add($lblCount)
-    ## Results list
-    $lstResults = [Terminal.Gui.ListView]::new()
-    $lstResults.X = 2
-    $lstResults.Y = 4
-    $lstResults.Width = [Terminal.Gui.Dim]::Fill(2)
-    $lstResults.Height = [Terminal.Gui.Dim]::Fill(5)
-    ## Format display strings
-    $displayItems = @()
-    foreach ($account in $staleAccounts) {
-      $statusIcon = if ($account.Enabled) { "✓" } else { "⊗" }
-      $lastLogonStr = if ($account.LastLogon -eq [DateTime]::MinValue) { "NEVER"
-      } else { $account.LastLogon.ToString('yyyy-MM-dd')
-      }
-      $displayItems += "[$statusIcon] $($account.ObjectType) | $($account.Name) | Last: $lastLogonStr ($($account.DaysSinceLogon)d ago)"
-    }
-    if ($displayItems.Count -eq 0) { $displayItems = @("(No stale accounts found)") }
-    $lstResults.SetSource($displayItems)
-    $dlg.Add($lstResults)
-    ## Action buttons
-    $y = [Terminal.Gui.Pos]::Bottom($dlg) - 3
-    ## Export button
-    $btnExport = [Terminal.Gui.Button]::new(2, $y, "Export CSV")
-    $btnExport.add_Clicked({
-      $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-      $filename = "stale_accounts_${DaysSinceLogon}days_$timestamp.csv"
-      try {
-        $staleAccounts | Export-Csv -Path $filename -NoTypeInformation -Encoding UTF8
-        Show-Modal "Export Complete" "Exported to:`n`n$filename"
-        Debug-Log "Exported stale accounts to $filename" -Type "Success"
-      } catch {
-        Show-Modal "Export Failed" "Failed to export:`n`n$($_.Exception.Message)"
-      }
-    }.GetNewClosure())
-    $dlg.Add($btnExport)
-
-    ## Disable Selected button (if items selected)
-    $btnDisable = [Terminal.Gui.Button]::new(20, $y, "Disable Selected")
-    $btnDisable.add_Clicked({
-      if ($lstResults.SelectedItem -lt 0) {
-        Show-Modal "No Selection" "Please select an account"
-        return
-      }
-
-      $selected = $staleAccounts[$lstResults.SelectedItem]
-      ## Find actual object in script arrays
-      $obj = $null
-      if ($selected.ObjectType -eq 'User') { $obj = $Script:Users | Where-Object { $_.SamAccountName -eq $selected.SamAccountName } | Select-Object -First 1
-      } else { $obj = $Script:Computers | Where-Object { $_.SamAccountName -eq $selected.SamAccountName } | Select-Object -First 1 }
-
-      if ($obj) {
-        Manage-AccountStatus -Objects @($obj) -Action 'Disable' -Reason "Stale account (not used in $DaysSinceLogon+ days)"
-        ## Refresh display
-        $selected.Enabled = $false
-        $selected.Disabled = $true
-        $displayItems[$lstResults.SelectedItem] = "[⊗] $($selected.ObjectType) | $($selected.Name) | Last: $($selected.LastLogon.ToString('yyyy-MM-dd')) ($($selected.DaysSinceLogon)d ago)"
-        $lstResults.SetSource($displayItems)
-      }
-    }.GetNewClosure())
-    $dlg.Add($btnDisable)
-
-    ## Close button
-    $btnClose = [Terminal.Gui.Button]::new(44, $y, "Close")
-    $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }).GetNewClosure()
-    $dlg.Add($btnClose)
-    [Terminal.Gui.Application]::Run($dlg)
-  }
-  return $staleAccounts
 }
 
 ## ==================== COPY USER/GROUP (TEMPLATE-BASED) ====================
@@ -1799,7 +1577,7 @@ function Copy-ADObject {
       return
   }
 
-  ## ==================== DIRECT CREATION ====================
+  ## ==================== Direct Creation ====================
   if (-not $NewName) {
     Show-Modal "Missing Name" "NewName parameter required when not using -ShowDialog"
     return
@@ -1812,7 +1590,7 @@ function Copy-ADObject {
   ## Create new object based on template
   try {
     if ($Script:DemoMode) {
-      ## ==================== DEMO MODE - COPY USER ====================
+      ## ==================== Deo Mode - Copy User ====================
       if ($isUser) {
         ## Generate SamAccountName if not provided
         if (-not $samAccountName) {
@@ -1857,7 +1635,7 @@ function Copy-ADObject {
       $Script:rawUsers += $newUser
 
       Debug-Log "Created user '$NewName' (demo mode) - Template: $($SourceObject.Name)" -Type "Success"
-      if ($CopyMemberships) { Debug-Log " Copied $($newUser.Groups.Count) group memberships" -Type "Insight" }
+      if ($CopyMemberships) { Debug-Log "Copied $($newUser.Groups.Count) group memberships" -Type "Insight" }
       Show-Modal "User Created" "Successfully created user '$NewName'`n`nLogin: $samAccountName`nEmail: $emailAddress$(if ($CopyMemberships) { "`n`nCopied $($newUser.Groups.Count) group memberships" } else { '' })"
 
       ## ==================== DEMO MODE - COPY GROUP ====================
@@ -1873,23 +1651,20 @@ function Copy-ADObject {
           DistinguishedName = "CN=$NewName,$($SourceObject.DistinguishedName -replace '^CN=[^,]+,', '')"
           Domain            = $Script:CurrentDomain
         }
-
         $Script:Groups += $newGroup
         $Script:rawDemoGroups += $newGroup
         Debug-Log "Created group '$NewName' (demo mode) - Template: $($SourceObject.Name)" -Type "Success"
-        if ($CopyMemberships) { Debug-Log " Copied $($newGroup.Members.Count) members" -Type "Insight" }
+        if ($CopyMemberships) { Debug-Log "Copied $($newGroup.Members.Count) members" -Type "Insight" }
         Show-Modal "Group Created" "Successfully created group '$NewName'$(if ($CopyMemberships) { "`n`nCopied $($newGroup.Members.Count) members" } else { '' })"
       }
-
     } else {
-      ## ==================== PRODUCTION MODE ====================
+      ## ==================== Production Mode ====================
       if ($isUser) {
         ## Generate SamAccountName if not provided
         if (-not $samAccountName) {
           if ($NewName -match '^(\w+)\s+(\w+)') { $samAccountName = "$($Matches[1]).$($Matches[2])".ToLower()
           } else { $samAccountName = $NewName.ToLower().Replace(' ', '.') }
         }
-
         ## Create user params
         $params = @{
           Name           = $NewName
@@ -1919,11 +1694,10 @@ function Copy-ADObject {
         if ($CopyMemberships) {
           $sourceGroups = Get-ADPrincipalGroupMembership -Identity $SourceObject.SamAccountName | Where-Object { $_.Name -ne 'Domain Users' }
           foreach ($group in $sourceGroups) { Add-ADGroupMember -Identity $group.SamAccountName -Members $samAccountName -ErrorAction SilentlyContinue }
-          Debug-Log " Copied $($sourceGroups.Count) group memberships" -Type "Insight"
+          Debug-Log "Copied $($sourceGroups.Count) group memberships" -Type "Insight"
         }
         Debug-Log "Created user '$NewName' in AD - Template: $($SourceObject.Name)" -Type "Success"
         Show-Modal "User Created" "Successfully created user '$NewName' in AD$(if ($CopyMemberships) { "`n`nCopied $($sourceGroups.Count) group memberships" } else { '' })"
-
       } else {
         ## Create group
         $params = @{
@@ -1932,22 +1706,19 @@ function Copy-ADObject {
           GroupScope  = 'Global'
           ErrorAction = 'Stop'
         }
-
         if ($SourceObject.Description) { $params['Description'] = $SourceObject.Description }
         if ($SourceObject.ManagedBy) { $params['ManagedBy'] = $SourceObject.ManagedBy }
         New-ADGroup @params
-
         ## Copy members
         if ($CopyMemberships) {
           $sourceMembers = Get-ADGroupMember -Identity $SourceObject.Name
           foreach ($member in $sourceMembers) { Add-ADGroupMember -Identity $NewName -Members $member.SamAccountName -ErrorAction SilentlyContinue }
-          Debug-Log " Copied $($sourceMembers.Count) members" -Type "Insight"
+          Debug-Log "Copied $($sourceMembers.Count) members" -Type "Insight"
         }
         Debug-Log "Created group '$NewName' in AD - Template: $($SourceObject.Name)" -Type "Success"
         Show-Modal "Group Created" "Successfully created group '$NewName' in AD$(if ($CopyMemberships) { "`n`nCopied $($sourceMembers.Count) members" } else { '' })"
       }
     }
-
     ## Refresh UI
     Refresh-Data -domain $Script:CurrentDomain
     Build-Tree -domain $Script:CurrentDomain
@@ -1970,8 +1741,7 @@ function Load-DefaultDemoData {
   Now automatically shows file picker to load a TDF/CSV file.
   #>
 
-  Debug-Log " Load-DefaultDemoData called - prompting for TDF file" -Type "Insight"
-
+  Debug-Log "Load-DefaultDemoData called - prompting for TDF file" -Type "Insight"
   ## Set minimal scaffold so the app doesn't crash if user cancels
   if (-not $Script:ForestName) {
     $Script:ForestName    = "example.com"
@@ -2004,29 +1774,28 @@ function Load-DefaultDemoData {
     }
   }
 
-  ## AUTOMATICALLY SHOW FILE PICKER
-  Debug-Log " Showing file picker for demo data" -Type "Insight"
+  ## Automatically show the file picker
+  Debug-Log "Showing file picker for demo data" -Type "Insight"
 
   $Script:selectedFile = $null
   Show-FileBrowserDialog -Mode 'Open'
 
   if ($Script:selectedFile -and (Test-Path -LiteralPath $Script:selectedFile)) {
-    Debug-Log " User selected file: $($Script:selectedFile)" -Type "Insight"
-
+    Debug-Log "User selected file: $($Script:selectedFile)" -Type "Insight"
     $result = Import-DataFile -FilePath $Script:selectedFile
 
     if ($result) {
-      Debug-Log " Demo data loaded successfully from file" -Type "Success"
+      Debug-Log "Demo data loaded successfully from file" -Type "Success"
       Show-InfoPanel -UpdateOnly
       Refresh-Data -Domain $Script:CurrentDomain -RebuildTree
       return $true  ## Success!
     } else {
-      Debug-Log " Failed to import data from file" -Type "Problem"
+      Debug-Log "Failed to import data from file" -Type "Problem"
       Show-Modal "Import Failed" "Failed to load demo data from selected file"
       return $false
     }
   } else {
-    Debug-Log " No file selected - demo mode has no data" -Type "Warning"
+    Debug-Log "No file selected - demo mode has no data" -Type "Warning"
     Show-Modal "Demo Mode" "Demo mode requires a data file.`n`nPlease use File → Import Demo Data to load a TDF or CSV file."
     return $false
   }
@@ -2036,7 +1805,7 @@ function Load-DefaultDemoData {
 function Import-DataFile {
   param([string]$FilePath)
 
-  Debug-Log ": ========== IMPORT-DATAFILE CALLED ==========" -Type "Insight"
+  Debug-Log ": ========== Import Data File Called ==========" -Type "Insight"
   Debug-Log ": FilePath parameter: $FilePath" -Type "Insight"
   if (-not $FilePath) {
     Debug-Log ": ERROR - FilePath is empty!" -Type "Problem"
@@ -2125,7 +1894,6 @@ function Import-DataFile {
     }
 
   } elseif ($extension -eq '.jsonc' -or $extension -eq '.json') {
-
     ## ===== JSONC Import =====
     try {
       $rawContent = Get-Content -Path $FilePath -Raw
@@ -2134,8 +1902,8 @@ function Import-DataFile {
       } | Where-Object { $_.Trim() -ne '' } | Out-String
 
       $jsonData = $cleanedContent | ConvertFrom-Json
-
       $users = @()
+
       if ($jsonData.users) {
         $users = $jsonData.users | ForEach-Object {
           $h = @{}
@@ -2178,15 +1946,9 @@ function Import-DataFile {
 
       ## FIXED: Properly detect domain from hashtable keys
       $importedDomain = 'example.com'  # Default fallback
-      if ($users.Count -gt 0 -and $users[0] -is [hashtable] -and $users[0].ContainsKey('Domain') -and $users[0]['Domain']) {
-        $importedDomain = $users[0]['Domain']
-      }
-      elseif ($dcs.Count -gt 0 -and $dcs[0] -is [hashtable] -and $dcs[0].ContainsKey('Domain') -and $dcs[0]['Domain']) {
-        $importedDomain = $dcs[0]['Domain']
-      }
-      elseif ($computers.Count -gt 0 -and $computers[0] -is [hashtable] -and $computers[0].ContainsKey('Domain') -and $computers[0]['Domain']) {
-        $importedDomain = $computers[0]['Domain']
-      }
+      if ($users.Count -gt 0 -and $users[0] -is [hashtable] -and $users[0].ContainsKey('Domain') -and $users[0]['Domain']) { $importedDomain = $users[0]['Domain'] }
+      elseif ($dcs.Count -gt 0 -and $dcs[0] -is [hashtable] -and $dcs[0].ContainsKey('Domain') -and $dcs[0]['Domain']) { $importedDomain = $dcs[0]['Domain'] }
+      elseif ($computers.Count -gt 0 -and $computers[0] -is [hashtable] -and $computers[0].ContainsKey('Domain') -and $computers[0]['Domain']) { $importedDomain = $computers[0]['Domain'] }
       Debug-Log ": JSONC - Domain detected: '$importedDomain' | Users: $($users.Count), Groups: $($groups.Count), Computers: $($computers.Count), DCs: $($dcs.Count)" -Type "Insight"
     } catch {
       Debug-Log ": Failed to parse JSONC: $($_.Exception.Message)" -Type "Problem"
@@ -2202,10 +1964,10 @@ function Import-DataFile {
       Debug-Log ": Loaded $($csvContent.Count) rows from CSV" -Type "Insight"
 
       ## Parse CSV rows into users/computers/etc based on objectClass column
-      $users = @()
-      $groups = @()
+      $users     = @()
+      $groups    = @()
       $computers = @()
-      $dcs = @()
+      $dcs       = @()
 
       foreach ($row in $csvContent) {
         ## Determine object type from objectClass field
@@ -2239,13 +2001,11 @@ function Import-DataFile {
               $ouParts += $matches[1]
             }
           }
-
           ## Reverse to get top-down hierarchy
           if ($ouParts.Count -gt 0) {
             [array]::Reverse($ouParts)
             $hashRow['OU'] = $ouParts
           }
-
           ## Extract CN (common name) if not already present
           if (-not $hashRow.ContainsKey('Name') -or -not $hashRow['Name']) {
             if ($dnField -match '^CN=([^,]+)') {
@@ -2253,30 +2013,19 @@ function Import-DataFile {
             }
           }
         }
-
         ## Categorize by object type
         switch -Regex ($objectType) {
-          '^(user|person|organizationalPerson)$' {
-            $users += $hashRow
-          }
-          '^(group|groupOfNames)$' {
-            $groups += $hashRow
-          }
-          '^(computer|device)$' {
-            $computers += $hashRow
-          }
-          '^(domainDNS)$' {
-            # Skip domain object itself
-          }
-          '^(organizationalUnit)$' {
-            # OUs are handled through DN parsing
-          }
+          '^(user|person|organizationalPerson)$' { $users += $hashRow }
+          '^(group|groupOfNames)$' { $groups += $hashRow }
+          '^(computer|device)$' { $computers += $hashRow }
+          ## Skip domain object itself
+          '^(domainDNS)$' {}
+          ## OUs are handled through DN parsing
+          '^(organizationalUnit)$' {}
           default {
             # Try to infer type from other fields
-            if ($hashRow.ContainsKey('sAMAccountName') -or $hashRow.ContainsKey('userPrincipalName')) {
-              $users += $hashRow
-            } elseif ($hashRow.ContainsKey('groupType')) {
-              $groups += $hashRow
+            if ($hashRow.ContainsKey('sAMAccountName') -or $hashRow.ContainsKey('userPrincipalName')) { $users += $hashRow
+            } elseif ($hashRow.ContainsKey('groupType')) { $groups += $hashRow
             }
           }
         }
@@ -2307,12 +2056,10 @@ function Import-DataFile {
             foreach ($dnField in $dnFields) {
               if ($obj.ContainsKey($dnField) -and $obj[$dnField]) {
                 $dn = $obj[$dnField]
-                # Extract domain from DN like "DC=jukebox,DC=corp"
+                ## Extract domain from DN like "DC=jukebox,DC=corp"
                 if ($dn -match 'DC=([^,]+)') {
                   $dcParts = @()
-                  $dn -split ',' | Where-Object { $_ -match '^DC=' } | ForEach-Object {
-                    $dcParts += ($_ -replace '^DC=', '')
-                  }
+                  $dn -split ',' | Where-Object { $_ -match '^DC=' } | ForEach-Object { $dcParts += ($_ -replace '^DC=', '') }
                   if ($dcParts.Count -gt 0) {
                     $importedDomain = $dcParts -join '.'
                     Debug-Log ": Extracted domain from DN: '$importedDomain'" -Type "Success"
@@ -2325,15 +2072,12 @@ function Import-DataFile {
           }
         }
       }
-
       Debug-Log ": CSV - Domain detected: '$importedDomain' | Users: $($users.Count), Groups: $($groups.Count), Computers: $($computers.Count), DCs: $($dcs.Count)" -Type "Insight"
-
     } catch {
       Debug-Log ": Failed to import CSV: $($_.Exception.Message)" -Type "Problem"
       Show-Modal "CSV Import Failed" "Could not import CSV file:`n$($_.Exception.Message)"
       return $false
     }
-
   } else {
     Debug-Log ": Unsupported file type: $extension" -Type "Problem"
     Show-Modal "Unsupported File" "Please use .csv, .jsonc, or .tdf files only."
@@ -2453,7 +2197,7 @@ function Load-ADData {
       }
     }
 
-    ## ---------------- COMPUTERS & DCs ----------------
+    ## ---------------- Computers and DCs ----------------
     $adComputers = Get-ADComputer -LDAPFilter "(objectClass=computer)" -SearchBase $baseDN -Properties * -ResultSetSize $null
     $computers = @()
     $dcs = @()
@@ -2464,7 +2208,6 @@ function Load-ADData {
       if ($dn -match 'OU=') { $ouParts = ($dn -split '(?<!\\),' | Where-Object { $_ -match '^OU=' } | ForEach-Object { $_ -replace '^OU=', '' })
         [array]::Reverse($ouParts)
       }
-
       $isDC = ($uac -band 8192) -or ($c.ServicePrincipalName -match 'E3514235') -or ($dn -match 'OU=Domain Controllers')
       if ($isDC) {
         $dcs += @{
@@ -2501,9 +2244,7 @@ function Load-ADData {
         }
       }
     }
-
     Debug-Log "AD query complete: Users=$($users.Count), Groups=$($groups.Count), Computers=$($computers.Count), DCs=$($dcs.Count)" -Type "Success"
-
     ## **STORE THE AD RAW DATA FOR REFRESH**
     $Script:ImportedRawData = @{
       Users     = $users
@@ -2653,7 +2394,6 @@ function Show-FileBrowserDialog {
       Get-ChildItem -Path $path -Directory -ErrorAction SilentlyContinue |
         Sort-Object Name |
         ForEach-Object { $items.Add("[DIR] $($_.Name)") }
-
       ## Files matching filter
       Get-ChildItem -Path $path -File -ErrorAction SilentlyContinue |
         Where-Object { $Filter -contains "*.*" -or $Filter -contains "*$($_.Extension)" } |
@@ -2683,10 +2423,8 @@ function Show-FileBrowserDialog {
       $labelSelected.Text = [NStack.ustring]::Make("Selected: $($script:selectedFile)")
     }
   }
-
   ## Double-click to select
   $listView.add_OpenSelectedItem($handleSelection)
-
   ## Enter key to select
   $listView.add_KeyPress({
     param($sender, $keyEvent)
@@ -2815,7 +2553,7 @@ function Build-ContextMenuItems {
     [object]$Object
   )
 
-  Debug-Log "Build-ContextMenuItems CALLED - ObjectType: $ObjectType" -Type "Insight"
+  Debug-Log "Build-ContextMenuItems Called - ObjectType: $ObjectType" -Type "Insight"
 
   $menuItems = [System.Collections.ArrayList]@()
 
@@ -2823,7 +2561,7 @@ function Build-ContextMenuItems {
 
   switch ($ObjectType) {
     'user' {
-      Debug-Log "Building USER menu" -Type "Tracing"
+      Debug-Log "Building User menu" -Type "Tracing"
       [void]$menuItems.Add("Properties")
       [void]$menuItems.Add("---")
       [void]$menuItems.Add("Reset Password")
@@ -2939,16 +2677,12 @@ function Set-StatusBar {
   param(
     [Parameter(Position=0)]
     [string]$Message = "",
-
     [switch]$Initialise,
     [object]$ThemeData = $null,
-
     [ValidateSet('Working', 'Success', 'Error', 'Warning', 'Info')]
     [string]$Icon,
-
     [int]$Percent,
     [int]$BarWidth = 20,
-
     [switch]$Spinner,
     [switch]$Final
   )
@@ -2985,14 +2719,11 @@ function Set-StatusBar {
       $items += [Terminal.Gui.StatusItem]::new($sc.Key, $sc.Label, $sc.Action)
     }
     $items += $Script:StatusItem
-
     $Script:StatusBar = [Terminal.Gui.StatusBar]::new($items)
-
     if ($ThemeData -and $ThemeData.StatusBar) {
       $Script:StatusBar.ColorScheme = $ThemeData.StatusBar
       Debug-Log "Status bar theme applied" -Type "Success"
     }
-
     Debug-Log "Status bar initialised" -Type "Success"
     return $Script:StatusBar
   }
@@ -3002,11 +2733,9 @@ function Set-StatusBar {
     Debug-Log "StatusBar not initialised" -Type "Problem"
     return
   }
-
   ## Backwards compatibility
   if ($Spinner -and -not $Icon) { $Icon = 'Working' }
   if ($Final   -and -not $Icon) { $Icon = 'Success' }
-
   ## Prefix
   if ($Icon -and $Script:StatusIcons.ContainsKey($Icon)) {
     $prefix = $Script:StatusIcons[$Icon]
@@ -3017,14 +2746,11 @@ function Set-StatusBar {
 
   ## ==================== ASCII PROGRESS BAR ====================
   $progressText = ""
-
   if ($PSBoundParameters.ContainsKey('Percent')) {
     if ($Percent -lt 0)   { $Percent = 0 }
     if ($Percent -gt 100) { $Percent = 100 }
-
     $filled = [Math]::Floor($BarWidth * ($Percent / 100))
     $empty  = $BarWidth - $filled
-
     $progressText = " [" + ('o' * $filled) + ('-' * $empty) + "] $Percent%"
   }
 
@@ -3039,7 +2765,6 @@ function Set-StatusBar {
     # Ignore refresh errors
   }
 }
-
 
 ##  We show so many pop-up dialogs, use this function to reduce clutter
 function Show-Modal {
@@ -3151,7 +2876,6 @@ function Initialise-DataSource {
   if ($Script:DemoMode -and -not $Script:DataFileLoaded) {
     Debug-Log "DemoMode enabled and no file loaded - loading default demo data..." -Type "Insight"
     $demoSuccess = Load-DefaultDemoData
-
     if ($demoSuccess) {
       Debug-Log "Default demo data loaded successfully" -Type "Success"
 
@@ -3393,24 +3117,24 @@ function Get-Theme {
     ## Dump the ColorSchemes that are actually being used
     Debug-Log "=== Script ColorScheme ===" -Type "Insight"
       if ($Script:ScriptCs) {
-        Debug-Log "  Normal    : $($Script:ScriptCs.Normal)" -Type "Insight"
-        Debug-Log "  Focus     : $($Script:ScriptCs.Focus)" -Type "Insight"
-        Debug-Log "  HotNormal : $($Script:ScriptCs.HotNormal)" -Type "Insight"
-        Debug-Log "  HotFocus  : $($Script:ScriptCs.HotFocus)" -Type "Insight"
-        Debug-Log "  Disabled  : $($Script:ScriptCs.Disabled)" -Type "Insight"
+        Debug-Log "Normal    : $($Script:ScriptCs.Normal)" -Type "Insight"
+        Debug-Log "Focus     : $($Script:ScriptCs.Focus)" -Type "Insight"
+        Debug-Log "HotNormal : $($Script:ScriptCs.HotNormal)" -Type "Insight"
+        Debug-Log "HotFocus  : $($Script:ScriptCs.HotFocus)" -Type "Insight"
+        Debug-Log "Disabled  : $($Script:ScriptCs.Disabled)" -Type "Insight"
       } else {
-        Debug-Log "  ScriptCs is null!" -Type "Warning"
+        Debug-Log "ScriptCs is null!" -Type "Warning"
       }
 
       Debug-Log "=== Main Window ColorScheme ===" -Type "Insight"
       if ($Script:mainWindowCs) {
-        Debug-Log "  Normal    : $($Script:mainWindowCs.Normal)" -Type "Insight"
-        Debug-Log "  Focus     : $($Script:mainWindowCs.Focus)" -Type "Insight"
-        Debug-Log "  HotNormal : $($Script:mainWindowCs.HotNormal)" -Type "Insight"
-        Debug-Log "  HotFocus  : $($Script:mainWindowCs.HotFocus)" -Type "Insight"
-        Debug-Log "  Disabled  : $($Script:mainWindowCs.Disabled)" -Type "Insight"
+        Debug-Log "Normal    : $($Script:mainWindowCs.Normal)" -Type "Insight"
+        Debug-Log "Focus     : $($Script:mainWindowCs.Focus)" -Type "Insight"
+        Debug-Log "HotNormal : $($Script:mainWindowCs.HotNormal)" -Type "Insight"
+        Debug-Log "HotFocus  : $($Script:mainWindowCs.HotFocus)" -Type "Insight"
+        Debug-Log "Disabled  : $($Script:mainWindowCs.Disabled)" -Type "Insight"
       } else {
-        Debug-Log "  mainWindowCs is null!" -Type "Warning"
+        Debug-Log "mainWindowCs is null!" -Type "Warning"
       }
       return
     }
@@ -3450,21 +3174,18 @@ function Get-Theme {
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
       }
-
       "class91" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
         $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::White)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
       }
-
       "dark" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
         $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Red)
       }
-
       ## Deutsche Bundesbahn – Orientrot era (mid/late 80s)
       "db-1980s" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
@@ -3472,7 +3193,6 @@ function Get-Theme {
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Red)
       }
-
       "default" {
         # fallback to dark
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
@@ -3480,21 +3200,18 @@ function Get-Theme {
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Black)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::DarkGray)
       }
-
       "dsb" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
         $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::White)
       }
-
       "gemstones" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
         $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::BrightMagenta)
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightGreen)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::White)
       }
-
       ## BR Executive / Swallow
       "intercity-swallow" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::DarkGray)
@@ -3502,7 +3219,6 @@ function Get-Theme {
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::DarkGray)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Red)
       }
-
       ## Had to be done
       "irn-bru" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightRed)
@@ -3510,21 +3226,18 @@ function Get-Theme {
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightRed)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
       }
-
      "light" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
         $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::Blue)
       }
-
     "matrix" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::Black)
       $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Black)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Gray)
     }
-
     ## Dutch Railways (Nederlandse Spoorwegen)
     "ns" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
@@ -3532,7 +3245,6 @@ function Get-Theme {
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Yellow,[Terminal.Gui.Color]::Blue)
     }
-
     ## NSE "Toothpaste" livery
     "network-southeast" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::White)
@@ -3540,28 +3252,24 @@ function Get-Theme {
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::White)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Red)
     }
-
     "panam" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
       $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
     }
-
     "procomm" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Red)
       $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::BrightBlue)
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
     }
-
     "scotrail" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
       $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::White)
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightBlue)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
     }
-
     ## Trans World Airways not two (if you're Scottish)
     "twa" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
@@ -3569,21 +3277,18 @@ function Get-Theme {
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::DarkGray)
     }
-
     "viarail" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
       $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
     }
-
     "viarail-soft" {
       $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
       $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::BrightYellow)
       $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
       $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
     }
-
     default {
       throw "Unknown theme: $Mode"
     }
@@ -3612,50 +3317,50 @@ function Apply-Theme {
   )
   if ($null -eq $ThemeData) { return }
 
-  ## --- Terminal.Gui base colors FIRST ---
+  ## Terminal.Gui base colours FIRST
   [Terminal.Gui.Colors]::Base     = $ThemeData.Global
   [Terminal.Gui.Colors]::Dialog   = $ThemeData.Global
   [Terminal.Gui.Colors]::Menu     = $ThemeData.Global
   [Terminal.Gui.Colors]::Error    = $ThemeData.Global
   [Terminal.Gui.Colors]::TopLevel = $ThemeData.Global
 
-  ## --- Global / TopLevel ---
+  ## Global / TopLevel
   if ($TopLevel -and $TopLevel.PSObject.Properties.Name -contains 'ColorScheme') {
     $TopLevel.ColorScheme = $ThemeData.Global
     $TopLevel.SetNeedsDisplay()
   }
 
-  ## --- Main window ---
+  ## Main window
   if ($MainWindow -and $MainWindow.PSObject.Properties.Name -contains 'ColorScheme') {
     $MainWindow.ColorScheme = $ThemeData.MainWindow
     $MainWindow.SetNeedsDisplay()
   }
 
-  ## --- Menu ---
+  ## Menu
   if ($Menu -and $Menu.PSObject.Properties.Name -contains 'ColorScheme') {
     $Menu.ColorScheme = $ThemeData.Global
     $Menu.SetNeedsDisplay()
   }
 
-  ## --- StatusBar ---
+  ## StatusBar
   if ($StatusBar -and $StatusBar.PSObject.Properties.Name -contains 'ColorScheme') {
     $StatusBar.ColorScheme = $ThemeData.Global
     $StatusBar.SetNeedsDisplay()
   }
 
-  ## --- Tree - USE MAINWINDOW SCHEME TO MATCH PARENT ---
+  ## Tree - USE MAINWINDOW SCHEME TO MATCH PARENT
   if ($Script:tree -and $Script:tree.PSObject.Properties.Name -contains 'ColorScheme') {
     $Script:tree.ColorScheme = $ThemeData.MainWindow  # ← CHANGED FROM Global
     $Script:tree.SetNeedsDisplay()
   }
 
-  ## --- Filter Panel ---
+  ## Filter Panel
   if ($Script:filterPanel -and $Script:filterPanel.PSObject.Properties.Name -contains 'ColorScheme') {
     $Script:filterPanel.ColorScheme = $ThemeData.MainWindow  # ← Match parent
     $Script:filterPanel.SetNeedsDisplay()
   }
 
-  ## --- Force complete refresh ---
+  ## Force complete refresh
   [Terminal.Gui.Application]::Refresh()
 }
 
@@ -3666,40 +3371,40 @@ function Show-LoadingDialog {
     [string]$Message = "Loading, please wait..."
   )
 
-  ## --- Create the dialog ---
+  ## Create the dialog
   $dlg = [Terminal.Gui.Dialog]::new("", 40, 7)
   $dlg.X = 2
   $dlg.Y = 2
 
-  ## --- Message label ---
+  ## Message label
   $lbl = [Terminal.Gui.Label]::new($Message)
   $lbl.X = 2
   $lbl.Y = 2
   $dlg.Add($lbl)
 
-  ## --- Spinner label ---
+  ## Spinner label
   $spinner = [Terminal.Gui.Label]::new("|")
   $spinner.X = [Terminal.Gui.Pos]::Right($lbl) + 1
   $spinner.Y = 2
   $dlg.Add($spinner)
 
-  ## --- Spinner globals ---
+  ## Spinner globals
   $Script:spinnerFrames = @("|","/","-","\\")
   $Script:spinnerFrameIndex = 0
 
-  ## --- Add a timeout handler to update the spinner ---
+  ## Add a timeout handler to update the spinner
   $timeout = [Terminal.Gui.Application]::AddTimeout([TimeSpan]::FromMilliseconds(150), {
     $Script:spinnerFrameIndex = ($Script:spinnerFrameIndex + 1) % $Script:spinnerFrames.Count
     $spinner.Text = $Script:spinnerFrames[$Script:spinnerFrameIndex]
 
-    # Return true to keep the timeout running
+    ## Return true to keep the timeout running
     return $true
   })
 
-  ## --- Show dialog in modal-safe, non-blocking way ---
+  ## Show dialog in modal-safe, non-blocking way
   [Terminal.Gui.Application]::BeginModal($dlg)
 
-  ## --- Return dialog and timeout for clean-up ---
+  ## Return dialog and timeout for clean-up
   return [PSCustomObject]@{
     Dialog  = $dlg
     Timeout = $timeout
@@ -3829,7 +3534,6 @@ Use DNS Manager for detailed record information.
       }
     }
   )
-
   ## Show dialog
   New-DualPaneListDialog -Title "DNS Records - $Domain" -Summary "DNS Zones: $($dnsZones.Count)  |  DNS Records: $($dnsRecords.Count)" -LeftPane @{ Title = "DNS Zones:"; Items = $dnsZones; FormatItem = $formatZone } -RightPane @{ Title = "DNS Records:"; Items = $dnsRecords; FormatItem = $formatRecord } -DetailsPane @{ Title = "Record Details:"; OnSelectionChanged = $showRecordDetails } -Buttons $buttons -Width 120 -Height 40
 }
@@ -3886,7 +3590,6 @@ or PowerShell DNS cmdlets (Get-DnsServerZone).
   $dialog.Title = "DNS Zone - $($Zone.Name)"
   $dialog.Width = 80
   $dialog.Height = 20
-
   $txtDetails = [Terminal.Gui.TextView]::new()
   $txtDetails.X = 1
   $txtDetails.Y = 1
@@ -4079,7 +3782,6 @@ refer to Microsoft IPSec documentation.
   $helpDialog.Title  = "IPSec Policies - Help"
   $helpDialog.Width  = 90
   $helpDialog.Height = 35
-
   $txtHelp           = [Terminal.Gui.TextView]::new()
   $txtHelp.X         = 1
   $txtHelp.Y         = 1
@@ -4088,7 +3790,6 @@ refer to Microsoft IPSec documentation.
   $txtHelp.ReadOnly  = $true
   $txtHelp.Text      = $helpText
   $helpDialog.Add($txtHelp)
-
   $btnClose   = [Terminal.Gui.Button]::new("Close")
   $btnClose.X = [Terminal.Gui.Pos]::Center()
   $btnClose.Y = [Terminal.Gui.Pos]::AnchorEnd(2)
@@ -4292,7 +3993,6 @@ function Show-TrustsDialog {
     Show-Modal "No Trusts" "No trust relationships found for domain: $Domain`n`nThis domain may not have any external trust relationships configured."
     return
   }
-
   ## Format function
   $formatTrust = {
     param($trust)
@@ -4301,7 +4001,6 @@ function Show-TrustsDialog {
     $direction = if ($trust.Direction) { $trust.Direction } else { "Unknown" }
     "$partner [$trustType - $direction]"
   }
-
   ## View handler
   $onView = {
     param($trust)
@@ -4378,7 +4077,6 @@ console (domain.msc) or PowerShell trust cmdlets.
           DN = $_.DN
         }
       }
-
       $exportData | Export-Csv -Path $filename -NoTypeInformation -Encoding UTF8
       Show-Modal "Success" "Exported $($items.Count) trust(s) to:`n$filename"
       Debug-Log "Exported trusts to $filename" -Type "Success"
@@ -4447,7 +4145,7 @@ function Test-TrustConnection {
         $results += ""
         $results += "Simulated Result: ✓ Trust appears healthy"
       } else {
-        ## Production mode - actually test
+        ## Production Mode - actually test
         $results += "Running: nltest /sc_query:$partner"
         $results += ""
 
@@ -4489,39 +4187,39 @@ function Show-AuditLogDialog {
   )
 
   $objectName = $Object.Name
-  Debug-Log " Showing audit log for $ObjectType '$objectName'" -Type "Insight"
+  Debug-Log "Showing audit log for $ObjectType '$objectName'" -Type "Insight"
 
-  ## ==================== ENHANCED DIAGNOSTICS ====================
-  Debug-Log " === OBJECT DIAGNOSTICS ===" -Type "Insight"
-  Debug-Log " DemoMode: $($Script:DemoMode)" -Type "Tracing"
-  Debug-Log " Object type: $($Object.GetType().Name)" -Type "Tracing"
-  Debug-Log " Object has AuditLog property: $($null -ne $Object.AuditLog)" -Type "Tracing"
+  ## ==================== Enhanced Diagnostics ====================
+  Debug-Log "=== Object Diagnostics ===" -Type "Insight"
+  Debug-Log "DemoMode: $($Script:DemoMode)" -Type "Tracing"
+  Debug-Log "Object type: $($Object.GetType().Name)" -Type "Tracing"
+  Debug-Log "Object has AuditLog property: $($null -ne $Object.AuditLog)" -Type "Tracing"
 
   ## List ALL properties
   if ($Object.PSObject.Properties) {
-    Debug-Log " Object properties via PSObject:" -Type "Tracing"
+    Debug-Log "Object properties via PSObject:" -Type "Tracing"
     $propNames = $Object.PSObject.Properties | ForEach-Object { $_.Name }
-    Debug-Log " Properties: $($propNames -join ', ')" -Type "Tracing"
-    Debug-Log " Total properties: $($propNames.Count)" -Type "Tracing"
+    Debug-Log "Properties: $($propNames -join ', ')" -Type "Tracing"
+    Debug-Log "Total properties: $($propNames.Count)" -Type "Tracing"
 
     ## Specifically check for AuditLog
     $auditLogProp = $Object.PSObject.Properties | Where-Object { $_.Name -eq 'AuditLog' }
     if ($auditLogProp) {
-      Debug-Log " Found AuditLog property!" -Type "Insight"
+      Debug-Log "Found AuditLog property!" -Type "Insight"
       if ($null -ne $auditLogProp.Value) {
-        Debug-Log " AuditLog type: $($auditLogProp.Value.GetType().Name)" -Type "Tracing"
+        Debug-Log "AuditLog type: $($auditLogProp.Value.GetType().Name)" -Type "Tracing"
         if ($auditLogProp.Value -is [array]) {
-          Debug-Log " AuditLog count: $($auditLogProp.Value.Count)" -Type "Tracing"
+          Debug-Log "AuditLog count: $($auditLogProp.Value.Count)" -Type "Tracing"
         }
       } else {
-        Debug-Log " AuditLog value is NULL" -Type "Warning"
+        Debug-Log "AuditLog value is NULL" -Type "Warning"
       }
     } else {
-      Debug-Log " AuditLog property NOT FOUND in PSObject.Properties" -Type "Warning"
+      Debug-Log "AuditLog property NOT FOUND in PSObject.Properties" -Type "Warning"
     }
   }
 
-  Debug-Log " ===========================" -Type "Insight"
+  Debug-Log "===========================" -Type "Insight"
 
   ## ==================== GENERATE LOG ENTRIES ====================
   $logEntries = @()
@@ -4536,24 +4234,24 @@ function Show-AuditLogDialog {
       $auditLogData = $Object.PSObject.Properties['AuditLog'].Value
       if ($null -ne $auditLogData -and $auditLogData.Count -gt 0) {
         $hasAuditLog = $true
-        Debug-Log " Found AuditLog via PSObject.Properties" -Type "Tracing"
+        Debug-Log "Found AuditLog via PSObject.Properties" -Type "Tracing"
       }
     } elseif ($Object.AuditLog) {
       $auditLogData = $Object.AuditLog
       if ($null -ne $auditLogData -and $auditLogData.Count -gt 0) {
         $hasAuditLog = $true
-        Debug-Log " Found AuditLog via direct property access" -Type "Tracing"
+        Debug-Log "Found AuditLog via direct property access" -Type "Tracing"
       }
     } elseif ($Object -is [hashtable] -and $Object.ContainsKey('AuditLog')) {
       $auditLogData = $Object['AuditLog']
       if ($null -ne $auditLogData -and $auditLogData.Count -gt 0) {
         $hasAuditLog = $true
-        Debug-Log " Found AuditLog in hashtable" -Type "Tracing"
+        Debug-Log "Found AuditLog in hashtable" -Type "Tracing"
       }
     }
 
     if ($hasAuditLog -and $auditLogData -and $auditLogData.Count -gt 0) {
-      Debug-Log " Using object's audit log ($($auditLogData.Count) entries)" -Type "Insight"
+      Debug-Log "Using object's audit log ($($auditLogData.Count) entries)" -Type "Insight"
 
       $logEntries = $auditLogData | ForEach-Object {
         [PSCustomObject]@{
@@ -4578,14 +4276,14 @@ function Show-AuditLogDialog {
 
     } else {
       ## No audit log in object - show modal and return
-      Debug-Log " Object has no audit log data" -Type "Insight"
+      Debug-Log "Object has no audit log data" -Type "Insight"
       Show-Modal "No Audit Log" "No audit log data is available for this $ObjectType.`n`nAudit logging may not be configured for this object."
       return
     }
 
   } else {
-    ## PRODUCTION MODE - Query Windows Event Log
-    Debug-Log " Production mode - querying Windows Event Log" -Type "Insight"
+    ## Production Mode - Query Windows Event Log
+    Debug-Log "Production Mode - querying Windows Event Log" -Type "Insight"
 
     try {
       $filter = @{
@@ -4636,21 +4334,20 @@ function Show-AuditLogDialog {
       }
 
       if ($logEntries.Count -eq 0) {
-        Debug-Log " No audit events found in Windows Event Log" -Type "Insight"
+        Debug-Log "No audit events found in Windows Event Log" -Type "Insight"
         Show-Modal "No Audit Data" "No audit events found in the last 30 days for this $ObjectType."
         return
       } else {
-        Debug-Log " Found $($logEntries.Count) audit events in Windows Event Log" -Type "Insight"
+        Debug-Log "Found $($logEntries.Count) audit events in Windows Event Log" -Type "Insight"
       }
 
     } catch {
-      Debug-Log " Error querying Windows Event Log: $($_.Exception.Message)" -Type "Problem"
+      Debug-Log "Error querying Windows Event Log: $($_.Exception.Message)" -Type "Problem"
       Show-Modal "Error" "Failed to query audit log:`n`n$($_.Exception.Message)"
       return
     }
   }
-
-  Debug-Log " Total log entries to display: $($logEntries.Count)" -Type "Insight"
+  Debug-Log "Total log entries to display: $($logEntries.Count)" -Type "Insight"
 
   ## ==================== CREATE TAB WITH AUDIT LOG ====================
   $auditTab = @{
@@ -4658,21 +4355,21 @@ function Show-AuditLogDialog {
     Builder = {
       param($view, $data, $state)
 
-      ## DEFENSIVE NULL CHECK
+      ## Defensive NULL check
       if ($null -eq $view) {
-        Debug-Log " ERROR: view parameter is null in Audit Log builder!" -Type "Problem"
+        Debug-Log "ERROR: view parameter is null in Audit Log builder!" -Type "Problem"
         throw "View parameter is null"
       }
 
       ## Capture necessary variables and functions
-      $entries = $logEntries
-      $objName = $objectName
-      $debugLogFunc = ${function:Debug-Log}
-      $showModalFunc = ${function:Show-Modal}
+      $entries        = $logEntries
+      $objName        = $objectName
+      $debugLogFunc   = ${function:Debug-Log}
+      $showModalFunc  = ${function:Show-Modal}
       $formatDateFunc = ${function:Format-DateSafe}
 
-      & $debugLogFunc " Building Audit Log tab with $($entries.Count) entries" -Type "Tracing"
-      & $debugLogFunc " View is: $($view.GetType().Name)" -Type "Tracing"
+      & $debugLogFunc "Building Audit Log tab with $($entries.Count) entries" -Type "Tracing"
+      & $debugLogFunc "View is: $($view.GetType().Name)" -Type "Tracing"
 
       ## Format helper function
       function Local-FormatLogItems {
@@ -4699,12 +4396,12 @@ function Show-AuditLogDialog {
       $lblHeader.Y = 0
 
       if ($null -eq $lblHeader) {
-        & $debugLogFunc " ERROR: Failed to create header label!" -Type "Problem"
+        & $debugLogFunc "ERROR: Failed to create header label!" -Type "Problem"
         throw "Failed to create label"
       }
 
       $view.Add($lblHeader)
-      & $debugLogFunc " Added header label" -Type "Tracing"
+      & $debugLogFunc "Added header label" -Type "Tracing"
 
       ## Filter label
       $lblFilter = [Terminal.Gui.Label]::new("Filter:")
@@ -4724,13 +4421,13 @@ function Show-AuditLogDialog {
         "Account Status"
       )
       $view.Add($rdoFilter)
-      & $debugLogFunc " Added filter controls" -Type "Tracing"
+      & $debugLogFunc "Added filter controls" -Type "Tracing"
 
       ## ==================== LIST VIEW ====================
       $lstLog = [Terminal.Gui.ListView]::new()
 
       if ($null -eq $lstLog) {
-        & $debugLogFunc " ERROR: Failed to create ListView!" -Type "Problem"
+        & $debugLogFunc "ERROR: Failed to create ListView!" -Type "Problem"
         throw "Failed to create ListView"
       }
 
@@ -4743,41 +4440,41 @@ function Show-AuditLogDialog {
       ## Set initial source
       try {
         $formattedItems = Local-FormatLogItems $entries
-        & $debugLogFunc " Formatted $($formattedItems.Count) items" -Type "Tracing"
+        & $debugLogFunc "Formatted $($formattedItems.Count) items" -Type "Tracing"
 
         if ($null -eq $formattedItems) {
-          & $debugLogFunc " ERROR: formattedItems is null!" -Type "Problem"
+          & $debugLogFunc "ERROR: formattedItems is null!" -Type "Problem"
           $formattedItems = [string[]]@("Error: formatted items is null")
         }
 
         $lstLog.SetSource($formattedItems)
-        & $debugLogFunc " Set ListView source successfully" -Type "Tracing"
+        & $debugLogFunc "Set ListView source successfully" -Type "Tracing"
       } catch {
-        & $debugLogFunc " Error setting ListView source: $($_.Exception.Message)" -Type "Problem"
+        & $debugLogFunc "Error setting ListView source: $($_.Exception.Message)" -Type "Problem"
         $lstLog.SetSource([string[]]@("Error displaying log entries: $($_.Exception.Message)"))
       }
 
-      & $debugLogFunc " About to add ListView to view" -Type "Tracing"
+      & $debugLogFunc "About to add ListView to view" -Type "Tracing"
 
       if ($null -eq $view) {
-        & $debugLogFunc " ERROR: View became null before Add!" -Type "Problem"
+        & $debugLogFunc "ERROR: View became null before Add!" -Type "Problem"
         throw "View is null before Add"
       }
 
       if ($null -eq $lstLog) {
-        & $debugLogFunc " ERROR: lstLog became null before Add!" -Type "Problem"
+        & $debugLogFunc "ERROR: lstLog became null before Add!" -Type "Problem"
         throw "lstLog is null before Add"
       }
 
       $view.Add($lstLog)
-      & $debugLogFunc " Added ListView to view" -Type "Tracing"
+      & $debugLogFunc "Added ListView to view" -Type "Tracing"
 
       ## ==================== SCROLLBARS ====================
       try {
         ## Vertical
         $sbvVertical = [Terminal.Gui.ScrollBarView]::new($lstLog, $true)
         if ($null -eq $sbvVertical) {
-          & $debugLogFunc " ERROR: Failed to create vertical scrollbar!" -Type "Warning"
+          & $debugLogFunc "ERROR: Failed to create vertical scrollbar!" -Type "Warning"
         } else {
           $sbvVertical.ChangedPosition.add({
             $lstLog.TopItem = $sbvVertical.Position
@@ -4794,7 +4491,7 @@ function Show-AuditLogDialog {
         ## Horizontal
         $sbvHorizontal = [Terminal.Gui.ScrollBarView]::new($lstLog, $false)
         if ($null -eq $sbvHorizontal) {
-          & $debugLogFunc " ERROR: Failed to create horizontal scrollbar!" -Type "Warning"
+          & $debugLogFunc "ERROR: Failed to create horizontal scrollbar!" -Type "Warning"
         } else {
           $sbvHorizontal.ChangedPosition.add({
             $lstLog.LeftItem = $sbvHorizontal.Position
@@ -4817,9 +4514,9 @@ function Show-AuditLogDialog {
           $view.Add($sbvHorizontal)
         }
 
-        & $debugLogFunc " Added scrollbars" -Type "Tracing"
+        & $debugLogFunc "Added scrollbars" -Type "Tracing"
       } catch {
-        & $debugLogFunc " Error adding scrollbars: $($_.Exception.Message)" -Type "Warning"
+        & $debugLogFunc "Error adding scrollbars: $($_.Exception.Message)" -Type "Warning"
       }
 
       ## ==================== FILTER HANDLER ====================
@@ -4840,7 +4537,7 @@ function Show-AuditLogDialog {
             $lstLog.SetSource($formattedFiltered)
           }
         } catch {
-          & $debugLogFunc " Filter error: $($_.Exception.Message)" -Type "Problem"
+          & $debugLogFunc "Filter error: $($_.Exception.Message)" -Type "Problem"
           $lstLog.SetSource([string[]]@("Error filtering entries"))
         }
       }.GetNewClosure())
@@ -4860,7 +4557,7 @@ function Show-AuditLogDialog {
       }.GetNewClosure())
       $view.Add($btnExport)
 
-      & $debugLogFunc " Audit Log tab builder completed" -Type "Tracing"
+      & $debugLogFunc "Audit Log tab builder completed" -Type "Tracing"
     }
   }
 
@@ -4870,14 +4567,7 @@ function Show-AuditLogDialog {
     ObjectType = $ObjectType
     LogEntries = $logEntries
   }
-
-  New-PropertiesDialog `
-    -Title "Audit Log - ${ObjectType}: $objectName" `
-    -Width 100 `
-    -Height 30 `
-    -Tabs @($auditTab) `
-    -Data $dialogData `
-    -IncludeSearchTab $false
+  New-PropertiesDialog -Title "Audit Log - ${ObjectType}: $objectName" -Width 100 -Height 30 -Tabs @($auditTab) -Data $dialogData -IncludeSearchTab $false
 }
 
 ## ==================== BULK ATTRIBUTE EDITOR ====================
@@ -4919,8 +4609,8 @@ function Set-BulkAttribute {
   }
 
   ## Detect object types
-  $hasUsers = $false
-  $hasGroups = $false
+  $hasUsers     = $false
+  $hasGroups    = $false
   $hasComputers = $false
 
   foreach ($obj in $Objects) {
@@ -4999,10 +4689,10 @@ function Set-BulkAttribute {
       if ($lstAttributes.SelectedItem -ge 0) {
         $attr = $availableAttributes[$lstAttributes.SelectedItem]
         if ($attr -eq 'ChangePasswordAtLogon') {
-          $lblHelp.Text = [NStack.ustring]::Make("Value: 'true' or 'false'")
+          $lblHelp.Text  = [NStack.ustring]::Make("Value: 'true' or 'false'")
           $txtValue.Text = [NStack.ustring]::Make("true")
         } elseif ($attr -eq 'ResetPassword') {
-          $lblHelp.Text = [NStack.ustring]::Make("Enter new password (leave blank for random)")
+          $lblHelp.Text  = [NStack.ustring]::Make("Enter new password (leave blank for random)")
           $txtValue.Text = [NStack.ustring]::Make("")
         } else {
           $lblHelp.Text = [NStack.ustring]::Make("")
@@ -5017,7 +4707,6 @@ function Set-BulkAttribute {
         Show-Modal "No Selection" "Please select an attribute"
         return
       }
-
       $selectedAttr = $availableAttributes[$lstAttributes.SelectedItem]
       $newValue = $txtValue.Text.ToString()
 
@@ -5025,12 +4714,10 @@ function Set-BulkAttribute {
         $confirm = Show-Modal "Empty Value" "Set attribute to empty/blank?`n`nAttribute: $selectedAttr" -YesNo
         if ($confirm -ne 0) { return }
       }
-
       [Terminal.Gui.Application]::RequestStop()
 
       ## Perform bulk update
       Set-BulkAttribute -Objects $Objects -Attribute $selectedAttr -Value $newValue
-
     }.GetNewClosure())
 
     $dlg.AddButton($btnApply)
@@ -5061,7 +4748,6 @@ function Set-BulkAttribute {
     Debug-Log "Bulk attribute update cancelled by user" -Type "Insight"
     return
   }
-
   Debug-Log "Starting bulk attribute update: $Attribute = '$Value' on $($Objects.Count) objects" -Type "Insight"
 
   ## Process objects
@@ -5071,22 +4757,19 @@ function Set-BulkAttribute {
 
   foreach ($obj in $Objects) {
     $name = $obj.Name
-
     ## Determine object type
     $objectType = if ($obj.PSObject.Properties.Match('ComputerType')) { 'Computer' }
                   elseif ($obj.PSObject.Properties.Match('Members')) { 'Group' }
                   else { 'User' }
-
     ## Validate attribute
     $validForObject = $false
     if ($objectType -eq 'User' -and $Attribute -in $userAttributes)    { $validForObject = $true }
     if ($objectType -eq 'Group' -and $Attribute -in $groupAttributes)  { $validForObject = $true }
     if ($objectType -eq 'Computer' -and $Attribute -in $computerAttributes) { $validForObject = $true }
-
     if (-not $validForObject) {
         $failCount++
         $errors += "${name}: Attribute '$Attribute' not valid for $objectType"
-        Debug-Log "  Skipped $name - attribute not valid for $objectType" -Type "Warning"
+        Debug-Log "Skipped $name - attribute not valid for $objectType" -Type "Warning"
         continue
     }
 
@@ -5099,44 +4782,42 @@ function Set-BulkAttribute {
           } else { $obj | Add-Member -NotePropertyName 'ChangePasswordAtLogon' -NotePropertyValue $boolValue -Force
           }
           $successCount++
-          Debug-Log "  Updated $objectType '$name': ChangePasswordAtLogon = $boolValue (demo mode)" -Type "Insight"
+          Debug-Log "Updated $objectType '$name': ChangePasswordAtLogon = $boolValue (demo mode)" -Type "Insight"
         } elseif ($Attribute -eq 'ResetPassword') {
           $passwordValue = if ([string]::IsNullOrWhiteSpace($Value)) {
             -join ((65..90) + (97..122) + (48..57) + (33,35,36,37,38,42,63) | Get-Random -Count 12 | ForEach-Object {[char]$_})
           } else {
             $Value
           }
-
           if ($obj.PSObject.Properties.Match('Password')) { $obj.Password = $passwordValue
           } else { $obj | Add-Member -NotePropertyName 'Password' -NotePropertyValue $passwordValue -Force
           }
           $successCount++
-          Debug-Log "  Reset password for $objectType '$name' (demo mode, password: $passwordValue)" -Type "Insight"
+          Debug-Log "Reset password for $objectType '$name' (demo mode, password: $passwordValue)" -Type "Insight"
         } else {
           ## Standard attribute
           if ($obj.PSObject.Properties.Match($Attribute)) { $obj.$Attribute = $Value
           } else { $obj | Add-Member -NotePropertyName $Attribute -NotePropertyValue $Value -Force
           }
           $successCount++
-          Debug-Log "  Updated $objectType '$name': $Attribute = '$Value' (demo mode)" -Type "Insight"
+          Debug-Log "Updated $objectType '$name': $Attribute = '$Value' (demo mode)" -Type "Insight"
         }
       } else {
-        ## Production mode
+        ## Production Mode
         if ($Attribute -eq 'ChangePasswordAtLogon') {
           $boolValue = [bool]::Parse($Value)
           Set-UnifiedObject -ObjectType User -Object $obj -Properties @{ ChangePasswordAtLogon = $boolValue }
           $successCount++
-          Debug-Log "  Updated $objectType '$name': ChangePasswordAtLogon = $boolValue in AD" -Type "Success"
+          Debug-Log "Updated $objectType '$name': ChangePasswordAtLogon = $boolValue in AD" -Type "Success"
         } elseif ($Attribute -eq 'ResetPassword') {
           $passwordValue = if ([string]::IsNullOrWhiteSpace($Value)) {
             $pw = -join ((65..90) + (97..122) + (48..57) + (33,35,36,37,38,42,63) | Get-Random -Count 12 | ForEach-Object { [char]$_ } )
             ConvertTo-SecureString -String $pw -AsPlainText -Force
             } else { ConvertTo-SecureString -String $Value -AsPlainText -Force
             }
-
             Set-ADAccountPassword -Identity $obj.SamAccountName -NewPassword $passwordValue -Reset -ErrorAction Stop
             $successCount++
-            Debug-Log "  Reset password for $objectType '$name' in AD" -Type "Success"
+            Debug-Log "Reset password for $objectType '$name' in AD" -Type "Success"
         } else {
           ## Standard attribute update via unified setter
           $properties = @{}
@@ -5161,13 +4842,13 @@ function Set-BulkAttribute {
           }
           Set-UnifiedObject -ObjectType $objectType -Object $obj -Properties $properties
           $successCount++
-          Debug-Log "  Updated $objectType '$name': $Attribute = '$Value' in AD" -Type "Success"
+          Debug-Log "Updated $objectType '$name': $Attribute = '$Value' in AD" -Type "Success"
         }
-      } ## End production mode
+      } ## End Production Mode
     } catch {
       $failCount++
       $errors += "${name}: $($_.Exception.Message)"
-      Debug-Log "  Failed to update $objectType '$name': $($_.Exception.Message)" -Type "Problem"
+      Debug-Log "Failed to update $objectType '$name': $($_.Exception.Message)" -Type "Problem"
     }
   } ## End foreach
 }
@@ -5208,7 +4889,6 @@ function Refresh-Data {
     ## Demo mode - reload from raw data
     if ($Script:DemoMode) {
       Set-StatusBar "Refreshing demo data..." -Icon 'Working'
-
       ## Check if we have ImportedRawData to refresh from
       if ($null -eq $Script:ImportedRawData) {
         Debug-Log "No ImportedRawData available - loading default demo data" -Type "Warning"
@@ -5217,16 +4897,9 @@ function Refresh-Data {
         ## Determine source label for status messages
         $sourceLabel = if ($Script:ImportSource) { $Script:ImportSource } else { "demo data" }
         Debug-Log "Refreshing from $sourceLabel" -Type "Insight"
-
         ## RE-CONVERT using the preserved raw data (File, AD, or Demo)
         $baseDN = "DC=$($Domain -replace '\.',',DC=')"
-        Convert-DataToADObjects `
-          -Users $Script:ImportedRawData.Users `
-          -DCs $Script:ImportedRawData.DCs `
-          -Computers $Script:ImportedRawData.Computers `
-          -Groups $Script:ImportedRawData.Groups `
-          -Domain $Domain `
-          -BaseDN $baseDN
+        Convert-DataToADObjects -Users $Script:ImportedRawData.Users -DCs $Script:ImportedRawData.DCs -Computers $Script:ImportedRawData.Computers -Groups $Script:ImportedRawData.Groups -Domain $Domain -BaseDN $baseDN
       }
 
       if ($RebuildTree) {
@@ -5244,15 +4917,11 @@ function Refresh-Data {
       }
 
       Set-StatusBar "Demo data refreshed" -Icon 'Success'
-
-      if ($ShowModal) {
-        Show-Modal "Refreshed" "Demo data refreshed successfully"
-      }
-
+      if ($ShowModal) { Show-Modal "Refreshed" "Demo data refreshed successfully" }
       return $true
     }
 
-    ## Production mode - query AD
+    ## Production Mode - query AD
     Set-StatusBar "Loading domain controllers..." -Icon 'Working'
     $dcs = Get-ADDomainController -Filter * -Server $Domain -ErrorAction Stop
     Set-StatusBar "Loading users..." -Icon 'Working'
@@ -5268,7 +4937,6 @@ function Refresh-Data {
       Set-StatusBar "Refresh failed - check logs" -Icon 'Success'
       return $false
     }
-
     Debug-Log "Loaded $($users.Count) users, $($groups.Count) groups, $($computers.Count) computers, $($dcs.Count) DCs" -Type "Insight"
 
     ## Convert to standardized format
@@ -5387,12 +5055,9 @@ function Initialise-DirectoryEmoji {
   $emoji = "🗂️"
 
   ## ==================== ICON INITIALISATION ====================
-
   if ($Script:HasTerminalIcons) {
 
-    ## Nerd Font / Symbol icons (explicit Unicode escapes)
-    ## Safe for Terminal.Gui when font supports Nerd Fonts
-
+    ## Nerd Font / Symbol icons (explicit Unicode escapes) & Safe for Terminal.Gui when font supports Nerd Fonts
     $Script:DirectoryEmoji = "`u{F115}"   ## nf-fa-folder
     $Script:FileEmoji      = "`u{F016}"   ## nf-fa-file
     $Script:UserEmoji      = "`u{F007}"   ## nf-fa-user
@@ -5449,10 +5114,10 @@ function Initialise-DirectoryEmoji {
   $Script:DirectoryEmoji = $emoji
 }
 
-## ========== ICON INITIALIZATION FUNCTION ==========
+## ========== ICON INITIALISATION FUNCTION ==========
 ## Call this AFTER module checks, before building the tree
 
-function Initialize-Icons {
+function Initialise-Icons {
   <#
   .SYNOPSIS
   Initialize icon set based on available modules
@@ -5576,13 +5241,10 @@ function Convert-DataToADObjects {
   function New-FakeGuid { [guid]::NewGuid().ToString() }
   function New-FakeSid {
     $rid = Get-Random -Minimum 1000 -Maximum 65535
-    "S-1-5-21-{0}-{1}-{2}-{3}" -f (Get-Random -Max 999999999),
-                                 (Get-Random -Max 999999999),
-                                 (Get-Random -Max 999999999),
-                                 $rid
+    "S-1-5-21-{0}-{1}-{2}-{3}" -f (Get-Random -Max 999999999),(Get-Random -Max 999999999),(Get-Random -Max 999999999),$rid
   }
 
-  ## ========================= USERS =========================
+  ## Users
   $convertedUsers = @()
 
   foreach ($user in $Users) {
@@ -5617,7 +5279,7 @@ function Convert-DataToADObjects {
       PasswordExpired               = [bool]$user.MustChangePassword
       PasswordLastSet               = (Get-Date).AddDays(-30)
       pwdLastSet                    = if ($user.MustChangePassword) { 0 } else { 134091109521968821 }
-      LastLogonDate                 = (Get-Date).AddHours(-(Get-Random -Minimum 1 -Maximum 72))
+      LastLogonDate                 = if ($user.LastLogonDate) { $user.LastLogonDate } else { (Get-Date).AddHours(-(Get-Random -Minimum 1 -Maximum 72)) }
       BadLogonCount                 = if ($user.Locked) { (Get-Random -Minimum 3 -Maximum 10) } else { 0 }
       Title                         = $user.Title
       Department                    = $user.Department
@@ -5641,7 +5303,7 @@ function Convert-DataToADObjects {
       AuditLog                      = $user.AuditLog  ## ← FIXED: Add AuditLog explicitly!
     }
 
-    ## ---- PRESERVE ALL EXTRA USER PROPERTIES (LAPS, TPM, BitLocker, etc.) ----
+    ##  Preserve all extra user properties (LAPS, TPM, BitLocker, etc.)
     if ($user -is [hashtable]) {
       $standardProps = @(
         'Name','Domain','SamAccountName','UserPrincipalName','Email','Title','Department', 'Company','Manager','Phone','MobilePhone','Office','Street','City','PostalCode',
@@ -5658,7 +5320,7 @@ function Convert-DataToADObjects {
     $convertedUsers += $adUser
   }
 
-  ## ========================= DCs =========================
+  ## Domain Controllers
   $convertedDCs = @()
 
   foreach ($dc in $DCs) {
@@ -5689,7 +5351,7 @@ function Convert-DataToADObjects {
       AuditLog               = $dc.AuditLog  ## ← FIXED: Add AuditLog for DCs too!
     }
 
-    ## ---- PRESERVE ALL EXTRA DC PROPERTIES ----
+    ##  Preserve all extra DC properties
     if ($dc -is [hashtable]) {
       $standardProps = @(
         'Name','Domain','DNSHostName','DistinguishedName','Site','Location',
@@ -5709,7 +5371,7 @@ function Convert-DataToADObjects {
     $convertedDCs += $adDC
   }
 
-  ## ========================= GROUPS =========================
+  ## Groups
   $convertedGroups = @()
 
   foreach ($group in $Groups) {
@@ -5735,7 +5397,7 @@ function Convert-DataToADObjects {
       AuditLog          = $group.AuditLog  ## ← FIXED: Add AuditLog for groups too!
     }
 
-    ## ---- PRESERVE ALL EXTRA GROUP PROPERTIES ----
+    ##  Preserve all extra group properties
     if ($group -is [hashtable]) {
       $standardProps = @(
         'Name','Domain','SamAccountName','Description','GroupCategory','GroupScope','ManagedBy','Members','MemberOf','AuditLog','Email','Type','Scope'
@@ -5752,7 +5414,7 @@ function Convert-DataToADObjects {
     $convertedGroups += $adGroup
   }
 
-  ## ========================= COMPUTERS =========================
+  ## Computers
   $convertedComputers = @()
 
   foreach ($computer in $Computers) {
@@ -5788,7 +5450,7 @@ function Convert-DataToADObjects {
       AuditLog               = $computer.AuditLog  ## ← FIXED: Add AuditLog for computers too!
     }
 
-    ## ---- PRESERVE ALL EXTRA COMPUTER PROPERTIES ----
+    ## Preserve all xtra computer properties
     if ($computer -is [hashtable]) {
       $standardProps = @(
         'Name','Domain','OS','OSVersion','IPv4Address','LastLogon',
@@ -5807,7 +5469,7 @@ function Convert-DataToADObjects {
     $convertedComputers += $adComputer
   }
 
-  ## ========================= GLOBALS =========================
+  ## Globals
   $Script:Users     = $convertedUsers
   $Script:Computers = $convertedComputers
   $Script:DCs       = $convertedDCs
@@ -5863,53 +5525,6 @@ function Convert-ToTreeNode {
 
 ##-------------------{ Build Domain Content }-------------------
 ## Helper Function: Parse Distinguished Name
-function Get-OUPathFromDN {
-  <#
-  .SYNOPSIS
-  Extracts OU hierarchy from a Distinguished Name
-
-  .DESCRIPTION
-  Parses an AD Distinguished Name and returns the OU path as an array,
-  ordered from top-level OU down to the immediate parent OU.
-
-  .PARAMETER DistinguishedName
-  The full Distinguished Name from Active Directory
-
-  .EXAMPLE
-  Get-OUPathFromDN "CN=John Doe,OU=UK,OU=Users,OU=here.corp,DC=here,DC=corp"
-  Returns: @("here.corp", "Users", "UK")
-
-  .EXAMPLE
-  Get-OUPathFromDN "CN=agadmin,CN=Users,DC=here,DC=corp"
-  Returns: @("Users")  # CN=Users is treated as an OU
-  #>
-
-  param(
-    [string]$DistinguishedName
-  )
-
-  if ([string]::IsNullOrWhiteSpace($DistinguishedName)) { return @() }
-  ## Split DN by comma (handling escaped commas in quotes)
-  $parts = $DistinguishedName -split ',(?=(?:[^"]*"[^"]*")*[^"]*$)'
-  $ouList = @()
-  foreach ($part in $parts) {
-    $part = $part.Trim()
-    ## Match OU= or CN= (CN=Users is a container, treat it like an OU)
-    if ($part -match '^(OU|CN)=(.+)$') {
-      $type = $matches[1]
-      $value = $matches[2]
-      ## Skip the actual user/group CN (first one)
-      if ($type -eq 'CN' -and $ouList.Count -eq 0) { continue }
-      ## Add to list (we'll reverse it later)
-      $ouList += $value
-    }
-    ## Stop at DC= (domain components)
-    elseif ($part -match '^DC=') { break }
-  }
-  ## Reverse to get top-down hierarchy
-  [array]::Reverse($ouList)
-  return $ouList
-}
 
 ## ========== HELPER FUNCTION FOR SAFE DATE FORMATTING ==========
 function Format-DateSafe {
@@ -5968,19 +5583,25 @@ function Build-DomainContent {
     [bool]$ShowOUs = $true
   )
 
-  ## Get icons
+  ## Get icons with fallback
   $userIcon     = Get-Icon 'User'
   $groupIcon    = Get-Icon 'Group'
   $computerIcon = Get-Icon 'Computer'
   $dcIcon       = Get-Icon 'DC'
+  $ouIcon       = Get-Icon 'OU'
   $disabledIcon = Get-Icon 'Disabled'
   $lockedIcon   = Get-Icon 'Locked'
 
   Debug-Log "Building content for domain: $domain" -Type "Insight"
 
   ## ========== USERS & OUs SECTION ==========
+  ## STEP 1: Get users for this domain
   $domainUsers = $Script:Users | Where-Object { $_.Domain -eq $domain }
   Debug-Log "Filtered to $($domainUsers.Count) users for domain $domain" -Type "Insight"
+
+  ## STEP 2: Apply combined filters (name, quick filter, checkboxes)
+  $domainUsers = Apply-CombinedFilters -Users $domainUsers
+  Debug-Log "After applying filters: $($domainUsers.Count) users" -Type "Insight"
 
   if ($domainUsers.Count -gt 0) {
     ## Diagnostics
@@ -6009,8 +5630,8 @@ function Build-DomainContent {
         Debug-Log "Adding $($ouTree['_ROOT_USERS'].Users.Count) root users" -Type "Tracing"
         foreach ($user in $ouTree[$ouName].Users) {
           $statusIcons = ""
-          if ($user.Disabled) { $statusIcons += " $disabledIcon" }
-          if ($user.Locked) { $statusIcons += " $lockedIcon" }
+          if (-not $user.Enabled -or $user.Disabled) { $statusIcons += " $disabledIcon" }
+          if ($user.LockedOut -or $user.Locked) { $statusIcons += " $lockedIcon" }
 
           $userNodeText = "$userIcon $($user.Name)$statusIcons"
           $userNode = [Terminal.Gui.Trees.TreeNode]::new($userNodeText)
@@ -6073,7 +5694,7 @@ function Build-DomainContent {
       $computersNode.Tag = @{ Type = 'Container'; Object = $null; Name = 'Computers' }
       foreach ($computer in $domainComputers | Sort-Object Name) {
         $statusIcons = ""
-        if ($computer.Disabled -or -not $computer.Enabled) {
+        if (-not $computer.Enabled -or $computer.Disabled) {
           $statusIcons += " $disabledIcon"
         }
         $computerNodeText = "$computerIcon $($computer.Name)$statusIcons"
@@ -6092,20 +5713,15 @@ function Add-OUNode {
   <#
   .SYNOPSIS
   Recursively adds OU nodes and their users to a TreeView
-
   .DESCRIPTION
   Creates a TreeView node for an OU, adds all users in that OU,
   then recursively processes child OUs
-
   .PARAMETER parentNode
   The parent TreeNode to add this OU to
-
   .PARAMETER ouData
   Hashtable containing Users array and Children hashtable
-
   .PARAMETER ouName
   Name of this OU
-
   .PARAMETER depth
   Current recursion depth (for logging indentation)
   #>
@@ -6119,7 +5735,7 @@ function Add-OUNode {
     [int]$depth = 0
   )
 
-  ## Get icons from script scope
+  ## Get icons from script scope with fallback
   $userIcon     = Get-Icon 'User'
   $ouIcon       = Get-Icon 'OU'
   $disabledIcon = Get-Icon 'Disabled'
@@ -6145,8 +5761,8 @@ function Add-OUNode {
   $addedUsers = 0
   foreach ($user in $ouData.Users) {
     $statusIcons = ""
-    if ($user.Disabled) { $statusIcons += " $disabledIcon" }
-    if ($user.Locked) { $statusIcons += " $lockedIcon" }
+    if (-not $user.Enabled -or $user.Disabled) { $statusIcons += " $disabledIcon" }
+    if ($user.LockedOut -or $user.Locked) { $statusIcons += " $lockedIcon" }
 
     $userNodeText = "$userIcon $($user.Name)$statusIcons"
     $userNode = [Terminal.Gui.Trees.TreeNode]::new($userNodeText)
@@ -6155,13 +5771,16 @@ function Add-OUNode {
     $addedUsers++
   }
 
-  if ($addedUsers -gt 0) { Debug-Log "$indent [Add-OUNode] Added $addedUsers users" -Type "Tracing" }
+  if ($addedUsers -gt 0) {
+    Debug-Log "$indent [Add-OUNode] Added $addedUsers users" -Type "Tracing"
+  }
 
   ## Recursively add child OUs
   foreach ($childOUName in $ouData.Children.Keys) {
     Debug-Log "$indent [Add-OUNode] Recursing into: $childOUName" -Type "Tracing"
     Add-OUNode -parentNode $ouNode -ouData $ouData.Children[$childOUName] -ouName $childOUName -depth ($depth + 1)
   }
+
   Debug-Log "$indent [Add-OUNode] Completed: $ouName (total children: $($ouNode.Children.Count))" -Type "Tracing"
 }
 
@@ -6262,11 +5881,11 @@ function Build-Tree {
 
   ## ================= Multi-domain forest =================
   if ($Script:Domains.Count -gt 1) {
-    & $debugLogFunc " Creating multi-domain forest tree with root: $($Script:ForestName)" -Type "Insight"
+    & $debugLogFunc "Creating multi-domain forest tree with root: $($Script:ForestName)" -Type "Insight"
     $root = [Terminal.Gui.Trees.TreeNode]::new($Script:ForestName)
 
     foreach ($dom in $Script:Domains) {
-      & $debugLogFunc " Adding domain node: $($dom)" -Type "Insight"
+      & $debugLogFunc "Adding domain node: $($dom)" -Type "Insight"
       $domainNode = [Terminal.Gui.Trees.TreeNode]::new($dom)
       $root.Children.Add($domainNode)
 
@@ -6276,19 +5895,19 @@ function Build-Tree {
 
     if (-not $Script:CurrentDomain) {
       $Script:CurrentDomain = $Script:Domains[0]
-      & $debugLogFunc " CurrentDomain was empty. Auto-selected: $($Script:CurrentDomain)" -Type "Insight"
+      & $debugLogFunc "CurrentDomain was empty. Auto-selected: $($Script:CurrentDomain)" -Type "Insight"
     }
   }
   ## ================= Single-domain =================
   else {
-    & $debugLogFunc " Creating single-domain tree: $($Script:Domains[0])" -Type "Insight"
+    & $debugLogFunc "Creating single-domain tree: $($Script:Domains[0])" -Type "Insight"
     $root = [Terminal.Gui.Trees.TreeNode]::new($Script:Domains[0])
 
     # Build content with visibility filters from FilterOptions
     & $buildDomainContentFunc -domainNode $root -domain $Script:Domains[0] -ShowGroups $Script:FilterOptions.ShowGroups -ShowDCs $Script:FilterOptions.ShowDCs -ShowComputers $Script:FilterOptions.ShowComputers -ShowOUs $Script:FilterOptions.ShowOUs
     if (-not $Script:CurrentDomain) {
       $Script:CurrentDomain = $Script:Domains[0]
-      & $debugLogFunc " CurrentDomain set (single-domain): $($Script:CurrentDomain)" -Type "Insight"
+      & $debugLogFunc "CurrentDomain set (single-domain): $($Script:CurrentDomain)" -Type "Insight"
     }
   }
 
@@ -6300,12 +5919,12 @@ function Build-Tree {
   try {
     $Script:tree.AddObject($root)
     $Script:tree.SelectedObject = $root
-    & $debugLogFunc " Root node added to TreeView" -Type "Success"
+    & $debugLogFunc "Root node added to TreeView" -Type "Success"
   } catch {
     throw "Build-Tree failed while attaching root to TreeView: $_"
   }
 
-  & $debugLogFunc " Build-Tree completed successfully" -Type "Success"
+  & $debugLogFunc "Build-Tree completed successfully" -Type "Success"
   return $root
 }
 
@@ -6716,7 +6335,6 @@ function Show-InfoPanel {
     [Terminal.Gui.Application]::Refresh()
     Debug-Log "InfoPanel update and refresh completed" -Type "Tracing"
   }
-
   return $Script:InfoPanel
 }
 
@@ -6831,7 +6449,7 @@ function Create-FilterPanel {
   $cmbQuickFilter.add_SelectedItemChanged({
     if ($cmbQuickFilter.SelectedItem -ge 0 -and $cmbQuickFilter.SelectedItem -lt $quickFilters.Count) {
       $Script:FilterOptions.QuickFilter = $quickFilters[$cmbQuickFilter.SelectedItem]
-      & $debugLogFunc " Quick filter changed to: $($Script:FilterOptions.QuickFilter)" -Type "Insight"
+      & $debugLogFunc "Quick filter changed to: $($Script:FilterOptions.QuickFilter)" -Type "Insight"
     }
   }.GetNewClosure())
   $filterFrame.Add($cmbQuickFilter)
@@ -7118,273 +6736,50 @@ function Show-QuickFilterDialog {
 }
 
 ## ==================== MAIN GET-ADHEALTH FUNCTION ====================
-function Show-ADHealthDialog {
-  <#
-  .SYNOPSIS
-  Comprehensive Active Directory health check with tabbed interface for DSA-TUI
+function Get-TrustStatusText {
+  param([string]$Domain)
 
-  .DESCRIPTION
-  Performs multiple health checks on Active Directory environment with tabbed UI:
-  - System Info
-  - Domain Controller Status
-  - Replication Health
-  - DNS Records
-  - SYSVOL/NETLOGON Shares
-  - FSMO Roles
-  - Group Policy Objects
+  $output = @()
+  $output += "TRUST RELATIONSHIPS FOR $Domain"
+  $output += "=" * 60
+  $output += ""
 
-  .PARAMETER Domain
-  The domain to check. Defaults to $Script:CurrentDomain
-
-  .EXAMPLE
-  Show-ADHealthDialog
-
-  .EXAMPLE
-  Show-ADHealthDialog -Domain "contoso.com"
-  #>
-
-  [CmdletBinding()]
-  param(
-    [Parameter(Position=0)]
-    [string]$Domain
-  )
-
-  Debug-Log "Show-ADHealthDialog called" -Type "Insight"
-
-  ## ==================== OS & TOOL DETECTION ====================
-
-  ## Detect OS
-  $osInfo = @{
-    IsWindows = $false
-    IsLinux   = $false
-    IsMacOS   = $false
-    OSName    = "Unknown"
-  }
-
-  if ($PSVersionTable.PSVersion.Major -ge 6) {
-    ## PowerShell Core 6+
-    $osInfo.IsWindows = $IsWindows
-    $osInfo.IsLinux = $IsLinux
-    $osInfo.IsMacOS = $IsMacOS
-  } else {
-    ## Windows PowerShell 5.1
-    $osInfo.IsWindows = $true
-  }
-
-  if ($osInfo.IsWindows) { $osInfo.OSName = "Windows $($PSVersionTable.PSVersion)" }
-  elseif ($osInfo.IsLinux) { $osInfo.OSName = "Linux" }
-  elseif ($osInfo.IsMacOS) { $osInfo.OSName = "macOS" }
-
-  Debug-Log "Detected OS: $($osInfo.OSName)" -Type "Insight"
-
-  ## Check tool availability
-  $tools = Test-ToolsAvailability
-  Debug-Log "Tool availability checked" -Type "Insight"
-
-  ## Check AD module
-  $hasADModule = $null -ne ($Script:HasActiveDirectory)
-  Debug-Log "ActiveDirectory module available: $hasADModule" -Type "Insight"
-
-  if (-not $hasADModule -and -not $Script:DemoMode) {
-    Show-Modal "AD Module Missing" "ActiveDirectory PowerShell module is not available.`n`nOS: $($osInfo.OSName)`n`nInstall RSAT (Windows) or realmd/sssd (Linux/macOS) to use this feature."
-    return
-  }
-
-  ## Determine domain to check
-  if (-not $Domain) {
-    if ($Script:CurrentDomain) {
-      $Domain = $Script:CurrentDomain
+  try {
+    if ($Script:DemoMode) {
+      $output += "Demo Mode - Simulated Trust Information"
+      $output += ""
+      $output += "Trust Partner: contoso.com"
+      $output += "  Direction: Bidirectional"
+      $output += "  Type: Forest"
+      $output += "  Status: ✓ Active"
+      $output += ""
+      $output += "Trust Partner: fabrikam.com"
+      $output += "  Direction: Outbound"
+      $output += "  Type: External"
+      $output += "  Status: ✓ Active"
+      $output += ""
+      $output += "To test trust in production, use 'Test Trust' button"
     } else {
-      if (-not $Script:DemoMode) {
-        try {
-          $Domain = (Get-ADDomain -Current LocalComputer).DNSRoot
-        } catch {
-          Show-Modal "Error" "Could not determine domain. Please specify domain in demo mode or ensure AD module is available."
-          return
+      $trusts = Get-ADTrust -Filter * -Server $Domain -ErrorAction Stop
+
+      if ($trusts) {
+        foreach ($trust in $trusts) {
+          $output += "Trust Partner: $($trust.Target)"
+          $output += "  Direction: $($trust.Direction)"
+          $output += "  Type: $($trust.TrustType)"
+          $output += "  Status: $(if ($trust.TrustAttributes -band 0x20) { '✓ Active' } else { '⚠ Inactive' })"
+          $output += ""
         }
       } else {
-        $Domain = "example.com"
+        $output += "No trust relationships found"
       }
     }
+  } catch {
+    $output += "⚠ Error retrieving trust information:"
+    $output += $_.Exception.Message
   }
 
-  Debug-Log "Checking AD Health for domain: $Domain" -Type "Insight"
-
-  ## Store tools and OS info in script scope for helper functions
-  $Script:ADHealthTools  = $tools
-  $Script:ADHealthOS     = $osInfo
-  $Script:ADHealthDomain = $Domain
-
-  ## Create main dialog
-  $dialog = [Terminal.Gui.Dialog]::new("AD Health Check - $Domain", 120, 35)
-
-  ## Create TabView
-  $tabView = [Terminal.Gui.TabView]::new()
-  $tabView.X = 0
-  $tabView.Y = 0
-  $tabView.Width = [Terminal.Gui.Dim]::Fill()
-  $tabView.Height = [Terminal.Gui.Dim]::Fill(2)
-
-  ## Tab definitions for AD health check
-  $tabs = @(
-    @{ Name = "System Info"; Generator = { Get-SystemInfoText } }
-    @{ Name = "Domain Controllers"; Generator = { Get-DCStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "Replication"; Generator = { Get-ReplicationStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "DNS Records"; Generator = { Get-DNSStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "SYSVOL/NETLOGON"; Generator = { Get-SysvolStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "FSMO Roles"; Generator = { Get-FSMOStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "DFS Status"; Generator = { Get-DFSStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "Group Policy"; Generator = { Get-GPOStatusText -Domain $Script:ADHealthDomain } }
-  )
-
-  ## Create tabs
-  foreach ($tabDef in $tabs) {
-    $tab = [Terminal.Gui.TabView+Tab]::new()
-    $tab.Text = [NStack.ustring]::Make($tabDef.Name)
-    $tab.View = [Terminal.Gui.View]::new()
-    $tab.View.Width = [Terminal.Gui.Dim]::Fill()
-    $tab.View.Height = [Terminal.Gui.Dim]::Fill()
-
-    $text = & $tabDef.Generator
-    $textView = [Terminal.Gui.TextView]::new()
-    $textView.X = 1
-    $textView.Y = 0
-    $textView.Width = [Terminal.Gui.Dim]::Fill(1)
-    $textView.Height = [Terminal.Gui.Dim]::Fill()
-    $textView.ReadOnly = $true
-    $textView.Text = [NStack.ustring]::Make($text)
-    $tab.View.Add($textView)
-    $tabView.AddTab($tab, $false)
-  }
-
-  $dialog.Add($tabView)
-
-  ## ==================== CTRL+F SEARCH ====================
-
-  ## Add key handler for Ctrl+F
-  $dialog.add_KeyPress({
-    param($e)
-
-    if ($e.KeyEvent.Key -eq [Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::f) {
-      $currentTab = $tabView.SelectedTab
-      $textView = $currentTab.View.Subviews[0]
-      if ($textView -and $textView -is [Terminal.Gui.TextView]) {
-        ## Simple search prompt
-        $searchText = Show-InputDialog -Title "Search" -Label "Search for:" -Width 50
-        if ($searchText) {
-          $content = $textView.Text.ToString()
-          $index = $content.IndexOf($searchText, [StringComparison]::OrdinalIgnoreCase)
-          if ($index -ge 0) {
-            ## Calculate line number
-            $lines = $content.Substring(0, $index) -split "`n"
-            $lineNum = $lines.Count - 1
-            ## Move cursor to that line
-            try {
-              $textView.CursorPosition = [Terminal.Gui.Point]::new(0, $lineNum)
-              $textView.SetNeedsDisplay()
-            } catch { }
-            Show-Modal "Search" "Found at line $($lineNum + 1)"
-          } else {
-            Show-Modal "Search" "Text '$searchText' not found"
-          }
-        }
-      }
-      $e.Handled = $true
-    }
-  })
-
-  ## ==================== BUTTONS ====================
-  $btnRefresh = [Terminal.Gui.Button]::new("Refresh")
-  $btnRefresh.X = 2
-  $btnRefresh.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
-  $btnRefresh.add_Clicked({
-    Debug-Log "Refreshing current tab..." -Type "Insight"
-    $currentTab = $tabView.SelectedTab
-    $tabName = $currentTab.Text.ToString()
-    ## Find matching tab definition
-    $tabDef = $tabs | Where-Object { $_.Name -eq $tabName } | Select-Object -First 1
-    if ($tabDef) {
-      ## Refresh tools check if System Info
-      if ($tabName -eq "System Info") {
-        $Script:ADHealthTools = Test-ToolsAvailability
-      }
-      $newText = & $tabDef.Generator
-      $currentTab.View.Subviews[0].Text = [NStack.ustring]::Make($newText)
-    }
-  }).GetNewClosure()
-  $dialog.Add($btnRefresh)
-
-  $btnExport = [Terminal.Gui.Button]::new("Export Report")
-  $btnExport.X = 15
-  $btnExport.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
-  $btnExport.add_Clicked({
-    Debug-Log "Exporting AD health report..." -Type "Insight"
-    $report = @"
-AD HEALTH REPORT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Domain: $Domain
-Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-
-SYSTEM INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-SystemInfoText)
-
-DOMAIN CONTROLLERS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-DCStatusText -Domain $Domain)
-
-REPLICATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-ReplicationStatusText -Domain $Domain)
-
-DNS RECORDS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-DNSStatusText -Domain $Domain)
-
-SYSVOL/NETLOGON
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-SysvolStatusText -Domain $Domain)
-
-FSMO ROLES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-FSMOStatusText -Domain $Domain)
-
-GROUP POLICY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-GPOStatusText -Domain $Domain)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-End of Report
-"@
-
-  $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-  $savePath = Show-FileBrowserDialog -StartDir "." -Title "Save AD Health Report" -Filter @("*.txt", "*.log")
-  if ($savePath) {
-    try {
-      $report | Out-File -FilePath $savePath -Encoding UTF8
-      Debug-Log "Report exported to $savePath" -Type "Success"
-      Show-Modal "Export Complete" "AD Health Report saved to:`n`n$savePath"
-    } catch {
-      Debug-Log "Failed to export report: $($_.Exception.Message)" -Type "Problem"
-      Show-Modal "Export Failed" "Failed to save report:`n`n$($_.Exception.Message)"
-    }
-  }
-}).GetNewClosure()
-
-  $dialog.Add($btnExport)
-
-  $btnClose = [Terminal.Gui.Button]::new("Close")
-  $btnClose.X = [Terminal.Gui.Pos]::AnchorEnd(10)
-  $btnClose.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
-  $btnClose.add_Clicked({
-    Debug-Log "AD Health dialog closed" -Type "Insight"
-    [Terminal.Gui.Application]::RequestStop()
-  }).GetNewClosure()
-  $dialog.Add($btnClose)
-
-  ## Run dialog
-  Debug-Log "Running AD Health dialog" -Type "Insight"
-  [Terminal.Gui.Application]::Run($dialog)
+  return $output -join "`n"
 }
 
 ## ==================== CONTENT GENERATORS ====================
@@ -7533,7 +6928,7 @@ function Get-DCStatusText {
       $output += "No domain controllers found in demo data."
     }
   } else {
-    ## Production mode - check ports
+    ## Production Mode - check ports
     $result = Test-DCStatus -Domain $Domain
 
     if ($result.Summary) {
@@ -7606,7 +7001,7 @@ function Get-ReplicationStatusText {
       $output += "Single DC - no replication partners."
     }
   } else {
-    ## Production mode - actually run repadmin
+    ## Production Mode - actually run repadmin
     $result = Test-ADReplication -Domain $Domain
 
     if ($hasRepadmin) {
@@ -7667,7 +7062,7 @@ function Get-DNSStatusText {
     $output += ""
     $output += "All DNS records appear healthy."
   } else {
-    ## Production mode - actually query DNS
+    ## Production Mode - actually query DNS
     $result = Test-ADDnsRecords -Domain $Domain
 
     $output += "Querying DNS records for domain: $Domain"
@@ -7720,7 +7115,7 @@ function Get-SysvolStatusText {
       $output += "No domain controllers found."
     }
   } else {
-    ## Production mode - actually check shares
+    ## Production Mode - actually check shares
     $result = Test-SysvolHealth -Domain $Domain
     $output += "Checking SYSVOL/NETLOGON shares for domain: $Domain"
     $output += ""
@@ -7897,7 +7292,7 @@ function Get-FSMOStatusText {
       $output += "No domain controllers found."
     }
   } else {
-    ## Production mode - actually query FSMO
+    ## Production Mode - actually query FSMO
     $result = Test-FSMORoles -Domain $Domain
     $output += "Checking FSMO roles for domain: $Domain"
     $output += ""
@@ -7955,7 +7350,7 @@ function Get-GPOStatusText {
     $output += ""
     $output += "All GPOs in sync."
   } else {
-    ## Production mode - actually query GPOs
+    ## Production Mode - actually query GPOs
     $result = Test-GPOHealth -Domain $Domain
     $output += "Checking GPOs for domain: $Domain"
     $output += ""
@@ -7989,7 +7384,7 @@ function Test-ToolsAvailability {
     else { 'Windows' }
 
   <#
-  LINUX-BASED TOOLS FOR QUERYING WINDOWS / ACTIVE DIRECTORY
+  Linux based tools for querying Windows / Active directory
   =========================================================
 
   NOTE:
@@ -8054,20 +7449,20 @@ Linux equivalents:
 Purpose:
 - Validate AD-related port availability (LDAP, Kerberos, SMB, RPC)
 
-----------{ SUMMARY }----------
+----------{ Summary }----------
 Windows diagnostic tools tend to be monolithic.
 Linux diagnostics are compositional, combining DNS, LDAP,
 Kerberos, SMB, and RPC checks to reach the same conclusions.
 
 This block documents the conceptual and operational mapping.
 
-MACOS / HOMEBREW AVAILABILITY NOTES
+MacOS / Homebrew Availability notes
 ===================================
 
 Most Linux-side AD diagnostic tools are available on macOS via Homebrew.
-However, a few are LIMITED or NOT FUNCTIONALLY EQUIVALENT on macOS.
+However, a few are LIMITED or are NOT functionally equivalent on macOS.
 
-----------{ AVAILABLE & FUNCTIONALLY EQUIVALENT ON macOS (via Homebrew) }----------
+----------{ Availablity & functionally equivalent on macOS (via Homebrew) }----------
 - ldapsearch / ldapwhoami
   Source: openldap
   Notes: Fully functional; identical usage to Linux.
@@ -8088,7 +7483,7 @@ However, a few are LIMITED or NOT FUNCTIONALLY EQUIVALENT on macOS.
   Source: krb5
   Notes: macOS includes MIT Kerberos; works natively with AD.
 
-----------{ PARTIALLY AVAILABLE / CONDITIONAL }----------
+----------{ Partially available / Conditional }----------
 - samba-tool drs
   Source: samba
   Notes:
@@ -8102,7 +7497,7 @@ However, a few are LIMITED or NOT FUNCTIONALLY EQUIVALENT on macOS.
     - Available, but requires Samba + winbind configuration
     - Not commonly used on macOS; more fragile than on Linux
 
-----------{ LIMITED OR NOT PRACTICAL ON macOS }----------
+----------{ Limited or not practical on MacOS }----------
 - rpcclient
   Source: samba
   Notes:
@@ -8115,7 +7510,7 @@ However, a few are LIMITED or NOT FUNCTIONALLY EQUIVALENT on macOS.
     - No native DFS-R client exists outside Windows
     - macOS can only validate SYSVOL access, not DFS-R health
 
-----------{ SUMMARY }----------
+----------{ Summary }----------
 ✔ Most LDAP, DNS, Kerberos, and port-query tooling works identically
   on Linux and macOS.
 
@@ -8629,7 +8024,7 @@ function Generate-RandomPassword {
   $Symbols   = @('!','@','$','?','<','>','*','&')
   $Script:actualPassword = ""
 
-  ## --- Generate-RandomPassword UI ---
+  ## Generate-RandomPassword UI
   $dlg = [Terminal.Gui.Dialog]::new("Generate Random Password", 66, 14)
 
   ## 2x2 checkbox layout
@@ -8653,7 +8048,7 @@ function Generate-RandomPassword {
   $txtPwd.Text = ""
   $dlg.Add($txtPwd)
 
-  ## --- ENTROPY DISPLAY ---
+  ## Entropy display
   $lblStrength = [Terminal.Gui.Label]::new(30,7,"Strength: Not generated")
   $lblStrength.Width = 30
   $dlg.Add($lblStrength)
@@ -8708,7 +8103,7 @@ function Generate-RandomPassword {
   $btnClose    = [Terminal.Gui.Button]::new("Close");    $btnClose.X=28; $btnClose.Y=10
   $dlg.Add($btnGenerate, $btnCopy, $btnClose)
 
-  ## --- Generate Logic ---
+  ## Generate Logic
   $btnGenerate.add_Clicked({
     $len = $txtLen.Text -as [int]
     if (-not $len) { $len = 12 }
@@ -8749,14 +8144,14 @@ function Generate-RandomPassword {
       }
     }).GetNewClosure()
 
-    ## --- Show Password toggle ---
+    ## Show Password toggle
     $chkShowPwd.add_Toggled({
       if ($chkShowPwd.Checked) { $txtPwd.Text = $Script:actualPassword
       } else { $txtPwd.Text = ('*' * $Script:actualPassword.Length)
       }
     })
 
-    ## --- Copy to Clipboard ---
+    ## Copy to Clipboard
     $btnCopy.add_Clicked({
       if (-not $Script:actualPassword) { return }
       if ($IsWindows) { Set-Clipboard -Value $Script:actualPassword }
@@ -8765,7 +8160,7 @@ function Generate-RandomPassword {
       Show-Modal "Copied" "Password copied to clipboard."
     }).GetNewClosure()
 
-    ## --- Close ---
+    ## Close
     $btnClose.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }).GetNewClosure()
 
   [Terminal.Gui.Application]::Run($dlg)
@@ -8791,7 +8186,7 @@ function Dump-LAPSDevices {
     [object[]]$Computers
   )
 
-  ## ---- Step 1: identify LAPS-enabled devices ----
+  ##  Step 1: identify LAPS-enabled devices
   $LAPSDevices = $Computers | Where-Object {
 
     ## Legacy LAPS
@@ -8805,12 +8200,12 @@ function Dump-LAPSDevices {
     return @()
   }
 
-  ## ---- Step 2: find properties populated on ALL LAPS devices ----
+  ##  Step 2: find properties populated on ALL LAPS devices
   $AllProps = $LAPSDevices[0].PSObject.Properties.Name
 
   $CommonProps = $AllProps | Where-Object { $prop = $_; -not ($LAPSDevices | Where-Object { -not $_.PSObject.Properties[$prop] -or [string]::IsNullOrWhiteSpace($_.$prop) }) }
 
-  ## ---- Step 3: output only those properties ----
+  ##  Step 3: output only those properties
   $LAPSDevices | Select-Object -Property $CommonProps
 }
 
@@ -8901,7 +8296,7 @@ function Show-LAPSSearchModal {
         Debug-Log "Found $($Script:LAPSComputers.Count) computers with LAPS" -Type "Insight"
 
       } else {
-        ## Production mode - detect LAPS schema once
+        ## Production Mode - detect LAPS schema once
         if (-not $Script:LAPSSchemaDetected) {
           try {
             $windowsLapsSchema = Get-ADObject -SearchBase (Get-ADRootDSE).SchemaNamingContext  -LDAPFilter "(lDAPDisplayName=msLAPS-Password)" -ErrorAction SilentlyContinue
@@ -9350,7 +8745,7 @@ function Show-NewObjectWizard {
       [Terminal.Gui.Application]::RequestStop()
 
       } else {
-        ## Production mode - create in AD
+        ## Production Mode - create in AD
         switch ($objType) {
           "User" {
             $sam      = $txtSam.Text.ToString().Trim()
@@ -9448,7 +8843,7 @@ function Show-NewObjectWizard {
   [Terminal.Gui.Application]::Run($dlg)
 }
 
-# -------------------------[] Change Domain Dialog ]-------------------------
+# -------------------------[ Change Domain Dialog ]-------------------------
 function Show-ChangeDomainDialog {
   <#
   .SYNOPSIS
@@ -9605,7 +9000,7 @@ function Show-ChangeDCDialog {
     if ($Script:DCs) { $Script:DCs | Sort-Object Name } else { @() }
     } else {
       try { Get-ADDomainController -Filter * | Select-Object Name, Site, IPv4Address, IsGlobalCatalog, OperatingSystem }
-      catch { & $debugLogFunc " Failed to get DCs: $($_.Exception.Message)" -Type "Problem"; @() }
+      catch { & $debugLogFunc "Failed to get DCs: $($_.Exception.Message)" -Type "Problem"; @() }
     }
 
     if ($availableDCs.Count -eq 0) {
@@ -9613,7 +9008,7 @@ function Show-ChangeDCDialog {
       return
     }
 
-    & $debugLogFunc " Found $($availableDCs.Count) DCs total" -Type "Insight"
+    & $debugLogFunc "Found $($availableDCs.Count) DCs total" -Type "Insight"
 
     $dlg = [Terminal.Gui.Dialog]::new("Change Domain Controller", 90, 28)
     $dlg.Data = @{ SelectedDC = $null }
@@ -9680,10 +9075,10 @@ function Show-ChangeDCDialog {
     $btnConnect.add_Clicked({
     if ($lstDCs.SelectedItem -ge 0 -and $lstDCs.SelectedItem -lt $availableDCs.Count) {
       $selectedDC = $availableDCs[$lstDCs.SelectedItem]
-      $oldDCName = $Script:CurrentDCName  # Capture the OLD name before changing
+      $oldDCName = $Script:CurrentDCName  ## Capture the OLD name before changing
       $Script:CurrentDC = $selectedDC
       $Script:CurrentDCName = $selectedDC.Name
-      & $debugLogFunc " Changed DC from '$oldDCName' to '$($Script:CurrentDCName)'" -Type "Success"
+      & $debugLogFunc "Changed DC from '$oldDCName' to '$($Script:CurrentDCName)'" -Type "Success"
       & $showInfoPanelFunc -UpdateOnly
       if (-not $demoMode) { & $refreshDataFunc -Domain $Script:CurrentDomain -RebuildTree }
       [Terminal.Gui.Application]::RequestStop()
@@ -9727,11 +9122,12 @@ function Show-ChangeDCDialog {
     )
 }
 
+## Do the heavy lifting when searching AD
 function Invoke-ADSearch {
   param(
     [Parameter(Mandatory=$true)] [Terminal.Gui.TextField] $UserField,
     [Parameter(Mandatory=$true)] [Terminal.Gui.TextField] $DomainField,
-    [Parameter(Mandatory=$true)] [string] $ObjType,  ## ← CHANGED FROM ComboBox TO string
+    [Parameter(Mandatory=$true)] [string] $ObjType,
     [Parameter(Mandatory=$true)] [Terminal.Gui.TabView] $TabView,
     [Parameter(Mandatory=$true)] [Terminal.Gui.TextView] $TxtOutput,
     [Parameter(Mandatory=$true)] [Terminal.Gui.CheckBox] $ChkDisabledOnly,
@@ -9740,13 +9136,28 @@ function Invoke-ADSearch {
     ## New parameters for clipboard buttons
     [Parameter(Mandatory=$false)] [Terminal.Gui.Button] $BtnCopyQuery,
     [Parameter(Mandatory=$false)] [Terminal.Gui.Button] $BtnPasteQuery,
-    [Parameter(Mandatory=$false)] [Terminal.Gui.Button] $BtnCopyResults
+    [Parameter(Mandatory=$false)] [Terminal.Gui.Button] $BtnCopyResults,
+    ## NEW: Stale account parameters
+    [Parameter(Mandatory=$false)] [Terminal.Gui.CheckBox] $ChkStaleOnly,
+    [Parameter(Mandatory=$false)] [Terminal.Gui.TextField] $TxtDaysInactive,
+    [Parameter(Mandatory=$false)] [Terminal.Gui.CheckBox] $ChkIncludeNeverLoggedOn
   )
 
   $searchName = $UserField.Text.ToString().Trim()
   $domain     = $DomainField.Text.ToString().Trim()
-  $objType    = $ObjType  ## ← REMOVE .Text.ToString() since it's already a string
+  $objType    = $ObjType
   $currentTab = $TabView.SelectedTab
+
+  ## Parse stale account settings
+  $staleOnly = if ($ChkStaleOnly) { $ChkStaleOnly.Checked } else { $false }
+  $includeNeverLoggedOn = if ($ChkIncludeNeverLoggedOn) { $ChkIncludeNeverLoggedOn.Checked } else { $false }
+  $daysInactive = 90
+  if ($TxtDaysInactive -and $TxtDaysInactive.Text.ToString().Trim() -ne "") {
+    if (-not [int]::TryParse($TxtDaysInactive.Text.ToString().Trim(), [ref]$daysInactive)) {
+      $TxtOutput.Text = "Invalid days inactive value. Using default: 90"
+      $daysInactive = 90
+    }
+  }
 
   try {
     $objs = @()
@@ -9754,59 +9165,214 @@ function Invoke-ADSearch {
       ## LDAP filter search
       $filter = $LdapFilter.Text.ToString().Trim()
       if (-not $filter) { $TxtOutput.Text="Please enter an LDAP filter."; return }
-        if ($Script:DemoMode) {
-          $TxtOutput.Text="LDAP search not supported in demo mode. Use Basic search."
-          return
-        } else {
-          $loading = Show-LoadingDialog -Message "Executing LDAP query..."
-          try {
-            $objs = Get-ADObject -LDAPFilter $filter -Properties Name,ObjectClass,DistinguishedName -ErrorAction Stop |
-            Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={$_.ObjectClass}}, @{Name='DN';Expression={$_.DistinguishedName}}
-            $Script:lastSearchType = "LDAP"
-          } finally { Close-LoadingDialog $loading }
-        }
+      if ($Script:DemoMode) {
+        $TxtOutput.Text="LDAP search not supported in demo mode. Use Basic search."
+        return
       } else {
-      ## Basic search
-      if (-not $searchName) { $TxtOutput.Text="Please enter a name."; return }
-        if ($Script:DemoMode) {
-          switch ($objType) {
-            "User"  { $objs = $Script:Users | Where-Object { $_.Name -like "*$searchName*" } | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"user"}} }
-            "Group" { $matchedGroups = @(); foreach ($u in $Script:Users) { foreach ($g in $u.Groups) { if ($g -like "*$searchName*") { $matchedGroups += $g } } }
-                      $objs = ($matchedGroups | Sort-Object -Unique) | ForEach-Object { [PSCustomObject]@{ Name=$_; Type="group" } }}
-            "OU"    { $ouNames = ($Script:Users | Select-Object -ExpandProperty OU -Unique)
-                      $objs = ($ouNames | Where-Object { $_ -like "*$searchName*" }) | ForEach-Object { [PSCustomObject]@{ Name=$_; Type="organizationalUnit" } } }
-            "Computer" { $objs = @() }
-            "Contact"  { $objs = @() }
-          }
-        $Script:lastSearchType = "Basic ($objType)"
-        } else {
-          $loading = Show-LoadingDialog -Message "Searching AD for $objType '$searchName'..."
-          try {
-            $filterStr = "Name -like '*$searchName*'"
-            if ($ChkDisabledOnly.Checked -and $objType -eq "User") { $filterStr = "Name -like '*$searchName*' -and Enabled -eq $false" }
-              switch ($objType) {
-                "User"     { $objs = Get-ADUser -Filter $filterStr -Properties Enabled -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"user"}}, @{Name='Enabled';Expression={$_.Enabled}} }
-                "Group"    { $objs = Get-ADGroup -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"group"}} }
-                "Computer" { $objs = Get-ADComputer -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"computer"}} }
-                "OU"       { $objs = Get-ADOrganizationalUnit -Filter "Name -like '*$searchName*'" -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"organizationalUnit"}} }
-                "Contact"  { $objs = Get-ADObject -Filter "ObjectClass -eq 'contact' -and Name -like '*$searchName*'" -Properties Name -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"contact"}} }
-                 default   { $objs=@() }
-              }
-            $Script:lastSearchType = "Basic ($objType)"
-          } finally { Close-LoadingDialog $loading }
-        }
+        $loading = Show-LoadingDialog -Message "Executing LDAP query..."
+        try {
+          $objs = Get-ADObject -LDAPFilter $filter -Properties Name,ObjectClass,DistinguishedName -ErrorAction Stop |
+          Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={$_.ObjectClass}}, @{Name='DN';Expression={$_.DistinguishedName}}
+          $Script:lastSearchType = "LDAP"
+        } finally { Close-LoadingDialog $loading }
       }
+    } else {
+      ## Basic search
+      if (-not $searchName -and -not $staleOnly) { $TxtOutput.Text="Please enter a name or enable stale account search."; return }
 
-      ## Store results for export
-      $Script:lastSearchResults = $objs
+      if ($Script:DemoMode) {
+        switch ($objType) {
+          "User"  {
+            $objs = $Script:Users | Where-Object {
+              $nameMatch = if ($searchName) { $_.Name -like "*$searchName*" } else { $true }
 
-      if (-not $objs -or $objs.Count -eq 0) { $TxtOutput.Text = "No results found"; return }
-        ## Display results
-        $resultText = "Found $($objs.Count) object(s):`n`n"
-        $resultText += ($objs | ForEach-Object { "$($_.Name) [$($_.Type)]" }) -join "`n"
-        $TxtOutput.Text = $resultText
-    } catch {
-      $TxtOutput.Text = "Error: $($_.Exception.Message)"
+              ## Apply stale filtering if enabled
+              if ($staleOnly -and $nameMatch) {
+                $cutoffDate = (Get-Date).AddDays(-$daysInactive)
+                $lastLogon = $_.LastLogonDate
+
+                if (-not $lastLogon) {
+                  $includeNeverLoggedOn
+                } else {
+                  $lastLogon -lt $cutoffDate
+                }
+              } else {
+                $nameMatch
+              }
+            } | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"user"}}, @{Name='LastLogon';Expression={if($_.LastLogonDate){$_.LastLogonDate.ToString('yyyy-MM-dd')}else{'Never'}}}
+          }
+
+          "Computer" {
+            $objs = $Script:Computers | Where-Object {
+              $nameMatch = if ($searchName) { $_.Name -like "*$searchName*" } else { $true }
+
+              ## Apply stale filtering if enabled
+              if ($staleOnly -and $nameMatch) {
+                $cutoffDate = (Get-Date).AddDays(-$daysInactive)
+                $lastLogon = $_.LastLogonDate
+
+                if (-not $lastLogon) {
+                  $includeNeverLoggedOn
+                } else {
+                  $lastLogon -lt $cutoffDate
+                }
+              } else {
+                $nameMatch
+              }
+            } | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"computer"}}, @{Name='LastLogon';Expression={if($_.LastLogonDate){$_.LastLogonDate.ToString('yyyy-MM-dd')}else{'Never'}}}
+          }
+
+          "DomainController" {
+            $objs = $Script:DCs | Where-Object {
+              $nameMatch = if ($searchName) { $_.Name -like "*$searchName*" } else { $true }
+
+              ## Apply stale filtering if enabled
+              if ($staleOnly -and $nameMatch) {
+                $cutoffDate = (Get-Date).AddDays(-$daysInactive)
+                $lastLogon = $_.LastLogonDate
+
+                if (-not $lastLogon) {
+                  $includeNeverLoggedOn
+                } else {
+                  $lastLogon -lt $cutoffDate
+                }
+              } else {
+                $nameMatch
+              }
+            } | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"domainController"}}, @{Name='LastLogon';Expression={if($_.LastLogonDate){$_.LastLogonDate.ToString('yyyy-MM-dd')}else{'Never'}}}
+          }
+
+          "Group" {
+            if ($staleOnly) {
+              $cutoffDate = (Get-Date).AddDays(-$daysInactive)
+              $objs = $Script:Groups | Where-Object {
+                $nameMatch = if ($searchName) { $_.Name -like "*$searchName*" } else { $true }
+
+                if ($nameMatch) {
+                  $whenChanged = $_.WhenChanged ?? $_.Modified
+                  if (-not $whenChanged) {
+                    $includeNeverLoggedOn
+                  } else {
+                    $whenChanged -lt $cutoffDate
+                  }
+                } else {
+                  $false
+                }
+              } | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"group"}}, @{Name='LastModified';Expression={if($_.WhenChanged){$_.WhenChanged.ToString('yyyy-MM-dd')}else{'Never'}}}
+            } else {
+              $matchedGroups = @()
+              foreach ($u in $Script:Users) {
+                foreach ($g in $u.Groups) {
+                  if ($g -like "*$searchName*") { $matchedGroups += $g }
+                }
+              }
+              $objs = ($matchedGroups | Sort-Object -Unique) | ForEach-Object { [PSCustomObject]@{ Name=$_; Type="group" } }
+            }
+          }
+
+          "OU"    {
+            $ouNames = ($Script:Users | Select-Object -ExpandProperty OU -Unique)
+            $objs = ($ouNames | Where-Object { $_ -like "*$searchName*" }) | ForEach-Object { [PSCustomObject]@{ Name=$_; Type="organizationalUnit" } }
+          }
+
+          "Contact"  { $objs = @() }
+        }
+        $Script:lastSearchType = if ($staleOnly) { "Stale $objType (${daysInactive}+ days)" } else { "Basic ($objType)" }
+      } else {
+        ## Real AD mode
+        $loading = Show-LoadingDialog -Message "Searching AD for $objType '$searchName'..."
+        try {
+          $filterStr = if ($searchName) { "Name -like '*$searchName*'" } else { "*" }
+          if ($ChkDisabledOnly.Checked -and $objType -eq "User") {
+            $filterStr = if ($searchName) { "Name -like '*$searchName*' -and Enabled -eq $false" } else { "Enabled -eq $false" }
+          }
+
+          switch ($objType) {
+            "User"     {
+              $props = @('Enabled', 'LastLogonDate')
+              $rawObjs = Get-ADUser -Filter $filterStr -Properties $props -ErrorAction Stop
+
+              ## Apply stale filtering
+              if ($staleOnly) {
+                $cutoffDate = (Get-Date).AddDays(-$daysInactive)
+                $rawObjs = $rawObjs | Where-Object {
+                  $lastLogon = $_.LastLogonDate
+                  if (-not $lastLogon) {
+                    $includeNeverLoggedOn
+                  } else {
+                    $lastLogon -lt $cutoffDate
+                  }
+                }
+              }
+
+              $objs = $rawObjs | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"user"}}, @{Name='Enabled';Expression={$_.Enabled}}, @{Name='LastLogon';Expression={if($_.LastLogonDate){$_.LastLogonDate.ToString('yyyy-MM-dd')}else{'Never'}}}
+            }
+
+            "Computer" {
+              $props = @('LastLogonDate')
+              $rawObjs = Get-ADComputer -Filter $filterStr -Properties $props -ErrorAction Stop
+
+              ## Apply stale filtering
+              if ($staleOnly) {
+                $cutoffDate = (Get-Date).AddDays(-$daysInactive)
+                $rawObjs = $rawObjs | Where-Object {
+                  $lastLogon = $_.LastLogonDate
+                  if (-not $lastLogon) {
+                    $includeNeverLoggedOn
+                  } else {
+                    $lastLogon -lt $cutoffDate
+                  }
+                }
+              }
+
+              $objs = $rawObjs | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"computer"}}, @{Name='LastLogon';Expression={if($_.LastLogonDate){$_.LastLogonDate.ToString('yyyy-MM-dd')}else{'Never'}}}
+            }
+
+            "Group"    {
+              $props = @('Modified')
+              $rawObjs = Get-ADGroup -Filter $filterStr -Properties $props -ErrorAction Stop
+
+              ## Apply stale filtering
+              if ($staleOnly) {
+                $cutoffDate = (Get-Date).AddDays(-$daysInactive)
+                $rawObjs = $rawObjs | Where-Object {
+                  $modified = $_.Modified
+                  if (-not $modified) {
+                    $includeNeverLoggedOn
+                  } else {
+                    $modified -lt $cutoffDate
+                  }
+                }
+              }
+
+              $objs = $rawObjs | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"group"}}, @{Name='LastModified';Expression={if($_.Modified){$_.Modified.ToString('yyyy-MM-dd')}else{'Never'}}}
+            }
+
+            "OU"       { $objs = Get-ADOrganizationalUnit -Filter $filterStr -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"organizationalUnit"}} }
+            "Contact"  { $objs = Get-ADObject -Filter "ObjectClass -eq 'contact' -and $filterStr" -Properties Name -ErrorAction Stop | Select-Object @{Name='Name';Expression={$_.Name}}, @{Name='Type';Expression={"contact"}} }
+            default   { $objs=@() }
+          }
+          $Script:lastSearchType = if ($staleOnly) { "Stale $objType (${daysInactive}+ days)" } else { "Basic ($objType)" }
+        } finally { Close-LoadingDialog $loading }
+      }
+    }
+
+    ## Store results for export
+    $Script:lastSearchResults = $objs
+
+    if (-not $objs -or $objs.Count -eq 0) { $TxtOutput.Text = "No results found"; return }
+
+    ## Display results
+    $resultText = "Found $($objs.Count) object(s):`n`n"
+    foreach ($obj in $objs) {
+      $line = "$($obj.Name) [$($obj.Type)]"
+      if ($obj.PSObject.Properties['LastLogon']) { $line += " - Last Logon: $($obj.LastLogon)" }
+      if ($obj.PSObject.Properties['LastModified']) { $line += " - Last Modified: $($obj.LastModified)" }
+      $resultText += "$line`n"
+    }
+    $TxtOutput.Text = $resultText
+  } catch {
+    $TxtOutput.Text = "Error: $($_.Exception.Message)"
   }
 }
 
@@ -9945,6 +9511,7 @@ function Show-ADSearchDialog {
     Creates a modal dialog for searching Active Directory with:
     - Basic search (by name and object type)
     - Advanced LDAP filter search
+    - Stale account search (inactive for X days)
     - Clipboard support for queries and results
     - Export functionality
   #>
@@ -9996,17 +9563,44 @@ function Show-ADSearchDialog {
     ## Object Type
     $lbl = [Terminal.Gui.Label]::new("Object Type:"); $lbl.X=2; $lbl.Y=$y; $basicView.Add($lbl)
     $cmbObjectType = [Terminal.Gui.ComboBox]::new(); $cmbObjectType.X=20; $cmbObjectType.Y=$y; $cmbObjectType.Width=20
-    $cmbObjectType.SetSource(@("User", "Group", "Computer", "OU", "Contact"))
+    $cmbObjectType.SetSource(@("User", "Group", "Computer", "OU", "Contact", "DomainController"))
     $cmbObjectType.SelectedItem = 0
     $basicView.Add($cmbObjectType); $y+=2
 
     ## Disabled only checkbox (for users)
     $chkDisabledOnly = [Terminal.Gui.CheckBox]::new("Disabled accounts only"); $chkDisabledOnly.X=20; $chkDisabledOnly.Y=$y
-    $basicView.Add($chkDisabledOnly); $y+=2
+    $basicView.Add($chkDisabledOnly); $y+=1
 
-    ## Search button
+    ## ==================== STALE ACCOUNT FILTERING ====================
+    ## Stale accounts checkbox
+    $chkStaleOnly = [Terminal.Gui.CheckBox]::new("Stale accounts only (inactive)"); $chkStaleOnly.X=20; $chkStaleOnly.Y=$y
+    $basicView.Add($chkStaleOnly); $y+=2
+
+    ## Days inactive field
+    $lbl = [Terminal.Gui.Label]::new("Days inactive:"); $lbl.X=20; $lbl.Y=$y; $basicView.Add($lbl)
+    $txtDaysInactive = [Terminal.Gui.TextField]::new("90"); $txtDaysInactive.X=36; $txtDaysInactive.Y=$y; $txtDaysInactive.Width=10
+    $basicView.Add($txtDaysInactive)
+
+    $lblDaysHelp = [Terminal.Gui.Label]::new("(Default: 90)"); $lblDaysHelp.X=47; $lblDaysHelp.Y=$y
+    $basicView.Add($lblDaysHelp); $y+=1
+
+    ## Include never logged on checkbox
+    $chkIncludeNeverLoggedOn = [Terminal.Gui.CheckBox]::new("Include never logged on"); $chkIncludeNeverLoggedOn.X=20; $chkIncludeNeverLoggedOn.Y=$y
+    $basicView.Add($chkIncludeNeverLoggedOn); $y+=2
+
+    ## Search button (with Copy Results on same line)
     $btnSearch = [Terminal.Gui.Button]::new("Search"); $btnSearch.X=20; $btnSearch.Y=$y
-    $basicView.Add($btnSearch); $y+=3
+    $basicView.Add($btnSearch)
+
+    ## Copy Results button on same line
+    $btnCopyResults = [Terminal.Gui.Button]::new("Copy Results to Clipboard")
+    $btnCopyResults.X = 35
+    $btnCopyResults.Y = $y
+    $btnCopyResults.add_Clicked({
+      & $copySearchResultsFunc -TxtOutput $txtResults
+    }.GetNewClosure())
+    $basicView.Add($btnCopyResults)
+    $y+=2  ## One line space below buttons
 
     ## Results
     $lbl = [Terminal.Gui.Label]::new("Results:"); $lbl.X=2; $lbl.Y=$y; $basicView.Add($lbl); $y+=1
@@ -10014,18 +9608,11 @@ function Show-ADSearchDialog {
     $txtResults.X = 2
     $txtResults.Y = $y
     $txtResults.Width = [Terminal.Gui.Dim]::Fill(2)
-    $txtResults.Height = [Terminal.Gui.Dim]::Fill(3)
+    $txtResults.Height = [Terminal.Gui.Dim]::Fill(1)  ## Go to bottom -1 line
     $txtResults.ReadOnly = $true
+    $txtResults.Text = "Enter search criteria and click Search"
     $basicView.Add($txtResults)
 
-    ## Copy Results button
-    $btnCopyResults = [Terminal.Gui.Button]::new("Copy Results to Clipboard")
-    $btnCopyResults.X = 2
-    $btnCopyResults.Y = [Terminal.Gui.Pos]::Bottom($txtResults) + 1
-    $btnCopyResults.add_Clicked({
-      & $copySearchResultsFunc -TxtOutput $txtResults
-    }.GetNewClosure())
-    $basicView.Add($btnCopyResults)
     $basicTab.View = $basicView
     $searchTabView.AddTab($basicTab, $false)
 
@@ -10071,9 +9658,19 @@ function Show-ADSearchDialog {
     }.GetNewClosure())
     $advView.Add($btnPasteQuery); $y+=2
 
-    ## Search button
+    ## Execute LDAP Query button (with Copy Results on same line)
     $btnSearchAdv = [Terminal.Gui.Button]::new("Execute LDAP Query"); $btnSearchAdv.X=2; $btnSearchAdv.Y=$y
-    $advView.Add($btnSearchAdv); $y+=3
+    $advView.Add($btnSearchAdv)
+
+    ## Copy Results button on same line
+    $btnCopyResultsAdv = [Terminal.Gui.Button]::new("Copy Results to Clipboard")
+    $btnCopyResultsAdv.X = 25
+    $btnCopyResultsAdv.Y = $y
+    $btnCopyResultsAdv.add_Clicked({
+      & $copySearchResultsFunc -TxtOutput $txtResultsAdv
+    }.GetNewClosure())
+    $advView.Add($btnCopyResultsAdv)
+    $y+=2  ## One line space below buttons
 
     ## Results
     $lbl = [Terminal.Gui.Label]::new("Results:"); $lbl.X=2; $lbl.Y=$y; $advView.Add($lbl); $y+=1
@@ -10081,18 +9678,11 @@ function Show-ADSearchDialog {
     $txtResultsAdv.X = 2
     $txtResultsAdv.Y = $y
     $txtResultsAdv.Width = [Terminal.Gui.Dim]::Fill(2)
-    $txtResultsAdv.Height = [Terminal.Gui.Dim]::Fill(3)
+    $txtResultsAdv.Height = [Terminal.Gui.Dim]::Fill(1)  ## Go to bottom -1 line
     $txtResultsAdv.ReadOnly = $true
+    $txtResultsAdv.Text = "Enter LDAP filter and click Execute"
     $advView.Add($txtResultsAdv)
 
-    ## Copy Results button
-    $btnCopyResultsAdv = [Terminal.Gui.Button]::new("Copy Results to Clipboard")
-    $btnCopyResultsAdv.X = 2
-    $btnCopyResultsAdv.Y = [Terminal.Gui.Pos]::Bottom($txtResultsAdv) + 1
-    $btnCopyResultsAdv.add_Clicked({
-      & $copySearchResultsFunc -TxtOutput $txtResultsAdv
-    }.GetNewClosure())
-    $advView.Add($btnCopyResultsAdv)
     $advTab.View = $advView
     $searchTabView.AddTab($advTab, $false)
 
@@ -10103,26 +9693,26 @@ function Show-ADSearchDialog {
       ## Get the selected object type as a string
       $selectedType = $cmbObjectType.Text.ToString()
 
-      & $invokeADSearchFunc -UserField $txtSearchName -DomainField $txtDomain -ObjType $selectedType -TabView $searchTabView -TxtOutput $txtResults -ChkDisabledOnly $chkDisabledOnly -LdapFilter $txtLdapFilter -AdvTab $advTab
+      & $invokeADSearchFunc -UserField $txtSearchName -DomainField $txtDomain -ObjType $selectedType -TabView $searchTabView -TxtOutput $txtResults -ChkDisabledOnly $chkDisabledOnly -LdapFilter $txtLdapFilter -AdvTab $advTab -ChkStaleOnly $chkStaleOnly -TxtDaysInactive $txtDaysInactive -ChkIncludeNeverLoggedOn $chkIncludeNeverLoggedOn
     }.GetNewClosure())
 
     ## Advanced Search
     $btnSearchAdv.add_Clicked({
       ## Get the selected object type as a string
       $selectedType = $cmbObjectType.Text.ToString()
-      & $invokeADSearchFunc -UserField $txtSearchName -DomainField $txtDomainAdv -ObjType $selectedType -TabView $searchTabView -TxtOutput $txtResultsAdv -ChkDisabledOnly $chkDisabledOnly -LdapFilter $txtLdapFilter -AdvTab $advTab
+      & $invokeADSearchFunc -UserField $txtSearchName -DomainField $txtDomainAdv -ObjType $selectedType -TabView $searchTabView -TxtOutput $txtResultsAdv -ChkDisabledOnly $chkDisabledOnly -LdapFilter $txtLdapFilter -AdvTab $advTab -ChkStaleOnly $chkStaleOnly -TxtDaysInactive $txtDaysInactive -ChkIncludeNeverLoggedOn $chkIncludeNeverLoggedOn
     }.GetNewClosure())
 
     ## Add TabView to dialog
     $dlg.Add($searchTabView)
-    & $debugLogFunc " AD Search Dialog created, running" -Type "Success"
+    & $debugLogFunc "AD Search Dialog created, running" -Type "Success"
 
     ## Run the dialog
     [Terminal.Gui.Application]::Run($dlg)
-    & $debugLogFunc " AD Search Dialog closed" -Type "Insight"
+    & $debugLogFunc "AD Search Dialog closed" -Type "Insight"
 
   } catch {
-    & $debugLogFunc " Exception in Show-ADSearchDialog: $($_.Exception.Message)" -Type "Problem"
+    & $debugLogFunc "Exception in Show-ADSearchDialog: $($_.Exception.Message)" -Type "Problem"
     & $showModalFunc "Error" "Failed to open search dialog:`n$($_.Exception.Message)"
   }
 }
@@ -10579,7 +10169,7 @@ function Invoke-ObjectOperation {
           Show-Modal "Success" "$objectType '$name' deleted successfully (demo mode)"
 
         } else {
-          ## Production mode - use AD cmdlets
+          ## Production Mode - use AD cmdlets
           switch ($objectType) {
             'User'     { Remove-ADUser -Identity $obj.SamAccountName -Confirm:$false -ErrorAction Stop }
             'Group'    { Remove-ADGroup -Identity $obj.Name -Confirm:$false -ErrorAction Stop }
@@ -10725,7 +10315,7 @@ function Invoke-ObjectOperation {
             $successCount++
             Debug-Log "Moved $name to $targetOU (demo mode)" -Type "Insight"
           } else {
-            ## Production mode
+            ## Production Mode
             Move-ADObject -Identity $obj.DistinguishedName -TargetPath $targetOU -ErrorAction Stop
             $successCount++
             Debug-Log "Moved $name to $targetOU in AD" -Type "Insight"
@@ -10828,7 +10418,7 @@ function Manage-AccountStatus {
   }
 
   Debug-Log "Starting bulk $Action on $($validObjects.Count) objects" -Type "Insight"
-  if ($Reason) { Debug-Log "  Reason: $Reason" -Type "Insight" }
+  if ($Reason) { Debug-Log "Reason: $Reason" -Type "Insight" }
 
   ## Process objects
   $successCount = 0
@@ -10849,10 +10439,10 @@ function Manage-AccountStatus {
           $obj.Disabled = $true
         }
           $successCount++
-          Debug-Log "  ${Action}d $objectType '$name' (demo mode)" -Type "Insight"
+          Debug-Log "${Action}d $objectType '$name' (demo mode)" -Type "Insight"
 
       } else {
-        ## Production mode - use AD cmdlets
+        ## Production Mode - use AD cmdlets
         if ($Action -eq 'Enable') {
           if ($objectType -eq 'User') { Enable-ADAccount -Identity $obj.SamAccountName -ErrorAction Stop
           } else { Enable-ADAccount -Identity $obj.SamAccountName -ErrorAction Stop }
@@ -10861,13 +10451,13 @@ function Manage-AccountStatus {
           } else { Disable-ADAccount -Identity $obj.SamAccountName -ErrorAction Stop }
         }
         $successCount++
-        Debug-Log "  ${Action}d $objectType '$name' in AD" -Type "Success"
+        Debug-Log "${Action}d $objectType '$name' in AD" -Type "Success"
         }
 
       } catch {
         $failCount++
         $errors += "${name}: $($_.Exception.Message)"
-        Debug-Log "  Failed to $Action $objectType '$name': $($_.Exception.Message)" -Type "Problem"
+        Debug-Log "Failed to $Action $objectType '$name': $($_.Exception.Message)" -Type "Problem"
       }
     }
 
@@ -10996,23 +10586,23 @@ function New-PropertiesDialog {
 
     ## Button handlers with captured functions
     $btnOK.add_Clicked({
-      & $debugLogFunc " OK clicked" -Type "Insight"
+      & $debugLogFunc "OK clicked" -Type "Insight"
       if ($OnOK) { & $OnOK $Data $sharedState }
       [Terminal.Gui.Application]::RequestStop()
     }.GetNewClosure())
 
     $btnCancel.add_Clicked({
-      & $debugLogFunc " Cancel clicked" -Type "Insight"
+      & $debugLogFunc "Cancel clicked" -Type "Insight"
       [Terminal.Gui.Application]::RequestStop()
     }.GetNewClosure())
 
     $btnApply.add_Clicked({
-      & $debugLogFunc " Apply clicked" -Type "Insight"
+      & $debugLogFunc "Apply clicked" -Type "Insight"
       if ($OnApply) {
         try {
           & $OnApply $Data $sharedState
         } catch {
-          & $debugLogFunc " Apply failed: $($_.Exception.Message)" -Type "Problem"
+          & $debugLogFunc "Apply failed: $($_.Exception.Message)" -Type "Problem"
           [Terminal.Gui.Application]::MainLoop.Invoke({
             & $showModalFunc "Error" "Failed to apply changes:`n$($_.Exception.Message)"
           })
@@ -11189,7 +10779,6 @@ function New-SearchTab {
   }
 }
 
-
 ## --------------------{ Helper funcitons for UI building }--------------------
 function Add-LabelAndField {
   <#
@@ -11335,7 +10924,7 @@ function Show-GroupPropertiesDialog {
           $members = Get-ADGroupMember -Identity $grp.Name -ErrorAction Stop
           $state.memberList = $members | Select-Object -ExpandProperty Name | Sort-Object
         } catch {
-          & $debugLogFunc " Failed to get group members: $($_.Exception.Message)" -Type "Warning"
+          & $debugLogFunc "Failed to get group members: $($_.Exception.Message)" -Type "Warning"
           $state.memberList = @()
         }
       }
@@ -11359,12 +10948,12 @@ function Show-GroupPropertiesDialog {
       ## Use $data instead of $group
       $grp = $data
 
-      ## CAPTURE ALL FUNCTIONS AND DATA AT BUILDER LEVEL
+      ## Capture all functions and data at builder level
       $debugLogFunc = ${function:Debug-Log}
       $showModalFunc = ${function:Show-Modal}
-      $allGroups = $Script:Groups  ## CAPTURE THE GROUPS ARRAY
-      $allUsers = $Script:Users    ## CAPTURE THE USERS ARRAY
-      $demoMode = $Script:DemoMode  ## CAPTURE DEMO MODE FLAG
+      $allGroups = $Script:Groups   ## capture the groups array
+      $allUsers = $Script:Users     ## capture the users array
+      $demoMode = $Script:DemoMode  ## capture the demo mode flag
 
       ## Get detailed member information
       $memberDetails = @()
@@ -11401,7 +10990,7 @@ function Show-GroupPropertiesDialog {
             }
           }
         } catch {
-          & $debugLogFunc " Failed to get member details: $($_.Exception.Message)" -Type "Warning"
+          & $debugLogFunc "Failed to get member details: $($_.Exception.Message)" -Type "Warning"
         }
       }
 
@@ -11442,7 +11031,7 @@ function Show-GroupPropertiesDialog {
         try {
           $memberDetails | Export-Csv -Path $filename -NoTypeInformation -Encoding UTF8
           & $showModalFunc "Export Complete" "Membership report exported to:`n`n$filename"
-          & $debugLogFunc " Exported group membership report to $filename" -Type "Success"
+          & $debugLogFunc "Exported group membership report to $filename" -Type "Success"
         } catch {
           & $showModalFunc "Export Failed" "Failed to export report:`n`n$($_.Exception.Message)"
         }
@@ -11474,10 +11063,10 @@ function Show-GroupPropertiesDialog {
         ## Get all other groups
         $allOtherGroups = @()
         if ($demoMode) {
-          & $debugLogFunc2 ": Demo mode - getting groups from allGroups (count: $($allGroups.Count))" -Type "Tracing"
-          & $debugLogFunc2 ": Current group name: $($grp.Name)" -Type "Tracing"
+          & $debugLogFunc2 "Demo mode - getting groups from allGroups (count: $($allGroups.Count))" -Type "Tracing"
+          & $debugLogFunc2 "Current group name: $($grp.Name)" -Type "Tracing"
           $allOtherGroups = @($allGroups | Where-Object { $_.Name -ne $grp.Name } | Sort-Object Name | Select-Object -ExpandProperty Name)
-          & $debugLogFunc2 ": Filtered other groups count: $($allOtherGroups.Count)" -Type "Tracing"
+          & $debugLogFunc2 "Filtered other groups count: $($allOtherGroups.Count)" -Type "Tracing"
         } else {
           try {
             $allOtherGroups = @(Get-ADGroup -Filter * | Where-Object { $_.Name -ne $grp.Name } | Sort-Object Name | Select-Object -ExpandProperty Name)
@@ -11486,7 +11075,7 @@ function Show-GroupPropertiesDialog {
           }
         }
 
-        & $debugLogFunc2 ": Found $($allOtherGroups.Count) other groups for comparison" -Type "Tracing"
+        & $debugLogFunc2 "Found $($allOtherGroups.Count) other groups for comparison" -Type "Tracing"
 
         ## Filtered groups list (starts with all groups)
         $filteredGroups = $allOtherGroups
@@ -11526,7 +11115,7 @@ function Show-GroupPropertiesDialog {
 
         $btnSelect = [Terminal.Gui.Button]::new("Compare")
         $btnSelect.add_Clicked({
-          & $debugLogFunc2 ": Compare button clicked, filteredGroups count: $($filteredGroups.Count), selected: $($lstGroups.SelectedItem)" -Type "Tracing"
+          & $debugLogFunc2 "Compare button clicked, filteredGroups count: $($filteredGroups.Count), selected: $($lstGroups.SelectedItem)" -Type "Tracing"
 
           if ($filteredGroups.Count -eq 0 -or $filteredGroups[0] -eq "(No matches found)" -or $filteredGroups[0] -eq "(No other groups found)") {
             & $showModalFunc2 "No Groups" "No groups available for comparison"
@@ -11540,7 +11129,7 @@ function Show-GroupPropertiesDialog {
 
           ## Get the selected group name
           $compareGroupName = $filteredGroups[$lstGroups.SelectedItem]
-          & $debugLogFunc2 ": Comparing $($grp.Name) with $compareGroupName" -Type "Tracing"
+          & $debugLogFunc2 "Comparing $($grp.Name) with $compareGroupName" -Type "Tracing"
 
           [Terminal.Gui.Application]::RequestStop()
 
@@ -11555,7 +11144,7 @@ function Show-GroupPropertiesDialog {
             try {
               $group2Members = @(Get-ADGroupMember -Identity $compareGroupName -ErrorAction Stop | Select-Object -ExpandProperty SamAccountName)
             } catch {
-              & $debugLogFunc2 ": Failed to get members of $compareGroupName : $($_.Exception.Message)" -Type "Problem"
+              & $debugLogFunc2 "Failed to get members of $compareGroupName : $($_.Exception.Message)" -Type "Problem"
               $group2Members = @()
             }
           }
@@ -11932,7 +11521,7 @@ function Show-ComputerPropertiesDialog {
       $lapsType = ""
 
       if (-not $demoMode) {
-        ## PRODUCTION MODE - Query AD
+        ## Production Mode - Query AD
         try {
           ## Try Windows LAPS first (new)
           $lapsData = Get-ADComputer -Identity $comp.Name -Properties 'msLAPS-Password','msLAPS-PasswordExpirationTime','msLAPS-AccountName','ms-Mcs-AdmPwd','ms-Mcs-AdmPwdExpirationTime' -ErrorAction SilentlyContinue
@@ -12924,11 +12513,7 @@ function Invoke-BulkDisableEnable {
   $action = if ($disable) { "disable" } else { "enable" }
 
   ## Confirm
-  $result = Show-Modal `
-    "Confirm Bulk Action" `
-    "Are you sure you want to $action $($Script:SelectedObjects.Count) user account(s)?" `
-    -YesNo
-
+  $result = Show-Modal "Confirm Bulk Action" "Are you sure you want to $action $($Script:SelectedObjects.Count) user account(s)?" -YesNo
   if ($result -ne 0) { return }
 
   $successCount = 0
@@ -13814,7 +13399,7 @@ if ($Script:DemoMode) {
   }
 
 } else {
-  Debug-Log "Production mode: querying AD forest..." -Type "Insight"
+  Debug-Log "Production Mode: querying AD forest..." -Type "Insight"
   try {
     if ($Domain) {
       Debug-Log "Querying specified domain: $Domain" -Type "Insight"
@@ -13865,13 +13450,6 @@ $top.Add($statusBar)
 ## sneak sneak
 Set-StatusBar "Refreshing users" -Icon Working -Percent 15
 
-## ========== COMPLETE STARTUP SEQUENCE - CORRECT ORDER ==========
-##
-## This shows the FULL startup sequence with all components
-## Only the progress indicators were added - everything else stays
-##
-## ================================================================
-
 ## ===== STEP 6: Load Domain Data =====
 if (-not $Script:DataFileLoaded) {
   Debug-Log "Loading domain data..." -Type "Insight"
@@ -13918,7 +13496,7 @@ Debug-Log "Forest/Domain initialization complete: CurrentDomain=$($Script:Curren
 
 ## VERIFY DATA WAS LOADED
 if ($Script:ADObjects.Count -eq 0 -and -not $Script:DemoMode) {
-  Debug-Log "WARNING: No AD objects loaded in production mode!" -Type "Problem"
+  Debug-Log "WARNING: No AD objects loaded in Production Mode!" -Type "Problem"
   Set-StatusBar "Warning: No objects loaded" -Icon 'Warning'
 } else {
   Debug-Log "Verified: $($Script:ADObjects.Count) objects loaded successfully" -Type "Success"
@@ -14063,6 +13641,8 @@ $top.add_KeyPress({
   $e.Handled = $handled
 })
 
+Set-StatusBar "Ready" -Icon 'Success'
+
 ## Debug view tree dump
 if ($DebugMode -or $Logging) {
   Debug-Log "=== FULL VIEW TREE DUMP ===" -Type "Insight"
@@ -14081,142 +13661,6 @@ Set-StatusBar "Shutting down"
 Debug-Log "Application shut down cleanly" -Type "Success"
 Debug-Log "End of line..." -Type "Insight"
 
-if ($Script:LogStream) {
-  $Script:LogStream.Close()
-  $Script:LogStream.Dispose()
-}
-
-## ===== STEP 7: Build UI Components =====
-Debug-Log "Initializing TreeView..." -Type "Insight"
-Set-StatusBar "Building tree view..." -Icon 'Working' -Percent 60
-$treeFrame = [Terminal.Gui.FrameView]::new("Active Directory Objects")
-$treeFrame.X = 0
-$treeFrame.Y = 0
-$treeFrame.Width  = [Terminal.Gui.Dim]::Fill(42)
-$treeFrame.Height = [Terminal.Gui.Dim]::Fill()
-$Script:tree      = [Terminal.Gui.TreeView]::new()
-
-$Script:tree.X = 0
-$Script:tree.Y = 0
-$Script:tree.Width  = [Terminal.Gui.Dim]::Fill()
-$Script:tree.Height = [Terminal.Gui.Dim]::Fill()
-
-## Right-click context menu handler
-Debug-Log "Setting up MouseClick handler for tree" -Type "Insight"
-
-$Script:tree.add_MouseClick({
-  param($arguments)
-  Debug-Log "=== MouseClick EVENT FIRED ===" -Type "Insight"
-  Debug-Log "MouseClick - Flags: $($arguments.MouseEvent.Flags)" -Type "Tracing"
-  Debug-Log "MouseClick - ButtonState: $($arguments.MouseEvent.ButtonState)" -Type "Tracing"
-
-  # Check for right-click (Button3Clicked)
-  $isButton3 = $arguments.MouseEvent.Flags -band [Terminal.Gui.MouseFlags]::Button3Clicked
-  Debug-Log "Is Button3Clicked: $isButton3" -Type "Tracing"
-
-  if ($isButton3) {
-    Debug-Log "Right-click detected on tree - ENTERING HANDLER" -Type "Insight"
-
-    $selectedNode = $Script:tree.SelectedObject
-    Debug-Log "SelectedObject retrieved: $($selectedNode -ne $null)" -Type "Tracing"
-
-    if ($null -eq $selectedNode) {
-      Debug-Log "No node selected - EXITING" -Type "Insight"
-      return
-    }
-
-    Debug-Log "Selected node name: $($selectedNode.Text)" -Type "Insight"
-
-    $tag = $selectedNode.Tag
-    Debug-Log "Tag retrieved: $($tag -ne $null)" -Type "Tracing"
-
-    if ($null -ne $tag) {
-      Debug-Log "Tag.Object exists: $($tag.Object -ne $null)" -Type "Tracing"
-      Debug-Log "Tag.Type: $($tag.Type)" -Type "Tracing"
-    }
-
-    if (-not $tag -or -not $tag.Object) {
-      Debug-Log "Container/OU selected (no context menu) - EXITING" -Type "Insight"
-      return
-    }
-
-    $obj = $tag.Object
-    $objType = $tag.Type
-    Debug-Log "CALLING Build-ContextMenuItems - Object: $($obj.Name), Type: $objType" -Type "Insight"
-
-    $menuItems = Build-ContextMenuItems -ObjectType $objType -Object $obj
-    Debug-Log "Built menu with $($menuItems.Count) items" -Type "Tracing"
-    Debug-Log "Menu items: $($menuItems -join ', ')" -Type "Tracing"
-
-    Debug-Log "CALLING Show-ContextMenu" -Type "Insight"
-    Show-ContextMenu -menuItems $menuItems -obj $obj -objType $objType
-    Debug-Log "Show-ContextMenu COMPLETED" -Type "Tracing"
-  } else {
-    Debug-Log "Not a right-click event - ignoring" -Type "Tracing"
-  }
-})
-
-Debug-Log "MouseClick handler setup complete" -Type "Insight"
-
-## Build and populate tree - AFTER data is loaded
-Set-StatusBar "Populating tree..." -Icon 'Working' -Percent 80
-
-Debug-Log "Building tree for domain: $($Script:CurrentDomain)" -Type "Insight"
-Debug-Log "Objects available: Users=$($Script:Users.Count), Groups=$($Script:Groups.Count), Computers=$($Script:Computers.Count), DCs=$($Script:DCs.Count)" -Type "Insight"
-
-$rootNode = Build-Tree -domain $Script:CurrentDomain
-
-if ($null -eq $rootNode) {
-  Debug-Log "FATAL - Build-Tree returned null root node" -Type "Problem"
-  Set-StatusBar "Error: Tree build failed" -Icon 'Error'
-} else {
-  Debug-Log "Build-Tree completed, tree populated with root: $($rootNode.Text)" -Type "Success"
-  Set-StatusBar "Tree built successfully" -Icon 'Success' -Percent 95
-}
-
-<#
-$treeFrame.Add($Script:tree)
-$win.Add($treeFrame)
-Debug-Log "TreeView created and added to window successfully" -Type "Success"
-Set-StatusBar "Ready" -Icon 'Success' -Percent 100
-#>
-
-## Global Key Handlers
-$top.add_KeyPress({
-  param($e)
-  $handled = $false
-  switch ($e.KeyEvent.Key) {
-    ([Terminal.Gui.Key]::F1)  { Show-Modal "Shortcuts" "F1-Help | F2-Password | F3-New | F5-Refresh | F6-Themes | F7-Search | F10-Quit" ; $handled = $true }
-    ([Terminal.Gui.Key]::F2)  { Generate-RandomPassword ; $handled = $true }
-    ([Terminal.Gui.Key]::F3)  { Show-NewObjectWizard    ; $handled = $true }
-    ([Terminal.Gui.Key]::F5)  { Refresh-Data -domain $Script:CurrentDomain -RebuildTree ; $handled = $true }
-    ([Terminal.Gui.Key]::F6)  { Show-ThemeSelector      ; $handled = $true }
-    ([Terminal.Gui.Key]::F7)  { Show-ADSearchDialog     ; $handled = $true }
-    ([Terminal.Gui.Key]::F10) { [Terminal.Gui.Application]::RequestStop() ; $handled = $true }
-  }
-  $e.Handled = $handled
-})
-
-## Debug view tree dump
-if ($DebugMode -or $Logging) {
-  Debug-Log "=== FULL VIEW TREE DUMP ===" -Type "Insight"
-  Debug-DumpViewTree -View $top
-  Debug-Log "=== END VIEW TREE DUMP ===" -Type "Insight"
-}
-
-## ===== STEP 8: Run Application =====
-Debug-Log "Starting Terminal.Gui main loop..." -Type "Success"
-Set-StatusBar "Ready" -Final
-#[Terminal.Gui.Application]::Run($top)
-
-## ===== Cleanup =====
-Debug-Log "Application stopped, cleaning up..." -Type "Insight"
-Set-StatusBar "Shutting down"
-[Terminal.Gui.Application]::Shutdown()
-Debug-Log "Application shut down cleanly" -Type "Success"
-Debug-Log "End of line..." -Type "Insight"
-
-## Gracefully close logs
 if ($Script:LogStream) {
   $Script:LogStream.Close()
   $Script:LogStream.Dispose()
