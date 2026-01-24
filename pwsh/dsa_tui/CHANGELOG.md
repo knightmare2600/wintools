@@ -6,10 +6,10 @@ Not all version are released publically, but they will all be documented here.
 
 ## 3.1.2.88 (Finding what I'm looking for)
   - Account Expiration Management and date validation
-  - Menu entries for Set-BulkAttribute and Find-StaleAccounts now merged into search AD and given a facelift
+  - Menu entries for `Set-BulkAttribute` and `Find-StaleAccounts` now merged into search AD and given a facelift
   - More code clean-up / formatting fixes
-  - Remove dead function Get-OUPathFromDN
-  - Integrate Apply-CombinedFilters into the Build-DomainContent function so filters actually work
+  - Remove dead function `Get-OUPathFromDN`
+  - Integrate `Apply-CombinedFilters` into the `Build-DomainContent` function so filters actually work
   - Glyphs / Emojis now work as expected in tree view
 
 ## 3.1.2.86 (Yet more bug fixes and more refactoring)
