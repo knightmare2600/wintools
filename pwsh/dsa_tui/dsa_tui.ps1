@@ -60,13 +60,10 @@ KEY CONCEPT:
 
 Recent changelog
 
-3.1.2.88 (Finding what I'm looking for)
-  - Account Expiration Management and date validation
-  - Menu entries for Set-BulkAttribute and Find-StaleAccounts now merged into search AD and given a facelift
-  - More code clean-up / formatting fixes
-  - Remove dead function Get-OUPathFromDN
-  - Integrate Apply-CombinedFilters into the Build-DomainContent function so filters actually work
-  - Glyphs / Emojis now work as expected in tree view
+3.1.2.91 (Nød lærer nøgen kvinde at spinde)
+  - Add F8 to select the tree for keyboard aficionados
+  - Start using dynamically resizing panels
+  - Re-add accidentally removed Show-ADHealthPDialog funciton
 
 -------------------------------------------------------------------------------
 TODO / COME BACK TO
@@ -75,7 +72,6 @@ TODO / COME BACK TO
 REMAINING FEATURES TO IMPLEMENT:
 
   - AD Health tabs like Group Policy and domain controllers the tab pane could be smaller with a search box in them to help out
-  - Start using dynamic resizes in panels and so on - slowly!
 
   BUGS:
   - Did the right click popup go away or is it broken...? Yes. Fix it later
@@ -504,7 +500,7 @@ function Build-MainMenu {
   $mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator (F2)",[Action]{Generate-RandomPassword})
   $mLAPSPasswords     = [Terminal.Gui.MenuItem]::new("_LAPS Passwords","Lookup LAPS Creds (Fx)",[Action]{Show-LAPSSearchModal})
   $mADHealth          = [Terminal.Gui.MenuItem]::new("_AD Health Status", "AD Health And Replication Status", [Action]{Show-ADHealthDialog })
-  $mShortcuts         = [Terminal.Gui.MenuItem]::new("_Shortcuts","Keyboard shortcuts (F1)",[Action]{Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF10 - Quit" })
+  $mShortcuts         = [Terminal.Gui.MenuItem]::new("_Shortcuts","Keyboard shortcuts (F1)",[Action]{Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF8 Focus Tree`nF10 - Quit" })
   $mAboutDSATUI       = [Terminal.Gui.MenuItem]::new("_About","About $($Script:ProjectName)",[Action]{Show-Modal "About" "$($Script:ProjectName)`n`nCodename: $($Script:FruitName)`nv$($Script:BuildVersion) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600)" })
   $mWhyBlaabaer       = [Terminal.Gui.MenuItem]::new("Why _Blåbær?","Why the $($Script:FruitName) codename?",[Action]{Show-BlaabaerInfo })
   $mTheme             = [Terminal.Gui.MenuItem]::new("_Theme","Change color theme (F6)",[Action]{Show-ThemeSelector })
@@ -2703,12 +2699,13 @@ function Set-StatusBar {
     $Script:StatusItem = [Terminal.Gui.StatusItem]::new(0, "Initializing...", $null)
 
     $shortcuts = @(
-      @{ Key = [Terminal.Gui.Key]::F1;  Label = "~F1~ Help";         Action = { Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF9 - Show Menus`nF10 - Quit`nF11 - Full Screen" } }
+      @{ Key = [Terminal.Gui.Key]::F1;  Label = "~F1~ Help";         Action = { Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF8 - Focus Tree`nF9 - Show Menus`nF10 - Quit`nF11 - Full Screen" } }
       @{ Key = [Terminal.Gui.Key]::F2;  Label = "~F2~ Password";     Action = { Generate-RandomPassword } }
       @{ Key = [Terminal.Gui.Key]::F3;  Label = "~F3~ New";          Action = { Show-NewObjectWizard } }
       @{ Key = [Terminal.Gui.Key]::F5;  Label = "~F5~ Refresh";      Action = { Refresh-Data -domain $Script:CurrentDomain -RebuildTree } }
       @{ Key = [Terminal.Gui.Key]::F6;  Label = "~F6~ Themes";       Action = { Show-ThemeSelector } }
       @{ Key = [Terminal.Gui.Key]::F7;  Label = "~F7~ Search";       Action = { Show-ADSearchDialog } }
+      @{ Key = [Terminal.Gui.Key]::F8;  Label = "~F8~ Focus Tree";   Action = { } }
       @{ Key = [Terminal.Gui.Key]::F9;  Label = "~F9~ Menus";        Action = { } }
       @{ Key = [Terminal.Gui.Key]::F10; Label = "~F10~ Quit";        Action = { [Terminal.Gui.Application]::RequestStop() } }
       @{ Key = [Terminal.Gui.Key]::F11; Label = "~F11~ Full Screen"; Action = { } }
@@ -6093,9 +6090,7 @@ function Get-LDAPFilteredObject {
         }
         'StaleAccounts90d'     {
           $staleDate = $now.AddDays(-90)
-          return $Users | Where-Object {
-            $_.LastLogonDate -and $_.LastLogonDate -lt $staleDate
-          }
+          return $Users | Where-Object { $_.LastLogonDate -and $_.LastLogonDate -lt $staleDate }
         }
         'EmptyEmail'           {
           return $Users | Where-Object {
@@ -6224,6 +6219,7 @@ function Apply-VisibilityFilters {
 ## Info panel to reduce clutter. Call once to create, then again to update, e.g. if domain changes
 function Show-InfoPanel {
   param(
+    [Terminal.Gui.View]$Parent,
     [int]$PanelWidth  = 40,
     [int]$PanelHeight = 10,
     [switch]$UpdateOnly
@@ -6235,7 +6231,14 @@ function Show-InfoPanel {
     $infoPanel.Width  = $PanelWidth
     $infoPanel.Height = $PanelHeight
     $infoPanel.X = [Terminal.Gui.Pos]::AnchorEnd($PanelWidth)
-    $infoPanel.Y = 1
+
+    ## DYNAMIC: Place below selection panel with 1 line gap
+    if ($Parent -and $Script:SelectionPanel) {
+      $infoPanel.Y = [Terminal.Gui.Pos]::Bottom($Script:SelectionPanel) + 1
+    } else {
+      $infoPanel.Y = 32  # Fallback
+    }
+
     $yPos = 0
 
     $lblForest = [Terminal.Gui.Label]::new("")
@@ -9463,45 +9466,6 @@ function Copy-SearchResultsToClipboard {
   }
 }
 
-## TODO: Implement this:
-# ====================================================={ Example: How to Add Clipboard Buttons to Your UI }=====================================================
-
-<# In your Search/Lookup tab creation, add these buttons:
-
-# LDAP Filter section
-$lbl = [Terminal.Gui.Label]::new("LDAP Filter:"); $lbl.X=2; $lbl.Y=$y; $advView.Add($lbl); $y+=1
-$txtLdapFilter = [Terminal.Gui.TextView]::new(); $txtLdapFilter.X=2; $txtLdapFilter.Y=$y; $txtLdapFilter.Width=[Terminal.Gui.Dim]::Fill(2); $txtLdapFilter.Height=4
-$advView.Add($txtLdapFilter); $y+=5
-
-# Clipboard buttons for LDAP query
-$btnCopyQuery = [Terminal.Gui.Button]::new("Copy Query"); $btnCopyQuery.X=2; $btnCopyQuery.Y=$y
-$btnCopyQuery.add_Clicked({ Copy-LDAPQueryToClipboard -LdapFilter $txtLdapFilter }).GetNewClosure()
-$advView.Add($btnCopyQuery)
-
-$btnPasteQuery = [Terminal.Gui.Button]::new("Paste Query"); $btnPasteQuery.X=18; $btnPasteQuery.Y=$y
-$btnPasteQuery.add_Clicked({ Paste-LDAPQueryFromClipboard -LdapFilter $txtLdapFilter }).GetNewClosure()
-$advView.Add($btnPasteQuery)
-$y+=2
-
-# Search button
-$btnSearch = [Terminal.Gui.Button]::new("Search"); $btnSearch.X=2; $btnSearch.Y=$y
-$btnSearch.add_Clicked({
-    Invoke-ADSearch -UserField $txtSearchName -DomainField $txtSearchDomain -ObjType $cmbSearchType -TabView $searchTabView -TxtOutput $txtSearchOutput -ChkDisabledOnly $chkDisabledOnly -LdapFilter $txtLdapFilter -AdvTab $advTab
-}).GetNewClosure()
-$advView.Add($btnSearch); $y+=3
-
-# Results section
-$lbl = [Terminal.Gui.Label]::new("Results:"); $lbl.X=2; $lbl.Y=$y; $advView.Add($lbl); $y+=1
-$txtSearchOutput = [Terminal.Gui.TextView]::new(); $txtSearchOutput.X=2; $txtSearchOutput.Y=$y
-$txtSearchOutput.Width=[Terminal.Gui.Dim]::Fill(2); $txtSearchOutput.Height=[Terminal.Gui.Dim]::Fill(4); $txtSearchOutput.ReadOnly=$true
-$advView.Add($txtSearchOutput); $y+=[Terminal.Gui.Dim]::Fill(3)
-
-# Copy results button
-$btnCopyResults = [Terminal.Gui.Button]::new("Copy Results to Clipboard"); $btnCopyResults.X=2; $btnCopyResults.Y=[Terminal.Gui.Pos]::Bottom($txtSearchOutput)+1
-$btnCopyResults.add_Clicked({ Copy-SearchResultsToClipboard -TxtOutput $txtSearchOutput }).GetNewClosure()
-$advView.Add($btnCopyResults)
-#>
-
 function Show-ADSearchDialog {
   <#
     .SYNOPSIS
@@ -11607,7 +11571,6 @@ function Show-ComputerPropertiesDialog {
           $lbl = [Terminal.Gui.Label]::new("Password Last Set: $lastSet")
           $lbl.X=4; $lbl.Y=$y; $view.Add($lbl); $y+=1
         }
-
         $y += 1
 
         ## View Password Button
@@ -12368,12 +12331,10 @@ function Show-ResetPasswordDialog {
       Show-Modal "Error" "Passwords do not match!"
       return
     }
-
     if ($password1.Length -lt 8) {
       Show-Modal "Error" "Password must be at least 8 characters!"
       return
     }
-
     try {
       if ($Script:DemoMode) {
         Debug-Log (" Password reset for $userName (demo mode)") -Type "Insight"
@@ -12433,7 +12394,7 @@ function Toggle-UserAccount {
 
 ## -------------------------{ Global Selection State }-------------------------
 $Script:SelectedObjects = @()
-$Script:SelectionMode = $false
+$Script:SelectionMode   = $false
 
 ## -------------------------{ Toggle Selection Mode }-------------------------
 function Toggle-SelectionMode {
@@ -12554,18 +12515,14 @@ function Invoke-BulkDisableEnable {
       $msg += "`n`nErrors:`n" + ($errors -join "`n")
     }
   }
-
   Show-Modal "Bulk Action Complete" $msg
-
   ## Refresh UI
   Build-Tree -Domain $Script:CurrentDomain
   Manage-FilterStatusLabel -Action 'Update' -Label $Script:FilterStatusLabel
-
   ## Clear selection + refresh panel
   $Script:SelectedObjects = @()
   $Script:SelectionMode   = $false
   Show-SelectionPanel -Parent $win
-
   ## Force redraw (prevents stale list artefacts)
   [Terminal.Gui.Application]::Refresh()
 }
@@ -12632,9 +12589,7 @@ function Invoke-BulkAddToGroup {
         Debug-Log (" Failed to add $cleanName`: $_") -Type "Insight"
       }
     }
-
     Show-Modal "Bulk Add Complete" "Successfully added $successCount user(s)`nFailed: $failCount"
-
     ## Refresh tree
     Build-Tree -domain $Script:CurrentDomain
     Manage-FilterStatusLabel -Action 'Update' -Label $Script:FilterStatusLabel
@@ -12728,14 +12683,12 @@ function Show-SelectionPanel {
   param(
     [Terminal.Gui.View]$Parent,
     [int]$PanelWidth  = 40,
-    [int]$PanelHeight = 5,
-    [int]$PanelY      = 17 ## Remember: *relative* to the end of the previus box not exact posiiton!
+    [int]$PanelHeight = 5
   )
-
   ## If panel already exists, just update it
   if ($Script:SelectionPanel -and $Script:SelectionPanel.Tag) {
-    $panel      = $Script:SelectionPanel
-    $lblCount   = $panel.Tag.CountLabel
+    $panel       = $Script:SelectionPanel
+    $lblCount    = $panel.Tag.CountLabel
     $lstSelected = $panel.Tag.ListView
   }
   else {
@@ -12744,14 +12697,20 @@ function Show-SelectionPanel {
     $panel.Width  = $PanelWidth
     $panel.Height = $PanelHeight
     $panel.X = [Terminal.Gui.Pos]::AnchorEnd($PanelWidth)
-    $panel.Y = [Terminal.Gui.Pos]::AnchorEnd($PanelY)
+
+    ## DYNAMIC: Place below filter panel with 1 line gap
+    $filterPanelRef = $Parent.Subviews | Where-Object { $_.GetType().Name -eq 'FrameView' -and $_.Text -eq 'Filters' } | Select-Object -First 1
+    if ($filterPanelRef) {
+      $panel.Y = [Terminal.Gui.Pos]::Bottom($filterPanelRef) + 1
+    } else {
+      $panel.Y = 26  # Fallback if filter panel not found
+    }
 
     ## Count label
     $lblCount = [Terminal.Gui.Label]::new("0 objects selected")
     $lblCount.X = 1
     $lblCount.Y = 0
     $panel.Add($lblCount)
-
     ## ListView
     $lstSelected = [Terminal.Gui.ListView]::new(@())
     $lstSelected.X = 1
@@ -12759,43 +12718,36 @@ function Show-SelectionPanel {
     $lstSelected.Width  = [Terminal.Gui.Dim]::Fill(2)
     $lstSelected.Height = [Terminal.Gui.Dim]::Fill(6)
     $panel.Add($lstSelected)
-
     ## Store references
     $panel | Add-Member -MemberType NoteProperty -Name Tag -Value @{
       CountLabel = $lblCount
       ListView   = $lstSelected
     } -Force
-
     ## ----------------- Batch action buttons -----------------
     $yPos = [Terminal.Gui.Pos]::Bottom($lstSelected) + 1
-
     $btnBulkDisable = [Terminal.Gui.Button]::new("Disable")
     $btnBulkDisable.X = 2
     $btnBulkDisable.Y = $yPos
     $btnBulkDisable.add_Clicked({ Invoke-BulkDisableEnable -disable $true }).GetNewClosure()
     $panel.Add($btnBulkDisable)
-
     $btnBulkEnable = [Terminal.Gui.Button]::new("Enable")
     $btnBulkEnable.X = 15
     $btnBulkEnable.Y = $yPos
     $btnBulkEnable.add_Clicked({ Invoke-BulkDisableEnable -disable $false }).GetNewClosure()
     $panel.Add($btnBulkEnable)
-
     $btnBulkMove = [Terminal.Gui.Button]::new("Move")
     $btnBulkMove.X = 27
     $btnBulkMove.Y = $yPos
     $btnBulkMove.add_Clicked({ Invoke-BulkMove }).GetNewClosure()
     $panel.Add($btnBulkMove)
-
     ## Attach once
     $Parent.Add($panel)
     $Script:SelectionPanel = $panel
   }
-
   ## ----------------- Update contents -----------------
-  $count = $Script:SelectedObjects.Count
+  $count         = $Script:SelectedObjects.Count
   $lblCount.Text = "$count object(s) selected"
-  $displayNames = $Script:SelectedObjects | ForEach-Object { $_ -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', '' }
+  $displayNames  = $Script:SelectedObjects | ForEach-Object { $_ -replace '^\(.\)\s*', '' -replace '^[○⊗]\s*', '' }
   $lstSelected.SetSource($displayNames)
   $panel.SetNeedsDisplay()
 }
@@ -13009,6 +12961,287 @@ function Invoke-ForceDCReplication {
   }
 }
 
+## ==================== MAIN GET-ADHEALTH FUNCTION ====================
+function Show-ADHealthDialog {
+  <#
+  .SYNOPSIS
+  Comprehensive Active Directory health check with tabbed interface for DSA-TUI
+
+  .DESCRIPTION
+  Performs multiple health checks on Active Directory environment with tabbed UI:
+  - System Info
+  - Domain Controller Status
+  - Replication Health
+  - DNS Records
+  - SYSVOL/NETLOGON Shares
+  - FSMO Roles
+  - Trust Relationships
+  - DFS Status
+  - Group Policy Objects
+
+  .PARAMETER Domain
+  The domain to check. Defaults to $Script:CurrentDomain
+
+  .EXAMPLE
+  Show-ADHealthDialog
+
+  .EXAMPLE
+  Show-ADHealthDialog -Domain "contoso.com"
+  #>
+
+  [CmdletBinding()]
+  param(
+    [Parameter(Position=0)]
+    [string]$Domain
+  )
+
+  Debug-Log "Show-ADHealthDialog called" -Type "Insight"
+
+  ## ==================== OS & TOOL DETECTION ====================
+
+  ## Detect OS
+  $osInfo = @{
+    IsWindows = $false
+    IsLinux   = $false
+    IsMacOS   = $false
+    OSName    = "Unknown"
+  }
+
+  if ($PSVersionTable.PSVersion.Major -ge 6) {
+    ## PowerShell Core 6+
+    $osInfo.IsWindows = $IsWindows
+    $osInfo.IsLinux = $IsLinux
+    $osInfo.IsMacOS = $IsMacOS
+  } else {
+    ## Windows PowerShell 5.1
+    $osInfo.IsWindows = $true
+  }
+
+  if ($osInfo.IsWindows) { $osInfo.OSName = "Windows $($PSVersionTable.PSVersion)" }
+  elseif ($osInfo.IsLinux) { $osInfo.OSName = "Linux" }
+  elseif ($osInfo.IsMacOS) { $osInfo.OSName = "macOS" }
+
+  Debug-Log "Detected OS: $($osInfo.OSName)" -Type "Insight"
+
+  ## Check tool availability
+  $tools = Test-ToolsAvailability
+  Debug-Log "Tool availability checked" -Type "Insight"
+
+  ## Check AD module
+  $hasADModule = $null -ne ($Script:HasActiveDirectory)
+  Debug-Log "ActiveDirectory module available: $hasADModule" -Type "Insight"
+
+  if (-not $hasADModule -and -not $Script:DemoMode) {
+    Show-Modal "AD Module Missing" "ActiveDirectory PowerShell module is not available.`n`nOS: $($osInfo.OSName)`n`nInstall RSAT (Windows) or realmd/sssd (Linux/macOS) to use this feature."
+    return
+  }
+
+  ## Determine domain to check
+  if (-not $Domain) {
+    if ($Script:CurrentDomain) {
+      $Domain = $Script:CurrentDomain
+    } else {
+      if (-not $Script:DemoMode) {
+        try {
+          $Domain = (Get-ADDomain -Current LocalComputer).DNSRoot
+        } catch {
+          Show-Modal "Error" "Could not determine domain. Please specify domain in demo mode or ensure AD module is available."
+          return
+        }
+      } else {
+        $Domain = "example.com"
+      }
+    }
+  }
+
+  Debug-Log "Checking AD Health for domain: $Domain" -Type "Insight"
+
+  ## Store tools and OS info in script scope for helper functions
+  $Script:ADHealthTools  = $tools
+  $Script:ADHealthOS     = $osInfo
+  $Script:ADHealthDomain = $Domain
+
+  ## Create main dialog
+  $dialog = [Terminal.Gui.Dialog]::new("AD Health Check - $Domain", 120, 35)
+
+  ## Create TabView
+  $tabView = [Terminal.Gui.TabView]::new()
+  $tabView.X = 0
+  $tabView.Y = 0
+  $tabView.Width = [Terminal.Gui.Dim]::Fill()
+  $tabView.Height = [Terminal.Gui.Dim]::Fill(2)
+
+  ## Tab definitions for AD health check
+  $tabs = @(
+    @{ Name = "System Info"; Generator = { Get-SystemInfoText } }
+    @{ Name = "Domain Controllers"; Generator = { Get-DCStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Replication"; Generator = { Get-ReplicationStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "DNS Records"; Generator = { Get-DNSStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "SYSVOL/NETLOGON"; Generator = { Get-SysvolStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "FSMO Roles"; Generator = { Get-FSMOStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Trust Relationships"; Generator = { Get-TrustStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "DFS Status"; Generator = { Get-DFSStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Group Policy"; Generator = { Get-GPOStatusText -Domain $Script:ADHealthDomain } }
+  )
+
+  ## Create tabs
+  foreach ($tabDef in $tabs) {
+    $tab = [Terminal.Gui.TabView+Tab]::new()
+    $tab.Text = [NStack.ustring]::Make($tabDef.Name)
+    $tab.View = [Terminal.Gui.View]::new()
+    $tab.View.Width = [Terminal.Gui.Dim]::Fill()
+    $tab.View.Height = [Terminal.Gui.Dim]::Fill()
+
+    $text = & $tabDef.Generator
+    $textView = [Terminal.Gui.TextView]::new()
+    $textView.X = 1
+    $textView.Y = 0
+    $textView.Width = [Terminal.Gui.Dim]::Fill(1)
+    $textView.Height = [Terminal.Gui.Dim]::Fill()
+    $textView.ReadOnly = $true
+    $textView.Text = [NStack.ustring]::Make($text)
+    $tab.View.Add($textView)
+    $tabView.AddTab($tab, $false)
+  }
+
+  $dialog.Add($tabView)
+
+  ## ==================== CTRL+F SEARCH ====================
+
+  ## Add key handler for Ctrl+F
+  $dialog.add_KeyPress({
+    param($e)
+
+    if ($e.KeyEvent.Key -eq [Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::f) {
+      $currentTab = $tabView.SelectedTab
+      $textView = $currentTab.View.Subviews[0]
+      if ($textView -and $textView -is [Terminal.Gui.TextView]) {
+        ## Simple search prompt
+        $searchText = Show-InputDialog -Title "Search" -Label "Search for:" -Width 50
+        if ($searchText) {
+          $content = $textView.Text.ToString()
+          $index = $content.IndexOf($searchText, [StringComparison]::OrdinalIgnoreCase)
+          if ($index -ge 0) {
+            ## Calculate line number
+            $lines = $content.Substring(0, $index) -split "`n"
+            $lineNum = $lines.Count - 1
+            ## Move cursor to that line
+            try {
+              $textView.CursorPosition = [Terminal.Gui.Point]::new(0, $lineNum)
+              $textView.SetNeedsDisplay()
+            } catch { }
+            Show-Modal "Search" "Found at line $($lineNum + 1)"
+          } else {
+            Show-Modal "Search" "Text '$searchText' not found"
+          }
+        }
+      }
+      $e.Handled = $true
+    }
+  })
+
+  ## ==================== BUTTONS ====================
+  $btnRefresh = [Terminal.Gui.Button]::new("Refresh")
+  $btnRefresh.X = 2
+  $btnRefresh.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnRefresh.add_Clicked({
+    Debug-Log "Refreshing current tab..." -Type "Insight"
+    $currentTab = $tabView.SelectedTab
+    $tabName = $currentTab.Text.ToString()
+    ## Find matching tab definition
+    $tabDef = $tabs | Where-Object { $_.Name -eq $tabName } | Select-Object -First 1
+    if ($tabDef) {
+      ## Refresh tools check if System Info
+      if ($tabName -eq "System Info") {
+        $Script:ADHealthTools = Test-ToolsAvailability
+      }
+      $newText = & $tabDef.Generator
+      $currentTab.View.Subviews[0].Text = [NStack.ustring]::Make($newText)
+    }
+  }).GetNewClosure()
+  $dialog.Add($btnRefresh)
+
+  $btnExport = [Terminal.Gui.Button]::new("Export Report")
+  $btnExport.X = 15
+  $btnExport.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnExport.add_Clicked({
+    Debug-Log "Exporting AD health report..." -Type "Insight"
+    $report = @"
+AD HEALTH REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Domain: $Domain
+Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+
+SYSTEM INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-SystemInfoText)
+
+DOMAIN CONTROLLERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-DCStatusText -Domain $Domain)
+
+REPLICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-ReplicationStatusText -Domain $Domain)
+
+DNS RECORDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-DNSStatusText -Domain $Domain)
+
+SYSVOL/NETLOGON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-SysvolStatusText -Domain $Domain)
+
+FSMO ROLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-FSMOStatusText -Domain $Domain)
+
+TRUST RELATIONSHIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-TrustStatusText -Domain $Domain)
+
+DFS STATUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-DFSStatusText -Domain $Domain)
+
+GROUP POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+$(Get-GPOStatusText -Domain $Domain)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+End of Report
+"@
+
+  $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+  $savePath = Show-FileBrowserDialog -StartDir "." -Title "Save AD Health Report" -Filter @("*.txt", "*.log")
+  if ($savePath) {
+    try {
+      $report | Out-File -FilePath $savePath -Encoding UTF8
+      Debug-Log "Report exported to $savePath" -Type "Success"
+      Show-Modal "Export Complete" "AD Health Report saved to:`n`n$savePath"
+    } catch {
+      Debug-Log "Failed to export report: $($_.Exception.Message)" -Type "Problem"
+      Show-Modal "Export Failed" "Failed to save report:`n`n$($_.Exception.Message)"
+    }
+  }
+}).GetNewClosure()
+
+  $dialog.Add($btnExport)
+
+  $btnClose = [Terminal.Gui.Button]::new("Close")
+  $btnClose.X = [Terminal.Gui.Pos]::AnchorEnd(10)
+  $btnClose.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnClose.add_Clicked({
+    Debug-Log "AD Health dialog closed" -Type "Insight"
+    [Terminal.Gui.Application]::RequestStop()
+  }).GetNewClosure()
+  $dialog.Add($btnClose)
+
+  ## Run dialog
+  Debug-Log "Running AD Health dialog" -Type "Insight"
+  [Terminal.Gui.Application]::Run($dialog)
+}
+
 function Check-DCReplication {
   [CmdletBinding()]
 
@@ -13121,7 +13354,6 @@ function Show-OUPropertiesDialog {
       } else { @() }
 
       $totalObjects = $usersInOU.Count + $groupsInOU.Count + $computersInOU.Count
-
       ## Display statistics
       $y = 1
 
@@ -13453,7 +13685,6 @@ Set-StatusBar "Refreshing users" -Icon Working -Percent 15
 ## ===== STEP 6: Load Domain Data =====
 if (-not $Script:DataFileLoaded) {
   Debug-Log "Loading domain data..." -Type "Insight"
-
   if ($Script:FilePathToLoad) {
     Debug-Log "File path specified: $($Script:FilePathToLoad)" -Type "Insight"
     Set-StatusBar "Loading data from file: $($Script:FilePathToLoad)..." -Icon 'Working' -Percent 10
@@ -13461,11 +13692,8 @@ if (-not $Script:DataFileLoaded) {
     Debug-Log "No file path - will use AD or demo data" -Type "Insight"
     Set-StatusBar "Loading domain data for $($Script:CurrentDomain)..." -Icon 'Working' -Percent 10
   }
-
   Set-StatusBar "Enumerating objects..." -Icon 'Working' -Percent 20
-
   Initialise-DataSource -FilePath $Script:FilePathToLoad -Domain $Script:CurrentDomain
-
   Set-StatusBar "Data load complete" -Icon 'Success' -Percent 50
 } else {
   Debug-Log "Skipping data load - CSV data already loaded" -Type "Insight"
@@ -13490,11 +13718,10 @@ if ($Script:DCs -and $Script:DCs.Count -gt 0) {
     $Script:CurrentDCName = "(None)"
   }
 }
-
 Debug-Log "POST-LOAD: Users=$($Script:Users.Count), DCs=$($Script:DCs.Count), Computers=$($Script:Computers.Count), Group=$($Script:Groups.Count), Objects=$($Script:ADObjects.Count)" -Type "Insight"
 Debug-Log "Forest/Domain initialization complete: CurrentDomain=$($Script:CurrentDomain)" -Type "Insight"
 
-## VERIFY DATA WAS LOADED
+## Verify data was loaded
 if ($Script:ADObjects.Count -eq 0 -and -not $Script:DemoMode) {
   Debug-Log "WARNING: No AD objects loaded in Production Mode!" -Type "Problem"
   Set-StatusBar "Warning: No objects loaded" -Icon 'Warning'
@@ -13503,7 +13730,6 @@ if ($Script:ADObjects.Count -eq 0 -and -not $Script:DemoMode) {
 }
 
 ## ===== STEP 7: Build UI Components =====
-
 Debug-Log "Creating main menu..." -Type "Insight"
 $menu = Build-MainMenu
 $top.Add($menu)
@@ -13513,39 +13739,34 @@ $filterPanel = Create-FilterPanel
 if (-not ($filterPanel -is [Terminal.Gui.View])) {
   $filterPanel = [Terminal.Gui.FrameView]::new("Filters")
 }
-$filterPanel.Width = 40
+$filterPanel.Width  = 40
 $filterPanel.Height = 26
-$filterPanel.X = [Terminal.Gui.Pos]::AnchorEnd(40)
-$filterPanel.Y = 0
+$filterPanel.X      = [Terminal.Gui.Pos]::AnchorEnd(40)
+$filterPanel.Y      = 0
 $win.Add($filterPanel)
 
 Debug-Log "Showing selection panel..." -Type "Insight"
-Show-SelectionPanel -Parent $win
+Show-SelectionPanel -Parent $win  ## Now positions itself below filter panel
 
 Debug-Log "Creating Info panel..." -Type "Insight"
-if (-not ($InfoPanel -is [Terminal.Gui.View])) {
-  $InfoPanel = [Terminal.Gui.FrameView]::new("Active Directory Info")
-}
-$InfoPanel.Width = 40
-$InfoPanel.Height = 12
-$InfoPanel.X = [Terminal.Gui.Pos]::AnchorEnd(40)
-$InfoPanel.Y = 31
+if (-not ($InfoPanel -is [Terminal.Gui.View])) { $InfoPanel = [Terminal.Gui.FrameView]::new("Active Directory Info") }
+Show-InfoPanel -Parent $win  ## Now positions itself dynamically
 $win.Add($InfoPanel)
 
 ## NOW update it with the current DC
 Show-InfoPanel -UpdateOnly
 Debug-Log "InfoPanel created and updated with DC: $($Script:CurrentDC.Name ?? 'None')" -Type "Tracing"
 
-## ===== NOW BUILD THE TREE =====
+## Now build the tree
 Debug-Log "Initializing TreeView..." -Type "Insight"
 Set-StatusBar "Building tree view..." -Icon 'Working' -Percent 60
 
 $treeFrame = [Terminal.Gui.FrameView]::new("Active Directory Objects")
 $treeFrame.X = 0
 $treeFrame.Y = 0
-$treeFrame.Width  = [Terminal.Gui.Dim]::Fill(42)
-$treeFrame.Height = [Terminal.Gui.Dim]::Fill()
-$Script:tree      = [Terminal.Gui.TreeView]::new()
+$treeFrame.Width    = [Terminal.Gui.Dim]::Fill(42)
+$treeFrame.Height   = [Terminal.Gui.Dim]::Fill()
+$Script:tree        = [Terminal.Gui.TreeView]::new()
 
 $Script:tree.X = 0
 $Script:tree.Y = 0
@@ -13611,7 +13832,6 @@ Debug-Log "Building tree for domain: $($Script:CurrentDomain)" -Type "Insight"
 Debug-Log "Objects available: Users=$($Script:Users.Count), Groups=$($Script:Groups.Count), Computers=$($Script:Computers.Count), DCs=$($Script:DCs.Count)" -Type "Insight"
 
 $rootNode = Build-Tree -domain $Script:CurrentDomain
-
 if ($null -eq $rootNode) {
   Debug-Log "FATAL - Build-Tree returned null root node" -Type "Problem"
   Set-StatusBar "Error: Tree build failed" -Icon 'Error'
@@ -13630,17 +13850,17 @@ $top.add_KeyPress({
   param($e)
   $handled = $false
   switch ($e.KeyEvent.Key) {
-    ([Terminal.Gui.Key]::F1)  { Show-Modal "Shortcuts" "F1-Help | F2-Password | F3-New | F5-Refresh | F6-Themes | F7-Search | F10-Quit" ; $handled = $true }
+    ([Terminal.Gui.Key]::F1)  { Show-Modal "Shortcuts" "F1-Help | F2-Password | F3-New | F5-Refresh | F6-Themes | F7-Search | F8-Focus Tree | F10-Quit" ; $handled = $true }
     ([Terminal.Gui.Key]::F2)  { Generate-RandomPassword ; $handled = $true }
     ([Terminal.Gui.Key]::F3)  { Show-NewObjectWizard    ; $handled = $true }
     ([Terminal.Gui.Key]::F5)  { Refresh-Data -domain $Script:CurrentDomain -RebuildTree ; $handled = $true }
     ([Terminal.Gui.Key]::F6)  { Show-ThemeSelector      ; $handled = $true }
     ([Terminal.Gui.Key]::F7)  { Show-ADSearchDialog     ; $handled = $true }
+    ([Terminal.Gui.Key]::F8)  { if ($Script:tree) { $Script:tree.SetFocus(); Debug-Log "Tree focused via F8" -Type "Insight" } ; $handled = $true }
     ([Terminal.Gui.Key]::F10) { [Terminal.Gui.Application]::RequestStop() ; $handled = $true }
   }
   $e.Handled = $handled
 })
-
 Set-StatusBar "Ready" -Icon 'Success'
 
 ## Debug view tree dump
