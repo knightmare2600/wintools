@@ -63,7 +63,7 @@ Recent changelog
 3.1.2.91 (Nød lærer nøgen kvinde at spinde)
   - Add F8 to select the tree for keyboard aficionados
   - Start using dynamically resizing panels
-  - Re-add accidentally removed Show-ADHealthPDialog funciton
+  - Re-add accidentally removed Show-ADHealthPDialog function
 
 -------------------------------------------------------------------------------
 TODO / COME BACK TO
@@ -126,7 +126,7 @@ if ($invalidParams) {
 ## execution loop, where they belong
 $Script:ProjectName  = "DSA-TUI pwsh dsa.msc TUI"
 $Script:FruitName    = "Blåbær"
-$Script:BuildVersion = "3.1.2.88"
+$Script:BuildVersion = "3.1.2.91"
 
 ## Global emojis
 $Script:Icons = @{
