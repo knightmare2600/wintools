@@ -235,27 +235,39 @@ Some information which might come in handy: [Someone else who likes the projct n
 | **Site** | **City / Location**          | **Country** | **Subnet**            | **Landline Range**                    | **Mobile Range** |
 |---------:|------------------------------|-------------|-----------------------|---------------------------------------|------------------|
 | ABR | Aberdeen, Scotland             | UK | 192.168.224.0/24 | +44 1224 496 0xxx               | +44 7700 900 2xxx |
+| AKL | Auckland, New Zealand          | NZ | 192.168.93.0/24  | +64 9 300 0xxx                  | +64 21 900 2xxx |
 | BIR | Birmingham, England            | UK | 192.168.121.0/24 | +44 121  496 0xxx               | +44 7700 900 2xxx |
 | BON | Bonn, West Germany (FRG)       | DE | 192.168.228.0/24 | +49 228  555  xxx               | +49 211  xxx xxxx |
 | BRD | West Berlin (FRG)              | DE | 192.168.113.0/24 | +49 311  555  xxx               | +49 211  xxx xxxx |
 | BRK | Brockville, Ontario            | CA | 192.168.136.0/24 | +1  613  555 6xxx               | +1  613  555 6xxx |
-| CLY | Clydebank, Scotland            | UK | 192.168.141.0/24 | +44 141  496 00xx               | +44 770  090 5xxx |
+| CLY | Clydebank, Scotland            | UK | 192.168.41.0/24  | +44 141  496 00xx               | +44 770  090 5xxx |
+| COV  | Coventry, England             | UK | 192.168.247.0/24 | +44 247 765 0xxx                | +44 7700 901 2xxx |
 | CPH | Copenhagen (København)         | DK | 192.168.231.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | DUN | Dundee, Scotland               | UK | 192.168.138.0/24 | +44 163  249 60xx               | +44 770  090 82xx |
 | EDI | Edinburgh, Scotland            | UK | 192.168.131.0/24 | +44 131  496 0xxx               | +44 770  090 3xxx |
+| FAL  | Falkirk, Scotland             | UK | 192.168.76.0/24  | +44 1324 500 0xxx               | +44 7700 903 2xxx |
 | FAX | Faxe, Danmark                  | DK | 192.168.246.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
+| GAA  | Georgia, AL, USA              | US | 192.168.33.0/24  | +1 334 300 0xxx                 | +1 770 900 2xxx  |
 | GLA | Glasgow, Scotland              | UK | 192.168.141.0/24 | +44 141  496 01xx               | +44 770  009 4xxx |
+| HAL  | Halifax, England              | UK | 192.168.142.0/24 | +44 1422 200 0xxx               | +44 7700 904 2xxx |
+| HUL  | Hull, England                 | UK | 192.168.142/24   | +44 1482 300 0xxx               | +44 7700 902 2xxx |
 | KGE | Køge, Danmark                  | DK | 192.168.265.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | KOR | Korsør, Danmark                | DK | 192.168.238.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | LIV | Liverpool, England             | UK | 192.168.151.0/24 | +44 151  496 0xxx               | +44 770  090 5xxx |
 | LND | London, England                | UK | 192.168.20.0/24  | +44 207  496 0xxx / 01632 96x xxx | +44 770  090 0xxx |
 | MCR | Manchester, England            | UK | 192.168.161.0/24 | +44 161  715 xxxx               | +44 770  090 6xxx |
+| MEL | Melbourne, Australia           | AU | 192.168.39.0/24  | +61 3 9000 0xxx                 | +61 400 901 2xxx |
 | MIA | Miami, Florida                 | US | 192.168.135.0/24 | +1  305  555 xxxx               | +1  786  555 xxxx |
+| MTL | Montreal, Canada               | CA | 192.168.154.0/24 | +1 514 400 0xxx                 | +1 514 900 2xxx  |
 | MUN | Munich, West Germany           | DE | 192.168.189.0/24 | +49 893  555 33xx               | +49 893  555 99xx |
 | NEW | Newcastle, England             | UK | 192.168.191.0/24 | +44 191  496 0xxx               | +44 770  090 9xxx |
+| NYC  | New York, NY, USA             | US | 192.168.212.0/24 | +1 212 500 0xxx                 | +1 917 900 2xxx  |
+| NJC  | New Jersey (City), NJ, USA    | US | 192.168.201.0/24 | +1 201 400 0xxx                 | +1 908 900 2xxx  |
 | ODE | Odense, Danmark                | DK | 192.168.126.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | PER | Perth, Scotland                | UK | 192.168.173.0/24 | +44 173  849 60xx               | +44 770  0173 0xx |
-| VIE | Vienna, Austria                | AT | 192.168.xxx.0/24 | +43 800  078  0xx               | +43 664  665 xxx |
+| SHE | Sheffield, England             | UK | 192.168.114.0/24 | +44 114 250 0xxx                | +44 7700 905 2xxx |
+| SYD | Sydney, Australia              | AU | 192.168.29.0/24  | +61 2 9000 0xxx                 | +61 400 900 2xxx |
+| VIE | Vienna, Austria                | AT | 192.168.78.0/24  | +43 800  078  0xx               | +43 664  665 xxx |
 
 **__A note on phone numbers:__**
 
