@@ -309,11 +309,13 @@ FWL  = Firewall Appliance                                     SUR  = Microsoft S
 ILO  = Integrated Lights-Out (Server Management Controller)   SVR  = Server (Legacy / Alternate Code)
 LAP  = Laptop (Windows)                                       SWI  = Network Switch
 LCD  = LCD Wallboard / Information Display                    TAB  = Tablet
-MAC  = macOS Desktop (iMac / Mac Mini)                        TEA  = Internet connected Coffee Pot / Tea machine RFC2324 compliant
-MBP  = MacBook Pro                                            TVS  = Television / Digital Signage Display
-MUS  = Music Workstation / Studio System                      VCU  = Video Conferencing Unit
-NIX  = Unix/Linux/Solaris System                              WAP  = Wireless Access Point
-PHN  = Mobile Phone                                           WKS  = Workstation (Desktop)
+MAC  = macOS Desktop (iMac / Mac Mini)                        TAR  = Tape archiver (Yes, it's where the UNIX command tar comes from
+MBP  = MacBook Pro                                            TEA  = Internet connected Coffee Pot / Tea machine RFC2324 compliant
+MUS  = Music Workstation / Studio System / Jukebox            TTY  = Teletype termianl E.g DEC VT320
+NIX  = Unix/Linux/Solaris System                              TVS  = Television / Digital Signage Display
+PBX  = PBX (Telephone server)                                 VCU  = Video Conferencing Unit
+PHN  = Mobile Phone                                           WAP  = Wireless Access Point
+PMP  = Petrol Pump                                            WKS  = Workstation (Desktop)
 PRN  = Printer
 ```
 
