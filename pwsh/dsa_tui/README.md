@@ -227,6 +227,8 @@ Some information which might come in handy: [Someone else who likes the projct n
 | Example Music (Österreich) GmbH       | Austria              | GmbH                  | Gesellschaft mit beschränkter Haftung |
 | Example Music (CA) Inc.               | Canada               | Inc.                  | Federal / provincial corporations |
 | Example Music (US) LLC.               | USA                  | LLC.                  | Standard US corporation suffix |
+| Example Music (AU) Pty Ltd            | Australia            | Pty Ltd.              | (Proprietary Limited Company) |
+| Example Music (NZ) Tāpui              | New Zealand          | Tāpui                 | Standard NZ corporation suffix |
 
 ## Site Names And subnets
 
