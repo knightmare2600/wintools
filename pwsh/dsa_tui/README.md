@@ -225,10 +225,13 @@ Some information which might come in handy: [Someone else who likes the projct n
 | Example Music (Danmark) ApS           | Denmark              | ApS                   | Danmark Aktieselskab (public limited) |
 | Example Music (Deutschland) GmbH      | Germany              | GmbH                  | Gesellschaft mit beschränkter Haftung |
 | Example Music (Österreich) GmbH       | Austria              | GmbH                  | Gesellschaft mit beschränkter Haftung |
-| Example Music (CA) Inc.               | Canada               | Inc.                  | Federal / provincial corporations |
+| Example Music (Norge) ASA             | Norway               | ASA                   | Allmennaksjeselskap |
+| Example Music (Sverige) AB            | Sweden               | AB                    | Aktiebolag |
+| Example Music (Nederland) B.V.        | Netherlands          | B.V.                  | bv (besloten vennootschap) |
+| Example Music (Canada) Inc.           | Canada               | Inc.                  | Federal / provincial corporations |
 | Example Music (US) LLC.               | USA                  | LLC.                  | Standard US corporation suffix |
-| Example Music (AU) Pty Ltd            | Australia            | Pty Ltd.              | (Proprietary Limited Company) |
-| Example Music (NZ) Tāpui              | New Zealand          | Tāpui                 | Standard NZ corporation suffix |
+| Example Music (Australia) Pty Ltd     | Australia            | Pty Ltd.              | Proprietary Limited Company |
+| Example Music (New Zealand) Tāpui     | New Zealand          | Tāpui                 | Standard NZ corporation suffix |
 
 ## Site Names And subnets
 
@@ -270,6 +273,8 @@ Some information which might come in handy: [Someone else who likes the projct n
 | SHE | Sheffield, England             | UK | 192.168.114.0/24 | +44 114 250 0xxx                | +44 7700 905 2xxx |
 | SYD | Sydney, Australia              | AU | 192.168.29.0/24  | +61 2 9000 0xxx                 | +61 400 900 2xxx |
 | VIE | Vienna, Austria                | AT | 192.168.78.0/24  | +43 800  078  0xx               | +43 664  665 xxx |
+
+TODO: Oslo, Gothemburg, San Francisco, Chicago, Amsterdam, Seattle, 
 
 **__A note on phone numbers:__**
 
