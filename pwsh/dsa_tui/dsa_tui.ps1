@@ -104,7 +104,8 @@ $providedParams = $args | Where-Object { $_ -match '^-' } | ForEach-Object {  $_
 ## Define valid parameter names (including aliases)
 $validParams = @(
   'DemoMode', 'Logging', 'LogFile', 'Domain', 'ImportDemoData', 'DemoDataFile', 'Theme', 'LaunchReady',
-  ## Common parameters built in to pwsh - DO NOT USE:  'Verbose', 'Debug', 'ErrorAction', 'WarningAction', 'WhatIf', 'Confirm'
+  ## Common parameters built in to pwsh - DO NOT USE:
+  'Verbose', 'Debug', 'ErrorAction', 'WarningAction', 'WhatIf', 'Confirm'
 )
 
 ## Find invalid parameters
@@ -559,15 +560,10 @@ function script:Set-ObjectCheckboxes {
         $State.chkSearchDisabled.CanFocus = $true
         $View.Add($State.chkSearchDisabled)
       } else {
-        if ($State.chkSearchLocked) {
-          $State.chkSearchLocked.Checked = [bool]($Data.Locked ?? $Data.LockedOut)
-        }
-        if ($State.chkSearchDisabled) {
-          $State.chkSearchDisabled.Checked = [bool]($Data.Disabled ?? -not $Data.Enabled)
-        }
+        if ($State.chkSearchLocked) { $State.chkSearchLocked.Checked = [bool]($Data.Locked ?? $Data.LockedOut) }
+        if ($State.chkSearchDisabled) { $State.chkSearchDisabled.Checked = [bool]($Data.Disabled ?? -not $Data.Enabled) }
       }
     }
-
     'Group' {
       if ($Mode -eq 'Create') {
         $State.chkSecurity = [Terminal.Gui.CheckBox]::new("Security Group")
@@ -613,7 +609,6 @@ function script:Set-ObjectCheckboxes {
         }
       }
     }
-
     'Computer' {
       if ($Mode -eq 'Create') {
         $State.chkSearchEnabled = [Terminal.Gui.CheckBox]::new("Enabled")
@@ -634,7 +629,6 @@ function script:Set-ObjectCheckboxes {
         }
       }
     }
-
     'DomainController' {
       if ($Mode -eq 'Create') {
         $State.chkSearchGC = [Terminal.Gui.CheckBox]::new("Global Catalog")
@@ -972,9 +966,7 @@ $accountTab = @{
     $btnAuditLog = [Terminal.Gui.Button]::new("View Audit Log...")
     $btnAuditLog.X = 4
     $btnAuditLog.Y = $y
-    $btnAuditLog.add_Clicked({
-      Show-AuditLogDialog -Object $user -ObjectType 'User'
-    })  ## NO .GetNewClosure() !
+    $btnAuditLog.add_Clicked({ Show-AuditLogDialog -Object $user -ObjectType 'User' })  ## NO .GetNewClosure() !
     $view.Add($btnAuditLog)
     $y += 1
     }
@@ -1678,10 +1670,8 @@ function Export-CSVDE {
       dNSHostName = $obj.DNSHostName
       servicePrincipalName = if ($obj.ServicePrincipalNames) { $obj.ServicePrincipalNames -join ';' } else { "" }
     }
-
     [PSCustomObject]$record
   }
-
   ## Export with no type information (CSVDE requirement)
   $csvdeObjects | Export-Csv -Path $Path -NoTypeInformation -Force -Encoding UTF8
   Debug-Log "Exported CSVDE format with $($csvdeObjects.Count) objects" -Type "Success"
@@ -1720,7 +1710,6 @@ function Export-SimpleCSV {
       AccountExpires = $obj.AccountExpirationDate
     }
   }
-
   $simpleObjects | Export-Csv -Path $Path -NoTypeInformation -Force -Encoding UTF8
   Debug-Log "Exported Simple CSV with $($simpleObjects.Count) objects" -Type "Success"
 }
@@ -2929,29 +2918,29 @@ function Show-ObjectContextMenu {
   Debug-Log "Built menu with $($menuItems.Count) items" -Type "Tracing"
 
   ## Capture variables AND functions for closure
-  $capturedObj = $Object
-  $capturedObjType = $ObjectType
+  $capturedObj       = $Object
+  $capturedObjType   = $ObjectType
   $capturedMenuItems = $menuItems
 
   ## Capture all the functions we'll need
-  $debugLogFunc = ${function:Debug-Log}
-  $showUserPropsFunc = ${function:Show-UserPropertiesDialog}
-  $showGroupPropsFunc = ${function:Show-GroupPropertiesDialog}
-  $showComputerPropsFunc = ${function:Show-ComputerPropertiesDialog}
-  $showDCPropsFunc = ${function:Show-DCPropertiesDialog}
-  $showOUPropsFunc = ${function:Show-OUPropertiesDialog}
-  $showResetPwdFunc = ${function:Show-ResetPasswordDialog}
-  $toggleUserFunc = ${function:Toggle-UserAccount}
-  $unlockUserFunc = ${function:Unlock-UserAccount}
-  $toggleComputerFunc = ${function:Toggle-ComputerAccount}
-  $invokeObjOpFunc = ${function:Invoke-ObjectOperation}
-  $showEditGroupFunc = ${function:Show-EditGroupMembershipDialog}
-  $checkDCReplFunc = ${function:Check-DCReplication}
-  $showADHealthFunc = ${function:Show-ADHealthDialog}
-  $showNewObjFunc = ${function:Show-NewObjectWizard}
-  $refreshDataFunc = ${function:Refresh-Data}
+  $debugLogFunc           = ${function:Debug-Log}
+  $showUserPropsFunc      = ${function:Show-UserPropertiesDialog}
+  $showGroupPropsFunc     = ${function:Show-GroupPropertiesDialog}
+  $showComputerPropsFunc  = ${function:Show-ComputerPropertiesDialog}
+  $showDCPropsFunc        = ${function:Show-DCPropertiesDialog}
+  $showOUPropsFunc        = ${function:Show-OUPropertiesDialog}
+  $showResetPwdFunc       = ${function:Show-ResetPasswordDialog}
+  $toggleUserFunc         = ${function:Toggle-UserAccount}
+  $unlockUserFunc         = ${function:Unlock-UserAccount}
+  $toggleComputerFunc     = ${function:Toggle-ComputerAccount}
+  $invokeObjOpFunc        = ${function:Invoke-ObjectOperation}
+  $showEditGroupFunc      = ${function:Show-EditGroupMembershipDialog}
+  $checkDCReplFunc        = ${function:Check-DCReplication}
+  $showADHealthFunc       = ${function:Show-ADHealthDialog}
+  $showNewObjFunc         = ${function:Show-NewObjectWizard}
+  $refreshDataFunc        = ${function:Refresh-Data}
   $invokeBulkAddGroupFunc = ${function:Invoke-BulkAddToGroup}
-  $showLAPSFunc = ${function:Show-LAPSSearchModal}
+  $showLAPSFunc           = ${function:Show-LAPSSearchModal}
 
   ## Create dialog
   $contextDialog = [Terminal.Gui.Dialog]::new("Actions", 30, ($menuItems.Count + 4))
@@ -3024,7 +3013,6 @@ function Show-ObjectContextMenu {
   $btnCancel = [Terminal.Gui.Button]::new("Cancel")
   $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }.GetNewClosure())
   $contextDialog.AddButton($btnCancel)
-
   [Terminal.Gui.Application]::Run($contextDialog)
 }
 
