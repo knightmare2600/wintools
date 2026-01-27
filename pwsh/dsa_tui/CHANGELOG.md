@@ -4,6 +4,22 @@
 
 Not all version are released publically, but they will all be documented here.
 
+## 3.2.3.10 (Nød lærer nøgen kvinde at spinde)
+  - Add F8 to select the tree for keyboard aficionados
+  - Start using dynamically resizing panels
+  - Re-add accidentally removed `Show-ADHealthPDialog` function
+  - Fix audit log to have scrollbars
+  - Add Falkirk office and some lesser known 80s bands from Falkirk.  Also add Miami Sound Machine in Vice City
+  - Big expansion of bands, including down under: 1000 Keys, Bananarama, Blondie, Crowded House, Dire Straits
+    Dodo & The Dodos, Bruce Springsteen & The E-Street Band, Elmer, Everything But The Girl, Fine Young Cannibals,
+    Fun Boy Three, Great White North, Heaven 17, Human League, Icehouse, INXS, KC & The Sunshine Band, Lowlife,
+    M-People, News, OMD, Pet Shop Boys, REM, Rush, SCTV (Bob & Doug McKenzie), The Beat, The Beautiful South, The
+    Pastels, The Specials, Thompson Twins, Vanessa Paradis, Wham, Propaganda, Falco and The Passions
+  - Bring the "refurbished" Falkirk Head office online located at 1876 Hope Street (if you know, you know)
+  - Sort the tree alphabetically
+  - Use `F12` for the popup "right click" context menu
+  - Use `F8` to navigate tabs to allow users with RDP issues to use the script
+
 ## 3.1.2.91 (Nød lærer nøgen kvinde at spinde)
   - Add F8 to select the tree for keyboard aficionados
   - Start using dynamically resizing panels
