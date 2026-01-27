@@ -4,7 +4,7 @@
 
 Not all version are released publically, but they will all be documented here.
 
-## 3.2.3.10 (Nød lærer nøgen kvinde at spinde)
+## 3.2.3.10 (Det er ingen ko på isen)
   - Add F8 to select the tree for keyboard aficionados
   - Start using dynamically resizing panels
   - Re-add accidentally removed `Show-ADHealthPDialog` function
