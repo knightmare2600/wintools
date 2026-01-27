@@ -259,6 +259,7 @@ Some information which might come in handy: [Someone else who likes the projct n
 | KGE | Køge, Danmark                  | DK | 192.168.265.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | KOR | Korsør, Danmark                | DK | 192.168.238.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | LIV | Liverpool, England             | UK | 192.168.151.0/24 | +44 151  496 0xxx               | +44 770  090 5xxx |
+| LAX | Los angeles, California        | US | 192.168.213.0/24 | +1 213  555 xxxx               | +1 213 555 xxx |
 | LND | London, England                | UK | 192.168.20.0/24  | +44 207  496 0xxx / 01632 96x xxx | +44 770  090 0xxx |
 | MCR | Manchester, England            | UK | 192.168.161.0/24 | +44 161  715 xxxx               | +44 770  090 6xxx |
 | MEL | Melbourne, Australia           | AU | 192.168.39.0/24  | +61 3 9000 0xxx                 | +61 400 901 2xxx |
