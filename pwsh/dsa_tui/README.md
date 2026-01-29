@@ -220,19 +220,20 @@ Some information which might come in handy: [Someone else who likes the projct n
 
 | **Name**                              | **Country**          | **Legal Form**        | **Notes** |
 |--------------------------------------|----------------------|-----------------------|-----------|
-| Example Music (England) Ltd           | England & Wales      | Ltd                   | Companies House jurisdiction |
-| Example Music (Scotland) Ltd          | Scotland             | Ltd (SCxxxxxx)        | Scottish company numbers start with “SC” |
-| Example Music (Danmark) ApS           | Denmark              | ApS                   | Danmark Aktieselskab (public limited) |
-| Example Creative ApS                  | Denmark              | ApS                   | Danmark Aktieselskab (public limited) |
-| Example Music (Deutschland) GmbH      | Germany              | GmbH                  | Gesellschaft mit beschränkter Haftung |
-| Example Music (Österreich) GmbH       | Austria              | GmbH                  | Gesellschaft mit beschränkter Haftung |
-| Example Music (Norge) ASA             | Norway               | ASA                   | Allmennaksjeselskap |
-| Example Music (Sverige) AB            | Sweden               | AB                    | Aktiebolag |
-| Example Music (Nederland) B.V.        | Netherlands          | B.V.                  | bv (besloten vennootschap) |
-| Example Music (Canada) Inc.           | Canada               | Inc.                  | Federal / provincial corporations |
-| Example Music (US) LLC.               | USA                  | LLC.                  | Standard US corporation suffix |
 | Example Music (Australia) Pty Ltd     | Australia            | Pty Ltd.              | Proprietary Limited Company |
+| Example Music (Canada) Inc.           | Canada               | Inc.                  | Federal / provincial corporations |
+| Example Creative ApS                  | Denmark              | ApS                   | Danmark Aktieselskab (public limited) |
+| Example Music (Danmark) ApS           | Denmark              | ApS                   | Danmark Aktieselskab (public limited) |
+| Example Music (Deutschland) GmbH      | Germany              | GmbH                  | Gesellschaft mit beschränkter Haftung |
+| Example Music (England) Ltd           | England & Wales      | Ltd                   | Companies House jurisdiction |
+| Example Music (Italia) S.p.a.         | Italy                | S.p.a.                | Società per azioni |
+| Example Music (Nederland) B.V.        | Netherlands          | B.V.                  | bv (besloten vennootschap) |
 | Example Music (New Zealand) Tāpui     | New Zealand          | Tāpui                 | Standard NZ corporation suffix |
+| Example Music (Norge) ASA             | Norway               | ASA                   | Allmennaksjeselskap |
+| Example Music (Österreich) GmbH       | Austria              | GmbH                  | Gesellschaft mit beschränkter Haftung |
+| Example Music (Scotland) Ltd          | Scotland             | Ltd (SCxxxxxx)        | Scottish company numbers start with “SC” |
+| Example Music (Sverige) AB            | Sweden               | AB                    | Aktiebolag |
+| Example Music (US) LLC.               | USA                  | LLC.                  | Standard US corporation suffix |
 
 ## Site Names And subnets
 
@@ -268,8 +269,8 @@ Some information which might come in handy: [Someone else who likes the projct n
 | MTL | Montreal, Canada               | CA | 192.168.154.0/24 | +1 514 400 0xxx                 | +1 514 900 2xxx  |
 | MUN | Munich, West Germany           | DE | 192.168.189.0/24 | +49 893  555 33xx               | +49 893  555 99xx |
 | NEW | Newcastle, England             | UK | 192.168.191.0/24 | +44 191  496 0xxx               | +44 770  090 9xxx |
-| NYC  | New York, NY, USA             | US | 192.168.212.0/24 | +1 212 500 0xxx                 | +1 917 900 2xxx  |
-| NJC  | New Jersey (City), NJ, USA    | US | 192.168.201.0/24 | +1 201 400 0xxx                 | +1 908 900 2xxx  |
+| NYC | New York, NY, USA              | US | 192.168.212.0/24 | +1 212 500 0xxx                 | +1 917 900 2xxx  |
+| NJC | New Jersey (City), NJ, USA     | US | 192.168.201.0/24 | +1 201 400 0xxx                 | +1 908 900 2xxx  |
 | ODE | Odense, Danmark                | DK | 192.168.126.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | PER | Perth, Scotland                | UK | 192.168.173.0/24 | +44 173  849 60xx               | +44 770  0173 0xx |
 | SHE | Sheffield, England             | UK | 192.168.114.0/24 | +44 114 250 0xxx                | +44 7700 905 2xxx |
