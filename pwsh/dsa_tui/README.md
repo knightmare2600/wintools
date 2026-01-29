@@ -223,6 +223,7 @@ Some information which might come in handy: [Someone else who likes the projct n
 | Example Music (England) Ltd           | England & Wales      | Ltd                   | Companies House jurisdiction |
 | Example Music (Scotland) Ltd          | Scotland             | Ltd (SCxxxxxx)        | Scottish company numbers start with “SC” |
 | Example Music (Danmark) ApS           | Denmark              | ApS                   | Danmark Aktieselskab (public limited) |
+| Example Creative ApS                  | Denmark              | ApS                   | Danmark Aktieselskab (public limited) |
 | Example Music (Deutschland) GmbH      | Germany              | GmbH                  | Gesellschaft mit beschränkter Haftung |
 | Example Music (Österreich) GmbH       | Austria              | GmbH                  | Gesellschaft mit beschränkter Haftung |
 | Example Music (Norge) ASA             | Norway               | ASA                   | Allmennaksjeselskap |
