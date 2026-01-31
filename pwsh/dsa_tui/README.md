@@ -319,14 +319,14 @@ FWL  = Firewall Appliance                                     SUR  = Microsoft S
 ILO  = Integrated Lights-Out (Server Management Controller)   SVR  = Server (Legacy / Alternate Code)
 LAP  = Laptop (Windows)                                       SWI  = Network Switch
 LCD  = LCD Wallboard / Information Display                    TAB  = Tablet
-MAC  = macOS Desktop (iMac / Mac Mini)                        TAR  = Tape archiver (Yes, it's where the UNIX command tar comes from
+MAC  = macOS Desktop (iMac / Mac Mini)                        TAR  = Tape archiver (Yes, it's where UNIX tar comes from
 MBP  = MacBook Pro                                            TEA  = Internet connected Coffee Pot / Tea machine RFC2324 compliant
 MUS  = Music Workstation / Studio System / Jukebox            TTY  = Teletype termianl E.g DEC VT320
 NIX  = Unix/Linux/Solaris System                              TVS  = Television / Digital Signage Display
 PBX  = PBX (Telephone server)                                 VCU  = Video Conferencing Unit
-PHN  = Mobile Phone                                           WAP  = Wireless Access Point
-PMP  = Petrol Pump                                            WKS  = Workstation (Desktop)
-PRN  = Printer
+PHN  = Mobile Phone                                           VND  = Vendinh Machine
+PMP  = Petrol Pump                                            WAP  = Wireless Access Point
+PRN  = Printer                                                WKS  = Workstation (Desktop)
 ```
 
 Device Numbering: 000–999 (three digits, zero padded)
@@ -340,7 +340,7 @@ Examples:
 
 ###
 
-Railway Maps giving an idea of office lcoaitons in relation to each other:
+Railway Maps giving an idea of office locations in relation to each other:
 
 Danmark: DSB network map:
 
