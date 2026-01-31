@@ -4,6 +4,24 @@
 
 Not all version are released publically, but they will all be documented here.
 
+## 3.2.3.14 (Regression and bug fix release)
+  - Fix data import regression
+  - Use proper AD property names inside TDF files but keep compatibility shim for old TDF files
+  - Merge functions `Export-TDF`, `Export-CSVDE` and `Export-SimpleCSV` into `Show-ExportDataDialog` function
+  - Implement correct syntax for CSVDE export files
+  - Fix regression bug in audit log entries
+  - Rework CSVDE export function to export correctly scoped data
+  - Normalised object property names to standard AD schema casing (e.g. `distinguishedName`, `objectClass`, `sAMAccountName`, `givenName`, `sn`, etc.)
+  - Updated remaining properties to consistently match native AD attribute names.
+  - Use `FileTime` formatted values already produced by Convert-DataToADObjects, and add DateTime type validation for timestamp attributes.
+  - Add array safety checks for multi-value attributes (`memberOf`, `member`, `servicePrincipalName`).
+  - Added logging to verify `distinguishedName` is populated on source objects, Generated CSV distinguished names match source objects,
+    CSV output contains (not empty) data.
+  - Fault isolation: Missing `DN` in `Convert-DataToADObjects`, Missing `DN` in record construction logic, and empty CSV rows in `Export-Csv` funciton
+  - Correct date parsing issue in Audit log function
+  - Clean up comments and headers around functions to be unifiorm
+  - Deleted duplicate function `Show-DNSZoneDetailsDialog`
+
 ## 3.2.3.10 (Det er ingen ko på isen)
   - Add F8 to select the tree for keyboard aficionados
   - Start using dynamically resizing panels
