@@ -63,28 +63,18 @@ Select-String .\users.ps1 -Pattern "Company\s*=\s*'([^']+)'" | ForEach-Object { 
 
 Recent changelog
 
-3.2.3.14 (Regression and bug fix release)
-  - Fix data import regression
-  - Use proper AD property names inside TDF files but keep compatibility shim for old TDF files
-  - Merge functions Export-TDF, Export-CSVDE and Export-SimpleCSV into Show-ExportDataDialog function
-  - Implement correct syntax for CSVDE export files
-  - Fix regression bug in audit log entries
-  - Rework CSVDE export function to export correctly scoped data
-  - Normalised object property names to standard AD schema casing (e.g. distinguishedName, objectClass, sAMAccountName, givenName, sn)
-  - Updated remaining properties to consistently match native AD attribute names.
-  - Use FileTime-formatted values already produced by Convert-DataToADObjects, and add DateTime type validation for timestamp attributes.
-  - Add array safety checks for multi-value attributes (memberOf, member, servicePrincipalName).
-  - Added logging to verify: distinguishedName is populated on source objects, Generated CSV distinguished names match source objects,
-    CSV output contains (not empty) data.
-  - Fault isolation: Missing DN in Convert-DataToADObjects, Missing DN in record construction logic, empty CSV rows in Export-Csv
-  - Correct date parsing issue in Audit log function
-  - Clean up comments and headers around functions to be unifiorm
-  - Deleted duplicate function `Show-DNSZoneDetailsDialog`
+3.2.4.03 (It was DNS, it's always DNS...)
+  - Add DNS Lookup modal function which works like whttp://hatsmydns.net
+  - Fix scoping issue with FSMO function in AD health dialog
+  - Fix spacing issue with environment info panel
+  - Rework menus to move AD specific sub functions such as IPSec or Printers to a dedicated menu
+  - Create a Utilities menu to hold password generator, DNS lookup, etc
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{ TODO / COME BACK TO }~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 REMAINING FEATURES TO IMPLEMENT:
   - AD Health tabs like Group Policy and domain controllers the tab pane could be smaller with a search box in them to help out
+  - https://learn.microsoft.com/en-us/previous-versions/windows/desktop/dacx/how-to-set-up-a-resource-property
 
   BUGS:
 
@@ -207,9 +197,9 @@ $Script:ImportSource    = $null    ## Track where data came from ('File', 'AD', 
 Write-Host "FilterOptions type: $($Script:FilterOptions.GetType().Name)" -Type "Insight"
 Write-Host "FilterOptions is hashtable: $($Script:FilterOptions -is [hashtable])" -Type "Insight"
 
-##################################################################################################################
+##--------------------------------------------------------------------------------------------------------------##
 ## Any functions added in here, make sure to keep chronology when calling them from inside other functions...   ##
-##################################################################################################################
+##--------------------------------------------------------------------------------------------------------------##
 
 ## ----------{ Test For Required Modules }----------
 function Test-Requirement {
@@ -441,8 +431,8 @@ function Build-MainMenu {
   $mFile         = [Terminal.Gui.MenuItem]::new("_Exit","Exit application (F10)",[Action]{ [Terminal.Gui.Application]::RequestStop() })
   $mNew          = [Terminal.Gui.MenuItem]::new("N_ew Object","Create a new object (F3)",[Action]{ Show-NewObjectWizard })
   $mProps        = [Terminal.Gui.MenuItem]::new("_Properties","Edit selected properties",[Action]{ Show-Properties })
-  $mDemoExport   = [Terminal.Gui.MenuItem]::new("_Export Demo Data", "Export demo data", [Action]{ Show-ExportDataDialog })
-  $mDemoImport   = [Terminal.Gui.MenuItem]::new("_Import Demo Data", "Import demo data", [Action]{
+  $mDemoExport   = [Terminal.Gui.MenuItem]::new("_Export Data", "Export demo data", [Action]{ Show-ExportDataDialog })
+  $mDemoImport   = [Terminal.Gui.MenuItem]::new("_Import Data", "Import demo data", [Action]{
     $Script:selectedFile = $null
     Show-FileBrowserDialog -Mode 'Open'
     if ($Script:selectedFile -and (Test-Path -LiteralPath $Script:selectedFile)) {
@@ -454,9 +444,9 @@ function Build-MainMenu {
     }
   })
   $mUndo              = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Debug-Log (" Undo placeholder") -Type "Insight" })
-  $mChangeDomain      = [Terminal.Gui.MenuItem]::new("Change _Domain","Select domain",[Action]{ Show-ChangeDomainDialog })
-  $mChangeDC          = [Terminal.Gui.MenuItem]::new("Change Domain _Controller","Select DC",[Action]{ Show-ChangeDCDialog })
-  $mSearchAD          = [Terminal.Gui.MenuItem]::new("_Search AD","Search Active Directory (F7)",[Action]{ $func = ${function:Show-ADSearchDialog} ;  & $func})
+  $mChangeDomain      = [Terminal.Gui.MenuItem]::new("Change _Domain","Change Domain",[Action]{ Show-ChangeDomainDialog })
+  $mChangeDC          = [Terminal.Gui.MenuItem]::new("Select D_C","Change Domain Controller",[Action]{ Show-ChangeDCDialog })
+  $mSearchAD          = [Terminal.Gui.MenuItem]::new("_Search AD","Search AD (F7)",[Action]{ $func = ${function:Show-ADSearchDialog} ;  & $func})
   $mRefresh           = [Terminal.Gui.MenuItem]::new("_Refresh","Refresh AD data (F5)",[Action]{
     Debug-Log (" Refresh menu clicked - scheduling refresh...") -Type "Insight"
     [Terminal.Gui.Application]::MainLoop.AddTimeout([TimeSpan]::FromMilliseconds(100), {
@@ -478,27 +468,28 @@ function Build-MainMenu {
   $mQuickFilter       = [Terminal.Gui.MenuItem]::new("_Quick Filter","Apply quick filters",[Action]{Show-QuickFilterDialog})
   $mSelectionMode     = [Terminal.Gui.MenuItem]::new("_Selection Mode (Ctrl+S)","Toggle selection mode",[Action]{Toggle-SelectionMode})
   $mSelectAll         = [Terminal.Gui.MenuItem]::new("Select _All (Ctrl+A)","Select all objects",[Action]{Manage-Selection -Action 'SelectAll'})
-  $mDeselectAll       = [Terminal.Gui.MenuItem]::new("_Deselect All (Ctrl+D)","Deselect all objects",[Action]{Manage-Selection -Action 'DeselectAll'})
+  $mDeselectAll       = [Terminal.Gui.MenuItem]::new("_Unselect All (Ctrl+U)","Deselect all objects",[Action]{Manage-Selection -Action 'DeselectAll'})
   $mBulkDisable       = [Terminal.Gui.MenuItem]::new("_Disable Selected", "Disable selected accounts", [Action]{$objects = Get-SelectedObjectsAsObjects ; Manage-AccountStatus -Objects $objects -Action 'Disable'})
   $mBulkEnable        = [Terminal.Gui.MenuItem]::new("_Enable Selected", "Enable selected accounts", [Action]{$objects = Get-SelectedObjectsAsObjects ; Manage-AccountStatus -Objects $objects -Action 'Enable'})
   $mBulkAddGroup      = [Terminal.Gui.MenuItem]::new("Add to _Group...","Add selected users to group",[Action]{Invoke-BulkAddToGroup})
-  $mBulkEdit          = [Terminal.Gui.MenuItem]::new("_Edit Attribute (Bulk)", "Change one attribute across selected objects", [Action]{$objects = Get-SelectedObjectsAsObjects ; Set-BulkAttribute -Objects $objects -ShowDialog})
-  $mStaleAll          = [Terminal.Gui.MenuItem]::new("Find _All Stale Accounts", "Find all inactive accounts", [Action]{Show-ADSearchDialog})
-  $mPasswordGenerator = [Terminal.Gui.MenuItem]::new("_Password Generator","Password Generator (F2)",[Action]{Generate-RandomPassword})
+  $mBulkEdit          = [Terminal.Gui.MenuItem]::new("_Edit Attribute (Bulk)", "Change attribute of selected objects", [Action]{$objects = Get-SelectedObjectsAsObjects ; Set-BulkAttribute -Objects $objects -ShowDialog})
+  $mStaleAll          = [Terminal.Gui.MenuItem]::new("Show _Stale Accounts", "Find all inactive accounts", [Action]{Show-ADSearchDialog})
+  $mPasswordGenerator = [Terminal.Gui.MenuItem]::new("Pass_word Generator","Password Generator (F2)",[Action]{Generate-RandomPassword})
   $mLAPSPasswords     = [Terminal.Gui.MenuItem]::new("_LAPS Passwords","Lookup LAPS Creds (Fx)",[Action]{Show-LAPSSearchModal})
-  $mADHealth          = [Terminal.Gui.MenuItem]::new("_AD Health Status", "AD Health And Replication Status", [Action]{Show-ADHealthDialog })
-  $mShortcuts         = [Terminal.Gui.MenuItem]::new("_Shortcuts","Keyboard shortcuts (F1)",[Action]{Show-Modal "Shortcuts" "F1 - Help`nF2 - Password Generator`nF3 - New`nF5 - Refresh`nF6 - Themes`nF7 - Search`nF8 Focus Tree`nF10 - Quit" })
-  $mAboutDSATUI       = [Terminal.Gui.MenuItem]::new("_About","About $($Script:ProjectName)",[Action]{Show-Modal "About" "$($Script:ProjectName)`n`nCodename: $($Script:FruitName)`nv$($Script:BuildVersion) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600)" })
+  $mADHealth          = [Terminal.Gui.MenuItem]::new("AD H_ealth Status", "AD Health/Replication Status", [Action]{Show-ADHealthDialog })
+  $mShortcuts         = [Terminal.Gui.MenuItem]::new("_Shortcuts","Keyboard shortcuts (F1)",[Action]{Show-Modal "Shortcuts" "F1  - Help              `nF2  - Password Generator`nF3  - New AD Object     `nF5  - Refresh AD Data   `nF6  - Theme Selection   `nF7  - Search AD         `nF8  - Focus Tree/Pane   `nF9  - Show Menubar      `nF10 - Quit DSA-TUI      `nF11 - Enter Full Screen `nF12 - Tree Context Menu `n" })
+  $mAboutDSATUI       = [Terminal.Gui.MenuItem]::new("Abou_t","About Project",[Action]{Show-Modal "About" "$($Script:ProjectName)`n`nCodename: $($Script:FruitName)`nv$($Script:BuildVersion) STABLE`nGPL-3 Copyleft`nBy Knightmare2600 (https://github.com/knightmare2600)" })
   $mWhyBlaabaer       = [Terminal.Gui.MenuItem]::new("Why _Blåbær?","Why the $($Script:FruitName) codename?",[Action]{Show-BlaabaerInfo })
-  $mTheme             = [Terminal.Gui.MenuItem]::new("_Theme","Change colour theme (F6)",[Action]{Show-ThemeSelector })
-  $menuItemGPOs       = [Terminal.Gui.MenuItem]::new("Group _Policy Objects", "Show Group Policies", {Show-GPOListDialog -Domain $Script:CurrentDomain})
+  $mTheme             = [Terminal.Gui.MenuItem]::new("_Theme","Change theme (F6)",[Action]{Show-ThemeSelector })
+  $menuItemGPOs       = [Terminal.Gui.MenuItem]::new("Group Policy Ob_jects", "Show Group Policies", {Show-GPOListDialog -Domain $Script:CurrentDomain})
+  $mDNSLookup         = [Terminal.Gui.MenuItem]::new("DNS _Lookup","DNS query tool",[Action]{Show-DNSLookupDialog})
   $menuItemTrusts     = [Terminal.Gui.MenuItem]::new("Trust _Relationships", "Show Trust Relationships", {Show-TrustsDialog -Domain $Script:CurrentDomain})
-  $menuItemIPSec      = [Terminal.Gui.MenuItem]::new("_IPSec Policies", "Show IPSec Policies", {Show-IPSecPoliciesDialog -Domain $Script:CurrentDomain})
+  $menuItemIPSec      = [Terminal.Gui.MenuItem]::new("IP_Sec Policies", "Show IPSec Policies", {Show-IPSecPoliciesDialog -Domain $Script:CurrentDomain})
   $menuItemIPSecHelp  = [Terminal.Gui.MenuItem]::new("_IPSec Help", "IPSec Policies Help", {Show-IPSecHelpDialog})
-  $menuItemPrinters   = [Terminal.Gui.MenuItem]::new("_Print Queues", "Show Printer Queues", {Show-PrintQueuesDialog -Domain $Script:CurrentDomain})
+  $menuItemPrinters   = [Terminal.Gui.MenuItem]::new("Print _Queues", "Show Printer Queues", {Show-PrintQueuesDialog -Domain $Script:CurrentDomain})
   $menuItemDNSDialog  = [Terminal.Gui.MenuItem]::new("_DNS Manager", "AD DNS Manager", { Show-DNSDialog })
   ## Submenu: Actions > AD Properties
-  $mCopyTemplate      = [Terminal.Gui.MenuItem]::new("Copy as _Template", "Create new object from selected object", [Action]{
+  $mCopyTemplate      = [Terminal.Gui.MenuItem]::new("Copy as _Template", "Clone from selected object", [Action]{
     ## Get the currently selected node from tree
     if (-not $Script:tree -or -not $Script:tree.SelectedObject) { Show-Modal "No Selection" "Please select a user or group to use as a template" ; return }
     $selectedNode = $Script:tree.SelectedObject
@@ -512,18 +503,19 @@ function Build-MainMenu {
   })
 
   ## ----------{ Menu Bar }----------
-  ## Be mindful of nested menus here!
+  ## Be mindful of nested menus here! Define sub-menus FIRST
+  $mExtraFunctions = [Terminal.Gui.MenuBarItem]::new("_Utilities",@($mPasswordGenerator, $mDNSLookup, $menuItemPrinters, $menuItemIPSec))
+  $mADFunctions    = [Terminal.Gui.MenuBarItem]::new("_AD Properties",@($mLAPSPasswords, $mCopyTemplate, $menuItemGPOs, $menuItemTrusts, $menuItemDNSDialog, $mADHealth, $mStaleAll))
+  ## THEN create the menu bar using them
   $menu = [Terminal.Gui.MenuBar]::new(@(
-    $mExtraFunctions = [Terminal.Gui.MenuBarItem]::new("_AD Properties",@($mPasswordGenerator, $mLAPSPasswords, $mCopyTemplate, $menuItemGPOs, $menuItemTrusts, $menuItemPrinters, $menuItemDNSDialog, $menuItemIPSec))
     [Terminal.Gui.MenuBarItem]::new("_File", @($mRefresh, $mDemoExport, $mDemoImport, $mTheme, $mFile)),
-    [Terminal.Gui.MenuBarItem]::new("_Action", @($mNew, $mProps, $mExtraFunctions, $mQuickFilter, $mUndo, $mChangeDomain, $mChangeDC, $mSearchAD, $mADHealth, $mStaleAll)),
+    [Terminal.Gui.MenuBarItem]::new("_Action", @($mADFunctions, $mNew, $mProps, $mQuickFilter, $mUndo, $mChangeDomain, $mChangeDC, $mSearchAD, $mExtraFunctions)),
     [Terminal.Gui.MenuBarItem]::new("_Selection", @($mSelectionMode, $mSelectAll, $mDeselectAll, $mBulkEdit, $mBulkAddGroup, $mBulkEnable, $mBulkDisable)),
     [Terminal.Gui.MenuBarItem]::new("_Help", @($mShortcuts, $menuItemIPSecHelp, $mAboutDSATUI, $mWhyBlaabaer))
   ))
   Debug-Log "Main menu created successfully" -Type "Insight"
   return $menu
 }
-
 function script:Set-ObjectCheckboxes {
   <#
   .SYNOPSIS
@@ -567,25 +559,21 @@ function script:Set-ObjectCheckboxes {
         $State.chkSecurity.Y = [Terminal.Gui.Pos]::Bottom($State.txtSearchOutput) + 1
         $State.chkSecurity.CanFocus = $true
         $View.Add($State.chkSecurity)
-
         $State.chkDistribution = [Terminal.Gui.CheckBox]::new("Distribution Group")
         $State.chkDistribution.X = 22
         $State.chkDistribution.Y = [Terminal.Gui.Pos]::Bottom($State.txtSearchOutput) + 1
         $State.chkDistribution.CanFocus = $true
         $View.Add($State.chkDistribution)
-
         $State.chkGlobal = [Terminal.Gui.CheckBox]::new("Global")
         $State.chkGlobal.X = 48
         $State.chkGlobal.Y = [Terminal.Gui.Pos]::Bottom($State.txtSearchOutput) + 1
         $State.chkGlobal.CanFocus = $true
         $View.Add($State.chkGlobal)
-
         $State.chkDomainLocal = [Terminal.Gui.CheckBox]::new("Domain Local")
         $State.chkDomainLocal.X = 60
         $State.chkDomainLocal.Y = [Terminal.Gui.Pos]::Bottom($State.txtSearchOutput) + 1
         $State.chkDomainLocal.CanFocus = $true
         $View.Add($State.chkDomainLocal)
-
         $State.chkUniversal = [Terminal.Gui.CheckBox]::new("Universal")
         $State.chkUniversal.X = 78
         $State.chkUniversal.Y = [Terminal.Gui.Pos]::Bottom($State.txtSearchOutput) + 1
@@ -1057,7 +1045,6 @@ $accountTab = @{
       $btnRemove.X = 22; $btnRemove.Y = 28
       $btnRemove.add_Clicked({
         $selectedIndex = $state.lstGroups.SelectedItem
-
         ## Force array
         $currentGroups = @()
         if ($user.Groups) { $currentGroups = @($user.Groups)
@@ -1193,10 +1180,8 @@ $accountTab = @{
         }
         ## Create the date (this will fail for invalid dates like Feb 30)
         $newExpiryDate = [DateTime]::new($year, $month, $day)
-
         ## Check if date is different from current
         $currentExpiry = if ($user.PSObject.Properties.Match('AccountExpirationDate')) { $user.AccountExpirationDate } else { $null }
-
         if ($null -eq $currentExpiry -or $newExpiryDate -ne $currentExpiry) {
           if ($Script:DemoMode) {
             $user.AccountExpirationDate = $newExpiryDate
@@ -1216,13 +1201,11 @@ $accountTab = @{
           }
         }
       }
-
       if ($changesMade) { Show-Modal "Success" "Changes applied successfully"
       } else { Show-Modal "Info" "No changes to apply"
       }
     } catch { Show-Modal "Error" "Failed to apply changes:`n$($_.Exception.Message)" }
   }
-
   ## ----------{ Create Dialog }---------
   ## Note: Search tab is auto-added by New-PropertiesDialog
   $tabs = @($generalTab, $accountTab, $addressTab, $profileTab, $organizationTab, $memberOfTab)
@@ -1362,12 +1345,12 @@ function Show-ThemeSelector {
     [Terminal.Gui.Application]::Refresh()
     Show-Modal "Theme Changed" "Theme changed to: ${sel}"
     [Terminal.Gui.Application]::RequestStop()
-  }).GetNewClosure()
+  })
   $dlg.AddButton($btnApply)
 
   ## Cancel Button
   $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }).GetNewClosure()
+  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
   $dlg.AddButton($btnCancel)
 
   ## Run the dialog
@@ -1628,15 +1611,15 @@ function Show-ExportDataDialog {
                   $obj.member
                 }
               } else { "" }
-              groupType          = if ($obj.objectClass -eq 'group') {
+              groupType             = if ($obj.objectClass -eq 'group') {
                 if ($obj.groupType) { $obj.groupType } else { "-2147483646" }
               } else { "" }
               ## Computer Properties
-              operatingSystem    = if ($obj.operatingSystem) { $obj.operatingSystem } else { "" }
+              operatingSystem        = if ($obj.operatingSystem) { $obj.operatingSystem } else { "" }
               operatingSystemVersion = if ($obj.operatingSystemVersion) {
                 $obj.operatingSystemVersion
               } else { "" }
-              dNSHostName        = if ($obj.dNSHostName) { $obj.dNSHostName } else { "" }
+              dNSHostName          = if ($obj.dNSHostName) { $obj.dNSHostName } else { "" }
               servicePrincipalName = if ($obj.servicePrincipalName) {
                 if ($obj.servicePrincipalName -is [array]) {
                   $obj.servicePrincipalName -join ';'
@@ -1673,8 +1656,8 @@ function Show-ExportDataDialog {
               DisplayName     = $obj.displayName
               Title           = $obj.title
               Department      = $obj.Department
-              Enabled         = if ($obj.Enabled -ne $null) { $obj.Enabled } else { $true }
-              Disabled        = if ($obj.Disabled -ne $null) { $obj.Disabled } else { $false }
+              Enabled         = if ($obj.Enabled -ne $null)   { $obj.Enabled } else { $true }
+              Disabled        = if ($obj.Disabled -ne $null)  { $obj.Disabled } else { $false }
               LockedOut       = if ($obj.LockedOut -ne $null) { $obj.LockedOut } else { $false }
               Domain          = $obj.Domain
               OU              = if ($obj.OU) { $obj.OU -join ' > ' } else { "" }
@@ -1688,11 +1671,9 @@ function Show-ExportDataDialog {
           & $debugLogFunc "Exported Simple CSV with $($simpleObjects.Count) objects" -Type "Success"
         }
       }
-
       & $debugLogFunc "Exported $($objectsToExport.Count) objects to ${format}: $fullPath" -Type "Success"
       & $showModalFunc -title "Export Complete" -msg "Successfully exported $($objectsToExport.Count) objects to:`n`n$fullPath"
       [Terminal.Gui.Application]::RequestStop()
-
     } catch {
       & $debugLogFunc "Failed to export: $($_.Exception.Message)" -Type "Problem"
       & $showModalFunc -title "Export Failed" -msg "Could not export data:`n`n$($_.Exception.Message)"
@@ -2083,7 +2064,6 @@ function Load-DefaultDemoData {
 
   ## Automatically show the file picker
   Debug-Log "Showing file picker for demo data" -Type "Insight"
-
   $Script:selectedFile = $null
   Show-FileBrowserDialog -Mode 'Open'
 
@@ -2642,6 +2622,369 @@ function Apply-CombinedFilters {
     }
   }
   return $filtered
+}
+
+## ----------{ DNS Lookup Tool }---------
+function Show-DNSLookupDialog {
+  <#
+  .SYNOPSIS
+  DNS lookup tool with multi-server verification and expected result validation
+
+  .DESCRIPTION
+  Provides DNS query functionality with:
+  - Multiple record types (A, AAAA, CNAME, MX, TXT, NS, SOA, PTR, SRV, ANY)
+  - Custom DNS server specification
+  - Expected result validation with visual indicators
+  - Multi-server checking (like https://whatsmydns.net)
+  - Clear result display with copy functionality
+
+  .EXAMPLE
+  Show-DNSLookupDialog
+  #>
+
+  Debug-Log "Opening DNS Lookup tool" -Type "Insight"
+
+  ## Check for DnsClient module
+  $hasDnsClient = $null -ne (Get-Module -ListAvailable -Name DnsClient)
+  if (-not $hasDnsClient) {
+    Show-Modal "DnsClient Module Missing" "The DnsClient PowerShell module is required for DNS lookups.`n`nThis module is included with Windows 8/Server 2012 and later.`n`nIt may not be available on this system."
+    return
+  }
+
+  ## Import DnsClient module if not already loaded
+  if (-not (Get-Module -Name DnsClient)) {
+    try {
+      Import-Module DnsClient -ErrorAction Stop
+      Debug-Log "DnsClient module imported successfully" -Type "Success"
+    } catch {
+      Show-Modal "Module Import Failed" "Failed to import DnsClient module:`n`n$($_.Exception.Message)"
+      return
+    }
+  }
+
+  ## Capture functions and icons
+  $debugLogFunc = ${function:Debug-Log}
+  $showModalFunc = ${function:Show-Modal}
+  $icons = if ($Script:Icons) { $Script:Icons } else { @{ Success = "✔"; Error = "✖" } }
+
+  ## Public DNS Servers for Multi-Server Check
+  $publicDNSServers = @(
+    @{ Name = "Google Primary"       ; IP = "8.8.8.8"         ; Location = "Global" }
+    @{ Name = "Google Secondary"     ; IP = "8.8.4.4"         ; Location = "Global" }
+    @{ Name = "Cloudflare Primary"   ; IP = "1.1.1.1"         ; Location = "Global" }
+    @{ Name = "Cloudflare Secondary" ; IP = "1.0.0.1"         ; Location = "Global" }
+    @{ Name = "Quad9 Primary"        ; IP = "9.9.9.9"         ; Location = "Global" }
+    @{ Name = "Quad9 Secondary"      ; IP = "149.112.112.112" ; Location = "Global" }
+    @{ Name = "OpenDNS Primary"      ; IP = "208.67.222.222"  ; Location = "Global" }
+    @{ Name = "OpenDNS Secondary"    ; IP = "208.67.220.220"  ; Location = "Global" }
+  )
+
+  ## ----------{ Lookup Function - Must be defined before buttons }---------
+  function Local-DNSLookup {
+    param(
+      [string]$RecordName,
+      [string]$RecordType,
+      [string]$DNSServer,
+      [string]$ExpectedResult,
+      [bool]$Validate,
+      [bool]$MultiServer,
+      [array]$PublicServers,
+      [hashtable]$Icons
+    )
+
+    if ([string]::IsNullOrWhiteSpace($RecordName)) { return "Error: Please enter a DNS record name" }
+
+    $results = @()
+    $results += "DNS Lookup Results"
+    $results += "═════════════════════════════════════════════════════════════════"
+    $results += "Record:     $RecordName"
+    $results += "Type:       $RecordType"
+    $results += "Timestamp:  $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    $results += ""
+
+    ## Determine which servers to query
+    $serversToQuery = @()
+
+    if ($MultiServer) {
+      $results += "Checking multiple DNS servers..."
+      $results += ""
+      $serversToQuery = $PublicServers
+    } else {
+      if ([string]::IsNullOrWhiteSpace($DNSServer)) {
+        $results += "Using system default DNS resolver"
+        $results += ""
+        $serversToQuery = @(@{ Name = "System Default"; IP = $null; Location = "Local" })
+      } else {
+        $results += "Using DNS server: $DNSServer"
+        $results += ""
+        $serversToQuery = @(@{ Name = "Custom Server"; IP = $DNSServer; Location = "Custom" })
+      }
+    }
+
+    ## Query each server
+    foreach ($server in $serversToQuery) {
+      if ($MultiServer) {
+        $results += "─────────────────────────────────────────────────────────────────"
+        $results += "$($server.Name) ($($server.IP)) - $($server.Location)"
+        $results += ""
+      }
+      try {
+        ## Build Resolve-DnsName parameters
+        $dnsParams = @{
+          Name = $RecordName
+          ErrorAction = 'Stop'
+        }
+        ## Add type parameter (skip for ANY)
+        if ($RecordType -ne "ANY") { $dnsParams['Type'] = $RecordType }
+        ## Add server parameter if specified
+        if ($server.IP) { $dnsParams['Server'] = $server.IP }
+        ## Execute DNS query
+        $dnsResult = Resolve-DnsName @dnsParams
+        if ($dnsResult) {
+          ## Extract relevant data based on record type
+          $recordData = @()
+
+          foreach ($record in $dnsResult) {
+            switch ($RecordType) {
+              "A"     { if ($record.IP4Address)    { $recordData += $record.IP4Address } }
+              "AAAA"  { if ($record.IP6Address)    { $recordData += $record.IP6Address } }
+              "CNAME" { if ($record.NameHost)      { $recordData += $record.NameHost } }
+              "MX"    { if ($record.NameExchange)  { $recordData += "$($record.Preference) $($record.NameExchange)" } }
+              "TXT"   { if ($record.Strings)       { $recordData += ($record.Strings -join ' ') } }
+              "NS"    { if ($record.NameHost)      { $recordData += $record.NameHost } }
+              "SOA"   { if ($record.PrimaryServer) { $recordData += "Primary: $($record.PrimaryServer), Serial: $($record.SerialNumber)" } }
+              "PTR"   { if ($record.NameHost)      { $recordData += $record.NameHost } }
+              "SRV"   { if ($record.NameTarget)    { $recordData += "$($record.Priority) $($record.Weight) $($record.Port) $($record.NameTarget)" } }
+              "ANY"   {
+                if ($record.IP4Address)   { $recordData += "A: $($record.IP4Address)" }
+                if ($record.IP6Address)   { $recordData += "AAAA: $($record.IP6Address)" }
+                if ($record.NameHost)     { $recordData += "CNAME/NS: $($record.NameHost)" }
+                if ($record.NameExchange) { $recordData += "MX: $($record.Preference) $($record.NameExchange)" }
+              }
+            }
+          }
+
+          if ($recordData.Count -gt 0) {
+            ## Validation check
+            $validationResult = ""
+            if ($Validate -and -not [string]::IsNullOrWhiteSpace($ExpectedResult)) {
+              $matched = $false
+              foreach ($data in $recordData) {
+                if ($data -match [regex]::Escape($ExpectedResult)) {
+                  $matched = $true
+                  break
+                }
+              }
+              if ($matched) {
+                $validationResult = "  $($Icons.Success) MATCHES expected result"
+              } else {
+                $validationResult = "  $($Icons.Error) DOES NOT MATCH expected result (expected: $ExpectedResult)"
+              }
+            }
+
+            foreach ($data in $recordData) { $results += "  $data" }
+            if ($validationResult) {
+              $results += ""
+              $results += $validationResult
+            }
+          } else {
+            $results += "  (No data returned for this record type)"
+          }
+        } else {
+          $results += "  (No records found)"
+        }
+      } catch {
+        $results += "  $($Icons.Error) Error: $($_.Exception.Message)"
+      }
+      $results += ""
+    }
+    $results += "═════════════════════════════════════════════════════════════════"
+    $results += "Lookup completed"
+    return ($results -join "`n")
+  }
+
+  ## Create dialog
+  $dialog = [Terminal.Gui.Dialog]::new("DNS Lookup Tool", 120, 40)
+  $y = 1
+
+  ## ----------{ DNS Record Input }---------
+  $lblRecord = [Terminal.Gui.Label]::new("DNS Record:")
+  $lblRecord.X = 2
+  $lblRecord.Y = $y
+  $dialog.Add($lblRecord)
+
+  $txtRecord = [Terminal.Gui.TextField]::new("")
+  $txtRecord.X = 15
+  $txtRecord.Y = $y
+  $txtRecord.Width = 50
+  $dialog.Add($txtRecord)
+  $y += 2
+
+  ## ----------{ Record Type Selection }---------
+  $lblType = [Terminal.Gui.Label]::new("Record Type:")
+  $lblType.X = 2
+  $lblType.Y = $y
+  $dialog.Add($lblType)
+
+  $cmbType = [Terminal.Gui.ComboBox]::new()
+  $cmbType.X = 15
+  $cmbType.Y = $y
+  $cmbType.Width = 20
+  $cmbType.Height = 4
+  $cmbType.SetSource([string[]]@("A", "AAAA", "CNAME", "MX", "TXT", "NS", "SOA", "PTR", "SRV", "ANY"))
+  $cmbType.Text = "A"
+  $dialog.Add($cmbType)
+  $y += 2
+
+  ## ----------{ DNS Server Input }---------
+  $lblServer = [Terminal.Gui.Label]::new("DNS Server:")
+  $lblServer.X = 2
+  $lblServer.Y = $y
+  $dialog.Add($lblServer)
+
+  $txtServer = [Terminal.Gui.TextField]::new("")
+  $txtServer.X = 15
+  $txtServer.Y = $y
+  $txtServer.Width = 30
+  $dialog.Add($txtServer)
+
+  $lblServerHint = [Terminal.Gui.Label]::new("(leave blank for system default)")
+  $lblServerHint.X = 46
+  $lblServerHint.Y = $y
+  $dialog.Add($lblServerHint)
+  $y += 2
+
+  ## ----------{ Expected Result Validation }---------
+  $chkValidate = [Terminal.Gui.CheckBox]::new("Validate against expected result:")
+  $chkValidate.X = 2
+  $chkValidate.Y = $y
+  $chkValidate.Checked = $false
+  $dialog.Add($chkValidate)
+  $y += 1
+
+  $txtExpected = [Terminal.Gui.TextField]::new("")
+  $txtExpected.X = 4
+  $txtExpected.Y = $y
+  $txtExpected.Width = 50
+  $txtExpected.Enabled = $false
+  $dialog.Add($txtExpected)
+
+  $lblExpectedHint = [Terminal.Gui.Label]::new("(e.g., 1.2.3.4 for A record)")
+  $lblExpectedHint.X = 55
+  $lblExpectedHint.Y = $y
+  $dialog.Add($lblExpectedHint)
+  $y += 2
+
+  ## Enable/disable expected result field based on checkbox
+  $chkValidate.add_Toggled({
+    $txtExpected.Enabled = $chkValidate.Checked
+  }.GetNewClosure())
+
+  ## ----------{ Multi-Server Check }---------
+  $chkMultiServer = [Terminal.Gui.CheckBox]::new("Check multiple DNS servers (like whatsmydns.net)")
+  $chkMultiServer.X = 2
+  $chkMultiServer.Y = $y
+  $chkMultiServer.Checked = $false
+  $dialog.Add($chkMultiServer)
+  $y += 2
+
+  ## ----------{ Results Display }---------
+  $lblResults = [Terminal.Gui.Label]::new("Results:")
+  $lblResults.X = 2
+  $lblResults.Y = $y
+  $dialog.Add($lblResults)
+  $y += 1
+
+  $txtResults = [Terminal.Gui.TextView]::new()
+  $txtResults.X = 2
+  $txtResults.Y = $y
+  $txtResults.Width = [Terminal.Gui.Dim]::Fill(2)
+  $txtResults.Height = [Terminal.Gui.Dim]::Fill(4)
+  $txtResults.ReadOnly = $true
+  $txtResults.Text = "Enter a DNS record and click Lookup to begin..."
+  $dialog.Add($txtResults)
+
+  ## ----------{ Capture for closures }---------
+  $capturedLookupFunc = ${function:Local-DNSLookup}
+  $capturedPublicServers = $publicDNSServers
+  $capturedIcons = $icons
+
+  ## ----------{ Buttons }---------
+  ## Lookup button
+  $btnLookup = [Terminal.Gui.Button]::new("Lookup")
+  $btnLookup.X = 2
+  $btnLookup.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnLookup.add_Clicked({
+    try {
+      $txtResults.Text = "Performing DNS lookup..."
+      [Terminal.Gui.Application]::Refresh()
+      $record      = $txtRecord.Text.ToString().Trim()
+      $type        = $cmbType.Text.ToString()
+      $server      = $txtServer.Text.ToString().Trim()
+      $expected    = $txtExpected.Text.ToString().Trim()
+      $validate    = $chkValidate.Checked
+      $multiServer = $chkMultiServer.Checked
+      $result      = & $capturedLookupFunc -RecordName $record -RecordType $type -DNSServer $server -ExpectedResult $expected -Validate $validate -MultiServer $multiServer -PublicServers $capturedPublicServers -Icons $capturedIcons
+      $txtResults.Text = $result
+      & $debugLogFunc "DNS lookup completed for $record ($type)" -Type "Success"
+    } catch {
+      $errorMsg = "DNS lookup failed: $($_.Exception.Message)"
+      $txtResults.Text = $errorMsg
+      & $debugLogFunc $errorMsg -Type "Problem"
+    }
+  }.GetNewClosure())
+  $dialog.Add($btnLookup)
+
+  ## Clear button
+  $btnClear = [Terminal.Gui.Button]::new("Clear")
+  $btnClear.X = 14
+  $btnClear.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnClear.add_Clicked({
+    $txtRecord.Text = ""
+    $txtServer.Text = ""
+    $txtExpected.Text = ""
+    $cmbType.Text = "A"
+    $chkValidate.Checked = $false
+    $chkMultiServer.Checked = $false
+    $txtExpected.Enabled = $false
+    $txtResults.Text = "Enter a DNS record and click Lookup to begin..."
+    & $debugLogFunc "DNS lookup form cleared" -Type "Insight"
+  }.GetNewClosure())
+  $dialog.Add($btnClear)
+
+  ## Copy Results button
+  $btnCopy = [Terminal.Gui.Button]::new("Copy Results")
+  $btnCopy.X = 24
+  $btnCopy.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnCopy.add_Clicked({
+    try {
+      $results = $txtResults.Text.ToString()
+      if (-not [string]::IsNullOrWhiteSpace($results)) {
+        Set-Clipboard -Value $results
+        & $showModalFunc "Copied" "Results copied to clipboard!"
+        & $debugLogFunc "DNS results copied to clipboard" -Type "Success"
+      } else {
+        & $showModalFunc "No Results" "No results to copy"
+      }
+    } catch {
+      & $showModalFunc "Copy Failed" "Failed to copy to clipboard: $($_.Exception.Message)"
+      & $debugLogFunc "Failed to copy DNS results: $($_.Exception.Message)" -Type "Problem"
+    }
+  }.GetNewClosure())
+  $dialog.Add($btnCopy)
+
+  ## Close button
+  $btnClose = [Terminal.Gui.Button]::new("Close")
+  $btnClose.X = [Terminal.Gui.Pos]::AnchorEnd(10)
+  $btnClose.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $btnClose.add_Clicked({
+    & $debugLogFunc "DNS Lookup tool closed" -Type "Insight"
+    [Terminal.Gui.Application]::RequestStop()
+  }.GetNewClosure())
+  $dialog.Add($btnClose)
+
+  ## Run dialog
+  [Terminal.Gui.Application]::Run($dialog)
 }
 
 ## ----------{ File Browser }----------
@@ -6686,9 +7029,9 @@ function Show-InfoPanel {
 
     ## DYNAMIC: Place below selection panel with 1 line gap
     if ($Parent -and $Script:SelectionPanel) {
-      $infoPanel.Y = [Terminal.Gui.Pos]::Bottom($Script:SelectionPanel) + 1
+      $infoPanel.Y = [Terminal.Gui.Pos]::Bottom($Script:SelectionPanel) + 0
     } else {
-      $infoPanel.Y = 31  # Fallback
+      $infoPanel.Y = 30  # Fallback
     }
 
     $yPos = 0
@@ -7260,10 +7603,11 @@ function Get-SystemInfoText {
   ## Module Availability
   $output += "PowerShell Modules:"
   $output += "  ActiveDirectory:                      $(if ($Script:HasActiveDirectory) { '✓ Available' } else { '✗ Not Found' })"
-  $output += "  Terminal-Icons:                       $(if ($hasTerminalIcons) { '✓ Available' } else { '✗ Not Found' })"
+  $output += "  DNSClient:                            $(if ($Script:hasDNSClient) { '✓ Available' } else { '✗ Not Found' })"
   $output += "  NerdFonts:                            $(if ($Script:hasNerdFonts) { '✓ Available' } else { '✗ Not Found' })"
   $output += "  PSWriteColor:                         $(if ($Script:hasPSWriteColor) { '✓ Available' } else { '✗ Not Found' })"
   $output += "  Microsoft.PowerShell.ConsoleGuiTools: $(if ($Script:hasConsoleTools) { '✓ Available' } else { '✗ Not Found' })"
+  $output += "  Terminal-Icons:                       $(if ($hasTerminalIcons) { '✓ Available' } else { '✗ Not Found' })"
   $output += ""
 
   ## Installation Instructions
@@ -7335,6 +7679,154 @@ function Get-SystemInfoText {
     $output += ""
   }
   return ($output -join "`n")
+}
+
+function Get-TrustTestingTabContent {
+  param([string]$Domain)
+
+  ## Get trust relationships
+  $trusts = if ($Script:DemoMode) {
+    @(
+      @{ Name = "corp.example.com"; Direction = "Bidirectional"; Type = "Forest" }
+      @{ Name = "partner.example.org"; Direction = "Outbound"; Type = "External" }
+    )
+  } else {
+    try {
+      if (Get-Command Get-ADTrust -ErrorAction SilentlyContinue) {
+        Get-ADTrust -Filter * | ForEach-Object {
+          @{
+            Name = $_.Name
+            Direction = $_.Direction
+            Type = $_.TrustType
+          }
+        }
+      } else {
+        @()
+      }
+    } catch {
+      @()
+    }
+  }
+
+  if ($trusts.Count -eq 0) {
+    return @"
+Trust Testing
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No trust relationships configured.
+
+This domain does not have any external trust
+relationships to test.
+"@
+  }
+
+  $text = @"
+Trust Testing
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Available Trust Relationships:
+
+"@
+
+  foreach ($trust in $trusts) {
+    $text += "  • $($trust.Name) ($($trust.Direction), $($trust.Type))`n"
+  }
+
+  $text += @"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INTERACTIVE TRUST TESTING
+
+To test a trust relationship, use the dedicated
+Trust Testing dialog from the main menu:
+
+  Actions → Test Trust Relationships
+
+Or use command-line tools:
+
+  nltest /server:$env:COMPUTERNAME /sc_query:DOMAIN
+
+  Test-ComputerSecureChannel -Credential (Get-Credential) -Server DOMAIN
+
+  netdom trust $Domain /domain:DOMAIN /verify
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TRUST HEALTH INDICATORS:
+
+✓ Trust should respond to secure channel queries
+✓ Authentication should succeed bidirectionally
+✓ DNS should resolve partner domain
+✓ Time sync should be within 5 minutes
+✓ Firewall should allow RPC traffic (135, 49152-65535)
+
+"@
+
+  return $text
+}
+
+## ADD THIS NEW HELPER FUNCTION for Statistics tab:
+function Get-DomainStatisticsText {
+  param([string]$Domain)
+
+  $totalUsers = $Script:Users.Count
+  $enabledUsers = ($Script:Users | Where-Object { $_.Enabled -eq $true }).Count
+  $disabledUsers = ($Script:Users | Where-Object { $_.Disabled -eq $true }).Count
+  $lockedUsers = ($Script:Users | Where-Object { $_.LockedOut -eq $true }).Count
+
+  $totalGroups = $Script:Groups.Count
+  $securityGroups = ($Script:Groups | Where-Object { $_.GroupCategory -eq 'Security' }).Count
+
+  $totalComputers = $Script:Computers.Count
+  $enabledComputers = ($Script:Computers | Where-Object { $_.Enabled -eq $true }).Count
+
+  $totalDCs = $Script:DCs.Count
+  $totalObjects = $totalUsers + $totalGroups + $totalComputers + $totalDCs
+
+  return @"
+Domain Statistics
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Domain: $Domain
+Forest: $($Script:ForestName)
+Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+
+USERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Users:          $totalUsers
+  Enabled:            $enabledUsers
+  Disabled:           $disabledUsers
+  Locked Out:         $lockedUsers
+
+GROUPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Groups:         $totalGroups
+  Security Groups:    $securityGroups
+  Distribution:       $($totalGroups - $securityGroups)
+
+COMPUTERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Computers:      $totalComputers
+  Enabled:            $enabledComputers
+  Disabled:           $($totalComputers - $enabledComputers)
+
+DOMAIN CONTROLLERS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total DCs:            $totalDCs
+
+FOREST INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Forest Name:          $($Script:ForestName)
+Total Domains:        $($Script:Domains.Count)
+Total Sites:          $($Script:Sites.Count)
+
+SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOTAL OBJECTS:        $totalObjects
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"@
 }
 
 function Get-DCStatusText {
@@ -7697,7 +8189,6 @@ function Get-FSMOStatusText {
       $output += $fmt -f "PDC Emulator", $primaryDC, "✓ Online"
       $output += $fmt -f "RID Master", $primaryDC, "✓ Online"
       $output += $fmt -f "Infrastructure Master", $primaryDC, "✓ Online"
-
       $output += ""
       $output += "All FSMO role holders are reachable."
     } else {
@@ -7935,7 +8426,9 @@ This distinction matters when documenting "Linux/macOS from Windows" diagnostic 
 
   ## Tool matrix per OS
   $toolMatrix = @{
-    Windows = @('repadmin.exe', 'dfsrdiag.exe', 'dcdiag.exe', 'nltest.exe', 'csvde.exe', 'portqry.exe', 'ping.exe', 'netstat.exe', 'nslookup.exe')
+    Windows = @('repadmin.exe', 'dfsrdiag.exe', 'dcdiag.exe', 'nltest.exe', 'csvde.exe', 'portqry.exe', 'ping.exe', 'netstat.exe', 'nslookup.exe','PsExec64.exe',
+                'PsExec64.exe','psfile64.exe','PsGetsid64.exe','PsInfo64.exe','pskill64.exe','pslist64.exe','PsLoggedon64.exe','psloglist64.exe',
+                'pspasswd64.exe','psping64.exe','PsService64.exe','psshutdown64.exe','pssuspend64.exe')
     Linux   = @('dig', 'ldapsearch', 'ldapwhoami', 'kinit', 'klist', 'nmap', 'nc', 'netstat', 'nslookup', 'ping', 'rpcclient', 'smbclient', 'samba-tool', 'wbinfo')
     MacOS   = @('dig', 'kinit', 'klist', 'ldapsearch', 'ldapwhoami', 'nc', 'netstat', 'nmap', 'nslookup', 'ping', 'smbclient')
   }
@@ -13333,7 +13826,7 @@ function Invoke-ForceDCReplication {
   }
 }
 
-## ----------{ Main Get-AD Heealth funciton }---------
+## ----------{ Main Get-AD Health function }---------
 function Show-ADHealthDialog {
   <#
   .SYNOPSIS
@@ -13432,33 +13925,41 @@ function Show-ADHealthDialog {
   $Script:ADHealthOS     = $osInfo
   $Script:ADHealthDomain = $Domain
 
+
+  ## Function captures:
+  $getFSMOFunc      = ${function:Get-FSMOStatusText}
+  $getTrustTestFunc = ${function:Get-TrustTestingTabContent}
+  $getStatsFunc     = ${function:Get-DomainStatisticsText}
+
   ## Create main dialog
-  $dialog = [Terminal.Gui.Dialog]::new("AD Health Check - $Domain", 120, 35)
+  $dialog = [Terminal.Gui.Dialog]::new("AD Health Check - $Domain", 140, 35)
 
   ## Create TabView
   $tabView = [Terminal.Gui.TabView]::new()
   $tabView.X = 0
   $tabView.Y = 0
-  $tabView.Width = [Terminal.Gui.Dim]::Fill()
+  $tabView.Width  = [Terminal.Gui.Dim]::Fill()
   $tabView.Height = [Terminal.Gui.Dim]::Fill(2)
 
   ## Tab definitions for AD health check
   $tabs = @(
-    @{ Name = "System Info"; Generator = { Get-SystemInfoText } }
-    @{ Name = "Domain Controllers"; Generator = { Get-DCStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "Replication"; Generator = { Get-ReplicationStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "DNS Records"; Generator = { Get-DNSStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "SYSVOL/NETLOGON"; Generator = { Get-SysvolStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "FSMO Roles"; Generator = { Get-FSMOStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "Trust Relationships"; Generator = { Get-TrustStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "DFS Status"; Generator = { Get-DFSStatusText -Domain $Script:ADHealthDomain } }
-    @{ Name = "Group Policy"; Generator = { Get-GPOStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "System Info"         ; Generator = { Get-SystemInfoText } }
+    @{ Name = "Domain Controllers"  ; Generator = { Get-DCStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Replication"         ; Generator = { Get-ReplicationStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "DNS Records"         ; Generator = { Get-DNSStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "SYSVOL/NETLOGON"     ; Generator = { Get-SysvolStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "FSMO Roles"          ; Generator = { Get-FSMOStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Trust Relationships" ; Generator = { Get-TrustStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Trust Testing"       ; Generator = { Get-TrustTestingTabContent -Domain $Script:ADHealthDomain } }
+    @{ Name = "Statistics"          ; Generator = { Get-DomainStatisticsText -Domain $Script:ADHealthDomain } }
+    @{ Name = "DFS Status"          ; Generator = { Get-DFSStatusText -Domain $Script:ADHealthDomain } }
+    @{ Name = "Group Policy"        ; Generator = { Get-GPOStatusText -Domain $Script:ADHealthDomain } }
   )
 
   ## Create tabs
   foreach ($tabDef in $tabs) {
     $tab             = [Terminal.Gui.TabView+Tab]::new()
-    $tab.Text        = [NStack.ustring]::Make($tabDef.Name)
+    $tab.Text        = $tabDef.Name
     $tab.View        = [Terminal.Gui.View]::new()
     $tab.View.Width  = [Terminal.Gui.Dim]::Fill()
     $tab.View.Height = [Terminal.Gui.Dim]::Fill()
@@ -13470,19 +13971,19 @@ function Show-ADHealthDialog {
     $textView.Width    = [Terminal.Gui.Dim]::Fill(1)
     $textView.Height   = [Terminal.Gui.Dim]::Fill()
     $textView.ReadOnly = $true
-    $textView.Text     = [NStack.ustring]::Make($text)
+    $textView.Text     = if ($text) { $text } else { "" }
     $tab.View.Add($textView)
     $tabView.AddTab($tab, $false)
   }
   $dialog.Add($tabView)
 
   ## ----------{ CTRL+F Search }---------
-
   ## Add key handler for Ctrl+F
   $dialog.add_KeyPress({
     param($e)
 
-    if ($e.KeyEvent.Key -eq [Terminal.Gui.Key]::CtrlMask -bor [Terminal.Gui.Key]::f) {
+    if (($e.KeyEvent.Key -band [Terminal.Gui.Key]::CtrlMask) -and
+        (([int]$e.KeyEvent.Key -band 0xFF) -eq [byte][char]'f')) {
       $currentTab = $tabView.SelectedTab
       $textView   = $currentTab.View.Subviews[0]
       if ($textView -and $textView -is [Terminal.Gui.TextView]) {
@@ -13508,7 +14009,12 @@ function Show-ADHealthDialog {
       }
       $e.Handled = $true
     }
-  })
+  }.GetNewClosure())
+
+  ## ----------{ Capture Variables for Closures }---------
+  $capturedTabs = $tabs
+  $capturedTabView = $tabView
+  $capturedDomain = $Domain
 
   ## ----------{ Buttons }---------
   $btnRefresh = [Terminal.Gui.Button]::new("Refresh")
@@ -13516,17 +14022,20 @@ function Show-ADHealthDialog {
   $btnRefresh.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
   $btnRefresh.add_Clicked({
     Debug-Log "Refreshing current tab..." -Type "Insight"
-    $currentTab = $tabView.SelectedTab
+    $currentTab = $capturedTabView.SelectedTab
     $tabName = $currentTab.Text.ToString()
     ## Find matching tab definition
-    $tabDef = $tabs | Where-Object { $_.Name -eq $tabName } | Select-Object -First 1
+    $tabDef = $capturedTabs | Where-Object { $_.Name -eq $tabName } | Select-Object -First 1
     if ($tabDef) {
       ## Refresh tools check if System Info
       if ($tabName -eq "System Info") { $Script:ADHealthTools = Test-ToolsAvailability }
       $newText = & $tabDef.Generator
-      $currentTab.View.Subviews[0].Text = [NStack.ustring]::Make($newText)
+      if ($newText) {
+        $currentTab.View.Subviews[0].Text = $newText
+        $currentTab.View.Subviews[0].SetNeedsDisplay()
+      }
     }
-  }).GetNewClosure()
+  }.GetNewClosure())
   $dialog.Add($btnRefresh)
 
   $btnExport = [Terminal.Gui.Button]::new("Export Report")
@@ -13534,74 +14043,130 @@ function Show-ADHealthDialog {
   $btnExport.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
   $btnExport.add_Clicked({
     Debug-Log "Exporting AD health report..." -Type "Insight"
+
+    ## Build report from all tabs
     $report = @"
 AD HEALTH REPORT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Domain: $Domain
+Domain: $capturedDomain
 Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 
-SYSTEM INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-SystemInfoText)
-
-DOMAIN CONTROLLERS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-DCStatusText -Domain $Domain)
-
-REPLICATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-ReplicationStatusText -Domain $Domain)
-
-DNS RECORDS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-DNSStatusText -Domain $Domain)
-
-SYSVOL/NETLOGON
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-SysvolStatusText -Domain $Domain)
-
-FSMO ROLES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-FSMOStatusText -Domain $Domain)
-
-TRUST RELATIONSHIPS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-TrustStatusText -Domain $Domain)
-
-DFS STATUS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-DFSStatusText -Domain $Domain)
-
-GROUP POLICY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-$(Get-GPOStatusText -Domain $Domain)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-End of Report
 "@
 
-  $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-  $savePath = Show-FileBrowserDialog -StartDir "." -Title "Save AD Health Report" -Filter @("*.txt", "*.log")
-  if ($savePath) {
-    try {
-      $report | Out-File -FilePath $savePath -Encoding UTF8
-      Debug-Log "Report exported to $savePath" -Type "Success"
-      Show-Modal "Export Complete" "AD Health Report saved to:`n`n$savePath"
-    } catch {
-      Debug-Log "Failed to export report: $($_.Exception.Message)" -Type "Problem"
-      Show-Modal "Export Failed" "Failed to save report:`n`n$($_.Exception.Message)"
+    foreach ($tabDef in $capturedTabs) {
+      $report += "`n$($tabDef.Name.ToUpper())`n"
+      $report += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n"
+      $report += & $tabDef.Generator
+      $report += "`n"
     }
-  }
-}).GetNewClosure()
 
+    $report += "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n"
+    $report += "End of Report`n"
+
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $defaultName = "ADHealth_$($capturedDomain)_$timestamp.txt"
+    $savePath = Show-FileBrowserDialog -Mode 'Save' -StartDir "." -DefaultName $defaultName
+
+    if ($savePath) {
+      try {
+        $report | Out-File -FilePath $savePath -Encoding UTF8
+        Debug-Log "Report exported to $savePath" -Type "Success"
+        Show-Modal "Export Complete" "AD Health Report saved to:`n`n$savePath"
+      } catch {
+        Debug-Log "Failed to export report: $($_.Exception.Message)" -Type "Problem"
+        Show-Modal "Export Failed" "Failed to save report:`n`n$($_.Exception.Message)"
+      }
+    }
+  }.GetNewClosure())
   $dialog.Add($btnExport)
+
+  ## Live search typing:
+  ## Search label
+  $lblSearch = [Terminal.Gui.Label]::new("Search:")
+  $lblSearch.X = 36
+  $lblSearch.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $dialog.Add($lblSearch)
+
+  ## Search text field
+  $txtSearch = [Terminal.Gui.TextField]::new("")
+  $txtSearch.X = 44
+  $txtSearch.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
+  $txtSearch.Width = 30
+  $dialog.Add($txtSearch)
+
+  ## Store original content for each tab (for filtering)
+  $tabOriginalContent = @{}
+
+  ## Search handler - filters current tab as user types
+  $txtSearch.add_TextChanged({
+    try {
+      $searchTerm = $txtSearch.Text.ToString().Trim()
+      $currentTab = $capturedTabView.SelectedTab
+      $textView = $currentTab.View.Subviews[0]
+
+      if (-not $textView -or $textView -isnot [Terminal.Gui.TextView]) { return }
+
+      $tabName = $currentTab.Text.ToString()
+
+      ## Store original content on first search
+      if (-not $tabOriginalContent.ContainsKey($tabName)) {
+        $tabOriginalContent[$tabName] = $textView.Text.ToString()
+      }
+
+      ## Get original content
+      $originalContent = $tabOriginalContent[$tabName]
+
+      if ([string]::IsNullOrWhiteSpace($searchTerm)) {
+        ## No search term - show original content
+        $textView.Text = $originalContent
+        $textView.SetNeedsDisplay()
+        return
+      }
+
+      ## Filter lines containing search term (case-insensitive)
+      $lines = $originalContent -split "`n"
+      $filteredLines = $lines | Where-Object {
+        $_ -match [regex]::Escape($searchTerm)
+      }
+
+      if ($filteredLines.Count -eq 0) {
+        $filteredContent = "(No matches found for '$searchTerm')"
+      } else {
+        $filteredContent = $filteredLines -join "`n"
+      }
+
+      $textView.Text = $filteredContent
+      $textView.SetNeedsDisplay()
+    } catch {
+      Debug-Log "Search error: $($_.Exception.Message)" -Type "Problem"
+    }
+  }.GetNewClosure())
+
+  ## Clear search when tab changes
+  $capturedTabView.add_SelectedTabChanged({
+    try {
+      $txtSearch.Text = ""
+      ## Restore original content if we had filtered
+      $currentTab = $capturedTabView.SelectedTab
+      $tabName = $currentTab.Text.ToString()
+      if ($tabOriginalContent.ContainsKey($tabName)) {
+        $textView = $currentTab.View.Subviews[0]
+        if ($textView -and $textView -is [Terminal.Gui.TextView]) {
+          $textView.Text = $tabOriginalContent[$tabName]
+          $textView.SetNeedsDisplay()
+        }
+      }
+    } catch { }
+  }.GetNewClosure())
+
+  ## Close button
   $btnClose   = [Terminal.Gui.Button]::new("Close")
   $btnClose.X = [Terminal.Gui.Pos]::AnchorEnd(10)
   $btnClose.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
   $btnClose.add_Clicked({
     Debug-Log "AD Health dialog closed" -Type "Insight"
     [Terminal.Gui.Application]::RequestStop()
-  }).GetNewClosure()
+  }.GetNewClosure())
   $dialog.Add($btnClose)
 
   ## Run dialog
@@ -13849,50 +14414,40 @@ function Show-OUPropertiesDialog {
       $totalObjects = $usersInOU.Count + $groupsInOU.Count + $computersInOU.Count
       ## Display statistics
       $y = 1
-
       $lblHeader = [Terminal.Gui.Label]::new("OU: $ouName")
       $lblHeader.X = 2; $lblHeader.Y = $y; $view.Add($lblHeader); $y += 2
 
       ## Users section
       $lblUsers = [Terminal.Gui.Label]::new("═══ USERS ═══")
       $lblUsers.X = 2; $lblUsers.Y = $y; $view.Add($lblUsers); $y += 1
-
       $lblUserTotal = [Terminal.Gui.Label]::new("Total Users:       $($usersInOU.Count)")
       $lblUserTotal.X = 4; $lblUserTotal.Y = $y; $view.Add($lblUserTotal); $y += 1
-
       $lblUserEnabled = [Terminal.Gui.Label]::new("  Enabled:         $enabledUsers")
       $lblUserEnabled.X = 4; $lblUserEnabled.Y = $y; $view.Add($lblUserEnabled); $y += 1
-
       $lblUserDisabled = [Terminal.Gui.Label]::new("  Disabled:        $disabledUsers")
       $lblUserDisabled.X = 4; $lblUserDisabled.Y = $y; $view.Add($lblUserDisabled); $y += 1
-
       $lblUserLocked = [Terminal.Gui.Label]::new("  Locked Out:      $lockedUsers")
       $lblUserLocked.X = 4; $lblUserLocked.Y = $y; $view.Add($lblUserLocked); $y += 2
 
       ## Computers section
       $lblComputers = [Terminal.Gui.Label]::new("═══ COMPUTERS ═══")
       $lblComputers.X = 2; $lblComputers.Y = $y; $view.Add($lblComputers); $y += 1
-
       $lblCompTotal = [Terminal.Gui.Label]::new("Total Computers:   $($computersInOU.Count)")
       $lblCompTotal.X = 4; $lblCompTotal.Y = $y; $view.Add($lblCompTotal); $y += 1
-
       $lblCompEnabled = [Terminal.Gui.Label]::new("  Enabled:         $enabledComputers")
       $lblCompEnabled.X = 4; $lblCompEnabled.Y = $y; $view.Add($lblCompEnabled); $y += 1
-
       $lblCompDisabled = [Terminal.Gui.Label]::new("  Disabled:        $disabledComputers")
       $lblCompDisabled.X = 4; $lblCompDisabled.Y = $y; $view.Add($lblCompDisabled); $y += 2
 
       ## Groups section
       $lblGroups = [Terminal.Gui.Label]::new("═══ GROUPS ═══")
       $lblGroups.X = 2; $lblGroups.Y = $y; $view.Add($lblGroups); $y += 1
-
       $lblGroupTotal = [Terminal.Gui.Label]::new("Total Groups:      $($groupsInOU.Count)")
       $lblGroupTotal.X = 4; $lblGroupTotal.Y = $y; $view.Add($lblGroupTotal); $y += 2
 
       ## Structure section
       $lblStructure = [Terminal.Gui.Label]::new("═══ STRUCTURE ═══")
       $lblStructure.X = 2; $lblStructure.Y = $y; $view.Add($lblStructure); $y += 1
-
       $lblNestedOUs = [Terminal.Gui.Label]::new("Nested OUs:        $($nestedOUs.Count)")
       $lblNestedOUs.X = 4; $lblNestedOUs.Y = $y; $view.Add($lblNestedOUs); $y += 2
 
@@ -13909,7 +14464,6 @@ function Show-OUPropertiesDialog {
       $btnExport.add_Clicked({
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
         $filename = "ou_stats_${ouName}_$timestamp.csv"
-
         try {
           $stats = [PSCustomObject]@{
             OU                = $ouName
@@ -13925,7 +14479,6 @@ function Show-OUPropertiesDialog {
             NestedOUs         = $nestedOUs.Count
             TotalObjects      = $totalObjects
           }
-
           $stats | Export-Csv -Path $filename -NoTypeInformation -Encoding UTF8
           Show-Modal "Export Complete" "Statistics exported to:`n`n$filename"
           Debug-Log "Exported OU statistics to $filename" -Type "Success"
@@ -13937,7 +14490,6 @@ function Show-OUPropertiesDialog {
       $view.Add($btnExport)
     }
   }
-
   ## ----------{ Apply Logic }---------
   $applyLogic = {
     param($ou, $state)
@@ -13964,7 +14516,6 @@ function Show-OUPropertiesDialog {
       Show-Modal "Error" "Failed to apply changes:`n$($_.Exception.Message)"
     }
   }
-
   ## ----------{ Create Dialog }---------
   ## Note: OUs don't get a search tab
   $tabs = @($generalTab, $statisticsTab)
@@ -14035,6 +14586,7 @@ $Script:hasConsoleTools    = Test-Requirement -Type Module -Name 'Microsoft.Powe
 $Script:HasPSWriteColor    = Test-Requirement -Type Module -Name "PSWriteColor" -InstallMsg 'Install-Module -Name PSWriteColor' -Optional
 $Script:HasTerminalIcons   = Test-Requirement -Type Module -Name "Terminal-Icons" -InstallMsg 'Install-Module -Name Terminal-Icons' -Optional
 $Script:hasNerdFonts       = Test-Requirement -Type Module -Name 'NerdFonts' -InstallMsg 'Install-Module -Name NerdFonts' -Optional
+$Script:hasNerdFonts       = Test-Requirement -Type Module -Name 'DNSClient' -InstallMsg 'Install-Module -Name DNSClient' -Optional
 
 ## Optional modules
 $Script:HasActiveDirectory = Test-Requirement -Type Module -Name "ActiveDirectory" -InstallMsg 'Install-Module -Name AzureAD' -Optional
