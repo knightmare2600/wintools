@@ -116,11 +116,11 @@ Not all version are released publically, but they will all be documented here.
 - Refactored data initialisation into a single authoritative entry point.
 - Introduced `Initialise-DataSource` as the primary loader.
 - Standardised load priority and fallback order:
-  - Active Directory (via Load-DomainData)
+  - Active Directory (via `Load-DomainData`)
   - CSV import
   - Demo data generation (`jukebox.example`)
 - Centralised Active Directory loading:
-  - All AD-specific logic now lives in Load-DomainData.
+  - All AD-specific logic now lives in `Load-DomainData`.
   - Removed duplicated forest, domain, user, group and computer loading code.
 - Added explicit domain support:
   - Initialise-DataSource now accepts `-Domain` and correctly passes it to Load-DomainData.
@@ -128,7 +128,7 @@ Not all version are released publically, but they will all be documented here.
   - Ensures script-scoped objects (Users, Groups, Computers, DCs, Forest, Domains) are always coherent.
   - Introduced consistent `$Script:DataSource` and `$Script:DataSourceInfo` metadata.
 - Improved error handling and fallback behaviour:
-  - Clean fallback from AD → CSV → Demo without partial or corrupt state.
+  - Clean fallback from `AD → CSV → Demo` without partial or corrupt state.
   - Clear logging and user feedback on failures.
 - Clarified invocation pattern:
   - Replaced direct calls to `Load-DomainData` with `Initialise-DataSource -Domain <domain>`.
@@ -141,7 +141,7 @@ Not all version are released publically, but they will all be documented here.
 - Groups were not enumerated properly in production.
 - Added OU statistics and summary support.
 - Demo mode now enumerates sites the same way as production (no hard-coded variables).
-- Reset-LapsPassword can now perform remote LAPS rotation (pending UI integration in LAPS window).
+- `Reset-LapsPassword` can now perform remote LAPS rotation (pending UI integration in LAPS window).
 - Clarified proper log closure using `[System.IO.StreamWriter]`.
 - Improved Test-ToolsAvailability function:
   - Fixed enumeration bug when checking tools (collection was modified).
@@ -157,7 +157,6 @@ Not all version are released publically, but they will all be documented here.
 - Began building a network diagram using d2 (WIP).
 - Cleaned up hashtable spacing.
 - Created an Actions submenu to reduce menu crowding.
-
 
 ---
 
@@ -175,45 +174,45 @@ Not all version are released publically, but they will all be documented here.
 ### 3.0.0.29 (Cleanup and reflow many areas of code)
 - Massive consolidation and feature expansion session. Reduced code duplication with unified functions, added bulk
   operations and auditing features.
-- **Manage-FilterStatusLabel**
-  - Unified Create-FilterStatusLabel + Update-FilterStatusLabel
+- **`Manage-FilterStatusLabel`**
+  - Unified `Create-FilterStatusLabel` and `Update-FilterStatusLabel`
   - Single function with `-Action 'Create'/'Update'` parameter
   - Supports both standalone and in-panel creation with `-InPanel` switch
-  - Replaced: Create-FilterStatusLabel, Update-FilterStatusLabel
-- **Manage-Spinner**
+  - Replaced: `Create-FilterStatusLabel`, `Update-FilterStatusLabel`
+- **`Manage-Spinner`**
   - Unified `Start-Spinner` + `Stop-Spinner`
   - Single function with `-Action 'Start'/'Stop'` parameter
   - Message parameter validation when starting
-  - Replaced: Start-Spinner, Stop-Spinner
-- **Manage-Selection**
+  - Replaced: `Start-Spinner`, `Stop-Spinner`
+- **`Manage-Selection`**
   - Unified Select-AllObjects and Deselect-AllObjects
   - Single function with `-Action 'SelectAll'/'DeselectAll'` parameter
-- **Get-Theme**
+- **`Get-Theme`**
   - Combined Get-Theme + Dump-ColourScheme
   - Added `-Dump` switch for debugging theme colours
   - All 19 themes preserved
-- **Apply-ObjectChanges**
+- **`Apply-ObjectChanges`**
   - Unified User/Group/OU/Computer apply logic
-- **Invoke-ObjectOperation**
+- **`Invoke-ObjectOperation`**
   - Unified delete/move/bulk operations
 - **AD Health refactor**
   - Refactored monolithic Get-ADHealth into modular checks
-  - Renamed Get-ADHealth → Check-ADHealth
+  - Renamed `Get-ADHealt`h → `Check-ADHealth`
 - Added AD Tools modal.
 - Added bulk account enable/disable.
 - Added bulk attribute editor.
 - Added stale account finder.
 - Added AD object cloning.
 - Added demo data import/export.
-- Introduced New-PropertiesDialog.
+- Introduced `New-PropertiesDialog` function.
 
 ---
 
 ### 2.3.8.21 (Bug fix and code consolidation)
 - Fixed Theme selector and background colour issues.
-- Improved Show-Modal Yes/No handling.
+- Improved `Show-Modal` Yes/No handling.
 - Added more themes.
-- Introduced New-PropertiesDialog.
+- Introduced `New-PropertiesDialog` modal.
 - Rewrote all object property dialogs to use it.
 - Added expired LAPS and stale device demo scenarios.
 - Reduced redundant functions.
@@ -223,7 +222,7 @@ Not all version are released publically, but they will all be documented here.
 
 ### 2.3.8.0 (Code reflow)
 - Nerd font icons used when available.
-- Removed Get-CleanObjectInfo.
+- Removed `Get-CleanObjectInfo` function.
 - Simplified object handling and icon detection.
 - Improved startup repaint logic.
 
@@ -242,7 +241,7 @@ Not all version are released publically, but they will all be documented here.
 ---
 
 ### 2.3.7.1 (Bug fix)
-- Added Initialize-DirectoryEmoji (date-based emojis).
+- Added `Initialise-DirectoryEmoji` (date-based emojis).
 
 ---
 
@@ -300,25 +299,25 @@ Not all version are released publically, but they will all be documented here.
 ### 1.8.4.0 (Refactoring)
 - Large refactor and cleanup.
 - Added OU, DC and Group editing support.
-- Reduced dialog duplication using Show-Modal.
+- Reduced dialog duplication using `Show-Modal`.
 - Demo-mode checks consolidated.
 
 ---
 
 ### 1.8.3.0 (More cowbell)
 - Added missing and former band members.
-- Added Get-CleanObjectInfo.
+- Added `Get-CleanObjectInfo`.
 - Fixed properties modal buttons.
 - Streamlined `$Script` usage.
 
 ---
 
 ### 1.8.2.0 (Lumberjack mode)
-- Reworked Build-Tree logic.
+- Reworked `Build-Tree` logic.
 - Removed duplicate code.
 - Added Theme Selector modal.
 - Verbose-only debug output.
-- Documented why Show-Properties is used.
+- Documented why `Show-Properties` is used.
 
 ---
 
@@ -374,7 +373,7 @@ Not all version are released publically, but they will all be documented here.
 ---
 
 ### 1.5.0.0 (Refresh engine rewrite)
-- Major rewrite of refresh and Build-Tree pipeline.
+- Major rewrite of refresh and `Build-Tree` pipeline.
 - Searchable attributes added.
 - LDAP query optimisation.
 - Caching introduced.
@@ -404,7 +403,7 @@ Not all version are released publically, but they will all be documented here.
 
 ### 1.1.0.0 (Initial AD integration)
 - LDAP domain bind and query functions.
-- Initial Build-Tree prototype.
+- Initial `Build-Tree` prototype.
 
 ---
 
