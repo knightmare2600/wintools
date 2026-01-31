@@ -5,7 +5,7 @@
 Not all version are released publically, but they will all be documented here.
 
 3.2.4.03 (It was DNS, it's always DNS...)
-  - Add DNS Lookup modal function which works like [What's My DNS](https://hatsmydns.net)
+  - Add DNS Lookup modal function which works like [What's My DNS](https://whatsmydns.net)
   - Fix scoping issue with FSMO function in AD health dialog
   - Fix spacing issue with environment info panel
   - Rework menus to move AD specific sub functions such as IPSec or Printers to a dedicated menu
