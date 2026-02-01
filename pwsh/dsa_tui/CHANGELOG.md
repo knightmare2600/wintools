@@ -4,7 +4,13 @@
 
 Not all version are released publically, but they will all be documented here.
 
-3.2.4.03 (It was DNS, it's always DNS...)
+## 3.2.4.11 (Room Resources and bugfixes)
+  - Rework Initialise-UIFramework to also create status bar and menu on first run
+  - Clean up formatting headers in certain dialogs
+  - New function `Show-ResourcePropertiesDialog` for resource accounts
+  - Logic fixes relating to button clicks/keypresses
+
+## 3.2.4.03 (It was DNS, it's always DNS...)
   - Add DNS Lookup modal function which works like [What's My DNS](https://whatsmydns.net)
   - Fix scoping issue with FSMO function in AD health dialog
   - Fix spacing issue with environment info panel
