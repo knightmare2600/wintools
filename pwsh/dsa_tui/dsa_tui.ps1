@@ -63,12 +63,11 @@ Select-String .\users.ps1 -Pattern "Company\s*=\s*'([^']+)'" | ForEach-Object { 
 
 Recent changelog
 
-3.2.4.03 (It was DNS, it's always DNS...)
-  - Add DNS Lookup modal function which works like whttp://hatsmydns.net
-  - Fix scoping issue with FSMO function in AD health dialog
-  - Fix spacing issue with environment info panel
-  - Rework menus to move AD specific sub functions such as IPSec or Printers to a dedicated menu
-  - Create a Utilities menu to hold password generator, DNS lookup, etc
+3.2.4.11 (Room Resources and bugfixes)
+  - Rework Initialise-UIFramework to also create status bar and menu on first run
+  - Clean up formatting headers in certain dialogs
+  - Show-ResourcePropertiesDialog for resource accounts
+  - Logic fixes relating to button clicks/keypresses
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{ TODO / COME BACK TO }~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -194,8 +193,8 @@ $Script:ImportedRawData = $null    ## Stores data from imported files
 $Script:ImportSource    = $null    ## Track where data came from ('File', 'AD', 'Demo')
 
 ## Diagnostic - Check what type it is
-Write-Host "FilterOptions type: $($Script:FilterOptions.GetType().Name)" -Type "Insight"
-Write-Host "FilterOptions is hashtable: $($Script:FilterOptions -is [hashtable])" -Type "Insight"
+Write-Host "FilterOptions type: $($Script:FilterOptions.GetType().Name)"
+Write-Host "FilterOptions is hashtable: $($Script:FilterOptions -is [hashtable])"
 
 ##--------------------------------------------------------------------------------------------------------------##
 ## Any functions added in here, make sure to keep chronology when calling them from inside other functions...   ##
@@ -263,7 +262,7 @@ function Test-Requirement {
           }
         } catch {
           Debug-Log "Failed to import module '$Name': $_" -Type "Warning"
-          if ($InstallMsg) { Debug-Log "Please run: $InstallMsg" -Type "Insight" }
+          if ($InstallMsg) { Debug-Log "Please run: $InstallMsg" -Type "Tracing" }
           return $false
         }
         return $true
@@ -273,7 +272,7 @@ function Test-Requirement {
         } else {
           Debug-Log "Module '$Name' is NOT installed." -Type "Problem"
         }
-        if ($InstallMsg) { Debug-Log "Please run: $InstallMsg" -Type "Insight" }
+        if ($InstallMsg) { Debug-Log "Please run: $InstallMsg" -Type "Tracing" }
         return $false
       }
     }
@@ -284,12 +283,12 @@ function Test-Requirement {
       }
       if (-not $IsWindowsServer -or -not $HasServerManagerModule) {
         Debug-Log "Windows Feature '$Name' cannot be checked on this OS (not Server / ServerManager module missing)." -Type "Warning"
-        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
+        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Tracing" }
         return $false
       }
       if (-not $IsAdmin) {
         Debug-Log "Cannot check/install Windows Feature '$Name' — requires admin privileges." -Type "Warning"
-        if ($InstallMsg) { Debug-Log "Suggested action (run elevated): $InstallMsg" -Type "Insight" }
+        if ($InstallMsg) { Debug-Log "Suggested action (run elevated): $InstallMsg" -Type "Tracing" }
         return $false
       }
       try {
@@ -297,7 +296,7 @@ function Test-Requirement {
         $feature = Get-WindowsFeature $Name -ErrorAction SilentlyContinue
       } catch {
         Debug-Log "Failed to query Windows Feature '$Name': $_" -Type "Warning"
-        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
+        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Tracing" }
         return $false
       }
       if ($feature) {
@@ -306,12 +305,12 @@ function Test-Requirement {
           return $true
         } else {
           Debug-Log "Windows Feature '$Name' is NOT installed." -Type "Problem"
-          if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
+          if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Tracing" }
           return $false
         }
       } else {
         Debug-Log "Windows Feature '$Name' not found on this system." -Type "Warning"
-        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
+        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Tracing" }
         return $false
       }
     }
@@ -329,7 +328,7 @@ function Test-Requirement {
         $cap = Get-WindowsCapability -Name $Name -Online -ErrorAction SilentlyContinue
       } catch {
         Debug-Log "Failed to query Windows Capability '$Name': $_" -Type "Warning"
-        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
+        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Tracing" }
         return $false
       }
       if ($cap) {
@@ -338,12 +337,12 @@ function Test-Requirement {
           return $true
         } else {
           Debug-Log "Windows Capability '$Name' is NOT installed." -Type "Problem"
-          if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
+          if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Tracing" }
           return $false
         }
       } else {
         Debug-Log "Windows Capability '$Name' not found on this system." -Type "Warning"
-        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
+        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Tracing" }
         return $false
       }
     }
@@ -358,7 +357,7 @@ function Test-Requirement {
         return $true
       } else {
         Debug-Log "Choco App '$Name' is NOT installed." -Type "Problem"
-        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Insight" }
+        if ($InstallMsg) { Debug-Log "Suggested action: $InstallMsg" -Type "Tracing" }
         return $false
       }
     }
@@ -426,7 +425,7 @@ function Debug-Log {
 function Build-MainMenu {
   [CmdletBinding()]
   param()
-  Debug-Log "Building main menu..." -Type "Insight"
+  Debug-Log "Building main menu..." -Type "Tracing"
   ## ----------{ Menu Items }----------
   $mFile         = [Terminal.Gui.MenuItem]::new("_Exit","Exit application (F10)",[Action]{ [Terminal.Gui.Application]::RequestStop() })
   $mNew          = [Terminal.Gui.MenuItem]::new("N_ew Object","Create a new object (F3)",[Action]{ Show-NewObjectWizard })
@@ -443,26 +442,26 @@ function Build-MainMenu {
       }
     }
   })
-  $mUndo              = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Debug-Log (" Undo placeholder") -Type "Insight" })
+  $mUndo              = [Terminal.Gui.MenuItem]::new("_Undo","Undo last action",[Action]{ Debug-Log (" Undo placeholder") -Type "Tracing" })
   $mChangeDomain      = [Terminal.Gui.MenuItem]::new("Change _Domain","Change Domain",[Action]{ Show-ChangeDomainDialog })
   $mChangeDC          = [Terminal.Gui.MenuItem]::new("Select D_C","Change Domain Controller",[Action]{ Show-ChangeDCDialog })
   $mSearchAD          = [Terminal.Gui.MenuItem]::new("_Search AD","Search AD (F7)",[Action]{ $func = ${function:Show-ADSearchDialog} ;  & $func})
   $mRefresh           = [Terminal.Gui.MenuItem]::new("_Refresh","Refresh AD data (F5)",[Action]{
-    Debug-Log (" Refresh menu clicked - scheduling refresh...") -Type "Insight"
+    Debug-Log (" Refresh menu clicked - scheduling refresh...") -Type "Tracing"
     [Terminal.Gui.Application]::MainLoop.AddTimeout([TimeSpan]::FromMilliseconds(100), {
-    Debug-Log (" Timeout callback - starting refresh...") -Type "Insight"
+    Debug-Log (" Timeout callback - starting refresh...") -Type "Tracing"
     try {
       Set-StatusBar "Refreshing..." -Icon 'Working'
       $result = Refresh-Data -domain $Script:CurrentDomain -RebuildTree
       if ($result) { Set-StatusBar "Refresh complete" -Icon 'Success' } else { Set-StatusBar "Refresh failed" -Icon 'Error' }
-        Debug-Log (" Refresh completed with result: $result") -Type "Insight"
+        Debug-Log (" Refresh completed with result: $result") -Type "Tracing"
       } catch {
-        Debug-Log (" Refresh crashed: $($_.Exception.Message)") -Type "Insight"
+        Debug-Log (" Refresh crashed: $($_.Exception.Message)") -Type "Tracing"
         Set-StatusBar "Refresh error" -Icon 'Error'
       }
       return $false
     })
-    Debug-Log (" Refresh scheduled") -Type "Insight"
+    Debug-Log (" Refresh scheduled") -Type "Tracing"
   })
 
   $mQuickFilter       = [Terminal.Gui.MenuItem]::new("_Quick Filter","Apply quick filters",[Action]{Show-QuickFilterDialog})
@@ -633,13 +632,14 @@ function script:Set-ObjectCheckboxes {
 }
 
 function Show-Properties {
-  Debug-Log "Show-Properties called" -Type "Insight"
+  Debug-Log "Show-Properties called" -Type "Tracing"
   $node = $Script:tree.SelectedObject
   if (-not $node) {
-    Debug-Log "No object selected" -Type "Insight"
+    Debug-Log "No object selected" -Type "Tracing"
     Show-Modal "Debug" "No object selected in tree"
     return
   }
+
   Debug-Log "Selected node text: '$($node.Text)'" -Type "Insight"
   $tag = $node.Tag
   Debug-Log "Tag is null: $($null -eq $tag)" -Type "Insight"
@@ -665,10 +665,22 @@ function Show-Properties {
 
   ##  Use the Type property first (more reliable)
   switch ($tag.Type) {
+
     'user' {
       Debug-Log "USER object selected: $($obj.Name)" -Type "Insight"
-      Show-UserPropertiesDialog -user $obj
-      return
+      ## Check if this is a resource account
+      if ($obj.PSObject.Properties['msExchRecipientTypeDetails'] -and $obj.msExchRecipientTypeDetails -eq 'RoomMailbox') {
+        Debug-Log "Detected as Resource/Room account" -Type "Insight"
+        Show-ResourcePropertiesDialog -resource $obj
+        return
+      } elseif ($obj.PSObject.Properties['msExchResourceMetaData'] -and $obj.msExchResourceMetaData -match 'ResourceType:') {
+        Debug-Log "Detected as Resource account (via metadata)" -Type "Insight"
+        Show-ResourcePropertiesDialog -resource $obj
+        return
+      } else {
+        Show-UserPropertiesDialog -user $obj
+        return
+      }
     }
     'group' {
       Debug-Log "GROUP object selected: $($obj.Name)" -Type "Insight"
@@ -686,7 +698,7 @@ function Show-Properties {
       return
     }
     'computer' {
-      Debug-Log "COMPUTER object selected: $($obj.Name)" -Type "Insight"
+      Debug-Log "Computer object selected: $($obj.Name)" -Type "Insight"
       Show-ComputerPropertiesDialog -computerName $obj.Name
       return
     }
@@ -704,13 +716,13 @@ function Show-Properties {
 
   ##  Fallback: Try to detect type from properties (for backward compatibility)
   if ($obj.PSObject.Properties.Match('SamAccountName').Count -gt 0) {
-    Debug-Log "Detected USER object (fallback): $($obj.Name)" -Type "Insight"
+    Debug-Log "Detected User object (fallback): $($obj.Name)" -Type "Insight"
     Show-UserPropertiesDialog -user $obj
     return
   }
   if ($obj.PSObject.Properties.Match('GroupScope').Count -gt 0 -or
     $obj.PSObject.Properties.Match('Members').Count -gt 0) {
-    Debug-Log "Detected GROUP object (fallback): $($obj.Name)" -Type "Insight"
+    Debug-Log "Detected Group object (fallback): $($obj.Name)" -Type "Insight"
     Show-GroupPropertiesDialog -group $obj
     return
   }
@@ -720,7 +732,7 @@ function Show-Properties {
     return
   }
   if ($obj.PSObject.Properties.Match('OperatingSystem').Count -gt 0) {
-    Debug-Log "Detected COMPUTER object (fallback): $($obj.Name)" -Type "Insight"
+    Debug-Log "Detected Computer object (fallback): $($obj.Name)" -Type "Insight"
     Show-ComputerPropertiesDialog -computer $obj
     return
   }
@@ -736,7 +748,7 @@ function Show-UserPropertiesDialog {
     Debug-Log "User object is null" -Type "Warning"
     return
   }
-  Debug-Log "Show-UserPropertiesDialog starting for: $($user.Name)" -Type "Insight"
+  Debug-Log "Show-UserPropertiesDialog starting for: $($user.Name)" -Type "Tracing"
 
   ## ----------{ General Tab }---------
   $generalTab = @{
@@ -1212,40 +1224,171 @@ $accountTab = @{
   New-PropertiesDialog -Title "User Properties - $($user.Name)" -Width 100 -Height 40 -Tabs $tabs -Data $user -OnApply $applyLogic -IncludeSearchTab $true -SearchTabConfig @{ObjectType='User'}
 }
 
-##  ----------{ Helper functions for property dialogs }---------
-function Add-LabelAndField {
-  param(
-    [Parameter(Mandatory)]$View,
-    [Parameter(Mandatory)][ref]$Y,
-    [Parameter(Mandatory)][string]$Label,
-    [Parameter(Mandatory)][string]$FieldName,
-    [Parameter(Mandatory)]$State,
-    [string]$Value = "",
-    [int]$LabelX = 2,
-    [int]$FieldX = 20,
-    [int]$Width = 60,
-    [bool]$ReadOnly = $false,
-    [bool]$IsTextField = $true
-  )
+function Show-ResourcePropertiesDialog {
+  param($resource)
 
-  $lbl   = [Terminal.Gui.Label]::new($Label)
-  $lbl.X = $LabelX
-  $lbl.Y = $Y.Value
-  $View.Add($lbl)
-
-  if ($IsTextField) {
-    $State.$FieldName          = [Terminal.Gui.TextField]::new($Value)
-    $State.$FieldName.X        = $FieldX
-    $State.$FieldName.Y        = $Y.Value
-    $State.$FieldName.Width    = $Width
-    $State.$FieldName.ReadOnly = $ReadOnly
-  } else {
-    $State.$FieldName   = [Terminal.Gui.Label]::new($Value)
-    $State.$FieldName.X = $FieldX
-    $State.$FieldName.Y = $Y.Value
+  if (-not $resource) {
+    Debug-Log "Resource object is null" -Type "Warning"
+    return
   }
-  $View.Add($State.$FieldName)
-  $Y.Value += 1
+  Debug-Log "Show-ResourcePropertiesDialog starting for: $($resource.Name)" -Type "Tracing"
+
+  ## ----------{ General Tab }---------
+  $generalTab = @{
+    Name = "General"
+    Builder = {
+      param($view, $resource, $state)
+      $y = 1
+
+      Add-SectionHeader -View $view -Y ([ref]$y) -Text "Resource Information"
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Name:" -FieldName 'txtName' -State $state -Value $resource.Name -IsTextField $false
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Display Name:" -FieldName 'txtDisplayName' -State $state -Value ($resource.DisplayName ?? "")
+      $emailAddr = if ($resource.EmailAddress) { $resource.EmailAddress } elseif ($resource.mail) { $resource.mail } else { "" }
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Email:" -FieldName 'txtEmail' -State $state -Value $emailAddr
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Description:" -FieldName 'txtDescription' -State $state -Value ($resource.Description ?? "")
+
+      Add-SectionHeader -View $view -Y ([ref]$y) -Text "Location"
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Office:" -FieldName 'txtOffice' -State $state -Value ($resource.physicalDeliveryOfficeName ?? "")
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Phone:" -FieldName 'txtPhone' -State $state -Value ($resource.telephoneNumber ?? "")
+    }
+  }
+
+  ## ----------{ Resource Tab }---------
+  $resourceTab = @{
+    Name = "Resource"
+    Builder = {
+      param($view, $resource, $state)
+      $y = 1
+
+      Add-SectionHeader -View $view -Y ([ref]$y) -Text "Resource Properties"
+
+      ## Resource Type
+      $lbl = [Terminal.Gui.Label]::new("Resource Type:")
+      $lbl.X = 2; $lbl.Y = $y
+      $view.Add($lbl)
+
+      $resourceType = "Room"
+      if ($resource.PSObject.Properties['msExchResourceMetaData'] -and $resource.msExchResourceMetaData) {
+        if ($resource.msExchResourceMetaData -match 'ResourceType:(\w+)') {
+          $resourceType = $matches[1]
+        }
+      }
+
+      $state.txtResourceType = [Terminal.Gui.TextField]::new($resourceType)
+      $state.txtResourceType.X = 20; $state.txtResourceType.Y = $y; $state.txtResourceType.Width = 30
+      $view.Add($state.txtResourceType)
+      $y += 1
+
+      ## Capacity - Fixed to show actual value
+      $lbl = [Terminal.Gui.Label]::new("Capacity:")
+      $lbl.X = 2; $lbl.Y = $y
+      $view.Add($lbl)
+
+      $capacity = ""
+      if ($resource.PSObject.Properties['msExchResourceSearchProperties'] -and $resource.msExchResourceSearchProperties) {
+        if ($resource.msExchResourceSearchProperties -match 'Capacity:(\d+)') {
+          $capacity = $matches[1]
+        }
+      }
+
+      $state.txtCapacity = [Terminal.Gui.TextField]::new($capacity)
+      $state.txtCapacity.X = 20; $state.txtCapacity.Y = $y; $state.txtCapacity.Width = 10
+      $view.Add($state.txtCapacity)
+
+      $lblPeople = [Terminal.Gui.Label]::new("people")
+      $lblPeople.X = 32; $lblPeople.Y = $y
+      $view.Add($lblPeople)
+      $y += 2
+
+      Add-SectionHeader -View $view -Y ([ref]$y) -Text "Amenities"
+
+      ## Parse existing amenities from data
+      $existingAmenities = @()
+      if ($resource.PSObject.Properties['msExchResourceSearchProperties'] -and $resource.msExchResourceSearchProperties) {
+        if ($resource.msExchResourceSearchProperties -match 'Equipment:(.+)') {
+          $equipmentPart = $matches[1]
+          $existingAmenities = $equipmentPart -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+        }
+      }
+
+      ## Common amenities checklist
+      $commonAmenities = @(
+        'Projector',
+        'Whiteboard',
+        'Video Conference',
+        'Conference Phone',
+        'TV/Display',
+        'HDMI Connection',
+        'Laptop Hookup',
+        'Wireless Presentation',
+        'Air Conditioning',
+        'Natural Light',
+        'Catering Setup',
+        'Accessibility Features'
+      )
+
+      ## Combine common amenities with existing ones that aren't in the common list
+      $allAmenities = @()
+      $allAmenities += $commonAmenities
+
+      ## Add any amenities from the data that aren't in the common list
+      foreach ($amenity in $existingAmenities) {
+        if ($amenity -notin $commonAmenities) {
+          $allAmenities += $amenity
+        }
+      }
+
+      $state.amenityCheckboxes = @{}
+
+      foreach ($amenity in $allAmenities) {
+        $chk = [Terminal.Gui.CheckBox]::new("$amenity")
+        $chk.X = 2
+        $chk.Y = $y
+        $chk.Checked = $existingAmenities -contains $amenity
+        $state.amenityCheckboxes[$amenity] = $chk
+        $view.Add($chk)
+        $y += 1
+      }
+    }
+  }
+
+  ## ----------{ Address Tab }---------
+  $addressTab = @{
+    Name = "Address"
+    Builder = {
+      param($view, $resource, $state)
+      $y = 1
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Street:" -FieldName 'txtStreet' -State $state -Value ($resource.StreetAddress ?? "") -Width 70
+      $y += 1
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "City:" -FieldName 'txtCity' -State $state -Value ($resource.City ?? "") -Width 70
+      $y += 1
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Postal Code:" -FieldName 'txtPostal' -State $state -Value ($resource.PostalCode ?? "") -Width 20
+      $y += 1
+      Add-LabelAndField -View $view -Y ([ref]$y) -Label "Country:" -FieldName 'txtCountry' -State $state -Value ($resource.Country ?? "") -Width 70
+    }
+  }
+
+  ## ----------{ Apply Logic }---------
+  $applyLogic = {
+    param($resource, $state)
+    try {
+      $changesMade = $false
+
+      # Apply changes here if needed
+
+      if ($changesMade) {
+        Show-Modal "Success" "Changes applied successfully"
+      } else {
+        Show-Modal "Info" "No changes to apply"
+      }
+    } catch {
+      Show-Modal "Error" "Failed to apply changes:`n$($_.Exception.Message)"
+    }
+  }
+
+  ## ----------{ Create Dialog }---------
+  $tabs = @($generalTab, $resourceTab, $addressTab)
+  New-PropertiesDialog -Title "Resource Properties - $($resource.Name)" -Width 100 -Height 40 -Tabs $tabs -Data $resource -OnApply $applyLogic
 }
 
 function Add-SectionHeader {
@@ -1364,7 +1507,7 @@ function Show-ExportDataDialog {
   Export demo data in various formats
   #>
 
-  Debug-Log "Opening Export Data dialog" -Type "Insight"
+  Debug-Log "Opening Export Data dialog" -Type "Tracing"
 
   ## Capture functions
   $debugLogFunc = ${function:Debug-Log}
@@ -1544,7 +1687,7 @@ function Show-ExportDataDialog {
           & $debugLogFunc "Exported TDF format" -Type "Success"
         }
         "CSVDE" {
-          & $debugLogFunc "Exporting CSVDE format" -Type "Insight"
+          & $debugLogFunc "Exporting CSVDE format" -Type "Tracing"
           ## CSVDE requires DN as first column and all AD attributes
           $csvdeObjects = foreach ($obj in $objectsToExport) {
             $record = [ordered]@{
@@ -1645,7 +1788,7 @@ function Show-ExportDataDialog {
           & $debugLogFunc "Exported CSVDE format with $($csvdeObjects.Count) objects" -Type "Success"
         }
         "CSV" {
-          & $debugLogFunc "Exporting Simple CSV format" -Type "Insight"
+          & $debugLogFunc "Exporting Simple CSV format" -Type "Tracing"
           ## Simple flattened export
           $simpleObjects = foreach ($obj in $objectsToExport) {
             [PSCustomObject]@{
@@ -1734,7 +1877,7 @@ function Copy-ADObject {
   }
 
   $objectType = if ($isUser) { 'User' } else { 'Group' }
-  Debug-Log "Copy $objectType initiated - Template: $($SourceObject.Name)" -Type "Insight"
+  Debug-Log "Copy $objectType initiated - Template: $($SourceObject.Name)" -Type "Tracing"
 
   ## ----------{ Interactive dialog }---------
   if ($ShowDialog) {
@@ -1923,7 +2066,7 @@ function Copy-ADObject {
       $Script:rawUsers += $newUser
 
       Debug-Log "Created user '$NewName' (demo mode) - Template: $($SourceObject.Name)" -Type "Success"
-      if ($CopyMemberships) { Debug-Log "Copied $($newUser.Groups.Count) group memberships" -Type "Insight" }
+      if ($CopyMemberships) { Debug-Log "Copied $($newUser.Groups.Count) group memberships" -Type "Tracing" }
       Show-Modal "User Created" "Successfully created user '$NewName'`n`nLogin: $samAccountName`nEmail: $emailAddress$(if ($CopyMemberships) { "`n`nCopied $($newUser.Groups.Count) group memberships" } else { '' })"
 
       ## ----------{ Demo mode - copy group }---------
@@ -2029,7 +2172,7 @@ function Load-DefaultDemoData {
   Now automatically shows file picker to load a TDF/CSV file.
   #>
 
-  Debug-Log "Load-DefaultDemoData called - prompting for TDF file" -Type "Insight"
+  Debug-Log "Load-DefaultDemoData called - prompting for TDF file" -Type "Tracing"
   ## Set minimal scaffold so the app doesn't crash if user cancels
   if (-not $Script:ForestName) {
     $Script:ForestName    = "example.com"
@@ -2063,12 +2206,12 @@ function Load-DefaultDemoData {
   }
 
   ## Automatically show the file picker
-  Debug-Log "Showing file picker for demo data" -Type "Insight"
+  Debug-Log "Showing file picker for demo data" -Type "Tracing"
   $Script:selectedFile = $null
   Show-FileBrowserDialog -Mode 'Open'
 
   if ($Script:selectedFile -and (Test-Path -LiteralPath $Script:selectedFile)) {
-    Debug-Log "User selected file: $($Script:selectedFile)" -Type "Insight"
+    Debug-Log "User selected file: $($Script:selectedFile)" -Type "Tracing"
     $result = Import-DataFile -FilePath $Script:selectedFile
     if ($result) {
       Debug-Log "Demo data loaded successfully from file" -Type "Success"
@@ -2091,8 +2234,8 @@ function Load-DefaultDemoData {
 function Import-DataFile {
   param([string]$FilePath)
 
-  Debug-Log "----------{Import Data File Called }----------" -Type "Insight"
-  Debug-Log "FilePath parameter: $FilePath" -Type "Insight"
+  Debug-Log "----------{Import Data File Called }----------" -Type "Tracing"
+  Debug-Log "FilePath parameter: $FilePath" -Type "Tracing"
   if (-not $FilePath) {
     Debug-Log "ERROR - FilePath is empty!" -Type "Problem"
     return $false
@@ -2104,12 +2247,12 @@ function Import-DataFile {
 
   ## Detect file type
   $extension = [System.IO.Path]::GetExtension($FilePath).ToLower()
-  Debug-Log "Importing data from: $FilePath (Type: $extension)" -Type "Insight"
+  Debug-Log "Importing data from: $FilePath (Type: $extension)" -Type "Tracing"
 
   if ($extension -eq '.ps1' -or $extension -eq '.psd1' -or $extension -eq '.tdf') {
-    ## ----------{PowerShell Data File Import }----------
+    ## ----------{ PowerShell Data File Import }----------
     try {
-      Debug-Log "Loading PowerShell data file: $FilePath" -Type "Insight"
+      Debug-Log "Loading PowerShell data file: $FilePath" -Type "Tracing"
 
       $Script:rawUsers      = $null
       $Script:rawDemoGroups = $null
@@ -2143,7 +2286,7 @@ function Import-DataFile {
         DCs       = $dcs
       }
       $Script:ImportSource = 'File'
-      Debug-Log "Loaded from PS1 - Users: $($users.Count), Groups: $($groups.Count), Computers: $($computers.Count), DCs: $($dcs.Count)" -Type "Insight"
+      Debug-Log "Loaded from PS1 - Users: $($users.Count), Groups: $($groups.Count), Computers: $($computers.Count), DCs: $($dcs.Count)" -Type "Tracing"
       ## FIXED: Properly detect domain from hashtable keys
       $importedDomain = 'example.com'  # Default fallback
 
@@ -2171,7 +2314,7 @@ function Import-DataFile {
           Debug-Log "Found domain in computer[0]: '$importedDomain'" -Type "Success"
         }
       }
-      Debug-Log "PS1 - Domain detected: '$importedDomain' | Users: $($users.Count), Groups: $($groups.Count), Computers: $($computers.Count), DCs: $($dcs.Count)" -Type "Insight"
+      Debug-Log "PS1 - Domain detected: '$importedDomain' | Users: $($users.Count), Groups: $($groups.Count), Computers: $($computers.Count), DCs: $($dcs.Count)" -Type "Tracing"
     } catch {
       Debug-Log "Failed to import PowerShell data file: $($_.Exception.Message)" -Type "Problem"
       Debug-Log "Stack trace: $($_.ScriptStackTrace)" -Type "Problem"
@@ -2180,7 +2323,7 @@ function Import-DataFile {
     }
 
   } elseif ($extension -eq '.jsonc' -or $extension -eq '.json') {
-    ## ----------{JSONC Import }----------
+    ## ----------{ JSONC Import }----------
     try {
       $rawContent = Get-Content -Path $FilePath -Raw
       $cleanedContent = $rawContent -split "`n" | ForEach-Object { $_ -replace '##.*$', '' } | Where-Object { $_.Trim() -ne '' } | Out-String
@@ -2231,14 +2374,14 @@ function Import-DataFile {
       if ($users.Count -gt 0 -and $users[0] -is [hashtable] -and $users[0].ContainsKey('Domain') -and $users[0]['Domain']) { $importedDomain = $users[0]['Domain'] }
       elseif ($dcs.Count -gt 0 -and $dcs[0] -is [hashtable] -and $dcs[0].ContainsKey('Domain') -and $dcs[0]['Domain']) { $importedDomain = $dcs[0]['Domain'] }
       elseif ($computers.Count -gt 0 -and $computers[0] -is [hashtable] -and $computers[0].ContainsKey('Domain') -and $computers[0]['Domain']) { $importedDomain = $computers[0]['Domain'] }
-      Debug-Log "JSONC - Domain detected: '$importedDomain' | Users: $($users.Count), Groups: $($groups.Count), Computers: $($computers.Count), DCs: $($dcs.Count)" -Type "Insight"
+      Debug-Log "JSONC - Domain detected: '$importedDomain' | Users: $($users.Count), Groups: $($groups.Count), Computers: $($computers.Count), DCs: $($dcs.Count)" -Type "Tracing"
     } catch {
       Debug-Log "Failed to parse JSONC: $($_.Exception.Message)" -Type "Problem"
       Show-Modal "JSONC Import Failed" "Could not parse JSONC file:`n$($_.Exception.Message)"
       return $false
     }
   } elseif ($extension -eq '.csv') {
-    ## ----------{CSV Import }----------
+    ## ----------{ CSV Import }----------
     try {
       $csvContent = Import-Csv -Path $FilePath -Encoding UTF8 -ErrorAction Stop
       Debug-Log "Loaded $($csvContent.Count) rows from CSV" -Type "Insight"
@@ -2360,7 +2503,7 @@ function Import-DataFile {
     return $false
   }
 
-  ## ----------{Common Processing }----------
+  ## ----------{ Common Processing }----------
   ## Only set domain/forest info if not already set by the imported file
   if (-not $Script:ForestName) {
     $Script:ForestName = $importedDomain
@@ -2401,7 +2544,7 @@ function Load-ADData {
     [string]$Domain = $null
   )
 
-  Debug-Log "Querying live Active Directory..." -Type "Insight"
+  Debug-Log "Querying live Active Directory..." -Type "Tracing"
   if (-not (Get-Module -ListAvailable ActiveDirectory)) {
     Debug-Log "ActiveDirectory module not available" -Type "Problem"
     return $false
@@ -2587,7 +2730,7 @@ function Set-UnifiedObject {
     default {
       ## In-memory update (CSV / Generated)
       foreach ($key in $Properties.Keys) { $Object.$key = $Properties[$key] }
-      Debug-Log "Updated ${label} in memory (${Script:DataSource} source): $($Object.Name)" -Type "Insight"
+      Debug-Log "Updated ${label} in memory (${Script:DataSource} source): $($Object.Name)" -Type "Tracing"
     }
   }
 }
@@ -2642,7 +2785,7 @@ function Show-DNSLookupDialog {
   Show-DNSLookupDialog
   #>
 
-  Debug-Log "Opening DNS Lookup tool" -Type "Insight"
+  Debug-Log "Opening DNS Lookup tool" -Type "Tracing"
 
   ## Check for DnsClient module
   $hasDnsClient = $null -ne (Get-Module -ListAvailable -Name DnsClient)
@@ -2948,7 +3091,7 @@ function Show-DNSLookupDialog {
     $chkMultiServer.Checked = $false
     $txtExpected.Enabled = $false
     $txtResults.Text = "Enter a DNS record and click Lookup to begin..."
-    & $debugLogFunc "DNS lookup form cleared" -Type "Insight"
+    & $debugLogFunc "DNS lookup form cleared" -Type "Tracing"
   }.GetNewClosure())
   $dialog.Add($btnClear)
 
@@ -2978,7 +3121,7 @@ function Show-DNSLookupDialog {
   $btnClose.X = [Terminal.Gui.Pos]::AnchorEnd(10)
   $btnClose.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
   $btnClose.add_Clicked({
-    & $debugLogFunc "DNS Lookup tool closed" -Type "Insight"
+    & $debugLogFunc "DNS Lookup tool closed" -Type "Tracing"
     [Terminal.Gui.Application]::RequestStop()
   }.GetNewClosure())
   $dialog.Add($btnClose)
@@ -3097,30 +3240,28 @@ function Show-FileBrowserDialog {
 function Initialise-UIFramework {
   <#
   .SYNOPSIS
-  Initialise Terminal.Gui application and create main window
-
+  Initialise Terminal.Gui application and create main window with menu and status bars
   .DESCRIPTION
-  Sets up the Terminal.Gui framework, creates the top-level application
-  and main window, and applies the selected theme. This should be called
-  FIRST before any data loading to ensure the UI is visible.
-
+  Sets up the Terminal.Gui framework, creates the top-level application,
+  main window, menu bar, and status bar, then applies the selected theme.
+  This should be called FIRST before any data loading to ensure the UI is visible.
   .PARAMETER Theme
-  Theme name to apply (HighContrast, PanAm, Matrix, etc)
-
+  Theme name to apply (procomm, matrix, british, etc)
   .PARAMETER Title
   Window title to display
-
   .EXAMPLE
-  $uiComponents = Initialise-UIFramework -Theme "PanAm" -Title "DSA-TUI v1.0"
+  $uiComponents = Initialise-UIFramework -Theme "procomm" -Title "DSA-TUI v1.0"
   $top = $uiComponents.Top
   $win = $uiComponents.Window
+  $menu = $uiComponents.Menu
+  $statusBar = $uiComponents.StatusBar
   #>
-
   param(
-    [string]$Theme = "HighContrast",
+    [string]$Theme = "procomm",
     [string]$Title = "DSA-TUI - Active Directory"
   )
-  Debug-Log "Initializing Terminal.Gui framework..." -Type "Insight"
+
+  Debug-Log "Initializing Terminal.Gui framework..." -Type "Tracing"
 
   ## ----------{ Step 1: Initialise Terminal.Gui }---------
   try {
@@ -3130,6 +3271,7 @@ function Initialise-UIFramework {
     Debug-Log "FATAL - Failed to Initialise Terminal.Gui: $($_.Exception.Message)" -Type "Problem"
     throw
   }
+
   ## Get top-level application
   $top = [Terminal.Gui.Application]::Top
 
@@ -3141,41 +3283,50 @@ function Initialise-UIFramework {
   $win.Height = [Terminal.Gui.Dim]::Fill(1)  ## Leave room for status bar
   Debug-Log "Main window created with title: $Title" -Type "Insight"
 
-  ## ----------{ Step 3: Apply Theme }---------
-  Debug-Log "Applying theme: $Theme" -Type "Insight"
+  ## ----------{ Step 3: Create Status Bar }---------
+  Debug-Log "Creating status bar..." -Type "Tracing"
+  $statusBar = Set-StatusBar -Initialise
+
+  ## ----------{ Step 4: Create Main Menu }---------
+  Debug-Log "Creating main menu..." -Type "Tracing"
+  $menu = Build-MainMenu
+
+  ## ----------{ Step 5: Apply Theme }---------
+  Debug-Log "Applying theme: $Theme" -Type "Tracing"
   $Script:ThemeMode = $Theme
 
-  try {
-    ## Get theme data
-    $themeData = Get-Theme -mode $Theme
-    if ($themeData) {
-      ## Store theme data globally
-      $Script:themeData = $themeData
-      ## Use Apply-Theme to handle all components properly
-      ## Note: Menu and StatusBar don't exist yet, so pass $null
-      Apply-Theme -ThemeData $themeData -TopLevel $top -MainWindow $win -Menu $null -Status $null
-      Debug-Log "Theme '$Theme' applied successfully" -Type "Success"
-    } else { Debug-Log "WARNING - Theme data is null, using defaults" -Type "Warning" }
-  } catch {
-    Debug-Log "WARNING - Failed to apply theme: $($_.Exception.Message)" -Type "Warning"
-  }
+  $themeData = Get-Theme -mode $Theme
+  if ($themeData) {
+    ## Store theme data globally
+    $Script:themeData = $themeData
+    ## Use Apply-Theme to handle all components properly
+    ## Note: Menu and StatusBar don't exist yet, so pass $null
+    Apply-Theme -ThemeData $themeData -TopLevel $top -MainWindow $win -Menu $menu -StatusBar $statusBar
+    Debug-Log "Theme '$Theme' applied successfully" -Type "Success"
+  } else { Debug-Log "WARNING - Theme data is null, using defaults" -Type "Warning" }
 
-  ## ----------{ Step 4: Add Window to Top }---------
+  ## ----------{ Step 6: Add Components to Top }---------
   $top.Add($win)
+  $top.Add($menu)
+  $top.Add($statusBar)
   Debug-Log "Main window added to top-level application" -Type "Success"
 
-  ## ----------{ Step 5: Return Components }---------
+  ## ----------{ Step 7: Return Components }---------
   $result = @{
-    Top    = $top
-    Window = $win
-    Theme  = $themeData
+    Top       = $top
+    Window    = $win
+    Menu      = $menu
+    StatusBar = $statusBar
   }
+
   Debug-Log "UI Framework initialization complete" -Type "Success"
+  Debug-Log "UI Framework ready - window visible to user" -Type "Success"
+
   return $result
 }
 
-## Show the F12 "right click" popup menu
 ## ----------[ Context Menu Handler ]----------
+## Show the F12 "right click" popup menu
 function Show-ObjectContextMenu {
   <#
   .SYNOPSIS
@@ -3195,7 +3346,7 @@ function Show-ObjectContextMenu {
     [string]$ObjectType
   )
 
-  Debug-Log "Showing context menu for $($Object.Name) (Type: $ObjectType)" -Type "Insight"
+  Debug-Log "Showing context menu for $($Object.Name) (Type: $ObjectType)" -Type "Tracing"
   ## Build menu items based on object type
   $menuItems = [System.Collections.ArrayList]@()
 
@@ -3294,30 +3445,30 @@ function Show-ObjectContextMenu {
   ## Handle selection
   $listView.add_OpenSelectedItem({
     $selected = $capturedMenuItems[$listView.SelectedItem]
-    & $debugLogFunc "Menu item selected: $selected" -Type "Insight"
+    & $debugLogFunc "Menu item selected: $selected" -Type "Tracing"
     [Terminal.Gui.Application]::RequestStop()
 
     switch ($selected) {
       "Properties" {
         switch ($capturedObjType) {
           'User' {
-            & $debugLogFunc "Showing user properties for $($capturedObj.Name)" -Type "Insight"
+            & $debugLogFunc "Showing user properties for $($capturedObj.Name)" -Type "Tracing"
             & $showUserPropsFunc -user $capturedObj
           }
           'Group' {
-            & $debugLogFunc "Showing group properties for $($capturedObj.Name)" -Type "Insight"
+            & $debugLogFunc "Showing group properties for $($capturedObj.Name)" -Type "Tracing"
             & $showGroupPropsFunc -group $capturedObj
           }
           'Computer' {
-            & $debugLogFunc "Showing computer properties for $($capturedObj.Name)" -Type "Insight"
+            & $debugLogFunc "Showing computer properties for $($capturedObj.Name)" -Type "Tracing"
             & $showComputerPropsFunc -computerName $capturedObj.Name
           }
           'DC' {
-            & $debugLogFunc "Showing DC properties for $($capturedObj.Name)" -Type "Insight"
+            & $debugLogFunc "Showing DC properties for $($capturedObj.Name)" -Type "Tracing"
             & $showDCPropsFunc -dc $capturedObj
           }
           'OU' {
-            & $debugLogFunc "Showing OU properties for $($capturedObj.Name)" -Type "Insight"
+            & $debugLogFunc "Showing OU properties for $($capturedObj.Name)" -Type "Tracing"
             & $showOUPropsFunc -ouname $capturedObj.Name
           }
         }
@@ -3404,7 +3555,7 @@ function Set-StatusBar {
 
   ## ----------{ Initialise mode }---------
   if ($Initialise) {
-    Debug-Log "Initializing status bar..." -Type "Insight"
+    Debug-Log "Initializing status bar..." -Type "Tracing"
 
     $Script:StatusIcons = @{
       Working = "⏳"
@@ -3535,19 +3686,19 @@ function Initialise-DataSource {
     [string]$Domain   = $null
   )
 
-  Debug-Log "========== Initialise-DataSource ==========" -Type "Insight"
+  Debug-Log "========== Initialise-DataSource ==========" -Type "Tracing"
   Debug-Log "Parameters - FilePath: '$FilePath', Domain: '$Domain'" -Type "Tracing"
   Debug-Log "Flags - DemoMode: $Script:DemoMode, DataFileLoaded: $Script:DataFileLoaded, ImportDemoData: $Script:ImportDemoData" -Type "Tracing"
 
   ## If data was already loaded, don't reload
   if ($Script:DataFileLoaded) {
-    Debug-Log "Data already loaded from file, skipping re-initialization" -Type "Insight"
+    Debug-Log "Data already loaded from file, skipping re-initialization" -Type "Tracing"
     return $true
   }
 
   ## Priority 1: Active Directory (if available and not in DemoMode)
   if ($Script:HasActiveDirectory -and -not $Script:DemoMode) {
-    Debug-Log "Loading from Active Directory..." -Type "Insight"
+    Debug-Log "Loading from Active Directory..." -Type "Tracing"
     if (Load-ADData -Domain $Domain) {
       Refresh-Data -domain $Script:CurrentDomain -RebuildTree
       Debug-Log "Active Directory data loaded successfully" -Type "Success"
@@ -3557,7 +3708,7 @@ function Initialise-DataSource {
 
   ## Priority 2: CSV/JSONC/TDF file (if path provided OR ImportDemoData flag set)
   if ($FilePath -and (Test-Path $FilePath)) {
-    Debug-Log "Loading from file: $FilePath" -Type "Insight"
+    Debug-Log "Loading from file: $FilePath" -Type "Tracing"
     try {
       $importSuccess = Import-DataFile -FilePath $FilePath
       if ($importSuccess) {
@@ -3571,7 +3722,7 @@ function Initialise-DataSource {
           $Script:CurrentDC = $Script:DCs | Where-Object { $_.IsGlobalCatalog } | Select-Object -First 1
           if (-not $Script:CurrentDC) { $Script:CurrentDC = $Script:DCs | Select-Object -First 1 }
           $Script:CurrentDCName = $Script:CurrentDC.Name
-          Debug-Log "Set current DC to: $($Script:CurrentDCName)" -Type "Insight"
+          Debug-Log "Set current DC to: $($Script:CurrentDCName)" -Type "Tracing"
         }
         return $true
       } else {
@@ -3586,7 +3737,7 @@ function Initialise-DataSource {
 
   ## Priority 3: Demo data (ONLY if DemoMode enabled AND no file was loaded)
   if ($Script:DemoMode -and -not $Script:DataFileLoaded) {
-    Debug-Log "DemoMode enabled and no file loaded - loading default demo data..." -Type "Insight"
+    Debug-Log "DemoMode enabled and no file loaded - loading default demo data..." -Type "Tracing"
     $demoSuccess = Load-DefaultDemoData
     if ($demoSuccess) {
       Debug-Log "Default demo data loaded successfully" -Type "Success"
@@ -3595,7 +3746,7 @@ function Initialise-DataSource {
         $Script:CurrentDC = $Script:DCs | Where-Object { $_.IsGlobalCatalog } | Select-Object -First 1
         if (-not $Script:CurrentDC) { $Script:CurrentDC = $Script:DCs | Select-Object -First 1 }
         $Script:CurrentDCName = $Script:CurrentDC.Name
-        Debug-Log "Set current DC to: $($Script:CurrentDCName)" -Type "Insight"
+        Debug-Log "Set current DC to: $($Script:CurrentDCName)" -Type "Tracing"
       }
       return $true
     }
@@ -3608,7 +3759,7 @@ function Initialise-DataSource {
       $Script:CurrentDC = $Script:DCs | Where-Object { $_.IsGlobalCatalog } | Select-Object -First 1
       if (-not $Script:CurrentDC) { $Script:CurrentDC = $Script:DCs | Select-Object -First 1 }
       $Script:CurrentDCName = $Script:CurrentDC.Name
-      Debug-Log "Set current DC to: $($Script:CurrentDCName)" -Type "Insight"
+      Debug-Log "Set current DC to: $($Script:CurrentDCName)" -Type "Tracing"
     } else {
       $Script:CurrentDCName = $Script:CurrentDC.Name
       Debug-Log "CurrentDC already set to: $($Script:CurrentDCName), preserving selection" -Type "Tracing"
@@ -3821,26 +3972,26 @@ function Get-Theme {
   ## Dump mode
   if ($Dump) {
     $themeName = if ($Mode) { $Mode } else { $Script:ThemeMode }
-    Debug-Log "Dumping colour scheme for theme: $themeName" -Type "Insight"
+    Debug-Log "Dumping colour scheme for theme: $themeName" -Type "Tracing"
     ## Dump the ColorSchemes that are actually being used
-    Debug-Log "=== Script ColorScheme ===" -Type "Insight"
+    Debug-Log "=== Script ColorScheme ===" -Type "Tracing"
       if ($Script:ScriptCs) {
-        Debug-Log "Normal    : $($Script:ScriptCs.Normal)" -Type "Insight"
-        Debug-Log "Focus     : $($Script:ScriptCs.Focus)" -Type "Insight"
-        Debug-Log "HotNormal : $($Script:ScriptCs.HotNormal)" -Type "Insight"
-        Debug-Log "HotFocus  : $($Script:ScriptCs.HotFocus)" -Type "Insight"
-        Debug-Log "Disabled  : $($Script:ScriptCs.Disabled)" -Type "Insight"
+        Debug-Log "Normal    : $($Script:ScriptCs.Normal)" -Type "Tracing"
+        Debug-Log "Focus     : $($Script:ScriptCs.Focus)" -Type "Tracing"
+        Debug-Log "HotNormal : $($Script:ScriptCs.HotNormal)" -Type "Tracing"
+        Debug-Log "HotFocus  : $($Script:ScriptCs.HotFocus)" -Type "Tracing"
+        Debug-Log "Disabled  : $($Script:ScriptCs.Disabled)" -Type "Tracing"
       } else {
         Debug-Log "ScriptCs is null!" -Type "Warning"
       }
 
-      Debug-Log "=== Main Window ColorScheme ===" -Type "Insight"
+      Debug-Log "=== Main Window ColorScheme ===" -Type "Tracing"
       if ($Script:mainWindowCs) {
-        Debug-Log "Normal    : $($Script:mainWindowCs.Normal)" -Type "Insight"
-        Debug-Log "Focus     : $($Script:mainWindowCs.Focus)" -Type "Insight"
-        Debug-Log "HotNormal : $($Script:mainWindowCs.HotNormal)" -Type "Insight"
-        Debug-Log "HotFocus  : $($Script:mainWindowCs.HotFocus)" -Type "Insight"
-        Debug-Log "Disabled  : $($Script:mainWindowCs.Disabled)" -Type "Insight"
+        Debug-Log "Normal    : $($Script:mainWindowCs.Normal)" -Type "Tracing"
+        Debug-Log "Focus     : $($Script:mainWindowCs.Focus)" -Type "Tracing"
+        Debug-Log "HotNormal : $($Script:mainWindowCs.HotNormal)" -Type "Tracing"
+        Debug-Log "HotFocus  : $($Script:mainWindowCs.HotFocus)" -Type "Tracing"
+        Debug-Log "Disabled  : $($Script:mainWindowCs.Disabled)" -Type "Tracing"
       } else {
         Debug-Log "mainWindowCs is null!" -Type "Warning"
       }
@@ -4116,6 +4267,7 @@ function Show-LoadingDialog {
 function Show-BlaabaerInfo {
   $message = @"
 $($Script:ProjectName) is codenamed $Script:FruitName because:
+
 - I was drinking blueberry soda when writing the code
 - $($Script:FruitName) is Danish for blueberry
 - Føtex sells a rather nice $($Script:FruitName) soda
@@ -4131,7 +4283,7 @@ function Show-DNSDialog {
   param([string]$Domain)
 
   if (-not $Domain) { $Domain = $Script:CurrentDomain }
-  Debug-Log "Opening DNS viewer for domain: $Domain" -Type "Insight"
+  Debug-Log "Opening DNS viewer for domain: $Domain" -Type "Tracing"
 
   ## Get DNS data
   $dnsZones = @()
@@ -4221,7 +4373,7 @@ Use DNS Manager for detailed record information.
         param($state)
         try {
           if ($IsWindows) {
-            Debug-Log "Launching dnsmgmt.msc" -Type "Insight"
+            Debug-Log "Launching dnsmgmt.msc" -Type "Tracing"
             Start-Process "dnsmgmt.msc" -ErrorAction Stop
             Show-Modal "DNS Manager" "Launching DNS Manager (dnsmgmt.msc)...`n`nNote: Requires administrative privileges and DNS tools installed."
           } else {
@@ -5757,7 +5909,7 @@ function Initialise-DirectoryEmoji {
   $Script:DirectoryEmoji = $emoji
 }
 
-## ----------{Icon initialisation function }----------
+## ----------{ Icon initialisation function }----------
 ## Call this AFTER module checks, before building the tree
 
 function Initialise-Icons {
@@ -5849,7 +6001,7 @@ function Initialise-Icons {
   Debug-Log "Icon set Initialised with $($Script:Icons.Count) icons" -Type "Success"
 }
 
-## ----------{Helper function to get icon }----------
+## ----------{ Helper function to get icon }----------
 function Get-Icon {
   param(
     [string]$IconName,
@@ -6394,7 +6546,7 @@ function Build-DomainContent {
 
   Debug-Log "Building content for domain: $domain" -Type "Insight"
 
-  ## ----------{Users & OUs section }----------
+  ## ----------{ Users & OUs section }----------
   ## Step 1: Get users for this domain
   $domainUsers = $Script:Users | Where-Object { $_.Domain -eq $domain }
   Debug-Log "Filtered to $($domainUsers.Count) users for domain $domain" -Type "Insight"
@@ -6448,7 +6600,7 @@ function Build-DomainContent {
     Debug-Log "Total OUs added: $addedOUs" -Type "Insight"
   }
 
-  ## ----------{Groups section }----------
+  ## ----------{ Groups section }----------
   if ($ShowGroups) {
     $domainGroups = $Script:Groups | Where-Object { $_.Domain -eq $domain }
 
@@ -6467,7 +6619,7 @@ function Build-DomainContent {
     }
   }
 
-  ## ----------{Domain controllers section }----------
+  ## ----------{ Domain controllers section }----------
   if ($ShowDCs) {
     $domainDCs = $Script:DCs | Where-Object { $_.Domain -eq $domain }
     if ($domainDCs.Count -gt 0) {
@@ -6485,7 +6637,7 @@ function Build-DomainContent {
     }
   }
 
-  ## ----------{Computers/devices section (Grouped by Type) }----------
+  ## ----------{ Computers/devices section (Grouped by Type) }----------
   if ($ShowComputers) {
     $domainComputers = $Script:Computers | Where-Object { $_.Domain -eq $domain }
     if ($domainComputers.Count -gt 0) {
@@ -6594,7 +6746,7 @@ function Add-OUNode {
   Debug-Log "$indent[Add-OUNode] Completed: $ouName (total children: $($ouNode.Children.Count))" -Type "Tracing"
 }
 
-## ----------{Build-OuTree - Fixed Version }----------
+## ----------{ Build-OuTree - Fixed Version }----------
 function Build-OUTree {
   param(
     [Parameter(Mandatory)]
@@ -6699,7 +6851,7 @@ function Build-Tree {
       & $debugLogFunc "CurrentDomain was empty. Auto-selected: $($Script:CurrentDomain)" -Type "Insight"
     }
   }
-  ## ----------{Single-domain }----------
+  ## ----------{ Single-domain }----------
   else {
     & $debugLogFunc "Creating single-domain tree: $($Script:Domains[0])" -Type "Insight"
     $root = [Terminal.Gui.Trees.TreeNode]::new($Script:Domains[0])
@@ -6716,7 +6868,7 @@ function Build-Tree {
     throw "Build-Tree failed: root node is null"
   }
 
-  ## ----------{Attach root to TreeView }----------
+  ## ----------{ Attach root to TreeView }----------
   try {
     $Script:tree.AddObject($root)
     $Script:tree.SelectedObject = $root
@@ -7237,14 +7389,14 @@ function Create-FilterPanel {
   $cmbQuickFilter.X=1; $cmbQuickFilter.Y=$y; $cmbQuickFilter.Width=35
 
   $quickFilters = @(
-    "All", "LockedOnly", "DisabledOnly", "EnabledOnly", "NeverLoggedIn", "NoManager", "PasswordExpired", "PasswordExpiring72h",
-    "PasswordNeverExpires", "AccountExpired", "AccountExpiring30d", "StaleAccounts90d", "EmptyEmail", "EmptyDepartment" )
+    "All", "LockedOnly","DisabledOnly","EnabledOnly","NeverLoggedIn","NoManager","PasswordExpired","PasswordExpiring72h",
+    "PasswordNeverExpires","AccountExpired","AccountExpiring30d","StaleAccounts90d","EmptyEmail","EmptyDepartment" )
 
   ## Friendly display names
   $quickFilterDisplay = @(
-    "All Users", "Locked Accounts", "Disabled Accounts", "Enabled Accounts", "Never Logged In", "No Manager Assigned",
-    "Password Expired", "Password Expiring (72h)", "Password Never Expires", "Account Expired", "Account Expiring (30d)",
-    "Stale Accounts (90d+)", "No Email Address", "No Department" )
+    "All Users", "Locked Accounts","Disabled Accounts","Enabled Accounts","Never Logged In","No Manager Assigned",
+    "Password Expired","Password Expiring (72h)","Password Never Expires","Account Expired","Account Expiring (30d)",
+    "Stale Accounts (90d+)","No Email Address","No Department")
 
   $cmbQuickFilter.SetSource($quickFilterDisplay)
   $cmbQuickFilter.SelectedItem = 0
@@ -7528,10 +7680,10 @@ function Show-QuickFilterDialog {
       Manage-FilterStatusLabel -Action 'Update' -Label $Script:FilterStatusLabel
       [Terminal.Gui.Application]::RequestStop()
     }
-  }).GetNewClosure()
+  })
   $dlg.AddButton($btnApply)
   $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }).GetNewClosure()
+  $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() })
   $dlg.AddButton($btnCancel)
   [Terminal.Gui.Application]::Run($dlg)
 }
@@ -13977,7 +14129,7 @@ function Show-ADHealthDialog {
   }
   $dialog.Add($tabView)
 
-  ## ----------{ CTRL+F Search }---------
+  ## ----------{ CTRL + F Search }---------
   ## Add key handler for Ctrl+F
   $dialog.add_KeyPress({
     param($e)
@@ -14576,7 +14728,7 @@ $Script:DataFileLoaded = $false
 $Script:DataFilePath   = $null
 
 ## ----------{ Step 2: Module Checks & Terminal.Gui }----------
-Debug-Log "Performing pre-flight module checks..." -Type "Insight"
+Debug-Log "Performing pre-flight module checks..." -Type "Tracing"
 
 ## Check all modules ONCE at startup
 ## ----------{ Preflight Checks }----------
@@ -14619,41 +14771,29 @@ Debug-Log "Module availability check complete" -Type "Insight"
 $Script:UseIcons = $false
 if ($Script:HasTerminalIcons) { try { Write-Host '' -NoNewline; $Script:UseIcons = $true } catch {} }
 
-## ----------{Step 3: Initialise Terminal.Gui UI }----------
+## ----------{ Step 3: Initialise Terminal.Gui UI }----------
 Initialise-DirectoryEmoji
-$windowTitle = "$($Script:ProjectName) $($Script:DirectoryEmoji) Active Directory $BuildVersion Codename: $($Script:FruitName)"
-
+$windowTitle  = "$($Script:ProjectName) $($Script:DirectoryEmoji) Active Directory $BuildVersion Codename: $($Script:FruitName)"
 $uiComponents = Initialise-UIFramework -Theme $Theme -Title $windowTitle
-$top = $uiComponents.Top
-$win = $uiComponents.Window
-$Script:themeData = $uiComponents.Theme
+$top          = $uiComponents.Top
+$win          = $uiComponents.Window
+$menu         = $uiComponents.Menu
+$statusBar    = $uiComponents.StatusBar
 
 ## TODO: This is where the statusbar and menu needs to move to
 
-## ----------{Step 4: Create Status & Menu Bars }----------
-Debug-Log "Creating status bar..." -Type "Insight"
-$statusBar = Set-StatusBar -Initialise -ThemeData $Script:themeData
-$top.Add($statusBar)
-
-Debug-Log "Creating main menu..." -Type "Insight"
-$menu = Build-MainMenu
-$top.Add($menu)
-
-Debug-Log "UI Framework ready - window visible to user" -Type "Success"
-Get-Theme -Dump $Script:themeData
-
 ## ----------{ Step 7: Build Remaining UI Components }----------
-Debug-Log "Creating filter panel..." -Type "Insight"
+Debug-Log "Creating filter panel..." -Type "Tracing"
 $filterPanel = Create-FilterPanel -Parent $win
 $win.Add($filterPanel)
 
-Debug-Log "Showing selection panel..." -Type "Insight"
+Debug-Log "Showing selection panel..." -Type "Tracing"
 Show-SelectionPanel -Parent $win
-Debug-Log "Creating Info panel..." -Type "Insight"
+Debug-Log "Creating Info panel..." -Type "Tracing"
 Show-InfoPanel -Parent $win
 
-## ----------{Step 5: Forest/Domain Initialization }----------
-Debug-Log "Initializing forest/domain globals..." -Type "Insight"
+## ----------{ Step 5: Forest/Domain Initialization }----------
+Debug-Log "Initializing forest/domain globals..." -Type "Tracing"
 
 ## Tab & layout placeholders
 $Script:LayoutInProgress = $false
@@ -14675,7 +14815,7 @@ if ($Script:DemoMode) {
       Debug-Log "Demo data file not found: $DemoDataFile" -Type "Problem"
       throw "Demo data import aborted: file $DemoDataFile does not exist."
     }
-    Debug-Log "Importing demo data from file: $DemoDataFile" -Type "Insight"
+    Debug-Log "Importing demo data from file: $DemoDataFile" -Type "Tracing"
     ## Import file - this will set forest/domain info from the CSV
     Initialise-DataSource -FilePath $DemoDataFile -Domain $null
     ## Set flags immediately after import
@@ -14691,10 +14831,10 @@ if ($Script:DemoMode) {
     $Script:CurrentDomain = $Script:RootDomain
   }
 } else {
-  Debug-Log "Production Mode: querying AD forest..." -Type "Insight"
+  Debug-Log "Production Mode: querying AD forest..." -Type "Tracing"
   try {
     if ($Domain) {
-      Debug-Log "Querying specified domain: $Domain" -Type "Insight"
+      Debug-Log "Querying specified domain: $Domain" -Type "Tracing"
       $targetDomain       = Get-ADDomain -Server $Domain -ErrorAction Stop
       $forest             = Get-ADForest -Server $targetDomain.Forest -ErrorAction Stop
     } else {
@@ -14735,14 +14875,14 @@ if (-not $Script:DataFileLoaded) {
 ## sneak sneak
 Set-StatusBar "Refreshing users" -Icon Working -Percent 25
 
-## ----------{Step 6: Load Domain Data }----------
+## ----------{ Step 6: Load Domain Data }----------
 if (-not $Script:DataFileLoaded) {
-  Debug-Log "Loading domain data..." -Type "Insight"
+  Debug-Log "Loading domain data..." -Type "Tracing"
   if ($Script:FilePathToLoad) {
-    Debug-Log "File path specified: $($Script:FilePathToLoad)" -Type "Insight"
+    Debug-Log "File path specified: $($Script:FilePathToLoad)" -Type "Tracing"
     Set-StatusBar "Loading data from file: $($Script:FilePathToLoad)..." -Icon 'Working' -Percent 10
   } else {
-    Debug-Log "No file path - will use AD or demo data" -Type "Insight"
+    Debug-Log "No file path - will use AD or demo data" -Type "Tracing"
     Set-StatusBar "Loading domain data for $($Script:CurrentDomain)..." -Icon 'Working' -Percent 10
   }
   Set-StatusBar "Enumerating objects..." -Icon 'Working' -Percent 20
@@ -14759,7 +14899,7 @@ if ($Script:DCs -and $Script:DCs.Count -gt 0) {
     $Script:CurrentDC = $Script:DCs | Where-Object { $_.IsGlobalCatalog } | Select-Object -First 1
     if (-not $Script:CurrentDC) { $Script:CurrentDC = $Script:DCs | Select-Object -First 1 }
     $Script:CurrentDCName = $Script:CurrentDC.Name
-    Debug-Log "Set current DC to: $($Script:CurrentDCName)" -Type "Insight"
+    Debug-Log "Set current DC to: $($Script:CurrentDCName)" -Type "Tracing"
   } else {
     $Script:CurrentDCName = $Script:CurrentDC.Name
     Debug-Log "CurrentDC already set to: $($Script:CurrentDCName), preserving" -Type "Tracing"
@@ -14771,8 +14911,8 @@ if ($Script:DCs -and $Script:DCs.Count -gt 0) {
     $Script:CurrentDCName = "(None)"
   }
 }
-Debug-Log "POST-LOAD: Users=$($Script:Users.Count), DCs=$($Script:DCs.Count), Computers=$($Script:Computers.Count), Group=$($Script:Groups.Count), Objects=$($Script:ADObjects.Count)" -Type "Insight"
-Debug-Log "Forest/Domain initialization complete: CurrentDomain=$($Script:CurrentDomain)" -Type "Insight"
+Debug-Log "POST-LOAD: Users=$($Script:Users.Count), DCs=$($Script:DCs.Count), Computers=$($Script:Computers.Count), Group=$($Script:Groups.Count), Objects=$($Script:ADObjects.Count)" -Type "Tracing"
+Debug-Log "Forest/Domain initialization complete: CurrentDomain=$($Script:CurrentDomain)" -Type "Tracing"
 
 ## Verify data was loaded
 if ($Script:ADObjects.Count -eq 0 -and -not $Script:DemoMode) {
@@ -14788,7 +14928,7 @@ $win.Add($infoPanel)
 Debug-Log "InfoPanel created and updated with DC: $($Script:CurrentDC.Name ?? 'None')" -Type "Tracing"
 
 ## Now build the tree
-Debug-Log "Initializing TreeView..." -Type "Insight"
+Debug-Log "Initializing TreeView..." -Type "Tracing"
 Set-StatusBar "Building tree view..." -Icon 'Working' -Percent 60
 
 $treeFrame = [Terminal.Gui.FrameView]::new("Active Directory Objects")
@@ -14805,8 +14945,8 @@ $Script:tree.Height = [Terminal.Gui.Dim]::Fill()
 
 ## Build and populate tree
 Set-StatusBar "Populating tree..." -Icon 'Working' -Percent 80
-Debug-Log "Building tree for domain: $($Script:CurrentDomain)" -Type "Insight"
-Debug-Log "Objects available: Users=$($Script:Users.Count), Groups=$($Script:Groups.Count), Computers=$($Script:Computers.Count), DCs=$($Script:DCs.Count)" -Type "Insight"
+Debug-Log "Building tree for domain: $($Script:CurrentDomain)" -Type "Tracing"
+Debug-Log "Objects available: Users=$($Script:Users.Count), Groups=$($Script:Groups.Count), Computers=$($Script:Computers.Count), DCs=$($Script:DCs.Count)" -Type "Tracing"
 
 $rootNode = Build-Tree -domain $Script:CurrentDomain
 if ($null -eq $rootNode) {
@@ -14833,7 +14973,7 @@ $top.add_KeyPress({
     ([Terminal.Gui.Key]::F5)  { Refresh-Data -domain $Script:CurrentDomain -RebuildTree ; $handled = $true }
     ([Terminal.Gui.Key]::F6)  { Show-ThemeSelector      ; $handled = $true }
     ([Terminal.Gui.Key]::F7)  { Show-ADSearchDialog     ; $handled = $true }
-    ([Terminal.Gui.Key]::F8)  { if ($Script:tree) { $Script:tree.SetFocus(); Debug-Log "Tree focused via F8" -Type "Insight" } ; $handled = $true }
+    ([Terminal.Gui.Key]::F8)  { if ($Script:tree) { $Script:tree.SetFocus(); Debug-Log "Tree focused via F8" -Type "Tracing" } ; $handled = $true }
     ([Terminal.Gui.Key]::F10) { [Terminal.Gui.Application]::RequestStop() ; $handled = $true }
     ([Terminal.Gui.Key]::F12) {
       $selectedNode = $Script:tree.SelectedObject
@@ -14847,9 +14987,9 @@ Set-StatusBar "Ready" -Icon 'Success'
 
 ## Debug view tree dump
 if ($DebugMode -or $Logging) {
-  Debug-Log "========== Full View Tree Dump ==========" -Type "Insight"
+  Debug-Log "========== Full View Tree Dump ==========" -Type "Tracing"
   Debug-DumpViewTree -View $top
-  Debug-Log "========== End View Tree Dump ==========" -Type "Insight"
+  Debug-Log "========== End View Tree Dump ==========" -Type "Tracing"
 }
 
 ## Capture functions for closure
@@ -14862,7 +15002,7 @@ Debug-Log "Starting Terminal.Gui main loop..." -Type "Success"
 [Terminal.Gui.Application]::Run($top)
 
 ## ----------{ Cleanup }----------
-Debug-Log "Application stopped, cleaning up..." -Type "Insight"
+Debug-Log "Application stopped, cleaning up..." -Type "Tracing"
 Set-StatusBar "Shutting down"
 [Terminal.Gui.Application]::Shutdown()
 Debug-Log "Application shut down cleanly" -Type "Success"
