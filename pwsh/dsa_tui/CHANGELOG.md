@@ -4,6 +4,24 @@
 
 Not all version are released publically, but they will all be documented here.
 
+3.2.6.15 (Function consolidation)
+
+- Move omdal text into variables to help alignment
+- Clean up some dead space in functions
+- Work around powershell unwrapping arrays despite being told not to in `AuditLog-Dialog` function
+
+3.2.6.14 (Function consolidation)
+
+- Retire: `Show-{Computer|DC|Group|OU|Resource|User}PropertiesDialog` functions and meld them into a cleaner, faster, better, stronger
+  `Show-ObjectPropertiesDialog` function
+- Rework `Show-ObjectContextMenu` to use the new `Show-ObjectPropertiesDialog` function, further reducing code re-use
+- Make `Convert-DataToADObjects` use the proper AD property names to further reduce special cases in the demo data
+- Add search to the Audit log modal for easy searching of large logs
+- Add support for creating resources to the `Show-NewObjectWizard` function
+- Remove a number of duplicate/reworked functions which were left in due to me being unable to work copy/paste properly at 01:30AM
+- A lot of functions have been melded. E.g. `Show-ADHealth` to consolidate a number of "called only once" functions
+- Fix erroneous menu text
+
 ## 3.2.4.11 (Room Resources and bugfixes)
   - Rework Initialise-UIFramework to also create status bar and menu on first run
   - Clean up formatting headers in certain dialogs
