@@ -61,17 +61,11 @@ Select-String .\users.ps1 -Pattern "Company\s*=\s*'([^']+)'" | ForEach-Object { 
 
 Recent Changelog
 
-3.2.6.11 (Function consolidation)
+3.2.6.15 (Function consolidation)
 
-- Retire: Show-{Computer|DC|Group|OU|Resource|User}PropertiesDialog functions and meld them into a cleaner, faster, better, stronger
-  Show-ObjectPropertiesDialog
-- Rework Show-ObjectContextMenu to use the new Show-ObjectPropertiesDialog function, further reducing code re-use
-- Make Convert-DataToADObjects use the proper AD property names to further reduce special cases in the demo data
-- Add search to the Audit log modal for easy searching of large logs
-- Add support for creating resources to the Show-NewObjectWizard function
-- Remove a number of duplicate/reworked functions which were left in due to me being unable to work copy/paste properly at 01:30AM
-- A lot of functions have been melded. E.g. Show-ADHealth to consolidate a number of "called only once" functions
-- Fix erroneous menu text
+- Move omdal text into variables to help alignment
+- Clean up some dead space in functions
+- Work around powershell unwrapping arrays despite being told not to in AuditLog-Dialog function
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{ TODO / COME BACK TO }~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -212,15 +206,12 @@ function Test-Requirement {
     Debug-Log "This script requires PowerShell 7.x or higher. You are running $($PSVersionTable.PSVersion)." -Type "Problem"
     return $false
   }
-
   ## Detect platform
   $Platform  = $PSVersionTable.PSEdition
   $OS        = $PSVersionTable.Platform
-
   ## Check elevated/admin on Windows
   $IsAdmin = $false
   if ($IsWindows) { $IsAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator") }
-
   ## Windows-specific helpers
   $IsWindowsServer = $false
   $HasServerManagerModule = $false
@@ -229,10 +220,8 @@ function Test-Requirement {
     $IsWindowsServer        = $osInfo.ProductType -in 2,3  # 2=Domain Controller, 3=Server
     $HasServerManagerModule = Get-Module -ListAvailable -Name ServerManager -ErrorAction SilentlyContinue
   }
-
   ## Main switch by Type
   switch ($Type) {
-
     "Module" {
       $module = Get-Module -ListAvailable -Name $Name -ErrorAction SilentlyContinue
       if ($module) {
@@ -631,7 +620,6 @@ function Show-Properties {
     Show-Modal "Debug" "No object selected in tree"
     return
   }
-
   Debug-Log "Selected node text: '$($node.Text)'" -Type "Insight"
   $tag = $node.Tag
   Debug-Log "Tag is null: $($null -eq $tag)" -Type "Insight"
@@ -640,7 +628,6 @@ function Show-Properties {
     Debug-Log "Tag.Object is null: $($null -eq $tag.Object)" -Type "Insight"
     if ($tag.Object) { Debug-Log "Tag.Object type: $($tag.Object.GetType().Name)" -Type "Insight" }
   }
-
   ## Get the actual AD object from the Tag
   $obj = $tag.Object
   ##  Handle containers without objects
@@ -653,7 +640,6 @@ function Show-Properties {
     Debug-Log "No object attached to this node" -Type "Warning"
     return
   }
-
   ##  Use the Type property first (more reliable)
   switch ($tag.Type) {
     'user' {
@@ -737,7 +723,6 @@ function Show-ThemeSelector {
   $half = [math]::Ceiling($themes.Count / 2)
   $leftThemes  = $themes[0..($half-1)]
   $rightThemes = $themes[$half..($themes.Count-1)]
-
   ## Determine current theme (case-insensitive)
   $currentTheme = $Script:ThemeMode
   Debug-Log (" Global ThemeMode = ${Global:ThemeMode}") -Type "Tracing"
@@ -915,7 +900,7 @@ function Show-ExportDataDialog {
   $lblStatus.Y = $y
   $lblStatus.Width = [Terminal.Gui.Dim]::Fill(2)
   $dlg.Add($lblStatus)
-  ## CAPTURE variables BEFORE the closure
+  ## Capture variables BEFORE the closure
   $capturedUsers = $Script:Users
   $capturedGroups = $Script:Groups
   $capturedComputers = $Script:Computers
@@ -1174,7 +1159,6 @@ function Copy-ADObject {
     $lblTemplate.X = 2
     $lblTemplate.Y = 2
     $dlg.Add($lblTemplate)
-
     ## New name
     $lblName = [Terminal.Gui.Label]::new("New ${objectType} Name:")
     $lblName.X = 2
@@ -1184,7 +1168,6 @@ function Copy-ADObject {
     $txtName.X = 2
     $txtName.Y = 5
     $txtName.Width = 66
-
     $dlg.Add($txtName)
     if ($isUser) {
       ## SamAccountName
@@ -1206,7 +1189,6 @@ function Copy-ADObject {
           $txtSam.Text = [NStack.ustring]::Make("${first}.${last}")
         }
       }.GetNewClosure())
-
       ## Email
       $lblEmail = [Terminal.Gui.Label]::new("Email Address:")
       $lblEmail.X = 2
@@ -1221,14 +1203,12 @@ function Copy-ADObject {
       } else {
         $yNext = 7
       }
-
       ## Copy memberships checkbox
       $chkMemberships = [Terminal.Gui.CheckBox]::new((if ($isUser) { "Copy group memberships" } else { "Copy group members" }))
       $chkMemberships.X = 2
       $chkMemberships.Y = $yNext
       $chkMemberships.Checked = $true
       $dlg.Add($chkMemberships)
-
       ## Fields to copy section
       $lblFields = [Terminal.Gui.Label]::new("Fields to copy:")
       $lblFields.X = 2
@@ -1239,16 +1219,13 @@ function Copy-ADObject {
       $lblFieldsList.Y = $yNext + 3
       $lblFieldsList.Width = 66
       $dlg.Add($lblFieldsList)
-
       if ($isUser) { $fieldsList = "Department, Title, Company, Manager, OU, Phone, Address"
       } else { $fieldsList = "Description, ManagedBy, OU" }
       $lblFieldsList.Text = [NStack.ustring]::Make($fieldsList)
-
       ## Create button
       $btnCreate = [Terminal.Gui.Button]::new("Create")
       $btnCreate.add_Clicked({
         $name = $txtName.Text.ToString()
-
         if ([string]::IsNullOrWhiteSpace($name)) {
           Show-Modal "Missing Name" "Please enter a name for the new $objectType"
          return
@@ -1256,7 +1233,6 @@ function Copy-ADObject {
         if ($isUser) {
           $sam = $txtSam.Text.ToString()
           $email = $txtEmail.Text.ToString()
-
           if ([string]::IsNullOrWhiteSpace($sam)) {
             Show-Modal "Missing Login" "Please enter a login name (SamAccountName)"
             return
@@ -1274,16 +1250,16 @@ function Copy-ADObject {
             [Terminal.Gui.Application]::RequestStop()
             Copy-ADObject -SourceObject $SourceObject -NewName $name -CopyMemberships:$chkMemberships.Checked
           }
-      }.GetNewClosure())
-      $dlg.AddButton($btnCreate)
+        }.GetNewClosure())
+        $dlg.AddButton($btnCreate)
 
-      ## Cancel button
-      $btnCancel = [Terminal.Gui.Button]::new("Cancel")
-      $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }).GetNewClosure()
-      $dlg.AddButton($btnCancel)
-      [Terminal.Gui.Application]::Run($dlg)
-      return
-  }
+        ## Cancel button
+        $btnCancel = [Terminal.Gui.Button]::new("Cancel")
+        $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }).GetNewClosure()
+        $dlg.AddButton($btnCancel)
+        [Terminal.Gui.Application]::Run($dlg)
+        return
+    }
 
   ## ----------{ Direct Creation }---------
   if (-not $NewName) {
@@ -2072,10 +2048,8 @@ function Show-DNSLookupDialog {
     $results += "Type:       $RecordType"
     $results += "Timestamp:  $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
     $results += ""
-
     ## Determine which servers to query
     $serversToQuery = @()
-
     if ($MultiServer) {
       $results += "Checking multiple DNS servers..."
       $results += ""
@@ -2091,7 +2065,6 @@ function Show-DNSLookupDialog {
         $serversToQuery = @(@{ Name = "Custom Server"; IP = $DNSServer; Location = "Custom" })
       }
     }
-
     ## Query each server
     foreach ($server in $serversToQuery) {
       if ($MultiServer) {
@@ -2114,7 +2087,6 @@ function Show-DNSLookupDialog {
         if ($dnsResult) {
           ## Extract relevant data based on record type
           $recordData = @()
-
           foreach ($record in $dnsResult) {
             switch ($RecordType) {
               "A"     { if ($record.IP4Address)    { $recordData += $record.IP4Address } }
@@ -2134,7 +2106,6 @@ function Show-DNSLookupDialog {
               }
             }
           }
-
           if ($recordData.Count -gt 0) {
             ## Validation check
             $validationResult = ""
@@ -2152,7 +2123,6 @@ function Show-DNSLookupDialog {
                 $validationResult = "  $($Icons.Error) DOES NOT MATCH expected result (expected: $ExpectedResult)"
               }
             }
-
             foreach ($data in $recordData) { $results += "  $data" }
             if ($validationResult) {
               $results += ""
@@ -2173,7 +2143,6 @@ function Show-DNSLookupDialog {
     $results += "Lookup completed"
     return ($results -join "`n")
   }
-
   ## Create dialog
   $dialog = [Terminal.Gui.Dialog]::new("DNS Lookup Tool", 120, 40)
   $y = 1
@@ -2183,7 +2152,6 @@ function Show-DNSLookupDialog {
   $lblRecord.X = 2
   $lblRecord.Y = $y
   $dialog.Add($lblRecord)
-
   $txtRecord = [Terminal.Gui.TextField]::new("")
   $txtRecord.X = 15
   $txtRecord.Y = $y
@@ -2196,7 +2164,6 @@ function Show-DNSLookupDialog {
   $lblType.X = 2
   $lblType.Y = $y
   $dialog.Add($lblType)
-
   $cmbType = [Terminal.Gui.ComboBox]::new()
   $cmbType.X = 15
   $cmbType.Y = $y
@@ -2212,13 +2179,11 @@ function Show-DNSLookupDialog {
   $lblServer.X = 2
   $lblServer.Y = $y
   $dialog.Add($lblServer)
-
   $txtServer = [Terminal.Gui.TextField]::new("")
   $txtServer.X = 15
   $txtServer.Y = $y
   $txtServer.Width = 30
   $dialog.Add($txtServer)
-
   $lblServerHint = [Terminal.Gui.Label]::new("(leave blank for system default)")
   $lblServerHint.X = 46
   $lblServerHint.Y = $y
@@ -2232,14 +2197,12 @@ function Show-DNSLookupDialog {
   $chkValidate.Checked = $false
   $dialog.Add($chkValidate)
   $y += 1
-
   $txtExpected = [Terminal.Gui.TextField]::new("")
   $txtExpected.X = 4
   $txtExpected.Y = $y
   $txtExpected.Width = 50
   $txtExpected.Enabled = $false
   $dialog.Add($txtExpected)
-
   $lblExpectedHint = [Terminal.Gui.Label]::new("(e.g., 1.2.3.4 for A record)")
   $lblExpectedHint.X = 55
   $lblExpectedHint.Y = $y
@@ -2265,7 +2228,6 @@ function Show-DNSLookupDialog {
   $lblResults.Y = $y
   $dialog.Add($lblResults)
   $y += 1
-
   $txtResults = [Terminal.Gui.TextView]::new()
   $txtResults.X = 2
   $txtResults.Y = $y
@@ -2353,7 +2315,6 @@ function Show-DNSLookupDialog {
     [Terminal.Gui.Application]::RequestStop()
   }.GetNewClosure())
   $dialog.Add($btnClose)
-
   ## Run dialog
   [Terminal.Gui.Application]::Run($dialog)
 }
@@ -2371,18 +2332,15 @@ function Show-FileBrowserDialog {
   $script:selectedFile = $null
   $script:currentPath = (Resolve-Path $StartDir).Path
   $dialog = [Terminal.Gui.Dialog]::new($Title, 80, 24)
-
   ## Current path label
   $labelPath = [Terminal.Gui.Label]::new(2, 1, "Path: $($script:currentPath)")
   $labelPath.Width = 74
   $dialog.Add($labelPath)
-
   ## ListView for files/folders
   $listView = [Terminal.Gui.ListView]::new()
   $listView.X = 2; $listView.Y = 3
   $listView.Width = 74; $listView.Height = 14
   $dialog.Add($listView)
-
   ## Selected file label
   $labelSelected = [Terminal.Gui.Label]::new(2, 18, "Selected: (none)")
   $labelSelected.Width = 74
@@ -2488,7 +2446,6 @@ function Initialise-UIFramework {
   )
 
   Debug-Log "Initializing Terminal.Gui framework..." -Type "Tracing"
-
   ## ----------{ Step 1: Initialise Terminal.Gui }---------
   try {
     [Terminal.Gui.Application]::Init()
@@ -2500,7 +2457,6 @@ function Initialise-UIFramework {
 
   ## Get top-level application
   $top = [Terminal.Gui.Application]::Top
-
   ## ----------{ Step 2: Create Main Window }---------
   $win = [Terminal.Gui.Window]::new($Title)
   $win.X = 0
@@ -2512,16 +2468,13 @@ function Initialise-UIFramework {
   ## ----------{ Step 3: Create Status Bar }---------
   Debug-Log "Creating status bar..." -Type "Tracing"
   $statusBar = Set-StatusBar -Initialise
-
   ## ----------{ Step 4: Create Main Menu }---------
   Debug-Log "Creating main menu..." -Type "Tracing"
   $menu = Build-MainMenu
-
   ## ----------{ Step 5: Apply Theme }---------
   Debug-Log "Applying theme: $Theme" -Type "Tracing"
   $Script:ThemeMode = $Theme
-
-  $themeData = Get-Theme -mode $Theme
+  $themeData        = Get-Theme -mode $Theme
   if ($themeData) {
     ## Store theme data globally
     $Script:themeData = $themeData
@@ -2556,10 +2509,8 @@ function Initialise-UIFramework {
     Menu      = $menu
     StatusBar = $statusBar
   }
-
   Debug-Log "UI Framework initialization complete" -Type "Success"
   Debug-Log "UI Framework ready - window visible to user" -Type "Success"
-
   return $result
 }
 
@@ -2585,10 +2536,8 @@ function Show-ObjectContextMenu {
   )
 
   Debug-Log "Showing context menu for $($Object.Name) (Type: $ObjectType)" -Type "Tracing"
-
   ## Build menu items based on object type
   $menuItems = [System.Collections.ArrayList]@()
-
   switch ($ObjectType) {
     'User' {
       [void]$menuItems.Add("Properties")
@@ -2841,7 +2790,6 @@ function Set-StatusBar {
   ## Build final display
   $displayText = "$prefix | $Message$progressText"
   $Script:StatusItem.Title = $displayText
-
   ## Refresh
   try {
     $Script:StatusBar.SetNeedsDisplay()
@@ -3179,7 +3127,6 @@ function Get-Theme {
       } else {
         Debug-Log "ScriptCs is null!" -Type "Warning"
       }
-
       Debug-Log "=== Main Window ColorScheme ===" -Type "Tracing"
       if ($Script:mainWindowCs) {
         Debug-Log "Normal    : $($Script:mainWindowCs.Normal)" -Type "Tracing"
@@ -3192,7 +3139,6 @@ function Get-Theme {
       }
       return
     }
-
     ## Load Mode
     if (-not $Mode) { throw "Get-Theme called with empty mode" }
     ## Initialise colour schemes and Ensure ColorSchemes are instantiated
@@ -3219,7 +3165,6 @@ function Get-Theme {
     #>
 
     switch ($Mode) {
-
       "british" {
         $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
         $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
@@ -3284,63 +3229,63 @@ function Get-Theme {
         $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Cyan)
         $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Red,[Terminal.Gui.Color]::Blue)
       }
-    "matrix" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::Black)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Black)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Gray)
-    }
-    ## Dutch Railways (Nederlandse Spoorwegen)
-    "ns" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Yellow,[Terminal.Gui.Color]::Blue)
-    }
-    ## NSE "Toothpaste" livery
-    "network-southeast" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::White)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::White)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Red)
-    }
-    "panam" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
-    }
-    "procomm" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Red)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::BrightBlue)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
-    }
-    "scotrail" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::White)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightBlue)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-    }
-    ## Trans World Airways not two (if you're Scottish)
-    "twa" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::DarkGray)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::DarkGray)
-    }
-    "viarail" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
-    }
-    "viarail-soft" {
-      $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::BrightYellow)
-      $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
-      $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
-    }
+     "matrix" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Green,[Terminal.Gui.Color]::Black)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Gray,[Terminal.Gui.Color]::Green)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Black)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Gray)
+      }
+      ## Dutch Railways (Nederlandse Spoorwegen)
+      "ns" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Yellow,[Terminal.Gui.Color]::Blue)
+      }
+      ## NSE "Toothpaste" livery
+      "network-southeast" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::White)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::White)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Red)
+      }
+      "panam" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::BrightBlue)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+      }
+      "procomm" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Red)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::BrightBlue)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Black)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightBlue,[Terminal.Gui.Color]::White)
+      }
+      "scotrail" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::White)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightBlue)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+      }
+      ## Trans World Airways not two (if you're Scottish)
+      "twa" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::DarkGray)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Red)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightRed,[Terminal.Gui.Color]::DarkGray)
+      }
+      "viarail" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::BrightYellow)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::BrightYellow,[Terminal.Gui.Color]::Blue)
+      }
+      "viarail-soft" {
+        $Script:ScriptCs.Normal     = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+        $Script:ScriptCs.Focus      = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Blue,[Terminal.Gui.Color]::BrightYellow)
+        $Script:mainWindowCs.Normal = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::White,[Terminal.Gui.Color]::Blue)
+        $Script:mainWindowCs.Focus  = [Terminal.Gui.Attribute]::Make([Terminal.Gui.Color]::Black,[Terminal.Gui.Color]::Gray)
+      }
     default {
       throw "Unknown theme: $Mode"
     }
@@ -3643,46 +3588,34 @@ function Show-IPSecPoliciesDialog {
       default                   { $policy.Type }
     }
 
-    $details = @"
-IPSec Policy Details
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Name: $(if ($policy.IPSecName) { $policy.IPSecName } else { $policy.Name })
-
-Type: $($policy.Type)
-$typeDesc
-
-IPSec ID: $(if ($policy.IPSecID) { $policy.IPSecID } else { "N/A" })
-
-Description:
-$(if ($policy.Description) { $policy.Description } else { "(No description)" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Distinguished Name:
-$($policy.DN)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-About IPSec Policies:
-
-IPSec policies in Active Directory define how network
-traffic is secured using Internet Protocol Security.
-
-Policy Components:
-- ipsecPolicy: Main policy object containing rules
-- ipsecNFA: Links filters to negotiation policies
-- ipsecISAKMPPolicy: IKE (Phase 1) key exchange
-- ipsecNegotiationPolicy: IPSec SA (Phase 2) settings
-- ipsecFilter: Traffic matching criteria
-
-To manage IPSec policies, use:
-- IP Security Policy Management (secpol.msc)
-- Group Policy Management Console
-- Windows Firewall with Advanced Security
-- PowerShell cmdlets (Get-NetIPsecRule, etc.)
-"@
-
+    $details = "IPSec Policy Details`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "Name: $(if ($policy.IPSecName) { $policy.IPSecName } else { $policy.Name })`n" +
+      "Type: $($policy.Type)`n" +
+      "$typeDesc`n" +
+      "IPSec ID: $(if ($policy.IPSecID) { $policy.IPSecID } else { 'N/A' })`n" +
+      "Description:`n" +
+      "$(if ($policy.Description) { $policy.Description } else { '(No description)' })`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "Distinguished Name:`n" +
+      "$($policy.DN)`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "About IPSec Policies:`n" +
+      "IPSec policies in Active Directory define how network`n" +
+      "traffic is secured using Internet Protocol Security.`n" +
+      "`n" +
+      "Policy Components:`n" +
+      "- ipsecPolicy: Main policy object containing rules`n" +
+      "- ipsecNFA: Links filters to negotiation policies`n" +
+      "- ipsecISAKMPPolicy: IKE (Phase 1) key exchange`n" +
+      "- ipsecNegotiationPolicy: IPSec SA (Phase 2) settings`n" +
+      "- ipsecFilter: Traffic matching criteria`n" +
+      "`n" +
+      "To manage IPSec policies, use:`n" +
+      "- IP Security Policy Management (secpol.msc)`n" +
+      "- Group Policy Management Console`n" +
+      "- Windows Firewall with Advanced Security`n" +
+      "- PowerShell cmdlets (Get-NetIPsecRule, etc.)"
     Show-Modal "IPSec Policy Details" $details
   }
 
@@ -3714,65 +3647,61 @@ To manage IPSec policies, use:
 }
 
 function Show-IPSecHelpDialog {
-  $helpText = @"
-IPSec Policies in Active Directory
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Overview:
-IPSec (Internet Protocol Security) policies define how
-network traffic is authenticated and encrypted between
-computers in an Active Directory domain.
-
-Policy Architecture:
-
-1. ipsecPolicy
-   The main policy object containing one or more rules.
-   Example: "Secure Server Policy"
-
-2. ipsecNFA (Negotiation Policy Association)
-   Links traffic filters to negotiation settings.
-   Defines WHAT traffic to secure and HOW to secure it.
-
-3. ipsecISAKMPPolicy (Phase 1 - IKE)
-   Internet Key Exchange settings for establishing
-   secure channels. Includes encryption algorithms
-   (DES, 3DES, AES) and authentication methods.
-
-4. ipsecNegotiationPolicy (Phase 2)
-   IPSec Security Association settings for actual
-   data protection. Defines AH/ESP protocols.
-
-5. ipsecFilter
-   Traffic matching rules (source/dest IP, ports,
-   protocols). Determines which packets are secured.
-
-Common Use Cases:
-• Server isolation (only allow authenticated clients)
-• Domain isolation (encrypt all domain traffic)
-• Require encryption for sensitive servers
-• Block specific traffic patterns
-
-Management Tools:
-
-Windows:
-• Local Security Policy (secpol.msc)
-• Group Policy Management (gpmc.msc)
-• IP Security Monitor (ipsecmon.exe)
-• PowerShell: Get-NetIPsecRule, New-NetIPsecRule
-
-Command Line:
-• netsh ipsec show all
-• netsh ipsec static show policy all
-
-Linux:
-• ipsec status (strongSwan/libreswan)
-• ip xfrm state/policy
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-For detailed IPSec configuration and troubleshooting,
-refer to Microsoft IPSec documentation.
-"@
+$helpText = "IPSec Policies in Active Directory`n" +
+  "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+  "Overview:`n" +
+  "IPSec (Internet Protocol Security) policies define how`n" +
+  "network traffic is authenticated and encrypted between`n" +
+  "computers in an Active Directory domain.`n" +
+  "`n" +
+  "Policy Architecture:`n" +
+  "`n" +
+  "1. ipsecPolicy`n" +
+  "   The main policy object containing one or more rules.`n" +
+  "   Example: `"Secure Server Policy`"`n" +
+  "`n" +
+  "2. ipsecNFA (Negotiation Policy Association)`n" +
+  "   Links traffic filters to negotiation settings.`n" +
+  "   Defines WHAT traffic to secure and HOW to secure it.`n" +
+  "`n" +
+  "3. ipsecISAKMPPolicy (Phase 1 - IKE)`n" +
+  "   Internet Key Exchange settings for establishing`n" +
+  "   secure channels. Includes encryption algorithms`n" +
+  "   (DES, 3DES, AES) and authentication methods.`n" +
+  "`n" +
+  "4. ipsecNegotiationPolicy (Phase 2)`n" +
+  "   IPSec Security Association settings for actual`n" +
+  "   data protection. Defines AH/ESP protocols.`n" +
+  "`n" +
+  "5. ipsecFilter`n" +
+  "   Traffic matching rules (source/dest IP, ports,`n" +
+  "   protocols). Determines which packets are secured.`n" +
+  "`n" +
+  "Common Use Cases:`n" +
+  "• Server isolation (only allow authenticated clients)`n" +
+  "• Domain isolation (encrypt all domain traffic)`n" +
+  "• Require encryption for sensitive servers`n" +
+  "• Block specific traffic patterns`n" +
+  "`n" +
+  "Management Tools:`n" +
+  "`n" +
+  "Windows:`n" +
+  "• Local Security Policy (secpol.msc)`n" +
+  "• Group Policy Management (gpmc.msc)`n" +
+  "• IP Security Monitor (ipsecmon.exe)`n" +
+  "• PowerShell: Get-NetIPsecRule, New-NetIPsecRule`n" +
+  "`n" +
+  "Command Line:`n" +
+  "• netsh ipsec show all`n" +
+  "• netsh ipsec static show policy all`n" +
+  "`n" +
+  "Linux:`n" +
+  "• ipsec status (strongSwan/libreswan)`n" +
+  "• ip xfrm state/policy`n" +
+  "`n" +
+  "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+  "For detailed IPSec configuration and troubleshooting,`n" +
+  "refer to Microsoft IPSec documentation."
 
   $helpDialog        = [Terminal.Gui.Dialog]::new()
   $helpDialog.Title  = "IPSec Policies - Help"
@@ -3833,9 +3762,10 @@ function Show-PrintQueuesDialog {
     $location = if ($printer.Location) { " [$($printer.Location)]" } else { "" }
     "$name$server$location"
   }
-  ## Details handler
+## Details handler
   $showPrinterDetails = {
     param($printer)
+
     $uncPath = if ($printer.ServerName -and $printer.ShareName) {
       "\\$($printer.ServerName)\$($printer.ShareName)"
     } elseif ($printer.PrinterName) {
@@ -3843,42 +3773,38 @@ function Show-PrintQueuesDialog {
     } else {
       "N/A"
     }
-
-    @"
-Print Queue Details
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Printer Name:       $($printer.PrinterName ?? $printer.Name)
-UNC Path:           $uncPath
-Server:             $(if ($printer.ServerName) { $printer.ServerName } else { "N/A" })
-Share Name:         $(if ($printer.ShareName) { $printer.ShareName } else { "N/A" })
-Location:           $(if ($printer.Location) { $printer.Location } else { "(Not specified)" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Distinguished Name: $($printer.DN)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-About Print Queues in Active Directory:
-
-Print queues published in AD allow users to easily find and connect to shared printers across the domain.
-
-Benefits:
-• Users can search for printers by location
-• Centralized printer management
-• Automatic driver deployment via Group Policy
-• Follow-me printing across locations
-
-To Connect:
-Windows: $uncPath
-Add via: Devices and Printers → Add Printer → Network
-
-To Manage:
-• Print Management Console (printmanagement.msc)
-• Server Manager → Print Services
-• PowerShell: Get-Printer, Add-Printer
-"@
+    $details = "Print Queue Details`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "Printer Name:       $($printer.PrinterName ?? $printer.Name)`n" +
+      "UNC Path:           $uncPath`n" +
+      "Server:             $(if ($printer.ServerName) { $printer.ServerName } else { 'N/A' })`n" +
+      "Share Name:         $(if ($printer.ShareName) { $printer.ShareName } else { 'N/A' })`n" +
+      "Location:           $(if ($printer.Location) { $printer.Location } else { '(Not specified)' })`n" +
+      "`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "Distinguished Name: $($printer.DN)`n" +
+      "`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "About Print Queues in Active Directory:`n" +
+      "`n" +
+      "Print queues published in AD allow users to easily find and connect`n" +
+      "to shared printers across the domain.`n" +
+      "`n" +
+      "Benefits:`n" +
+      "• Users can search for printers by location`n" +
+      "• Centralized printer management`n" +
+      "• Automatic driver deployment via Group Policy`n" +
+      "• Follow-me printing across locations`n" +
+      "`n" +
+      "To Connect:`n" +
+      "Windows: $uncPath`n" +
+      "Add via: Devices and Printers → Add Printer → Network`n" +
+      "`n" +
+      "To Manage:`n" +
+      "• Print Management Console (printmanagement.msc)`n" +
+      "• Server Manager → Print Services`n" +
+      "• PowerShell: Get-Printer, Add-Printer"
+    return $details
   }
 
   ## Button definitions
@@ -4013,35 +3939,27 @@ function Show-TrustsDialog {
       default       { $trustType }
     }
 
-    $details = @"
-Trust Relationship Details
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Trusted Partner: $partner
-Trust Type:      $trustType
-$typeDesc
-
-Direction:       $direction
-$directionDesc
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Distinguished Name:
-$(if ($trust.DN) { $trust.DN } else { "N/A" })
-
-Created:  $(if ($trust.Created) { $trust.Created } else { "Unknown" })
-Modified: $(if ($trust.Modified) { $trust.Modified } else { "Unknown" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Trust Status:
-Use 'nltest /trusted_domains' or 'Get-ADTrust' to verify
-trust health and test connectivity.
-
-For trust management, use Active Directory Domains and Trusts
-console (domain.msc) or PowerShell trust cmdlets.
-"@
-
+    $details = "Trust Relationship Details`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "Trusted Partner: $partner`n" +
+      "Trust Type:      $trustType`n" +
+      "$typeDesc`n" +
+      "Direction:       $direction`n" +
+      "$directionDesc`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "Distinguished Name:`n" +
+      "$(if ($trust.DN) { $trust.DN } else { 'N/A' })`n" +
+      "`n" +
+      "Created:  $(if ($trust.Created) { $trust.Created } else { 'Unknown' })`n" +
+      "Modified: $(if ($trust.Modified) { $trust.Modified } else { 'Unknown' })`n" +
+      "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+      "Trust Status:`n" +
+      "`n" +
+      "Use 'nltest /trusted_domains' or 'Get-ADTrust' to verify`n" +
+      "trust health and test connectivity.`n" +
+      "`n" +
+      "For trust management, use Active Directory Domains and Trusts`n" +
+      "console (domain.msc) or PowerShell trust cmdlets."
     Show-Modal "Trust Details" $details
   }
 
@@ -4074,6 +3992,7 @@ console (domain.msc) or PowerShell trust cmdlets.
 }
 
 ## ----------{ Show Audit Log dialog }----------
+## Show Audit Log dialog
 function Show-AuditLogDialog {
   <#
   .SYNOPSIS
@@ -4091,9 +4010,8 @@ function Show-AuditLogDialog {
 
   $objectName = $Object.Name
   Debug-Log "Showing audit log for $ObjectType '$objectName'" -Type "Insight"
-
-  ## ----------{ Enhanced Diagnostics }---------
-  Debug-Log "========== Object Diagnostics ==========" -Type "Insight"
+  ## Enhanced Diagnostics
+  Debug-Log "=== Object Diagnostics ===" -Type "Insight"
   Debug-Log "DemoMode: $($Script:DemoMode)" -Type "Tracing"
   Debug-Log "Object type: $($Object.GetType().Name)" -Type "Tracing"
   Debug-Log "Object has AuditLog property: $($null -ne $Object.AuditLog)" -Type "Tracing"
@@ -4104,14 +4022,15 @@ function Show-AuditLogDialog {
     $propNames = $Object.PSObject.Properties | ForEach-Object { $_.Name }
     Debug-Log "Properties: $($propNames -join ', ')" -Type "Tracing"
     Debug-Log "Total properties: $($propNames.Count)" -Type "Tracing"
-
     ## Specifically check for AuditLog
     $auditLogProp = $Object.PSObject.Properties | Where-Object { $_.Name -eq 'AuditLog' }
     if ($auditLogProp) {
       Debug-Log "Found AuditLog property!" -Type "Insight"
       if ($null -ne $auditLogProp.Value) {
         Debug-Log "AuditLog type: $($auditLogProp.Value.GetType().Name)" -Type "Tracing"
-        if ($auditLogProp.Value -is [array]) { Debug-Log "AuditLog count: $($auditLogProp.Value.Count)" -Type "Tracing" }
+        if ($auditLogProp.Value -is [array]) {
+          Debug-Log "AuditLog count: $($auditLogProp.Value.Count)" -Type "Tracing"
+        }
       } else {
         Debug-Log "AuditLog value is NULL" -Type "Warning"
       }
@@ -4119,15 +4038,15 @@ function Show-AuditLogDialog {
       Debug-Log "AuditLog property NOT FOUND in PSObject.Properties" -Type "Warning"
     }
   }
+  Debug-Log "===========================" -Type "Insight"
 
-  ## ----------{ Generate Audit log entries }---------
+  ## Generate log entries
   $logEntries = @()
 
   if ($Script:DemoMode) {
     ## Check for audit log data in the object
-    $hasAuditLog  = $false
+    $hasAuditLog = $false
     $auditLogData = $null
-
     ## Try different ways to access AuditLog
     if ($Object.PSObject.Properties['AuditLog']) {
       $auditLogData = $Object.PSObject.Properties['AuditLog'].Value
@@ -4148,9 +4067,9 @@ function Show-AuditLogDialog {
         Debug-Log "Found AuditLog in hashtable" -Type "Tracing"
       }
     }
-
     if ($hasAuditLog -and $auditLogData -and $auditLogData.Count -gt 0) {
       Debug-Log "Using object's audit log ($($auditLogData.Count) entries)" -Type "Insight"
+
       $logEntries = $auditLogData | ForEach-Object {
         [PSCustomObject]@{
           Timestamp  = if ($_.Timestamp -is [datetime]) {
@@ -4235,9 +4154,9 @@ function Show-AuditLogDialog {
   }
   Debug-Log "Total log entries to display: $($logEntries.Count)" -Type "Insight"
 
-  ## ----------{ Create Audit Log tab }---------
+  ## Create tab with audit log
   $auditTab = @{
-    Name    = "Audit Log"
+    Name = "Audit Log"
     Builder = {
       param($view, $data, $state)
 
@@ -4246,38 +4165,42 @@ function Show-AuditLogDialog {
         Debug-Log "ERROR: view parameter is null in Audit Log builder!" -Type "Problem"
         throw "View parameter is null"
       }
-
       ## Capture necessary variables and functions
       $entries        = $logEntries
       $objName        = $objectName
       $debugLogFunc   = ${function:Debug-Log}
       $showModalFunc  = ${function:Show-Modal}
       $formatDateFunc = ${function:Format-DateSafe}
-
       & $debugLogFunc "Building Audit Log tab with $($entries.Count) entries" -Type "Tracing"
       & $debugLogFunc "View is: $($view.GetType().Name)" -Type "Tracing"
 
-      ## Format helper function
+      ## Format helper function - Add dummy entry to prevent unwrapping
       function Local-FormatLogItems {
-        param([array]$items)
+        param($items)
 
-        ## Create List<string> (implements IList)
-        $list = [System.Collections.Generic.List[string]]::new()
-        if (-not $items -or $items.Count -eq 0) {
-          $list.Add("(No entries to display)")
-          return $list
+        $formattedItems = @()
+        if (-not $items -or @($items).Count -eq 0) {
+          $formattedItems = @("(No entries to display)", "")
+          return $formattedItems
         }
-        foreach ($entry in $items) {
-          try {
-            $dateStr = & $formatDateFunc $entry.Timestamp 'yyyy-MM-dd HH:mm'
-            $formatted = "$dateStr | $($entry.Action.PadRight(15)) | $($entry.Details.PadRight(35)) | By: $($entry.By)"
-            $list.Add($formatted)
-          } catch {
-            $list.Add("Error formatting entry")
+        foreach ($entry in @($items)) {
+          if ($null -ne $entry) {
+            $formattedItems += (
+              '{0:yyyy-MM-dd HH:mm} | {1,-15} | {2,-35} | By: {3}' -f `
+              $entry.Timestamp,
+              $entry.Action,
+              $entry.Details,
+              $entry.By
+            )
           }
         }
-        return $list
+        ## Workaround: If only one entry, add a blank to prevent unwrapping
+        if ($formattedItems.Count -eq 1) {
+          $formattedItems += ""
+        }
+        return $formattedItems
       }
+
       ## Header
       $lblHeader = [Terminal.Gui.Label]::new("Recent audit events for $objName ($($entries.Count))")
       $lblHeader.X = 1
@@ -4297,17 +4220,11 @@ function Show-AuditLogDialog {
       $rdoFilter = [Terminal.Gui.RadioGroup]::new()
       $rdoFilter.X = 10
       $rdoFilter.Y = 2
-      $rdoFilter.RadioLabels = [NStack.ustring[]]@(
-        "All",
-        "Modifications",
-        "Password Resets",
-        "Group Changes",
-        "Account Status"
-      )
+      $rdoFilter.RadioLabels = [NStack.ustring[]]@( "All", "Modifications", "Password Resets", "Group Changes", "Account Status" )
       $view.Add($rdoFilter)
       & $debugLogFunc "Added filter controls" -Type "Tracing"
 
-      ## ----------{ List View }---------
+      ## List view
       $lstLog = [Terminal.Gui.ListView]::new()
       if ($null -eq $lstLog) {
         & $debugLogFunc "ERROR: Failed to create ListView!" -Type "Problem"
@@ -4315,31 +4232,22 @@ function Show-AuditLogDialog {
       }
       $lstLog.X = 1
       $lstLog.Y = 5
-      $lstLog.Width  = [Terminal.Gui.Dim]::Fill(3)
-      $lstLog.Height = [Terminal.Gui.Dim]::Fill(6)
+      $lstLog.Width  = [Terminal.Gui.Dim]::Fill(3)  # Make room for vertical scrollbar
+      $lstLog.Height = [Terminal.Gui.Dim]::Fill(6)  # Make room for horizontal scrollbar
       $lstLog.CanFocus = $true
-
-      ## Store original list for search filtering
-      $state.originalLogList = $null
-      $state.currentFilteredEntries = $entries
-
       ## Set initial source
       try {
         $formattedItems = Local-FormatLogItems $entries
-        $state.originalLogList = $formattedItems
-        & $debugLogFunc "Formatted $($formattedItems.Count) items as IList" -Type "Tracing"
+        & $debugLogFunc "Formatted $($formattedItems.Count) items" -Type "Tracing"
         if ($null -eq $formattedItems) {
           & $debugLogFunc "ERROR: formattedItems is null!" -Type "Problem"
-          $fallbackList = [System.Collections.Generic.List[string]]::new()
-          $fallbackList.Add("Error: formatted items is null")
-          $formattedItems = $fallbackList
+          $formattedItems = @("Error: formatted items is null", "")
         }
         $lstLog.SetSource($formattedItems)
         & $debugLogFunc "Set ListView source successfully" -Type "Tracing"
       } catch {
         & $debugLogFunc "Error setting ListView source: $($_.Exception.Message)" -Type "Problem"
-        $errorList = [System.Collections.Generic.List[string]]::new()
-        $errorList.Add("Error displaying log entries: $($_.Exception.Message)")
+        $errorList = @("Error displaying log entries: $($_.Exception.Message)", "")
         $lstLog.SetSource($errorList)
       }
       & $debugLogFunc "About to add ListView to view" -Type "Tracing"
@@ -4354,7 +4262,7 @@ function Show-AuditLogDialog {
       $view.Add($lstLog)
       & $debugLogFunc "Added ListView to view" -Type "Tracing"
 
-      ## ----------{ Scrollbars }---------
+      ## Scrollbars
       try {
         ## Vertical scrollbar
         $vScrollBar = [Terminal.Gui.ScrollBarView]::new($lstLog, $true, $true)
@@ -4376,21 +4284,20 @@ function Show-AuditLogDialog {
         $view.Add($vScrollBar)
         & $debugLogFunc "Added vertical scrollbar" -Type "Tracing"
 
-        ## Horizontal scrollbar
+        ## Horizontal scrollbar - Fixed position
         $hScrollBar = [Terminal.Gui.ScrollBarView]::new($lstLog, $false, $true)
         $hScrollBar.X = 1
-        $hScrollBar.Y = [Terminal.Gui.Pos]::AnchorEnd(4)
+        $hScrollBar.Y = [Terminal.Gui.Pos]::Bottom($lstLog)  ## Place right below ListView
         $hScrollBar.Width = [Terminal.Gui.Dim]::Fill(3)
         $hScrollBar.Height = 1
         $hScrollBar.add_ChangedPosition({
           $lstLog.LeftItem = $hScrollBar.Position
           $lstLog.SetNeedsDisplay()
         }.GetNewClosure())
-
         $lstLog.add_DrawContent({
           if ($lstLog.Source -and $lstLog.Source.Count -gt 0) {
             $maxWidth = 0
-            foreach ($item in $lstLog.Source) { if ($item -and $item.Length -gt $maxWidth) { $maxWidth = $item.Length }}
+            foreach ($item in $lstLog.Source) { if ($item -and $item.Length -gt $maxWidth) { $maxWidth = $item.Length } }
             $hScrollBar.Size = $maxWidth
             $hScrollBar.Position = $lstLog.LeftItem
             $hScrollBar.SetNeedsDisplay()
@@ -4402,52 +4309,7 @@ function Show-AuditLogDialog {
         & $debugLogFunc "Error adding scrollbars: $($_.Exception.Message)" -Type "Warning"
       }
 
-      ## ----------{ Live Search Field }---------
-      $lblSearch = [Terminal.Gui.Label]::new("Search:")
-      $lblSearch.X = 1
-      $lblSearch.Y = [Terminal.Gui.Pos]::AnchorEnd(2)
-      $view.Add($lblSearch)
-
-      $state.txtSearch = [Terminal.Gui.TextField]::new("")
-      $state.txtSearch.X = 9
-      $state.txtSearch.Y = [Terminal.Gui.Pos]::AnchorEnd(2)
-      $state.txtSearch.Width = 40
-      $view.Add($state.txtSearch)
-
-      ## Search handler - filters list as user types
-      $state.txtSearch.add_TextChanged({
-        try {
-          $searchTerm = $state.txtSearch.Text.ToString().Trim()
-
-          if ([string]::IsNullOrWhiteSpace($searchTerm)) {
-            ## No search term - restore original filtered list
-            $lstLog.SetSource($state.originalLogList)
-            $lstLog.SetNeedsDisplay()
-            return
-          }
-
-          ## Filter the formatted list items
-          $filteredList = [System.Collections.Generic.List[string]]::new()
-          foreach ($item in $state.originalLogList) {
-            if ($item -match [regex]::Escape($searchTerm)) {
-              $filteredList.Add($item)
-            }
-          }
-
-          if ($filteredList.Count -eq 0) {
-            $noMatchList = [System.Collections.Generic.List[string]]::new()
-            $noMatchList.Add("(No matches found for '$searchTerm')")
-            $lstLog.SetSource($noMatchList)
-          } else {
-            $lstLog.SetSource($filteredList)
-          }
-          $lstLog.SetNeedsDisplay()
-        } catch {
-          & $debugLogFunc "Search error: $($_.Exception.Message)" -Type "Problem"
-        }
-      }.GetNewClosure())
-
-      ## ----------{ Filter Handler }---------
+      ## Filter handler
       $rdoFilter.add_SelectedItemChanged({
         try {
           $filtered = switch ($rdoFilter.SelectedItem) {
@@ -4457,33 +4319,23 @@ function Show-AuditLogDialog {
             3 { $entries | Where-Object { $_.Action -match "Group" } }
             4 { $entries | Where-Object { $_.Action -match "Account|Status" } }
           }
-
-          $state.currentFilteredEntries = $filtered
-
           if (-not $filtered -or $filtered.Count -eq 0) {
-            $emptyList = [System.Collections.Generic.List[string]]::new()
-            $emptyList.Add("(No entries match filter)")
-            $state.originalLogList = $emptyList
+            $emptyList = @("(No entries match filter)", "")
             $lstLog.SetSource($emptyList)
           } else {
             $formattedFiltered = Local-FormatLogItems $filtered
-            $state.originalLogList = $formattedFiltered
             $lstLog.SetSource($formattedFiltered)
           }
-
-          ## Clear search field when filter changes
-          $state.txtSearch.Text = ""
         } catch {
           & $debugLogFunc "Filter error: $($_.Exception.Message)" -Type "Problem"
-          $errorList = [System.Collections.Generic.List[string]]::new()
-          $errorList.Add("Error filtering entries")
+          $errorList = @("Error filtering entries", "")
           $lstLog.SetSource($errorList)
         }
       }.GetNewClosure())
 
-      ## ----------{ Export Button }---------
+      ## Export button
       $btnExport = [Terminal.Gui.Button]::new("Export to CSV")
-      $btnExport.X = 52
+      $btnExport.X = 1
       $btnExport.Y = [Terminal.Gui.Pos]::AnchorEnd(2)
       $btnExport.add_Clicked({
         try {
@@ -4499,7 +4351,7 @@ function Show-AuditLogDialog {
     }
   }
 
-  ## ----------{ Show dialog using New-PropertiesDialog }---------
+  ## Show dialog using New-PropertiesDialog
   $dialogData = @{
     ObjectName = $objectName
     ObjectType = $ObjectType
@@ -6659,10 +6511,7 @@ function Create-FilterPanel {
 
     ## Rebuild tree with filters
     $rootNode = & $buildTreeFunc -domain $Script:CurrentDomain
-    if ($rootNode) {
-      [Terminal.Gui.Application]::Refresh()
-    }
-
+    if ($rootNode) { [Terminal.Gui.Application]::Refresh() }
     ## Update status label
     & $manageFilterFunc -Action 'Update' -Label $Script:FilterStatusLabel
   }.GetNewClosure())
@@ -7085,13 +6934,9 @@ function Show-GPOListDialog {
     Show-Modal "No GPOs" "No Group Policy Objects found for domain: $Domain"
     return
   }
-
   Debug-Log "Found $($gpos.Count) GPOs" -Type "Insight"
 
-  ## ==========================================================================
-  ## EMBEDDED GPO DETAILS FUNCTION
-  ## ==========================================================================
-
+  ## Embedded GPO details function
   $showGPODetails = {
     param($GPO)
 
@@ -7099,34 +6944,32 @@ function Show-GPOListDialog {
     Debug-Log "Showing details for GPO: $gpoName" -Type "Insight"
 
     ## Build details text
-    $details = @"
-Group Policy Object Details
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Name: $gpoName
-
-Description:
-$(if ($GPO.Description) { $GPO.Description } else { "(No description)" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Path: $(if ($GPO.GPCFileSysPath) { $GPO.GPCFileSysPath } else { "N/A" })
-Version Number: $(if ($GPO.VersionNumber) { $GPO.VersionNumber } else { "N/A" })
-Functionality Version: $(if ($GPO.GPCFunctionalityVersion) { $GPO.GPCFunctionalityVersion } else { "N/A" })
-Flags: $(if ($GPO.Flags) { $GPO.Flags } else { "N/A" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Machine Extensions:
-$(if ($GPO.GPCMachineExtensionNames) { $GPO.GPCMachineExtensionNames } else { "(None)" })
-
-User Extensions:
-$(if ($GPO.GPCUserExtensionNames) { $GPO.GPCUserExtensionNames } else { "(None)" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Distinguished Name:
-$(if ($GPO.DN) { $GPO.DN } else { "N/A" })
-
-Created: $(if ($GPO.Created) { $GPO.Created } else { "Unknown" })
-Modified: $(if ($GPO.Modified) { $GPO.Modified } else { "Unknown" })
-"@
+    $details = "Group Policy Object Details`n" +
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+    "Name: $gpoName`n" +
+    "`n" +
+    "Description:`n" +
+    "$(if ($GPO.Description) { $GPO.Description } else { '(No description)' })`n" +
+    "`n" +
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+    "Path: $(if ($GPO.GPCFileSysPath) { $GPO.GPCFileSysPath } else { 'N/A' })`n" +
+    "Version Number: $(if ($GPO.VersionNumber) { $GPO.VersionNumber } else { 'N/A' })`n" +
+    "Functionality Version: $(if ($GPO.GPCFunctionalityVersion) { $GPO.GPCFunctionalityVersion } else { 'N/A' })`n" +
+    "Flags: $(if ($GPO.Flags) { $GPO.Flags } else { 'N/A' })`n" +
+    "`n" +
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+    "Machine Extensions:`n" +
+    "$(if ($GPO.GPCMachineExtensionNames) { $GPO.GPCMachineExtensionNames } else { '(None)' })`n" +
+    "`n" +
+    "User Extensions:`n" +
+    "$(if ($GPO.GPCUserExtensionNames) { $GPO.GPCUserExtensionNames } else { '(None)' })`n" +
+    "`n" +
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+    "Distinguished Name:`n" +
+    "$(if ($GPO.DN) { $GPO.DN } else { 'N/A' })`n" +
+    "`n" +
+    "Created: $(if ($GPO.Created) { $GPO.Created } else { 'Unknown' })`n" +
+    "Modified: $(if ($GPO.Modified) { $GPO.Modified } else { 'Unknown' })"
 
     ## Create dialog
     $dialog = [Terminal.Gui.Dialog]::new()
@@ -7174,10 +7017,7 @@ Modified: $(if ($GPO.Modified) { $GPO.Modified } else { "Unknown" })
     [Terminal.Gui.Application]::Run($dialog)
   }
 
-  ## ==========================================================================
-  ## LIST DIALOG HANDLERS
-  ## ==========================================================================
-
+  ## ---------{ List dialog handlers }----------
   ## Format function
   $formatGPO = {
     param($gpo)
@@ -7185,13 +7025,11 @@ Modified: $(if ($GPO.Modified) { $GPO.Modified } else { "Unknown" })
     $version = if ($gpo.VersionNumber) { " (v$($gpo.VersionNumber))" } else { "" }
     "$name$version"
   }
-
   ## View handler - calls embedded details function
   $onView = {
     param($gpo)
     & $showGPODetails $gpo
   }
-
   ## Export handler
   $onExport = {
     param($items)
@@ -7581,7 +7419,6 @@ function Show-LAPSSearchModal {
           }
         }
         Debug-Log "Found $($Script:LAPSComputers.Count) computers with LAPS" -Type "Insight"
-
       } else {
         ## Production Mode - detect LAPS schema once
         if (-not $Script:LAPSSchemaDetected) {
@@ -7614,7 +7451,6 @@ function Show-LAPSSearchModal {
           Debug-Log "AD query failed: $($_.Exception.Message)" -Type "Problem"
           throw
         }
-
         ## Filter to only computers with LAPS passwords
         $Script:LAPSComputers = @()
         foreach ($comp in $rawComputers) {
@@ -8886,15 +8722,11 @@ function Show-ADHealthDialog {
       }
     }
   }
-
   $Script:ADHealthTools  = $tools
   $Script:ADHealthOS     = $osInfo
   $Script:ADHealthDomain = $Domain
 
-  ## ==========================================================================
-  ## EMBEDDED TEST FUNCTIONS - Defined as ScriptBlocks for closure
-  ## ==========================================================================
-
+  ## Embedded test functionS - Defined as ScriptBlocks for closure
   $Test_DCStatus = {
     param([string]$Domain)
 
@@ -8912,14 +8744,12 @@ function Show-ADHealthDialog {
         $site = $dc.Site
         $ping = Test-Connection -ComputerName $name -Count 1 -Quiet -ErrorAction SilentlyContinue
         $reachable = if ($ping) { "OK" } else { "FAIL" }
-
         $uptimeDays = "?"
         try {
           $wmi = Get-WmiObject -Class Win32_OperatingSystem -ComputerName $name -ErrorAction Stop
           $lastBoot = [Management.ManagementDateTimeConverter]::ToDateTime($wmi.LastBootUpTime)
           $uptimeDays = ((Get-Date) - $lastBoot).Days
         } catch { }
-
         ## Port checks using Test-NetConnection
         $ldapOK = $false
         $kerbOK = $false
@@ -9003,7 +8833,6 @@ function Show-ADHealthDialog {
         $health = "WARN"
       }
     }
-
     return @{
       Summary = $summary
       Details = $details
@@ -9017,7 +8846,6 @@ function Show-ADHealthDialog {
     $summary = @()
     $details = ""
     $health  = "OK"
-
     $srvRecords = @(
       "_ldap._tcp.dc._msdcs.$Domain"
       "_kerberos._tcp.$Domain"
@@ -9162,10 +8990,8 @@ function Show-ADHealthDialog {
   $tabView.Width  = [Terminal.Gui.Dim]::Fill()
   $tabView.Height = [Terminal.Gui.Dim]::Fill(2)
 
-  ## ==========================================================================
-  ## TAB DEFINITIONS - ALL INLINE
-  ## ==========================================================================
 
+  ## Tab definitions - all inline
   $tabs = @(
     ## ----------{ System Info Tab }---------
     @{
@@ -10184,10 +10010,7 @@ function Show-ADHealthDialog {
     }
   )
 
-  ## ==========================================================================
-  ## BUILD TABS
-  ## ==========================================================================
-
+  ## Build tabs
   $tabIndex = 0
   foreach ($tabDef in $tabs) {
     $tab = [Terminal.Gui.TabView+Tab]::new()
@@ -10216,10 +10039,7 @@ function Show-ADHealthDialog {
     }
   }
 
-  ## ==========================================================================
-  ## BUTTONS AND SEARCH
-  ## ==========================================================================
-
+  ## Buttons and search
   $btnRefresh = [Terminal.Gui.Button]::new("Refresh")
   $btnRefresh.X = 2
   $btnRefresh.Y = [Terminal.Gui.Pos]::AnchorEnd(1)
@@ -11852,17 +11672,14 @@ function Show-ObjectPropertiesDialog {
             $existingAmenities = $equipmentPart -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
           }
         }
-
         $commonAmenities = @(
           'Projector', 'Whiteboard', 'Video Conference', 'Conference Phone', 'TV/Display', 'HDMI Connection', 'Laptop Hookup',
           'Wireless Presentation', 'Air Conditioning', 'Natural Light', 'Catering Setup', 'Accessibility Features'
         )
-
         $allAmenities = @($commonAmenities)
         foreach ($amenity in $existingAmenities) {
           if ($amenity -notin $commonAmenities) { $allAmenities += $amenity }
         }
-
         $state.amenityCheckboxes = @{}
           foreach ($amenity in $allAmenities) {
             $chk = [Terminal.Gui.CheckBox]::new("$amenity")
@@ -11874,11 +11691,9 @@ function Show-ObjectPropertiesDialog {
           }
         }
       }
-
-        $tabs = @( $generalTab, $resourceTab, (& $BuildAddressTab) )
-        $applyLogic = & $BuildGenericApplyLogic @{} 'Resource'
+      $tabs = @( $generalTab, $resourceTab, (& $BuildAddressTab) )
+      $applyLogic = & $BuildGenericApplyLogic @{} 'Resource'
       }
-
       'Group' {
         $includeSearch = $true
         $searchConfig = @{ObjectType='Group'}
@@ -12109,7 +11924,6 @@ function Show-ObjectPropertiesDialog {
                     $group2Members = @()
                   }
                 }
-
                 $inBoth = @($group1Members | Where-Object { $group2Members -contains $_ })
                 $onlyInGroup1 = @($group1Members | Where-Object { $group2Members -notcontains $_ })
                 $onlyInGroup2 = @($group2Members | Where-Object { $group1Members -notcontains $_ })
@@ -12119,7 +11933,6 @@ function Show-ObjectPropertiesDialog {
                 $resultMsg += "Only in ${compareGroupName}: $($onlyInGroup2.Count)"
                 & $showModalFunc2 "Group Comparison" $resultMsg
               }.GetNewClosure())
-
               $compareDlg.AddButton($btnSelect)
               $btnCancel = [Terminal.Gui.Button]::new("Cancel")
               $btnCancel.add_Clicked({ [Terminal.Gui.Application]::RequestStop() }.GetNewClosure())
@@ -12375,30 +12188,27 @@ function Show-ObjectPropertiesDialog {
               $btnViewPassword.X = 4
               $btnViewPassword.Y = $y
               $btnViewPassword.add_Clicked({
-              $details = @"
-LAPS Password Details
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Computer: $($comp.Name)
-LAPS Type: $lapsType
-Account Name: $lapsAccountName
-
-Password:
-$lapsPassword
-
-Password Expires: $lapsExpiry
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠ SECURITY WARNING ⚠
-
-This password provides full local administrator
-access to this computer. Handle with extreme care
-and store securely.
-
-Do not share via email or unsecured channels.
-Log access to this password per your organization's
-security policy.
-"@
+              $details = "LAPS Password Details`n" +
+               "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+               "Computer: $($comp.Name)`n" +
+               "LAPS Type: $lapsType`n" +
+               "Account Name: $lapsAccountName`n" +
+               "`n" +
+               "Password:`n" +
+               "$lapsPassword`n" +
+               "`n" +
+               "Password Expires: $lapsExpiry`n" +
+               "`n" +
+               "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+               "⚠ SECURITY WARNING ⚠`n" +
+               "`n" +
+               "This password provides full local administrator`n" +
+               "access to this computer. Handle with extreme care`n" +
+               "and store securely.`n" +
+               "`n" +
+               "Do not share via email or unsecured channels.`n" +
+               "Log access to this password per your organization's`n" +
+               "security policy."
               & $showModalFunc "LAPS Password" $details
             }.GetNewClosure())
 
@@ -12483,30 +12293,27 @@ security policy.
                 if ($selectedIndex -ge 0 -and $selectedIndex -lt $recoveryKeys.Count) {
                   $key = $recoveryKeys[$selectedIndex]
                   $createdStr = & $formatDateFunc $key.Created 'yyyy-MM-dd HH:mm:ss'
-                  $details = @"
-BitLocker Recovery Key Details
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Computer: $($comp.Name)
-Key Name: $($key.Name)
-
-Recovery Password:
-$($key.RecoveryPassword)
-
-Recovery GUID: $($key.RecoveryGuid)
-Volume GUID:   $($key.VolumeGuid)
-
-Created: $createdStr
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠ SECURITY WARNING ⚠
-
-This recovery password provides full access to
-encrypted data on this volume. Handle with extreme
-care and store securely.
-
-Do not share via email or unsecured channels.
-"@
+                  $details = "BitLocker Recovery Key Details`n" +
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+                    "Computer: $($comp.Name)`n" +
+                    "Key Name: $($key.Name)`n" +
+                    "`n" +
+                    "Recovery Password:`n" +
+                    "$($key.RecoveryPassword)`n" +
+                    "`n" +
+                    "Recovery GUID: $($key.RecoveryGuid)`n" +
+                    "Volume GUID:   $($key.VolumeGuid)`n" +
+                    "`n" +
+                    "Created: $createdStr`n" +
+                    "`n" +
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+                    "⚠ SECURITY WARNING ⚠`n" +
+                    "`n" +
+                    "This recovery password provides full access to`n" +
+                    "encrypted data on this volume. Handle with extreme`n" +
+                    "care and store securely.`n" +
+                    "`n" +
+                    "Do not share via email or unsecured channels."
                   & $showModalFunc "BitLocker Recovery Key" $details
                 } else {
                   & $showModalFunc "Info" "Please select a recovery key to view"
@@ -12756,10 +12563,10 @@ Do not share via email or unsecured channels.
       }
     }
 
-      $diskTab = @{
-        Name = "Disk Space"
-          Builder = {
-            param($view, $dc, $state)
+    $diskTab = @{
+      Name = "Disk Space"
+        Builder = {
+          param($view, $dc, $state)
 
           $y = 1
           if ($dc.DiskSpace) {
@@ -12878,18 +12685,14 @@ Do not share via email or unsecured channels.
               $selectedIndex = $state.lstDFSR.SelectedItem
               if ($selectedIndex -ge 0 -and $selectedIndex -lt $dfsrObjects.Count) {
                 $dfsrObj = $dfsrObjects[$selectedIndex]
-                $details = @"
-DFSR Object Details
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Class: $($dfsrObj.Class)
-Name:  $($dfsrObj.Name)
-DN:    $($dfsrObj.DN)
-
-This DFSR object is part of the Active Directory
-replication topology for this domain controller.
-"@
-
+                $details = "DFSR Object Details`n" +
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+                "Class: $($dfsrObj.Class)`n" +
+                "Name:  $($dfsrObj.Name)`n" +
+                "DN:    $($dfsrObj.DN)`n" +
+                "`n" +
+                "This DFSR object is part of the Active Directory`n" +
+                "replication topology for this domain controller."
                 & $showModalFunc "DFSR Details" $details
               } else {
                 & $showModalFunc "Info" "Please select a DFSR object to view"
@@ -13276,18 +13079,12 @@ function Show-GPOListDialog {
   ## Get GPOs
   $gpoResult = Test-GPOHealth -Domain $Domain
   $gpos      = $gpoResult.GPOs
-
   if (-not $gpos -or $gpos.Count -eq 0) {
     Show-Modal "No GPOs" "No Group Policy Objects found for domain: $Domain"
     return
   }
-
   Debug-Log "Found $($gpos.Count) GPOs" -Type "Insight"
-
-  ## ==========================================================================
-  ## EMBEDDED GPO DETAILS FUNCTION
-  ## ==========================================================================
-
+  ## Embedded GPO details function
   $showGPODetails = {
     param($GPO)
 
@@ -13295,34 +13092,32 @@ function Show-GPOListDialog {
     Debug-Log "Showing details for GPO: $gpoName" -Type "Insight"
 
     ## Build details text
-    $details = @"
-Group Policy Object Details
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Name: $gpoName
-
-Description:
-$(if ($GPO.Description) { $GPO.Description } else { "(No description)" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Path: $(if ($GPO.GPCFileSysPath) { $GPO.GPCFileSysPath } else { "N/A" })
-Version Number: $(if ($GPO.VersionNumber) { $GPO.VersionNumber } else { "N/A" })
-Functionality Version: $(if ($GPO.GPCFunctionalityVersion) { $GPO.GPCFunctionalityVersion } else { "N/A" })
-Flags: $(if ($GPO.Flags) { $GPO.Flags } else { "N/A" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Machine Extensions:
-$(if ($GPO.GPCMachineExtensionNames) { $GPO.GPCMachineExtensionNames } else { "(None)" })
-
-User Extensions:
-$(if ($GPO.GPCUserExtensionNames) { $GPO.GPCUserExtensionNames } else { "(None)" })
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Distinguished Name:
-$(if ($GPO.DN) { $GPO.DN } else { "N/A" })
-
-Created: $(if ($GPO.Created) { $GPO.Created } else { "Unknown" })
-Modified: $(if ($GPO.Modified) { $GPO.Modified } else { "Unknown" })
-"@
+    $details = "Group Policy Object Details`n" +
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+    "Name: $gpoName`n" +
+    "`n" +
+    "Description:`n" +
+    "$(if ($GPO.Description) { $GPO.Description } else { '(No description)' })`n" +
+    "`n" +
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+    "Path: $(if ($GPO.GPCFileSysPath) { $GPO.GPCFileSysPath } else { 'N/A' })`n" +
+    "Version Number: $(if ($GPO.VersionNumber) { $GPO.VersionNumber } else { 'N/A' })`n" +
+    "Functionality Version: $(if ($GPO.GPCFunctionalityVersion) { $GPO.GPCFunctionalityVersion } else { 'N/A' })`n" +
+    "Flags: $(if ($GPO.Flags) { $GPO.Flags } else { 'N/A' })`n" +
+    "`n" +
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+    "Machine Extensions:`n" +
+    "$(if ($GPO.GPCMachineExtensionNames) { $GPO.GPCMachineExtensionNames } else { '(None)' })`n" +
+    "`n" +
+    "User Extensions:`n" +
+    "$(if ($GPO.GPCUserExtensionNames) { $GPO.GPCUserExtensionNames } else { '(None)' })`n" +
+    "`n" +
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" +
+    "Distinguished Name:`n" +
+    "$(if ($GPO.DN) { $GPO.DN } else { 'N/A' })`n" +
+    "`n" +
+    "Created: $(if ($GPO.Created) { $GPO.Created } else { 'Unknown' })`n" +
+    "Modified: $(if ($GPO.Modified) { $GPO.Modified } else { 'Unknown' })"
 
     ## Create dialog
     $dialog = [Terminal.Gui.Dialog]::new()
@@ -13370,10 +13165,7 @@ Modified: $(if ($GPO.Modified) { $GPO.Modified } else { "Unknown" })
     [Terminal.Gui.Application]::Run($dialog)
   }
 
-  ## ==========================================================================
-  ## LIST DIALOG HANDLERS
-  ## ==========================================================================
-
+  ## List dialog handlers
   ## Format function
   $formatGPO = {
     param($gpo)
