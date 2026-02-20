@@ -257,7 +257,7 @@ Some information which might come in handy: [Someone else who likes the projct n
 | GAA  | Georgia, AL, USA              | US | 192.168.33.0/24  | +1 334 300 0xxx                 | +1 770 900 2xxx  |
 | GLA | Glasgow, Scotland              | UK | 192.168.141.0/24 | +44 141  496 01xx               | +44 770  009 4xxx |
 | HAL  | Halifax, England              | UK | 192.168.142.0/24 | +44 1422 200 0xxx               | +44 7700 904 2xxx |
-| HUL  | Hull, England                 | UK | 192.168.142/24   | +44 1482 300 0xxx               | +44 7700 902 2xxx |
+| HUL  | Hull, England                 | UK | 192.168.148/24   | +44 1482 300 0xxx               | +44 7700 902 2xxx |
 | KGE | Køge, Danmark                  | DK | 192.168.265.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | KOR | Korsør, Danmark                | DK | 192.168.238.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | LIV | Liverpool, England             | UK | 192.168.151.0/24 | +44 151  496 0xxx               | +44 770  090 5xxx |
