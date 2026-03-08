@@ -246,7 +246,7 @@ Some information which might come in handy: [Someone else who likes the projct n
 | AMS | Amsterdam, Netherlands         | NL | 192.168.31.0/24  | +31  02  555 xxxx               | +31  xxx  555 xxxx |
 | BIR | Birmingham, England            | UK | 192.168.121.0/24 | +44 121  496 0xxx               | +44 7700 900 2xxx |
 | BON | Bonn, West Germany (FRG)       | DE | 192.168.228.0/24 | +49 228  555  xxx               | +49 211  xxx xxxx |
-| BRD | West Berlin (FRG)              | DE | 192.168.113.0/24 | +49 311  555  xxx               | +49 211  xxx xxxx |
+| BER | West Berlin (FRG) Was (BRD)    | DE | 192.168.113.0/24 | +49 311  555  xxx               | +49 211  xxx xxxx |
 | BRK | Brockville, Ontario            | CA | 192.168.136.0/24 | +1  613  555 6xxx               | +1  613  555 6xxx |
 | CLY | Clydebank, Scotland            | UK | 192.168.41.0/24  | +44 141  496 00xx               | +44 770  090 5xxx |
 | COV  | Coventry, England             | UK | 192.168.247.0/24 | +44 247 765 0xxx                | +44 7700 901 2xxx |
@@ -259,7 +259,7 @@ Some information which might come in handy: [Someone else who likes the projct n
 | GLA | Glasgow, Scotland              | UK | 192.168.141.0/24 | +44 141  496 01xx               | +44 770  009 4xxx |
 | GOT | Gothemburg, Sweden             | SE | 192.168.46.0/24 | +46  305  555 xxxx               | +1  xxx  555 xxxx |
 | HAL  | Halifax, England              | UK | 192.168.142.0/24 | +44 1422 200 0xxx               | +44 7700 904 2xxx |
-| HUL  | Hull, England                 | UK | 192.168.148/24   | +44 1482 300 0xxx               | +44 7700 902 2xxx |
+| HUL  | Hull, England                 | UK | 192.168.148.0/24  | +44 1482 300 0xxx               | +44 7700 902 2xxx |
 | KGE | Køge, Danmark                  | DK | 192.168.65.0/24  | +45  00  000  xxx               | +45  2x  xxx xxx |
 | KOR | Korsør, Danmark                | DK | 192.168.238.0/24 | +45  00  000  xxx               | +45  2x  xxx xxx |
 | LIV | Liverpool, England             | UK | 192.168.151.0/24 | +44 151  496 0xxx               | +44 770  090 5xxx |
